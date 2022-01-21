@@ -1,4 +1,4 @@
-package main
+package grpcmanager
 
 import (
 	"context"
@@ -9,19 +9,19 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type controlGrpcManager struct {
+type ControlGrpcManager struct {
 	Conn	*grpc.ClientConn
 }
 
-func NewControlGrpcManager(authToken string, endPoint string) (controlGrpcManager, error) {
+func NewControlGrpcManager(authToken string, endPoint string) (ControlGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 	conn, err := grpc.Dial(endPoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(addHeadersInterceptor(authToken)))
-	return controlGrpcManager{Conn: conn}, err
+	return ControlGrpcManager{Conn: conn}, err
 }
 
-func (cm *controlGrpcManager) Close() error {
+func (cm *ControlGrpcManager) Close() error {
 	return cm.Conn.Close()
 }
 

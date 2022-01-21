@@ -1,20 +1,20 @@
-package main
+package responses
 
 import (
-	pb "github.com/momentohq/client_sdk_go/protos"
+	pb "github.com/momentohq/client-sdk-go/protos"
 )
 
-type listCachesResponse struct {
+type ListCachesResponse struct {
 	NextToken	string
 	Caches 		[]cacheInfo
 }
 
-func NewListCacheResponse(lcr *pb.ListCachesResponse) *listCachesResponse {
+func NewListCacheResponse(lcr *pb.ListCachesResponse) *ListCachesResponse {
 	caches := []cacheInfo{}
 	for _, cache := range lcr.Cache {
 		caches = append(caches, NewCacheInfo(cache))
 	}
-	return &listCachesResponse{NextToken: lcr.NextToken, Caches: caches}
+	return &ListCachesResponse{NextToken: lcr.NextToken, Caches: caches}
 }
 
 

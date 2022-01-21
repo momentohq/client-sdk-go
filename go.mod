@@ -1,4 +1,4 @@
-module github.com/momentohq/client_sdk_go
+module github.com/momentohq/client-sdk-go
 
 go 1.17
 

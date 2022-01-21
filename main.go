@@ -1,7 +1,13 @@
 package main
 
 func main() {
-	//scsControlEndpoint := "control.cell-alpha-dev.preprod.a.momentohq.com:443"
+		// scsControlEndpoint := "control.cell-alpha-dev.preprod.a.momentohq.com:443"
+	// scsDataEndpoint := "cache.cell-alpha-dev.preprod.a.momentohq.com:443"
+	// cacheClient := scc.SimpleCacheClient(TEST_AUTH_TOKEN, uint32(60))
+	// err := cacheClient.CreateCache("cache-go-3")
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
 
 	// cc, cErr := NewScsControlClient(TEST_AUTH_TOKEN, scsControlEndpoint)
 	// if cErr != nil {
