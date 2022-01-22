@@ -3,34 +3,34 @@ package scsmanager
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	gm "github.com/momentohq/client-sdk-go/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/protos"
 	rs "github.com/momentohq/client-sdk-go/responses"
+	ut "github.com/momentohq/client-sdk-go/utility"
 )
 
-type scsControlClient struct {
+type ScsControlClient struct {
 	GrpcManager		gm.ControlGrpcManager
 	Client			pb.ScsControlClient
 }
 
-func NewScsControlClient(authToken string, endPoint string) (*scsControlClient, error) {
+func NewScsControlClient(authToken string, endPoint string) (*ScsControlClient, error) {
 	cm, err := gm.NewControlGrpcManager(authToken, endPoint)
 	if err != nil {
 		return nil, err
 	}
 	client := pb.NewScsControlClient(cm.Conn)
-	return &scsControlClient{GrpcManager: cm, Client: client}, nil
+	return &ScsControlClient{GrpcManager: cm, Client: client}, nil
 }
 
-func (scc *scsControlClient) close() error {
+func (scc *ScsControlClient) close() error {
 	return scc.GrpcManager.Close()
 }
 
-func (cc *scsControlClient) ScsCreateCache(cacheName string) error {
-	if isCacheNameValid(cacheName) {
+func (cc *ScsControlClient) ScsCreateCache(cacheName string) error {
+	if ut.IsCacheNameValid(cacheName) {
 		request := pb.CreateCacheRequest{CacheName: cacheName}
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 		_, err := cc.Client.CreateCache(ctx, &request)
@@ -43,8 +43,8 @@ func (cc *scsControlClient) ScsCreateCache(cacheName string) error {
 	return fmt.Errorf("cache name cannot be empty")
 }
 
-func (cc *scsControlClient) ScsDeleteCache(cacheName string) error {
-	if isCacheNameValid(cacheName) {
+func (cc *ScsControlClient) ScsDeleteCache(cacheName string) error {
+	if ut.IsCacheNameValid(cacheName) {
 		request := pb.DeleteCacheRequest{CacheName: cacheName}
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 		_, err := cc.Client.DeleteCache(ctx, &request)
@@ -58,7 +58,7 @@ func (cc *scsControlClient) ScsDeleteCache(cacheName string) error {
 }
 
 
-func (cc *scsControlClient) ScsListCaches(nextToken ...string) (*rs.ListCachesResponse, error) {
+func (cc *ScsControlClient) ScsListCaches(nextToken ...string) (*rs.ListCachesResponse, error) {
 	defaultToken := ""
 	if len(nextToken) != 0 {
 		defaultToken = nextToken[0]
@@ -71,8 +71,4 @@ func (cc *scsControlClient) ScsListCaches(nextToken ...string) (*rs.ListCachesRe
 	}
 	defer cc.close()
 	return rs.NewListCacheResponse(resp), nil
-}
-
-func isCacheNameValid(cacheName string) bool {
-	return len(strings.TrimSpace(cacheName)) != 0
 }
