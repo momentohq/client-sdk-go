@@ -42,11 +42,11 @@ func (scc *ScsDataClient) close() error {
 
 func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*rs.SetCacheResponse, error) {
 	if ut.IsCacheNameValid(cacheName) {
-		_, byteKey, errAsBytesKey := asBytes(key, "Unsupported type for key: ")
+		byteKey, errAsBytesKey := asBytes(key, "Unsupported type for key: ")
 		if errAsBytesKey != nil {
 			return nil, errAsBytesKey
 		}
-		_, byteValue, errAsBytesValue := asBytes(value, "Unsupported type for value: ")
+		byteValue, errAsBytesValue := asBytes(value, "Unsupported type for value: ")
 		if errAsBytesValue != nil {
 			return nil, errAsBytesValue
 		}
@@ -80,7 +80,7 @@ func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interf
 
 func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*rs.GetCacheResponse, error) {
 	if ut.IsCacheNameValid(cacheName) {
-		_, byteKey, errAsBytes := asBytes(key, "Unsupported type for key: ")
+		byteKey, errAsBytes := asBytes(key, "Unsupported type for key: ")
 		if errAsBytes != nil {
 			return nil, errAsBytes
 		}
@@ -101,14 +101,14 @@ func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*rs.GetCach
 	return nil, fmt.Errorf("cache name cannot be empty")
 }
 
-func asBytes(data interface{}, message string) (string, []byte, error) {
+func asBytes(data interface{}, message string) ([]byte, error) {
 	switch data.(type) {
 		case string:
-			return "", []byte(reflect.ValueOf(data).String()), nil
+			return []byte(reflect.ValueOf(data).String()), nil
 		case byte:
-			return "", reflect.ValueOf(data).Bytes(), nil
+			return reflect.ValueOf(data).Bytes(), nil
 		default:
-			return "", nil, fmt.Errorf("%s %s", message, reflect.TypeOf(data).String())
+			return nil, fmt.Errorf("%s %s", message, reflect.TypeOf(data).String())
 	}
 }
 
