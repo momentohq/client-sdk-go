@@ -11,13 +11,16 @@ import (
 	ut "github.com/momentohq/client-sdk-go/utility"
 )
 
+const CONTROL_PORT = ":443"
+
 type ScsControlClient struct {
 	GrpcManager		gm.ControlGrpcManager
 	Client			pb.ScsControlClient
 }
 
 func NewScsControlClient(authToken string, endPoint string) (*ScsControlClient, error) {
-	cm, err := gm.NewControlGrpcManager(authToken, endPoint)
+	newEndPoint := fmt.Sprint(endPoint, CONTROL_PORT)
+	cm, err := gm.NewControlGrpcManager(authToken, newEndPoint)
 	if err != nil {
 		return nil, err
 	}

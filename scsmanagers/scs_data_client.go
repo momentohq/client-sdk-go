@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+const CACHE_PORT = ":443"
+
 type ScsDataClient struct {
 	GrpcManager			gm.DataGrpcManager
 	Client				pb.ScsClient
@@ -20,7 +22,8 @@ type ScsDataClient struct {
 }
 
 func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint32) (*ScsDataClient, error) {
-	cm, err := gm.NewDataGrpcManager(authToken, endPoint)
+	newEndPoint := fmt.Sprint(endPoint, CACHE_PORT)
+	cm, err := gm.NewDataGrpcManager(authToken, newEndPoint)
 	if err != nil {
 		return nil, err
 	}
