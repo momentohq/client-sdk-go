@@ -16,9 +16,9 @@ import (
 const CACHE_PORT = ":443"
 
 type ScsDataClient struct {
-	GrpcManager			gm.DataGrpcManager
-	Client				pb.ScsClient
-	DefaultTtlSeconds 	uint32
+	GrpcManager       gm.DataGrpcManager
+	Client            pb.ScsClient
+	DefaultTtlSeconds uint32
 }
 
 func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint32) (*ScsDataClient, error) {
@@ -28,7 +28,7 @@ func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint3
 		return nil, err
 	}
 	client := pb.NewScsClient(cm.Conn)
-	er := isTtlValid(defaultTtlSeconds) 
+	er := isTtlValid(defaultTtlSeconds)
 	if er != nil {
 		cm.Conn.Close()
 		return nil, er
@@ -54,7 +54,7 @@ func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interf
 		if len(ttlSeconds) == 0 {
 			itemTtlMils = scc.DefaultTtlSeconds * 1000
 		} else {
-			err :=  isTtlValid(ttlSeconds[0])
+			err := isTtlValid(ttlSeconds[0])
 			if err != nil {
 				return nil, err
 			} else {
@@ -101,12 +101,12 @@ func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*rs.GetCach
 
 func asBytes(data interface{}, message string) ([]byte, error) {
 	switch data.(type) {
-		case string:
-			return []byte(reflect.ValueOf(data).String()), nil
-		case byte:
-			return reflect.ValueOf(data).Bytes(), nil
-		default:
-			return nil, fmt.Errorf("%s %s", message, reflect.TypeOf(data).String())
+	case string:
+		return []byte(reflect.ValueOf(data).String()), nil
+	case byte:
+		return reflect.ValueOf(data).Bytes(), nil
+	default:
+		return nil, fmt.Errorf("%s %s", message, reflect.TypeOf(data).String())
 	}
 }
 

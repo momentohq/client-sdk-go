@@ -7,10 +7,10 @@ import (
 )
 
 type simpleCacheClient struct {
-	authToken 			string
-	defaultTtlSeconds 	uint32
-	controlClient       *cc.ScsControlClient
-	dataClient			*cc.ScsDataClient
+	authToken         string
+	defaultTtlSeconds uint32
+	controlClient     *cc.ScsControlClient
+	dataClient        *cc.ScsDataClient
 }
 
 func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCacheClient, error) {
@@ -29,9 +29,9 @@ func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCache
 		return nil, cErr
 	}
 	return &simpleCacheClient{authToken: authToken, defaultTtlSeconds: defaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
-} 
+}
 
-func (scc *simpleCacheClient) CreateCache (cacheName string) error {
+func (scc *simpleCacheClient) CreateCache(cacheName string) error {
 	return scc.controlClient.ScsCreateCache(cacheName)
 }
 
@@ -39,15 +39,15 @@ func (scc *simpleCacheClient) DeleteCache(cacheName string) error {
 	return scc.controlClient.ScsDeleteCache(cacheName)
 }
 
-func (scc *simpleCacheClient) ListCaches (nextToken ...string) (*rs.ListCachesResponse, error) {
+func (scc *simpleCacheClient) ListCaches(nextToken ...string) (*rs.ListCachesResponse, error) {
 	return scc.controlClient.ScsListCaches(nextToken...)
 }
 
-func (scc *simpleCacheClient) Set (cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*rs.SetCacheResponse, error) {
+func (scc *simpleCacheClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*rs.SetCacheResponse, error) {
 	return scc.dataClient.ScsSet(cacheName, key, value, ttlSeconds...)
 }
 
-func (scc *simpleCacheClient) Get (cacheName string, key interface{}) (*rs.GetCacheResponse, error) {
+func (scc *simpleCacheClient) Get(cacheName string, key interface{}) (*rs.GetCacheResponse, error) {
 	return scc.dataClient.ScsGet(cacheName, key)
 }
 
