@@ -32,23 +32,23 @@ func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCache
 }
 
 func (scc *simpleCacheClient) CreateCache(cacheName string) error {
-	return scc.controlClient.ScsCreateCache(cacheName)
+	return scc.controlClient.CreateCache(cacheName)
 }
 
 func (scc *simpleCacheClient) DeleteCache(cacheName string) error {
-	return scc.controlClient.ScsDeleteCache(cacheName)
+	return scc.controlClient.DeleteCache(cacheName)
 }
 
 func (scc *simpleCacheClient) ListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
-	return scc.controlClient.ScsListCaches(nextToken...)
+	return scc.controlClient.ListCaches(nextToken...)
 }
 
 func (scc *simpleCacheClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
-	return scc.dataClient.ScsSet(cacheName, key, value, ttlSeconds...)
+	return scc.dataClient.Set(cacheName, key, value, ttlSeconds...)
 }
 
 func (scc *simpleCacheClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
-	return scc.dataClient.ScsGet(cacheName, key)
+	return scc.dataClient.Get(cacheName, key)
 }
 
 func (scc *simpleCacheClient) Close() (error, error) {

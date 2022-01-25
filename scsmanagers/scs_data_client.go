@@ -40,7 +40,7 @@ func (scc *ScsDataClient) Close() error {
 	return scc.GrpcManager.Close()
 }
 
-func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
+func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
 	if utility.IsCacheNameValid(cacheName) {
 		byteKey, errAsBytesKey := asBytes(key, "Unsupported type for key: ")
 		if errAsBytesKey != nil {
@@ -77,7 +77,7 @@ func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interf
 	return nil, fmt.Errorf("cache name cannot be empty")
 }
 
-func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
+func (scc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
 	if utility.IsCacheNameValid(cacheName) {
 		byteKey, errAsBytes := asBytes(key, "Unsupported type for key: ")
 		if errAsBytes != nil {

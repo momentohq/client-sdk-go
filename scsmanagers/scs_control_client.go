@@ -32,7 +32,7 @@ func (scc *ScsControlClient) Close() error {
 	return scc.GrpcManager.Close()
 }
 
-func (cc *ScsControlClient) ScsCreateCache(cacheName string) error {
+func (cc *ScsControlClient) CreateCache(cacheName string) error {
 	if utility.IsCacheNameValid(cacheName) {
 		request := pb.CreateCacheRequest{CacheName: cacheName}
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
@@ -45,7 +45,7 @@ func (cc *ScsControlClient) ScsCreateCache(cacheName string) error {
 	return fmt.Errorf("cache name cannot be empty")
 }
 
-func (cc *ScsControlClient) ScsDeleteCache(cacheName string) error {
+func (cc *ScsControlClient) DeleteCache(cacheName string) error {
 	if utility.IsCacheNameValid(cacheName) {
 		request := pb.DeleteCacheRequest{CacheName: cacheName}
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
@@ -58,7 +58,7 @@ func (cc *ScsControlClient) ScsDeleteCache(cacheName string) error {
 	return fmt.Errorf("cache name cannot be empty")
 }
 
-func (cc *ScsControlClient) ScsListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
+func (cc *ScsControlClient) ListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
 	defaultToken := ""
 	if len(nextToken) != 0 {
 		defaultToken = nextToken[0]
