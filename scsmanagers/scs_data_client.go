@@ -6,24 +6,24 @@ import (
 	"reflect"
 	"time"
 
-	gm "github.com/momentohq/client-sdk-go/grpcmanagers"
+	grpcmanagers "github.com/momentohq/client-sdk-go/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/protos"
-	rs "github.com/momentohq/client-sdk-go/responses"
-	ut "github.com/momentohq/client-sdk-go/utility"
+	responses "github.com/momentohq/client-sdk-go/responses"
+	utility "github.com/momentohq/client-sdk-go/utility"
 	"google.golang.org/grpc/metadata"
 )
 
 const CACHE_PORT = ":443"
 
 type ScsDataClient struct {
-	GrpcManager       gm.DataGrpcManager
+	GrpcManager       grpcmanagers.DataGrpcManager
 	Client            pb.ScsClient
 	DefaultTtlSeconds uint32
 }
 
 func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint32) (*ScsDataClient, error) {
 	newEndPoint := fmt.Sprint(endPoint, CACHE_PORT)
-	cm, err := gm.NewDataGrpcManager(authToken, newEndPoint)
+	cm, err := grpcmanagers.NewDataGrpcManager(authToken, newEndPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +40,8 @@ func (scc *ScsDataClient) Close() error {
 	return scc.GrpcManager.Close()
 }
 
-func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*rs.SetCacheResponse, error) {
-	if ut.IsCacheNameValid(cacheName) {
+func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
+	if utility.IsCacheNameValid(cacheName) {
 		byteKey, errAsBytesKey := asBytes(key, "Unsupported type for key: ")
 		if errAsBytesKey != nil {
 			return nil, errAsBytesKey
@@ -68,7 +68,7 @@ func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interf
 		if errSet != nil {
 			return nil, errSet
 		}
-		newResp, er := rs.NewSetCacheResponse(resp)
+		newResp, er := responses.NewSetCacheResponse(resp)
 		if er != nil {
 			return nil, er
 		}
@@ -77,8 +77,8 @@ func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interf
 	return nil, fmt.Errorf("cache name cannot be empty")
 }
 
-func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*rs.GetCacheResponse, error) {
-	if ut.IsCacheNameValid(cacheName) {
+func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
+	if utility.IsCacheNameValid(cacheName) {
 		byteKey, errAsBytes := asBytes(key, "Unsupported type for key: ")
 		if errAsBytes != nil {
 			return nil, errAsBytes
@@ -90,7 +90,7 @@ func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*rs.GetCach
 		if err != nil {
 			return nil, err
 		}
-		newResp, er := rs.NewGetCacheResponse(resp)
+		newResp, er := responses.NewGetCacheResponse(resp)
 		if er != nil {
 			return nil, er
 		}

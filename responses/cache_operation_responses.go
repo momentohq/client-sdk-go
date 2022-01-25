@@ -2,12 +2,12 @@ package responses
 
 import (
 	pb "github.com/momentohq/client-sdk-go/protos"
-	ut "github.com/momentohq/client-sdk-go/utility"
+	utility "github.com/momentohq/client-sdk-go/utility"
 )
 
 type ListCachesResponse struct {
-	nextToken	string
-	caches 		[]cacheInfo
+	nextToken string
+	caches    []cacheInfo
 }
 
 func NewListCacheResponse(lcr *pb.ListCachesResponse) *ListCachesResponse {
@@ -30,23 +30,22 @@ func (lcr *ListCachesResponse) Name() []string {
 	return caches
 }
 
-
 type cacheInfo struct {
-	Name	string
+	Name string
 }
 
-func NewCacheInfo(ci *pb.Cache) cacheInfo{
+func NewCacheInfo(ci *pb.Cache) cacheInfo {
 	return cacheInfo{Name: ci.CacheName}
 }
 
 const (
-	HIT	 string = "HIT"
+	HIT  string = "HIT"
 	MISS string = "MISS"
 )
 
 type GetCacheResponse struct {
-	value 	[]byte
-	result	string
+	value  []byte
+	result string
 }
 
 func NewGetCacheResponse(gcr *pb.GetResponse) (*GetCacheResponse, error) {
@@ -56,7 +55,7 @@ func NewGetCacheResponse(gcr *pb.GetResponse) (*GetCacheResponse, error) {
 	} else if gcr.Result == pb.ECacheResult_Miss {
 		result = MISS
 	} else {
-		return nil, ut.ConvertEcacheResult(gcr.Result, gcr.Message, "GET")
+		return nil, utility.ConvertEcacheResult(gcr.Result, gcr.Message, "GET")
 	}
 	return &GetCacheResponse{value: gcr.CacheBody, result: result}, nil
 }
@@ -80,12 +79,12 @@ func (gcr *GetCacheResponse) Result() string {
 }
 
 type SetCacheResponse struct {
-	result 	string
+	result string
 }
 
-func NewSetCacheResponse (scr *pb.SetResponse) (*SetCacheResponse, error) {
+func NewSetCacheResponse(scr *pb.SetResponse) (*SetCacheResponse, error) {
 	if scr.Result != pb.ECacheResult_Ok {
-		return nil, ut.ConvertEcacheResult(scr.Result, scr.Message, "SET")
+		return nil, utility.ConvertEcacheResult(scr.Result, scr.Message, "SET")
 	}
 	return &SetCacheResponse{result: scr.Result.String()}, nil
 }
