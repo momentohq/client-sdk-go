@@ -83,8 +83,5 @@ type SetCacheResponse struct {
 }
 
 func NewSetCacheResponse(scr *pb.SetResponse) (*SetCacheResponse, error) {
-	if scr.Result != pb.ECacheResult_Ok {
-		return nil, utility.ConvertEcacheResult(scr.Result, scr.Message, "SET")
-	}
 	return &SetCacheResponse{result: scr.Result.String()}, nil
 }
