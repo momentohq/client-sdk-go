@@ -36,7 +36,7 @@ func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint3
 	return &ScsDataClient{GrpcManager: cm, Client: client, DefaultTtlSeconds: defaultTtlSeconds}, nil
 }
 
-func (scc *ScsDataClient) close() error {
+func (scc *ScsDataClient) Close() error {
 	return scc.GrpcManager.Close()
 }
 
@@ -74,7 +74,6 @@ func (scc *ScsDataClient) ScsSet(cacheName string, key interface{}, value interf
 		}
 		return newResp, nil
 	}
-	defer scc.close()
 	return nil, fmt.Errorf("cache name cannot be empty")
 }
 
@@ -97,7 +96,6 @@ func (scc *ScsDataClient) ScsGet(cacheName string, key interface{}) (*rs.GetCach
 		}
 		return newResp, nil
 	}
-	defer scc.close()
 	return nil, fmt.Errorf("cache name cannot be empty")
 }
 

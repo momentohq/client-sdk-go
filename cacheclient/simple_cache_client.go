@@ -9,8 +9,8 @@ import (
 type simpleCacheClient struct {
 	authToken 			string
 	defaultTtlSeconds 	uint32
-	controlEndPoint 	string
-	cacheEndPoint 		string
+	controlClient       *cc.ScsControlClient
+	dataClient			*cc.ScsDataClient
 }
 
 func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCacheClient, error) {
@@ -18,50 +18,50 @@ func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCache
 	if err != nil {
 		return nil, err
 	}
-	return &simpleCacheClient{authToken: authToken, defaultTtlSeconds: defaultTtlSeconds, controlEndPoint: endPoints.ContorlEndPoint, cacheEndPoint: endPoints.CacheEndPoint}, nil
+	ctEndPoint := endPoints.ContorlEndPoint
+	cEndPoint := endPoints.CacheEndPoint
+	controlClient, ctErr := cc.NewScsControlClient(authToken, ctEndPoint)
+	if ctErr != nil {
+		return nil, ctErr
+	}
+	dataClient, cErr := cc.NewScsDataClient(authToken, cEndPoint, defaultTtlSeconds)
+	if cErr != nil {
+		return nil, cErr
+	}
+	return &simpleCacheClient{authToken: authToken, defaultTtlSeconds: defaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
 } 
 
 func (scc *simpleCacheClient) CreateCache (cacheName string) error {
-	endpoint := scc.controlEndPoint
-	client, err := cc.NewScsControlClient(scc.authToken, endpoint)
-	if err != nil {
-		return err
-	}
-	return client.ScsCreateCache(cacheName)
+	return scc.controlClient.ScsCreateCache(cacheName)
 }
 
 func (scc *simpleCacheClient) DeleteCache(cacheName string) error {
-	endpoint := scc.controlEndPoint
-	client, err := cc.NewScsControlClient(scc.authToken, endpoint)
-	if err != nil {
-		return err
-	}
-	return client.ScsDeleteCache(cacheName)
+	return scc.controlClient.ScsDeleteCache(cacheName)
 }
 
 func (scc *simpleCacheClient) ListCaches (nextToken ...string) (*rs.ListCachesResponse, error) {
-	endpoint := scc.controlEndPoint
-	client, err := cc.NewScsControlClient(scc.authToken, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	return client.ScsListCaches(nextToken...)
+	return scc.controlClient.ScsListCaches(nextToken...)
 }
 
 func (scc *simpleCacheClient) Set (cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*rs.SetCacheResponse, error) {
-	endpoint := scc.cacheEndPoint
-	client, err := cc.NewScsDataClient(scc.authToken, endpoint, scc.defaultTtlSeconds)
-	if err != nil {
-		return nil, err
-	}
-	return client.ScsSet(cacheName, key, value, ttlSeconds...)
+	return scc.dataClient.ScsSet(cacheName, key, value, ttlSeconds...)
 }
 
 func (scc *simpleCacheClient) Get (cacheName string, key interface{}) (*rs.GetCacheResponse, error) {
-	endpoint := scc.cacheEndPoint
-	client, err := cc.NewScsDataClient(scc.authToken, endpoint, scc.defaultTtlSeconds)
-	if err != nil {
-		return nil, err
+	return scc.dataClient.ScsGet(cacheName, key)
+}
+
+func (scc *simpleCacheClient) Close() (error, error) {
+	ccErr := scc.controlClient.Close()
+	dErr := scc.dataClient.Close()
+	if ccErr != nil || dErr != nil {
+		if ccErr != nil {
+			return ccErr, nil
+		} else if dErr != nil {
+			return nil, dErr
+		} else {
+			return ccErr, dErr
+		}
 	}
-	return client.ScsGet(cacheName, key)
+	return nil, nil
 }

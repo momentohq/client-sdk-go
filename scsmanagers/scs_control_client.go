@@ -28,7 +28,7 @@ func NewScsControlClient(authToken string, endPoint string) (*ScsControlClient, 
 	return &ScsControlClient{GrpcManager: cm, Client: client}, nil
 }
 
-func (scc *ScsControlClient) close() error {
+func (scc *ScsControlClient) Close() error {
 	return scc.GrpcManager.Close()
 }
 
@@ -42,7 +42,6 @@ func (cc *ScsControlClient) ScsCreateCache(cacheName string) error {
 		}
 		return nil
 	}
-	defer cc.close()
 	return fmt.Errorf("cache name cannot be empty")
 }
 
@@ -56,7 +55,6 @@ func (cc *ScsControlClient) ScsDeleteCache(cacheName string) error {
 		}
 		return nil
 	}
-	defer cc.close()
 	return fmt.Errorf("cache name cannot be empty")
 }
 
@@ -72,6 +70,5 @@ func (cc *ScsControlClient) ScsListCaches(nextToken ...string) (*rs.ListCachesRe
 	if err != nil {
 		return nil, err
 	}
-	defer cc.close()
 	return rs.NewListCacheResponse(resp), nil
 }
