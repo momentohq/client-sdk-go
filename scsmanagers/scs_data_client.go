@@ -9,6 +9,7 @@ import (
 	grpcmanagers "github.com/momentohq/client-sdk-go/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/protos"
 	responses "github.com/momentohq/client-sdk-go/responses"
+	scserrors "github.com/momentohq/client-sdk-go/scserrors"
 	utility "github.com/momentohq/client-sdk-go/utility"
 	"google.golang.org/grpc/metadata"
 )
@@ -70,13 +71,10 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 		if errSet != nil {
 			return nil, errSet
 		}
-		newResp, er := responses.NewSetCacheResponse(resp)
-		if er != nil {
-			return nil, er
-		}
+		newResp := responses.NewSetCacheResponse(resp)
 		return newResp, nil
 	}
-	return nil, fmt.Errorf("cache name cannot be empty")
+	return nil, scserrors.InvalidInputError("cache name cannot be empty")
 }
 
 func (scc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
@@ -99,7 +97,7 @@ func (scc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.Get
 		}
 		return newResp, nil
 	}
-	return nil, fmt.Errorf("cache name cannot be empty")
+	return nil, scserrors.InvalidInputError("cache name cannot be empty")
 }
 
 func asBytes(data interface{}, message string) ([]byte, error) {
@@ -109,13 +107,13 @@ func asBytes(data interface{}, message string) ([]byte, error) {
 	case byte:
 		return reflect.ValueOf(data).Bytes(), nil
 	default:
-		return nil, fmt.Errorf("%s %s", message, reflect.TypeOf(data).String())
+		return nil, scserrors.InvalidInputError(fmt.Sprintf("%s %s", message, reflect.TypeOf(data).String()))
 	}
 }
 
 func isTtlValid(ttlSeconds interface{}) error {
 	if (reflect.TypeOf(ttlSeconds).String() != "uint32") || (reflect.ValueOf(ttlSeconds).Interface().(uint32) < uint32(0)) {
-		return fmt.Errorf("ttl seconds must be a non-negative integer")
+		return scserrors.InvalidInputError("ttl seconds must be a non-negative integer")
 	}
 	return nil
 }

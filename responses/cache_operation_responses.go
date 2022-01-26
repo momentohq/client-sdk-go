@@ -82,6 +82,6 @@ type SetCacheResponse struct {
 	result string
 }
 
-func NewSetCacheResponse(scr *pb.SetResponse) (*SetCacheResponse, error) {
-	return &SetCacheResponse{result: scr.Result.String()}, nil
+func NewSetCacheResponse(scr *pb.SetResponse) *SetCacheResponse {
+	return &SetCacheResponse{result: scr.Result.String()}
 }
