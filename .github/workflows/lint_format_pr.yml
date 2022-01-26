@@ -7,7 +7,7 @@ permissions:
   pull-requests: read
 jobs:
   golangci:
-    name: lint
+    name: lint/format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,5 +16,5 @@ jobs:
         with:
           version: latest
           only-new-issues: true
-      - name: Format
+      - name: format
         run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
