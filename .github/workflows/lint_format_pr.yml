@@ -1,4 +1,4 @@
-name: "Lint PR"
+name: "Lint/Format PR"
 on:
   pull_request:
     branches: [main]
@@ -16,3 +16,5 @@ jobs:
         with:
           version: latest
           only-new-issues: true
+      - name: Format
+        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
