@@ -2,16 +2,16 @@ package responses
 
 import (
 	pb "github.com/momentohq/client-sdk-go/protos"
-	utility "github.com/momentohq/client-sdk-go/utility"
+	"github.com/momentohq/client-sdk-go/utility"
 )
 
 type ListCachesResponse struct {
 	nextToken string
-	caches    []cacheInfo
+	caches    []CacheInfo
 }
 
 func NewListCacheResponse(lcr *pb.ListCachesResponse) *ListCachesResponse {
-	caches := []cacheInfo{}
+	var caches = []CacheInfo{}
 	for _, cache := range lcr.Cache {
 		caches = append(caches, NewCacheInfo(cache))
 	}
@@ -22,20 +22,20 @@ func (lcr *ListCachesResponse) NextToken() string {
 	return lcr.nextToken
 }
 
-func (lcr *ListCachesResponse) Name() []string {
-	caches := []string{}
-	for _, cache := range lcr.caches {
-		caches = append(caches, cache.Name)
-	}
-	return caches
+func (lcr *ListCachesResponse) Caches() []CacheInfo {
+	return lcr.caches
 }
 
-type cacheInfo struct {
-	Name string
+type CacheInfo struct {
+	name string
 }
 
-func NewCacheInfo(ci *pb.Cache) cacheInfo {
-	return cacheInfo{Name: ci.CacheName}
+func (ci CacheInfo) Name() string {
+	return ci.name
+}
+
+func NewCacheInfo(ci *pb.Cache) CacheInfo {
+	return CacheInfo{name: ci.CacheName}
 }
 
 const (

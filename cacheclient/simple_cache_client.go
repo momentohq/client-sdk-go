@@ -1,9 +1,9 @@
 package cacheclient
 
 import (
-	resolver "github.com/momentohq/client-sdk-go/resolver"
-	responses "github.com/momentohq/client-sdk-go/responses"
-	scsmanagers "github.com/momentohq/client-sdk-go/scsmanagers"
+	"github.com/momentohq/client-sdk-go/resolver"
+	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/scsmanagers"
 )
 
 type simpleCacheClient struct {
@@ -51,17 +51,15 @@ func (scc *simpleCacheClient) Get(cacheName string, key interface{}) (*responses
 	return scc.dataClient.Get(cacheName, key)
 }
 
-func (scc *simpleCacheClient) Close() (error, error) {
+func (scc *simpleCacheClient) Close() error {
 	ccErr := scc.controlClient.Close()
 	dErr := scc.dataClient.Close()
 	if ccErr != nil || dErr != nil {
 		if ccErr != nil {
-			return ccErr, nil
+			return ccErr
 		} else if dErr != nil {
-			return nil, dErr
-		} else {
-			return ccErr, dErr
+			return dErr
 		}
 	}
-	return nil, nil
+	return nil
 }

@@ -1,4 +1,4 @@
-package scsmanager
+package scsmanagers
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 	"reflect"
 	"time"
 
-	grpcmanagers "github.com/momentohq/client-sdk-go/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/protos"
-	responses "github.com/momentohq/client-sdk-go/responses"
-	scserrors "github.com/momentohq/client-sdk-go/scserrors"
-	utility "github.com/momentohq/client-sdk-go/utility"
+	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/scserrors"
+	"github.com/momentohq/client-sdk-go/utility"
 	"google.golang.org/grpc/metadata"
 )
 
-const CACHE_PORT = ":443"
-const CACHE_CTX_TIMEOUT = 10 * time.Second
+const CachePort = ":443"
+const CacheCtxTimeout = 10 * time.Second
 
 type ScsDataClient struct {
 	grpcManager       grpcmanagers.DataGrpcManager
@@ -24,7 +24,7 @@ type ScsDataClient struct {
 }
 
 func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint32) (*ScsDataClient, error) {
-	newEndPoint := fmt.Sprint(endPoint, CACHE_PORT)
+	newEndPoint := fmt.Sprint(endPoint, CachePort)
 	cm, err := grpcmanagers.NewDataGrpcManager(authToken, newEndPoint)
 	if err != nil {
 		return nil, err
@@ -38,11 +38,11 @@ func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint3
 	return &ScsDataClient{grpcManager: cm, client: client, defaultTtlSeconds: defaultTtlSeconds}, nil
 }
 
-func (scc *ScsDataClient) Close() error {
-	return scc.grpcManager.Close()
+func (dc *ScsDataClient) Close() error {
+	return dc.grpcManager.Close()
 }
 
-func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
+func (dc *ScsDataClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
 	if utility.IsCacheNameValid(cacheName) {
 		byteKey, errAsBytesKey := asBytes(key, "Unsupported type for key: ")
 		if errAsBytesKey != nil {
@@ -54,7 +54,7 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 		}
 		var itemTtlMils uint32
 		if len(ttlSeconds) == 0 {
-			itemTtlMils = scc.defaultTtlSeconds * 1000
+			itemTtlMils = dc.defaultTtlSeconds * 1000
 		} else {
 			err := isTtlValid(ttlSeconds[0])
 			if err != nil {
@@ -64,10 +64,10 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 			}
 		}
 		request := pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils}
-		ctx, cancel := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 		defer cancel()
 		md := createNewMetadata(cacheName)
-		resp, errSet := scc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
+		resp, errSet := dc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
 		if errSet != nil {
 			return nil, errSet
 		}
@@ -77,17 +77,17 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 	return nil, scserrors.InvalidInputError("cache name cannot be empty")
 }
 
-func (scc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
+func (dc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
 	if utility.IsCacheNameValid(cacheName) {
 		byteKey, errAsBytes := asBytes(key, "Unsupported type for key: ")
 		if errAsBytes != nil {
 			return nil, errAsBytes
 		}
 		request := pb.GetRequest{CacheKey: byteKey}
-		ctx, cancel := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 		defer cancel()
 		md := createNewMetadata(cacheName)
-		resp, err := scc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
+		resp, err := dc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
 		if err != nil {
 			return nil, err
 		}

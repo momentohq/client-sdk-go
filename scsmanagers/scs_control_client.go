@@ -1,26 +1,26 @@
-package scsmanager
+package scsmanagers
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	grpcmanagers "github.com/momentohq/client-sdk-go/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/protos"
-	responses "github.com/momentohq/client-sdk-go/responses"
-	utility "github.com/momentohq/client-sdk-go/utility"
+	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utility"
 )
 
-const CONTROL_PORT = ":443"
-const CONTROL_CTX_TIMEOUT = 10 * time.Second
+const ControlPort = ":443"
+const ControlCtxTimeout = 10 * time.Second
 
 type ScsControlClient struct {
-	grpcManager grpcmanagers.ControlGrpcManager
+	grpcManager *grpcmanagers.ControlGrpcManager
 	client      pb.ScsControlClient
 }
 
 func NewScsControlClient(authToken string, endPoint string) (*ScsControlClient, error) {
-	newEndPoint := fmt.Sprint(endPoint, CONTROL_PORT)
+	newEndPoint := fmt.Sprint(endPoint, ControlPort)
 	cm, err := grpcmanagers.NewControlGrpcManager(authToken, newEndPoint)
 	if err != nil {
 		return nil, err
@@ -29,14 +29,14 @@ func NewScsControlClient(authToken string, endPoint string) (*ScsControlClient, 
 	return &ScsControlClient{grpcManager: cm, client: client}, nil
 }
 
-func (scc *ScsControlClient) Close() error {
-	return scc.grpcManager.Close()
+func (cc *ScsControlClient) Close() error {
+	return cc.grpcManager.Close()
 }
 
 func (cc *ScsControlClient) CreateCache(cacheName string) error {
 	if utility.IsCacheNameValid(cacheName) {
 		request := pb.CreateCacheRequest{CacheName: cacheName}
-		ctx, cancel := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 		defer cancel()
 		_, err := cc.client.CreateCache(ctx, &request)
 		if err != nil {
@@ -50,7 +50,7 @@ func (cc *ScsControlClient) CreateCache(cacheName string) error {
 func (cc *ScsControlClient) DeleteCache(cacheName string) error {
 	if utility.IsCacheNameValid(cacheName) {
 		request := pb.DeleteCacheRequest{CacheName: cacheName}
-		ctx, cancel := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 		defer cancel()
 		_, err := cc.client.DeleteCache(ctx, &request)
 		if err != nil {
@@ -67,7 +67,7 @@ func (cc *ScsControlClient) ListCaches(nextToken ...string) (*responses.ListCach
 		defaultToken = nextToken[0]
 	}
 	request := pb.ListCachesRequest{NextToken: defaultToken}
-	ctx, cancel := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
 	resp, err := cc.client.ListCaches(ctx, &request)
 	if err != nil {
