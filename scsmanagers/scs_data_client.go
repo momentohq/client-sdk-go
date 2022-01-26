@@ -63,7 +63,8 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 			}
 		}
 		request := pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils}
-		ctx, _ := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
+		defer cancel()
 		md := createNewMetadata(cacheName)
 		resp, errSet := scc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
 		if errSet != nil {
@@ -85,7 +86,8 @@ func (scc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.Get
 			return nil, errAsBytes
 		}
 		request := pb.GetRequest{CacheKey: byteKey}
-		ctx, _ := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
+		defer cancel()
 		md := createNewMetadata(cacheName)
 		resp, err := scc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
 		if err != nil {

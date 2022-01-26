@@ -36,7 +36,8 @@ func (scc *ScsControlClient) Close() error {
 func (cc *ScsControlClient) CreateCache(cacheName string) error {
 	if utility.IsCacheNameValid(cacheName) {
 		request := pb.CreateCacheRequest{CacheName: cacheName}
-		ctx, _ := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+		defer cancel()
 		_, err := cc.client.CreateCache(ctx, &request)
 		if err != nil {
 			return err
@@ -49,7 +50,8 @@ func (cc *ScsControlClient) CreateCache(cacheName string) error {
 func (cc *ScsControlClient) DeleteCache(cacheName string) error {
 	if utility.IsCacheNameValid(cacheName) {
 		request := pb.DeleteCacheRequest{CacheName: cacheName}
-		ctx, _ := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+		defer cancel()
 		_, err := cc.client.DeleteCache(ctx, &request)
 		if err != nil {
 			return err
@@ -65,7 +67,8 @@ func (cc *ScsControlClient) ListCaches(nextToken ...string) (*responses.ListCach
 		defaultToken = nextToken[0]
 	}
 	request := pb.ListCachesRequest{NextToken: defaultToken}
-	ctx, _ := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+	ctx, cancel := context.WithTimeout(context.Background(), CONTROL_CTX_TIMEOUT)
+	defer cancel()
 	resp, err := cc.client.ListCaches(ctx, &request)
 	if err != nil {
 		return nil, err
