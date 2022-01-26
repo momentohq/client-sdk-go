@@ -17,9 +17,9 @@ const CACHE_PORT = ":443"
 const CACHE_CTX_TIMEOUT = 10 * time.Second
 
 type ScsDataClient struct {
-	GrpcManager       grpcmanagers.DataGrpcManager
-	Client            pb.ScsClient
-	DefaultTtlSeconds uint32
+	grpcManager       grpcmanagers.DataGrpcManager
+	client            pb.ScsClient
+	defaultTtlSeconds uint32
 }
 
 func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint32) (*ScsDataClient, error) {
@@ -34,11 +34,11 @@ func NewScsDataClient(authToken string, endPoint string, defaultTtlSeconds uint3
 		cm.Conn.Close()
 		return nil, er
 	}
-	return &ScsDataClient{GrpcManager: cm, Client: client, DefaultTtlSeconds: defaultTtlSeconds}, nil
+	return &ScsDataClient{grpcManager: cm, client: client, defaultTtlSeconds: defaultTtlSeconds}, nil
 }
 
 func (scc *ScsDataClient) Close() error {
-	return scc.GrpcManager.Close()
+	return scc.grpcManager.Close()
 }
 
 func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
@@ -53,7 +53,7 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 		}
 		var itemTtlMils uint32
 		if len(ttlSeconds) == 0 {
-			itemTtlMils = scc.DefaultTtlSeconds * 1000
+			itemTtlMils = scc.defaultTtlSeconds * 1000
 		} else {
 			err := isTtlValid(ttlSeconds[0])
 			if err != nil {
@@ -64,8 +64,8 @@ func (scc *ScsDataClient) Set(cacheName string, key interface{}, value interface
 		}
 		request := pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils}
 		ctx, _ := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
-		md := metadata.Pairs("cache", cacheName)
-		resp, errSet := scc.Client.Set(metadata.NewOutgoingContext(ctx, md), &request)
+		md := createNewMetadata(cacheName)
+		resp, errSet := scc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
 		if errSet != nil {
 			return nil, errSet
 		}
@@ -86,8 +86,8 @@ func (scc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.Get
 		}
 		request := pb.GetRequest{CacheKey: byteKey}
 		ctx, _ := context.WithTimeout(context.Background(), CACHE_CTX_TIMEOUT)
-		md := metadata.Pairs("cache", cacheName)
-		resp, err := scc.Client.Get(metadata.NewOutgoingContext(ctx, md), &request)
+		md := createNewMetadata(cacheName)
+		resp, err := scc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
 		if err != nil {
 			return nil, err
 		}
@@ -116,4 +116,8 @@ func isTtlValid(ttlSeconds interface{}) error {
 		return fmt.Errorf("ttl seconds must be a non-negative integer")
 	}
 	return nil
+}
+
+func createNewMetadata(cacheName string) metadata.MD {
+	return metadata.Pairs("cache", cacheName)
 }
