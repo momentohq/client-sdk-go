@@ -54,38 +54,38 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 
 	client, err := setUp(&testing.T{})
 	if err != nil {
-		log.Fatal("setUp error: " + err.Error())
+		t.Error("Set up error: " + err.Error())
 	}
 
 	createCacheErr := client.CreateCache(cacheName)
 	if createCacheErr != nil {
-		log.Fatal(createCacheErr.Error())
+		t.Error(createCacheErr.Error())
 	}
 
 	_, setErr := client.Set(cacheName, key, value, DefaultTtlSeconds)
 	if setErr != nil {
-		log.Fatal(setErr.Error())
+		t.Error(setErr.Error())
 	}
 
 	getResp, getErr := client.Get(cacheName, key)
 	if getErr != nil {
-		log.Fatal(getErr.Error())
+		t.Error(getErr.Error())
 	}
 	if getResp.Result() != responses.HIT {
-		log.Fatal("Cache miss")
+		t.Error("Cache miss")
 	}
 	if !bytes.Equal(getResp.ByteValue(), value) {
-		log.Fatal("Set byte value and returned byte value are not equal")
+		t.Error("Set byte value and returned byte value are not equal")
 	}
 
 	existingCacheResp, _ := client.Get(TestCacheName, key)
 	if existingCacheResp.Result() != responses.MISS {
-		log.Fatalf("key: %s shouldn't exist in %s since it's never set.", string(key), TestCacheName)
+		t.Errorf("key: %s shouldn't exist in %s since it's never set.", string(key), TestCacheName)
 	}
 
 	deleteCacheErr := client.DeleteCache(cacheName)
 	if deleteCacheErr != nil {
-		log.Fatal(deleteCacheErr.Error())
+		t.Error(deleteCacheErr.Error())
 	}
 	cleanUp(client)
 }

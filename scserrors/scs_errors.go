@@ -30,13 +30,13 @@ func GrpcErrorConverter(grpcErr error) error {
 	if grpcStatus, ok := status.FromError(grpcErr); ok {
 		switch grpcStatus.Code().String() {
 		case AlreadyExists:
-			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
+			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
 		case InvalidArgument:
-			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
+			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
 		case NotFound:
-			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
+			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
 		case PermissionDenied:
-			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
+			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
 		}
 	} else {
 		return InternalServerError("CacheService failed with an internal error")
