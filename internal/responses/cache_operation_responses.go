@@ -1,8 +1,8 @@
 package responses
 
 import (
-	pb "github.com/momentohq/client-sdk-go/protos"
-	"github.com/momentohq/client-sdk-go/utility"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
 type ListCachesResponse struct {

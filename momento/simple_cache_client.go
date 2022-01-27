@@ -1,9 +1,9 @@
-package cacheclient
+package momento
 
 import (
-	"github.com/momentohq/client-sdk-go/resolver"
-	"github.com/momentohq/client-sdk-go/responses"
-	"github.com/momentohq/client-sdk-go/scsmanagers"
+	"github.com/momentohq/client-sdk-go/internal/resolver"
+	"github.com/momentohq/client-sdk-go/internal/responses"
+	"github.com/momentohq/client-sdk-go/internal/scsmanagers"
 )
 
 type ScsClient struct {

@@ -36,4 +36,4 @@ jobs:
       - name: Run test
         run: |
           go vet ./...
-          go test ./tests
+          go test ./internal/tests

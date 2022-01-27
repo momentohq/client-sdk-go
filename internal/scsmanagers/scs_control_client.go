@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/grpcmanagers"
-	pb "github.com/momentohq/client-sdk-go/protos"
-	"github.com/momentohq/client-sdk-go/responses"
-	"github.com/momentohq/client-sdk-go/scserrors"
-	"github.com/momentohq/client-sdk-go/utility"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/internal/responses"
+	"github.com/momentohq/client-sdk-go/internal/scserrors"
+	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
 const ControlPort = ":443"
