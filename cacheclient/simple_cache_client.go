@@ -6,14 +6,14 @@ import (
 	"github.com/momentohq/client-sdk-go/scsmanagers"
 )
 
-type simpleCacheClient struct {
+type ScsClient struct {
 	authToken         string
 	defaultTtlSeconds uint32
 	controlClient     *scsmanagers.ScsControlClient
 	dataClient        *scsmanagers.ScsDataClient
 }
 
-func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCacheClient, error) {
+func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*ScsClient, error) {
 	endPoints, err := resolver.Resolve(authToken)
 	if err != nil {
 		return nil, err
@@ -28,30 +28,30 @@ func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*simpleCache
 	if cErr != nil {
 		return nil, cErr
 	}
-	return &simpleCacheClient{authToken: authToken, defaultTtlSeconds: defaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
+	return &ScsClient{authToken: authToken, defaultTtlSeconds: defaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
 }
 
-func (scc *simpleCacheClient) CreateCache(cacheName string) error {
+func (scc *ScsClient) CreateCache(cacheName string) error {
 	return scc.controlClient.CreateCache(cacheName)
 }
 
-func (scc *simpleCacheClient) DeleteCache(cacheName string) error {
+func (scc *ScsClient) DeleteCache(cacheName string) error {
 	return scc.controlClient.DeleteCache(cacheName)
 }
 
-func (scc *simpleCacheClient) ListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
+func (scc *ScsClient) ListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
 	return scc.controlClient.ListCaches(nextToken...)
 }
 
-func (scc *simpleCacheClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
+func (scc *ScsClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
 	return scc.dataClient.Set(cacheName, key, value, ttlSeconds...)
 }
 
-func (scc *simpleCacheClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
+func (scc *ScsClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
 	return scc.dataClient.Get(cacheName, key)
 }
 
-func (scc *simpleCacheClient) Close() error {
+func (scc *ScsClient) Close() error {
 	ccErr := scc.controlClient.Close()
 	dErr := scc.dataClient.Close()
 	if ccErr != nil || dErr != nil {

@@ -15,18 +15,27 @@ func InternalServerError(errMessage string) error {
 	return errors.New("InternalServerError: " + errMessage)
 }
 
+const (
+	AlreadyExists    = "AlreadyExists"
+	InvalidArgument  = "InvalidArgument"
+	NotFound         = "NotFound"
+	PermissionDenied = "PermissionDenied"
+)
+
 func GrpcErrorConverter(grpcErr error) error {
 	if grpcStatus, ok := status.FromError(grpcErr); ok {
 		switch grpcStatus.Code().String() {
-		case "AlreadyExists":
+		case AlreadyExists:
 			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
-		case "InvalidArgument":
+		case InvalidArgument:
 			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
-		case "NotFound":
+		case NotFound:
 			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
-		case "PermissionDenied":
+		case PermissionDenied:
 			return fmt.Errorf(fmt.Sprintf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message()))
 		}
+	} else {
+		return InternalServerError("CacheService failed with an internal error")
 	}
-	return InternalServerError("CacheService failed with an internal error'")
+	return nil
 }

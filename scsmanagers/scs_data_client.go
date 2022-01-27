@@ -104,7 +104,7 @@ func asBytes(data interface{}, message string) ([]byte, error) {
 	switch data.(type) {
 	case string:
 		return []byte(reflect.ValueOf(data).String()), nil
-	case byte:
+	case []byte:
 		return reflect.ValueOf(data).Bytes(), nil
 	default:
 		return nil, scserrors.InvalidInputError(fmt.Sprintf("%s %s", message, reflect.TypeOf(data).String()))
