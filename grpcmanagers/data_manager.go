@@ -14,12 +14,15 @@ type DataGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewDataGrpcManager(authToken string, endPoint string) (DataGrpcManager, error) {
+func NewDataGrpcManager(authToken string, endPoint string) (*DataGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 	conn, err := grpc.Dial(endPoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)))
-	return DataGrpcManager{Conn: conn}, scserrors.GrpcErrorConverter(err)
+	if err != nil {
+		return nil, scserrors.GrpcErrorConverter(err)
+	}
+	return &DataGrpcManager{Conn: conn}, nil
 }
 
 func (cm *DataGrpcManager) Close() error {

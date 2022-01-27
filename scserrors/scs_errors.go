@@ -15,6 +15,10 @@ func InternalServerError(errMessage string) error {
 	return errors.New("InternalServerError: " + errMessage)
 }
 
+func ClientSdkError(errMessage string) error {
+	return errors.New("ClientSdkError: " + errMessage)
+}
+
 const (
 	AlreadyExists    = "AlreadyExists"
 	InvalidArgument  = "InvalidArgument"
@@ -37,5 +41,5 @@ func GrpcErrorConverter(grpcErr error) error {
 	} else {
 		return InternalServerError("CacheService failed with an internal error")
 	}
-	return nil
+	return ClientSdkError(fmt.Sprintf("Operation failed with error: %s", grpcErr.Error()))
 }

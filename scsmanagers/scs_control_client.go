@@ -8,6 +8,7 @@ import (
 	"github.com/momentohq/client-sdk-go/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/protos"
 	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/scserrors"
 	"github.com/momentohq/client-sdk-go/utility"
 )
 
@@ -40,7 +41,7 @@ func (cc *ScsControlClient) CreateCache(cacheName string) error {
 		defer cancel()
 		_, err := cc.client.CreateCache(ctx, &request)
 		if err != nil {
-			return err
+			return scserrors.GrpcErrorConverter(err)
 		}
 		return nil
 	}
@@ -54,7 +55,7 @@ func (cc *ScsControlClient) DeleteCache(cacheName string) error {
 		defer cancel()
 		_, err := cc.client.DeleteCache(ctx, &request)
 		if err != nil {
-			return err
+			return scserrors.GrpcErrorConverter(err)
 		}
 		return nil
 	}
@@ -71,7 +72,7 @@ func (cc *ScsControlClient) ListCaches(nextToken ...string) (*responses.ListCach
 	defer cancel()
 	resp, err := cc.client.ListCaches(ctx, &request)
 	if err != nil {
-		return nil, err
+		return nil, scserrors.GrpcErrorConverter(err)
 	}
 	return responses.NewListCacheResponse(resp), nil
 }

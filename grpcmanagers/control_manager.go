@@ -19,7 +19,10 @@ func NewControlGrpcManager(authToken string, endPoint string) (*ControlGrpcManag
 		InsecureSkipVerify: false,
 	}
 	conn, err := grpc.Dial(endPoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)))
-	return &ControlGrpcManager{Conn: conn}, scserrors.GrpcErrorConverter(err)
+	if err != nil {
+		return nil, scserrors.GrpcErrorConverter(err)
+	}
+	return &ControlGrpcManager{Conn: conn}, nil
 }
 
 func (cm *ControlGrpcManager) Close() error {

@@ -4,23 +4,35 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/cacheclient"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
+var TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
+var TestCacheName = os.Getenv("TEST_CACHE_NAME")
+
+const BadToken = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJpbnRlZ3JhdGlvbiIsImNwIjoiY29udHJvbC5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSIsImMiOiJjYWNoZS5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSJ9.gdghdjjfjyehhdkkkskskmmls76573jnajhjjjhjdhnndy"
 const DefaultTtlSeconds = 60
 
 func setUp(t *testing.T) (*cacheclient.ScsClient, error) {
-	authToken := os.Getenv("TEST_AUTH_TOKEN")
-	if authToken == "" {
+	if TestAuthToken == "" {
 		log.Fatal("Integration tests require TEST_AUTH_TOKEN env var.")
+	} else if TestCacheName == "" {
+		log.Fatal("Integration tests require TEST_CACHE_NAME env var.")
 	} else {
-		client, err := cacheclient.SimpleCacheClient(authToken, DefaultTtlSeconds)
+		client, err := cacheclient.SimpleCacheClient(TestAuthToken, DefaultTtlSeconds)
 		if err != nil {
 			return nil, err
 		} else {
+			// Check if TestCacheName exists
+			createErr := client.CreateCache(TestCacheName)
+			if !strings.Contains(createErr.Error(), "AlreadyExists") {
+				log.Fatal(createErr.Error())
+			}
 			return client, nil
 		}
 	}
@@ -34,29 +46,43 @@ func cleanUp(client *cacheclient.ScsClient) {
 	}
 }
 
+// Basic happy path test - create a cache, operate set/get, and delete the cache
 func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	cacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
+
 	client, err := setUp(&testing.T{})
 	if err != nil {
 		log.Fatal("setUp error: " + err.Error())
 	}
+
 	createCacheErr := client.CreateCache(cacheName)
 	if createCacheErr != nil {
 		log.Fatal(createCacheErr.Error())
 	}
+
 	_, setErr := client.Set(cacheName, key, value, DefaultTtlSeconds)
 	if setErr != nil {
 		log.Fatal(setErr.Error())
 	}
+
 	getResp, getErr := client.Get(cacheName, key)
 	if getErr != nil {
 		log.Fatal(getErr.Error())
 	}
+	if getResp.Result() != responses.HIT {
+		log.Fatal("Cache miss")
+	}
 	if !bytes.Equal(getResp.ByteValue(), value) {
 		log.Fatal("Set byte value and returned byte value are not equal")
 	}
+
+	existingCacheResp, _ := client.Get(TestCacheName, key)
+	if existingCacheResp.Result() != responses.MISS {
+		log.Fatalf("key: %s shouldn't exist in %s since it's never set.", string(key), TestCacheName)
+	}
+
 	deleteCacheErr := client.DeleteCache(cacheName)
 	if deleteCacheErr != nil {
 		log.Fatal(deleteCacheErr.Error())

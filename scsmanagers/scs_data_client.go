@@ -18,7 +18,7 @@ const CachePort = ":443"
 const CacheCtxTimeout = 10 * time.Second
 
 type ScsDataClient struct {
-	grpcManager       grpcmanagers.DataGrpcManager
+	grpcManager       *grpcmanagers.DataGrpcManager
 	client            pb.ScsClient
 	defaultTtlSeconds uint32
 }
@@ -69,7 +69,7 @@ func (dc *ScsDataClient) Set(cacheName string, key interface{}, value interface{
 		md := createNewMetadata(cacheName)
 		resp, errSet := dc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
 		if errSet != nil {
-			return nil, errSet
+			return nil, scserrors.GrpcErrorConverter(errSet)
 		}
 		newResp := responses.NewSetCacheResponse(resp)
 		return newResp, nil
@@ -87,9 +87,9 @@ func (dc *ScsDataClient) Get(cacheName string, key interface{}) (*responses.GetC
 		ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 		defer cancel()
 		md := createNewMetadata(cacheName)
-		resp, err := dc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
-		if err != nil {
-			return nil, err
+		resp, getErr := dc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
+		if getErr != nil {
+			return nil, scserrors.GrpcErrorConverter(getErr)
 		}
 		newResp, er := responses.NewGetCacheResponse(resp)
 		if er != nil {
