@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/momento/requests"
 	"github.com/momentohq/client-sdk-go/momento/responses"
+
+	"github.com/google/uuid"
 )
 
 var TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")

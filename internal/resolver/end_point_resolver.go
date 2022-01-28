@@ -3,8 +3,9 @@ package resolver
 import (
 	"reflect"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/momentohq/client-sdk-go/internal/requests"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 const (
