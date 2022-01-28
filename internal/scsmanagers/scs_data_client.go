@@ -72,7 +72,7 @@ func (dc *ScsDataClient) Set(csr requests.CacheSetRequest) (*responses.SetCacheR
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}
-	newResp := responses.NewSetCacheResponse(resp)
+	newResp := responses.NewSetCacheResponse(resp, byteValue)
 	return newResp, nil
 }
 

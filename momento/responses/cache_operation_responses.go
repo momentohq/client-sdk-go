@@ -85,9 +85,17 @@ func (gcr *GetCacheResponse) Result() string {
 }
 
 type SetCacheResponse struct {
-	result string
+	value []byte
 }
 
-func NewSetCacheResponse(sr *pb.SetResponse) *SetCacheResponse {
-	return &SetCacheResponse{result: sr.Result.String()}
+func NewSetCacheResponse(sr *pb.SetResponse, value []byte) *SetCacheResponse {
+	return &SetCacheResponse{value: value}
+}
+
+func (scr *SetCacheResponse) StringValue() string {
+	return string(scr.value)
+}
+
+func (scr *SetCacheResponse) ByteValue() []byte {
+	return scr.value
 }
