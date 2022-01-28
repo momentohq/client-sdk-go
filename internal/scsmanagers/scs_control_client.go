@@ -7,9 +7,11 @@ import (
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/responses"
+	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/internal/utility"
+	"github.com/momentohq/client-sdk-go/momento/requests"
+	"github.com/momentohq/client-sdk-go/momento/responses"
 )
 
 const ControlPort = ":443"
@@ -20,9 +22,13 @@ type ScsControlClient struct {
 	client      pb.ScsControlClient
 }
 
-func NewScsControlClient(authToken string, endPoint string) (*ScsControlClient, error) {
-	newEndPoint := fmt.Sprint(endPoint, ControlPort)
-	cm, err := grpcmanagers.NewControlGrpcManager(authToken, newEndPoint)
+func NewScsControlClient(ccr internalRequests.ControlClientRequest) (*ScsControlClient, error) {
+	newEndpoint := fmt.Sprint(ccr.Endpoint, ControlPort)
+	controlGrpcManagerRequest := internalRequests.ControlGrpcManagerRequest{
+		AuthToken: ccr.AuthToken,
+		Endpoint:  newEndpoint,
+	}
+	cm, err := grpcmanagers.NewControlGrpcManager(controlGrpcManagerRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -34,9 +40,9 @@ func (cc *ScsControlClient) Close() error {
 	return cc.grpcManager.Close()
 }
 
-func (cc *ScsControlClient) CreateCache(cacheName string) error {
-	if utility.IsCacheNameValid(cacheName) {
-		request := pb.CreateCacheRequest{CacheName: cacheName}
+func (cc *ScsControlClient) CreateCache(ccr requests.CreateCacheRequest) error {
+	if utility.IsCacheNameValid(ccr.CacheName) {
+		request := pb.CreateCacheRequest{CacheName: ccr.CacheName}
 		ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 		defer cancel()
 		_, err := cc.client.CreateCache(ctx, &request)
@@ -48,9 +54,9 @@ func (cc *ScsControlClient) CreateCache(cacheName string) error {
 	return fmt.Errorf("cache name cannot be empty")
 }
 
-func (cc *ScsControlClient) DeleteCache(cacheName string) error {
-	if utility.IsCacheNameValid(cacheName) {
-		request := pb.DeleteCacheRequest{CacheName: cacheName}
+func (cc *ScsControlClient) DeleteCache(dcr requests.DeleteCacheRequest) error {
+	if utility.IsCacheNameValid(dcr.CacheName) {
+		request := pb.DeleteCacheRequest{CacheName: dcr.CacheName}
 		ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 		defer cancel()
 		_, err := cc.client.DeleteCache(ctx, &request)
@@ -62,12 +68,8 @@ func (cc *ScsControlClient) DeleteCache(cacheName string) error {
 	return fmt.Errorf("cache name cannot be empty")
 }
 
-func (cc *ScsControlClient) ListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
-	defaultToken := ""
-	if len(nextToken) != 0 {
-		defaultToken = nextToken[0]
-	}
-	request := pb.ListCachesRequest{NextToken: defaultToken}
+func (cc *ScsControlClient) ListCaches(lcr requests.ListCachesRequest) (*responses.ListCachesResponse, error) {
+	request := pb.ListCachesRequest{NextToken: lcr.NextToken}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
 	resp, err := cc.client.ListCaches(ctx, &request)

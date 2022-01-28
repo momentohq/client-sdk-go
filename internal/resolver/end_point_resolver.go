@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/momentohq/client-sdk-go/internal/requests"
 )
 
 const (
@@ -13,27 +14,27 @@ const (
 	CACHE_ENDPOINT_CLAIM_ID         = "c"
 )
 
-type EndPoints struct {
-	ContorlEndPoint string
-	CacheEndPoint   string
+type Endpoints struct {
+	ControlEndpoint string
+	CacheEndpoint   string
 }
 
-func Resolve(authToken string, endPointOverride ...string) (*EndPoints, error) {
-	if len(endPointOverride) != 0 {
-		return &EndPoints{ContorlEndPoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + endPointOverride[0], CacheEndPoint: MOMENTO_CACHE_ENDPOINT_PREFIX + endPointOverride[0]}, nil
+func Resolve(rr requests.ResolveRequest) (*Endpoints, error) {
+	if rr.EndpointOverride != "" {
+		return &Endpoints{ControlEndpoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + rr.EndpointOverride, CacheEndpoint: MOMENTO_CACHE_ENDPOINT_PREFIX + rr.EndpointOverride}, nil
 	}
-	return getEndPointsFromToken(authToken)
+	return getEndpointsFromToken(rr.AuthToken)
 }
 
-func getEndPointsFromToken(authToken string) (*EndPoints, error) {
+func getEndpointsFromToken(authToken string) (*Endpoints, error) {
 	token, _, err := new(jwt.Parser).ParseUnverified(authToken, jwt.MapClaims{})
 	if err != nil {
 		return nil, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		ctEndPoint := reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String()
-		cEndPoint := reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()
-		return &EndPoints{ContorlEndPoint: ctEndPoint, CacheEndPoint: cEndPoint}, nil
+		ctEndpoint := reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String()
+		cEndpoint := reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()
+		return &Endpoints{ControlEndpoint: ctEndpoint, CacheEndpoint: cEndpoint}, nil
 	} else {
 		return nil, err
 	}

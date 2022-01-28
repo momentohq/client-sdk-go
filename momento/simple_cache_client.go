@@ -1,9 +1,11 @@
 package momento
 
 import (
+	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
-	"github.com/momentohq/client-sdk-go/internal/responses"
 	"github.com/momentohq/client-sdk-go/internal/scsmanagers"
+	"github.com/momentohq/client-sdk-go/momento/requests"
+	"github.com/momentohq/client-sdk-go/momento/responses"
 )
 
 type ScsClient struct {
@@ -13,42 +15,54 @@ type ScsClient struct {
 	dataClient        *scsmanagers.ScsDataClient
 }
 
-func SimpleCacheClient(authToken string, defaultTtlSeconds uint32) (*ScsClient, error) {
-	endPoints, err := resolver.Resolve(authToken)
+func SimpleCacheClient(ccr requests.SimpleCacheClientRequest) (*ScsClient, error) {
+	resolveRequest := internalRequests.ResolveRequest{
+		AuthToken: ccr.AuthToken,
+	}
+	endpoints, err := resolver.Resolve(resolveRequest)
 	if err != nil {
 		return nil, err
 	}
-	ctEndPoint := endPoints.ContorlEndPoint
-	cEndPoint := endPoints.CacheEndPoint
-	controlClient, ctErr := scsmanagers.NewScsControlClient(authToken, ctEndPoint)
+	ctEndpoint := endpoints.ControlEndpoint
+	cEndpoint := endpoints.CacheEndpoint
+	controlClientRequest := internalRequests.ControlClientRequest{
+		AuthToken: ccr.AuthToken,
+		Endpoint:  ctEndpoint,
+	}
+	controlClient, ctErr := scsmanagers.NewScsControlClient(controlClientRequest)
 	if ctErr != nil {
 		return nil, ctErr
 	}
-	dataClient, cErr := scsmanagers.NewScsDataClient(authToken, cEndPoint, defaultTtlSeconds)
+	dataClientRequest := internalRequests.DataClientRequest{
+		AuthToken:         ccr.AuthToken,
+		Endpoint:          cEndpoint,
+		DefaultTtlSeconds: ccr.DefaultTtlSeconds,
+	}
+	dataClient, cErr := scsmanagers.NewScsDataClient(dataClientRequest)
 	if cErr != nil {
 		return nil, cErr
 	}
-	return &ScsClient{authToken: authToken, defaultTtlSeconds: defaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
+	return &ScsClient{authToken: ccr.AuthToken, defaultTtlSeconds: ccr.DefaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
 }
 
-func (scc *ScsClient) CreateCache(cacheName string) error {
-	return scc.controlClient.CreateCache(cacheName)
+func (scc *ScsClient) CreateCache(ccr requests.CreateCacheRequest) error {
+	return scc.controlClient.CreateCache(ccr)
 }
 
-func (scc *ScsClient) DeleteCache(cacheName string) error {
-	return scc.controlClient.DeleteCache(cacheName)
+func (scc *ScsClient) DeleteCache(dcr requests.DeleteCacheRequest) error {
+	return scc.controlClient.DeleteCache(dcr)
 }
 
-func (scc *ScsClient) ListCaches(nextToken ...string) (*responses.ListCachesResponse, error) {
-	return scc.controlClient.ListCaches(nextToken...)
+func (scc *ScsClient) ListCaches(lcr requests.ListCachesRequest) (*responses.ListCachesResponse, error) {
+	return scc.controlClient.ListCaches(lcr)
 }
 
-func (scc *ScsClient) Set(cacheName string, key interface{}, value interface{}, ttlSeconds ...uint32) (*responses.SetCacheResponse, error) {
-	return scc.dataClient.Set(cacheName, key, value, ttlSeconds...)
+func (scc *ScsClient) Set(csr requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
+	return scc.dataClient.Set(csr)
 }
 
-func (scc *ScsClient) Get(cacheName string, key interface{}) (*responses.GetCacheResponse, error) {
-	return scc.dataClient.Get(cacheName, key)
+func (scc *ScsClient) Get(cgr requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
+	return scc.dataClient.Get(cgr)
 }
 
 func (scc *ScsClient) Close() error {
