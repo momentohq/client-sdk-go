@@ -1,4 +1,4 @@
-name: Client SDK Go Test
+name: CI
 on:
   pull_request:
     branches: [main]
@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     env:
       TEST_AUTH_TOKEN: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
-      TEST_CACHE_NAME: "dummy"
+      TEST_CACHE_NAME: "client-sdk-go-test"
     steps:
       - name: Setup repo
         uses: actions/checkout@v2
