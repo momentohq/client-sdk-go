@@ -6,12 +6,10 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/internal/models"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/internal/utility"
-	"github.com/momentohq/client-sdk-go/momento/requests"
-	"github.com/momentohq/client-sdk-go/momento/responses"
 )
 
 const ControlPort = ":443"
@@ -22,8 +20,8 @@ type ScsControlClient struct {
 	controlClient pb.ScsControlClient
 }
 
-func NewScsControlClient(request *internalRequests.ControlClientRequest) (*ScsControlClient, error) {
-	controlManager, err := grpcmanagers.NewControlGrpcManager(&internalRequests.ControlGrpcManagerRequest{
+func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, error) {
+	controlManager, err := grpcmanagers.NewControlGrpcManager(&models.ControlGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, ControlPort),
 	})

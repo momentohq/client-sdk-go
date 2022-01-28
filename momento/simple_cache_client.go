@@ -1,11 +1,9 @@
 package momento
 
 import (
-	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
+	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
 	"github.com/momentohq/client-sdk-go/internal/scsmanagers"
-	"github.com/momentohq/client-sdk-go/momento/requests"
-	"github.com/momentohq/client-sdk-go/momento/responses"
 )
 
 type ScsClient struct {
@@ -15,14 +13,14 @@ type ScsClient struct {
 	dataClient        *scsmanagers.ScsDataClient
 }
 
-func SimpleCacheClient(request *requests.SimpleCacheClientRequest) (*ScsClient, error) {
-	endpoints, err := resolver.Resolve(&internalRequests.ResolveRequest{
+func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
+	endpoints, err := resolver.Resolve(&models.ResolveRequest{
 		AuthToken: request.AuthToken,
 	})
 	if err != nil {
 		return nil, err
 	}
-	controlClient, err := scsmanagers.NewScsControlClient(&internalRequests.ControlClientRequest{
+	controlClient, err := scsmanagers.NewScsControlClient(&models.ControlClientRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  endpoints.ControlEndpoint,
 	})

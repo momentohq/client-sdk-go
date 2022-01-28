@@ -1,4 +1,4 @@
-package requests
+package models
 
 import pb "github.com/momentohq/client-sdk-go/internal/protos"
 

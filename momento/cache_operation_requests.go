@@ -1,4 +1,4 @@
-package requests
+package momento
 
 type SimpleCacheClientRequest struct {
 	AuthToken         string

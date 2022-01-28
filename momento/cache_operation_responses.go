@@ -1,8 +1,8 @@
-package responses
+package momento
 
 import (
+	"github.com/momentohq/client-sdk-go/internal/models"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
 	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
@@ -56,7 +56,7 @@ func NewGetCacheResponse(resp *pb.GetResponse) (*GetCacheResponse, error) {
 	} else if resp.Result == pb.ECacheResult_Miss {
 		result = MISS
 	} else {
-		return nil, utility.ConvertEcacheResult(internalRequests.ConvertEcacheResultRequest{
+		return nil, utility.ConvertEcacheResult(models.ConvertEcacheResultRequest{
 			ECacheResult: resp.Result,
 			Message:      resp.Message,
 			OpName:       "GET",

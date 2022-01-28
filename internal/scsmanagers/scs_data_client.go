@@ -7,12 +7,10 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/internal/models"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/internal/utility"
-	"github.com/momentohq/client-sdk-go/momento/requests"
-	"github.com/momentohq/client-sdk-go/momento/responses"
 
 	"google.golang.org/grpc/metadata"
 )
@@ -26,8 +24,8 @@ type ScsDataClient struct {
 	defaultTtlSeconds uint32
 }
 
-func NewScsDataClient(request *internalRequests.DataClientRequest) (*ScsDataClient, error) {
-	dataManager, err := grpcmanagers.NewDataGrpcManager(&internalRequests.DataGrpcManagerRequest{
+func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, error) {
+	dataManager, err := grpcmanagers.NewDataGrpcManager(&models.DataGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, CachePort),
 	})
