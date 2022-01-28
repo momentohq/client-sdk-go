@@ -26,11 +26,10 @@ func setUp(t *testing.T) (*ScsClient, error) {
 	} else if TestCacheName == "" {
 		t.Error("Integration tests require TEST_CACHE_NAME env var.")
 	} else {
-		simpleCacheClientRequest := requests.SimpleCacheClientRequest{
+		client, err := SimpleCacheClient(&requests.SimpleCacheClientRequest{
 			AuthToken:         TestAuthToken,
 			DefaultTtlSeconds: DefaultTtlSeconds,
-		}
-		client, err := SimpleCacheClient(simpleCacheClientRequest)
+		})
 		if err != nil {
 			return nil, err
 		} else {

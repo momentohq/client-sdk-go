@@ -15,7 +15,7 @@ type ScsClient struct {
 	dataClient        *scsmanagers.ScsDataClient
 }
 
-func SimpleCacheClient(request requests.SimpleCacheClientRequest) (*ScsClient, error) {
+func SimpleCacheClient(request *requests.SimpleCacheClientRequest) (*ScsClient, error) {
 	endpoints, err := resolver.Resolve(&internalRequests.ResolveRequest{
 		AuthToken: request.AuthToken,
 	})
