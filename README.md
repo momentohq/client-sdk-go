@@ -5,7 +5,7 @@
 
 # Prerequisites
 
-- Go version 0.17.
+- Go version 0.17.\*
 
 # Tests
 
