@@ -1,4 +1,4 @@
-name: CI
+name: Client SDK Go Test
 on:
   pull_request:
     branches: [main]

@@ -44,57 +44,60 @@ func (dc *ScsDataClient) Close() error {
 }
 
 func (dc *ScsDataClient) Set(csr requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
-	if utility.IsCacheNameValid(csr.CacheName) {
-		byteKey, errAsBytesKey := asBytes(csr.Key, "Unsupported type for key: ")
-		if errAsBytesKey != nil {
-			return nil, errAsBytesKey
-		}
-		byteValue, errAsBytesValue := asBytes(csr.Value, "Unsupported type for value: ")
-		if errAsBytesValue != nil {
-			return nil, errAsBytesValue
-		}
-		var itemTtlMils uint32
-		if csr.TtlSeconds == 0 {
-			itemTtlMils = dc.defaultTtlSeconds * 1000
-		} else {
-			itemTtlMils = csr.TtlSeconds * 1000
-
-		}
-		request := pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils}
-		ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
-		defer cancel()
-		md := createNewMetadata(csr.CacheName)
-		resp, errSet := dc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
-		if errSet != nil {
-			return nil, scserrors.GrpcErrorConverter(errSet)
-		}
-		newResp := responses.NewSetCacheResponse(resp)
-		return newResp, nil
+	if !utility.IsCacheNameValid(csr.CacheName) {
+		return nil, scserrors.InvalidInputError("cache name cannot be empty")
 	}
-	return nil, scserrors.InvalidInputError("cache name cannot be empty")
+	var defaultTtlMils = dc.defaultTtlSeconds * 1000
+	var ttlMils = csr.TtlSeconds * 1000
+	byteKey, err := asBytes(csr.Key, "Unsupported type for key: ")
+	if err != nil {
+		return nil, err
+	}
+	byteValue, err := asBytes(csr.Value, "Unsupported type for value: ")
+	if err != nil {
+		return nil, err
+	}
+	var itemTtlMils uint32
+	if csr.TtlSeconds == 0 {
+		itemTtlMils = defaultTtlMils
+	} else {
+		itemTtlMils = ttlMils
+
+	}
+	request := pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils}
+	ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
+	defer cancel()
+	md := createNewMetadata(csr.CacheName)
+	resp, err := dc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
+	if err != nil {
+		return nil, scserrors.GrpcErrorConverter(err)
+	}
+	newResp := responses.NewSetCacheResponse(resp)
+	return newResp, nil
 }
 
 func (dc *ScsDataClient) Get(cgr requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
-	if utility.IsCacheNameValid(cgr.CacheName) {
-		byteKey, errAsBytes := asBytes(cgr.Key, "Unsupported type for key: ")
-		if errAsBytes != nil {
-			return nil, errAsBytes
-		}
-		request := pb.GetRequest{CacheKey: byteKey}
-		ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
-		defer cancel()
-		md := createNewMetadata(cgr.CacheName)
-		resp, getErr := dc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
-		if getErr != nil {
-			return nil, scserrors.GrpcErrorConverter(getErr)
-		}
-		newResp, er := responses.NewGetCacheResponse(resp)
-		if er != nil {
-			return nil, er
-		}
-		return newResp, nil
+	if !utility.IsCacheNameValid(cgr.CacheName) {
+		return nil, scserrors.InvalidInputError("cache name cannot be empty")
 	}
-	return nil, scserrors.InvalidInputError("cache name cannot be empty")
+	byteKey, err := asBytes(cgr.Key, "Unsupported type for key: ")
+	if err != nil {
+		return nil, err
+	}
+	request := pb.GetRequest{CacheKey: byteKey}
+	ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
+	defer cancel()
+	md := createNewMetadata(cgr.CacheName)
+	resp, err := dc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
+	if err != nil {
+		return nil, scserrors.GrpcErrorConverter(err)
+	}
+	newResp, err := responses.NewGetCacheResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return newResp, nil
+
 }
 
 func asBytes(data interface{}, message string) ([]byte, error) {

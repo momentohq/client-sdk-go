@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/momento/requests"
 	"github.com/momentohq/client-sdk-go/momento/responses"
@@ -37,9 +38,9 @@ func setUp(t *testing.T) (*momento.ScsClient, error) {
 			createCacheRequest := requests.CreateCacheRequest{
 				CacheName: TestCacheName,
 			}
-			createErr := client.CreateCache(createCacheRequest)
-			if !strings.Contains(createErr.Error(), "AlreadyExists") {
-				t.Error(createErr.Error())
+			err := client.CreateCache(createCacheRequest)
+			if !strings.Contains(err.Error(), scserrors.AlreadyExists) {
+				t.Error(err.Error())
 			}
 			return client, nil
 		}
@@ -68,9 +69,9 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	createCacheRequest := requests.CreateCacheRequest{
 		CacheName: cacheName,
 	}
-	createCacheErr := client.CreateCache(createCacheRequest)
-	if createCacheErr != nil {
-		t.Error(createCacheErr.Error())
+	err = client.CreateCache(createCacheRequest)
+	if err != nil {
+		t.Error(err.Error())
 	}
 
 	setRequest := requests.CacheSetRequest{
@@ -78,18 +79,18 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		Key:       key,
 		Value:     value,
 	}
-	_, setErr := client.Set(setRequest)
-	if setErr != nil {
-		t.Error(setErr.Error())
+	_, err = client.Set(setRequest)
+	if err != nil {
+		t.Error(err.Error())
 	}
 
 	getRequest := requests.CacheGetRequest{
 		CacheName: cacheName,
 		Key:       key,
 	}
-	getResp, getErr := client.Get(getRequest)
-	if getErr != nil {
-		t.Error(getErr.Error())
+	getResp, err := client.Get(getRequest)
+	if err != nil {
+		t.Error(err.Error())
 	}
 	if getResp.Result() != responses.HIT {
 		t.Error("Cache miss")

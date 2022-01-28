@@ -29,18 +29,18 @@ func SimpleCacheClient(ccr requests.SimpleCacheClientRequest) (*ScsClient, error
 		AuthToken: ccr.AuthToken,
 		Endpoint:  ctEndpoint,
 	}
-	controlClient, ctErr := scsmanagers.NewScsControlClient(controlClientRequest)
-	if ctErr != nil {
-		return nil, ctErr
+	controlClient, err := scsmanagers.NewScsControlClient(controlClientRequest)
+	if err != nil {
+		return nil, err
 	}
 	dataClientRequest := internalRequests.DataClientRequest{
 		AuthToken:         ccr.AuthToken,
 		Endpoint:          cEndpoint,
 		DefaultTtlSeconds: ccr.DefaultTtlSeconds,
 	}
-	dataClient, cErr := scsmanagers.NewScsDataClient(dataClientRequest)
-	if cErr != nil {
-		return nil, cErr
+	dataClient, err := scsmanagers.NewScsDataClient(dataClientRequest)
+	if err != nil {
+		return nil, err
 	}
 	return &ScsClient{authToken: ccr.AuthToken, defaultTtlSeconds: ccr.DefaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
 }
