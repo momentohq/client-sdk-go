@@ -56,12 +56,11 @@ func NewGetCacheResponse(gr *pb.GetResponse) (*GetCacheResponse, error) {
 	} else if gr.Result == pb.ECacheResult_Miss {
 		result = MISS
 	} else {
-		resultRequest := internalRequests.ConvertEcacheResultRequest{
+		return nil, utility.ConvertEcacheResult(internalRequests.ConvertEcacheResultRequest{
 			ECacheResult: gr.Result,
 			Message:      gr.Message,
 			OpName:       "GET",
-		}
-		return nil, utility.ConvertEcacheResult(resultRequest)
+		})
 	}
 	return &GetCacheResponse{value: gr.CacheBody, result: result}, nil
 }

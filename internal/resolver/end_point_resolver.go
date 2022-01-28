@@ -20,7 +20,7 @@ type Endpoints struct {
 	CacheEndpoint   string
 }
 
-func Resolve(rr requests.ResolveRequest) (*Endpoints, error) {
+func Resolve(rr *requests.ResolveRequest) (*Endpoints, error) {
 	if rr.EndpointOverride != "" {
 		return &Endpoints{ControlEndpoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + rr.EndpointOverride, CacheEndpoint: MOMENTO_CACHE_ENDPOINT_PREFIX + rr.EndpointOverride}, nil
 	}
@@ -33,9 +33,7 @@ func getEndpointsFromToken(authToken string) (*Endpoints, error) {
 		return nil, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		ctEndpoint := reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String()
-		cEndpoint := reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()
-		return &Endpoints{ControlEndpoint: ctEndpoint, CacheEndpoint: cEndpoint}, nil
+		return &Endpoints{ControlEndpoint: reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String(), CacheEndpoint: reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()}, nil
 	} else {
 		return nil, err
 	}

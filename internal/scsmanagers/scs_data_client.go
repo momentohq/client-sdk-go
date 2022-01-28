@@ -26,25 +26,22 @@ type ScsDataClient struct {
 	defaultTtlSeconds uint32
 }
 
-func NewScsDataClient(dcr internalRequests.DataClientRequest) (*ScsDataClient, error) {
-	newEndpoint := fmt.Sprint(dcr.Endpoint, CachePort)
-	dataGrpcManagerRequest := internalRequests.DataGrpcManagerRequest{
+func NewScsDataClient(dcr *internalRequests.DataClientRequest) (*ScsDataClient, error) {
+	cm, err := grpcmanagers.NewDataGrpcManager(&internalRequests.DataGrpcManagerRequest{
 		AuthToken: dcr.AuthToken,
-		Endpoint:  newEndpoint,
-	}
-	cm, err := grpcmanagers.NewDataGrpcManager(dataGrpcManagerRequest)
+		Endpoint:  fmt.Sprint(dcr.Endpoint, CachePort),
+	})
 	if err != nil {
 		return nil, err
 	}
-	client := pb.NewScsClient(cm.Conn)
-	return &ScsDataClient{grpcManager: cm, client: client, defaultTtlSeconds: dcr.DefaultTtlSeconds}, nil
+	return &ScsDataClient{grpcManager: cm, client: pb.NewScsClient(cm.Conn), defaultTtlSeconds: dcr.DefaultTtlSeconds}, nil
 }
 
 func (dc *ScsDataClient) Close() error {
 	return dc.grpcManager.Close()
 }
 
-func (dc *ScsDataClient) Set(csr requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
+func (dc *ScsDataClient) Set(csr *requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
 	if !utility.IsCacheNameValid(csr.CacheName) {
 		return nil, scserrors.InvalidInputError("cache name cannot be empty")
 	}
@@ -65,19 +62,16 @@ func (dc *ScsDataClient) Set(csr requests.CacheSetRequest) (*responses.SetCacheR
 		itemTtlMils = ttlMils
 
 	}
-	request := pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils}
 	ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 	defer cancel()
-	md := createNewMetadata(csr.CacheName)
-	resp, err := dc.client.Set(metadata.NewOutgoingContext(ctx, md), &request)
+	resp, err := dc.client.Set(metadata.NewOutgoingContext(ctx, createNewMetadata(csr.CacheName)), &pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils})
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}
-	newResp := responses.NewSetCacheResponse(resp, byteValue)
-	return newResp, nil
+	return responses.NewSetCacheResponse(resp, byteValue), nil
 }
 
-func (dc *ScsDataClient) Get(cgr requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
+func (dc *ScsDataClient) Get(cgr *requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
 	if !utility.IsCacheNameValid(cgr.CacheName) {
 		return nil, scserrors.InvalidInputError("cache name cannot be empty")
 	}
@@ -85,11 +79,9 @@ func (dc *ScsDataClient) Get(cgr requests.CacheGetRequest) (*responses.GetCacheR
 	if err != nil {
 		return nil, err
 	}
-	request := pb.GetRequest{CacheKey: byteKey}
 	ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 	defer cancel()
-	md := createNewMetadata(cgr.CacheName)
-	resp, err := dc.client.Get(metadata.NewOutgoingContext(ctx, md), &request)
+	resp, err := dc.client.Get(metadata.NewOutgoingContext(ctx, createNewMetadata(cgr.CacheName)), &pb.GetRequest{CacheKey: byteKey})
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}

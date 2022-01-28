@@ -15,7 +15,7 @@ type DataGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewDataGrpcManager(dgmr internalRequests.DataGrpcManagerRequest) (*DataGrpcManager, error) {
+func NewDataGrpcManager(dgmr *internalRequests.DataGrpcManagerRequest) (*DataGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}

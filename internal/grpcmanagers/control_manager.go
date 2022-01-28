@@ -15,7 +15,7 @@ type ControlGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewControlGrpcManager(cgmr internalRequests.ControlGrpcManagerRequest) (*ControlGrpcManager, error) {
+func NewControlGrpcManager(cgmr *internalRequests.ControlGrpcManagerRequest) (*ControlGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}

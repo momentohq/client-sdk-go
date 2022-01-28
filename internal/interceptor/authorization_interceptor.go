@@ -9,7 +9,6 @@ import (
 
 func AddHeadersInterceptor(authToken string) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", authToken)
-		return invoker(ctx, method, req, reply, cc, opts...)
+		return invoker(metadata.AppendToOutgoingContext(ctx, "authorization", authToken), method, req, reply, cc, opts...)
 	}
 }
