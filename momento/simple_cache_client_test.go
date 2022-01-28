@@ -17,6 +17,8 @@ import (
 var (
 	TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
 	TestCacheName = os.Getenv("TEST_CACHE_NAME")
+	client        *ScsClient
+	err           error
 )
 
 const (
@@ -24,13 +26,21 @@ const (
 	DefaultTtlSeconds = 60
 )
 
+func TestMain(m *testing.M) {
+	setUp(&testing.T{})
+	exitVal := m.Run()
+	cleanUp(client)
+
+	os.Exit(exitVal)
+}
+
 func setUp(t *testing.T) (*ScsClient, error) {
 	if TestAuthToken == "" {
 		t.Error("Integration tests require TEST_AUTH_TOKEN env var.")
 	} else if TestCacheName == "" {
 		t.Error("Integration tests require TEST_CACHE_NAME env var.")
 	} else {
-		client, err := SimpleCacheClient(&requests.SimpleCacheClientRequest{
+		client, err = SimpleCacheClient(&requests.SimpleCacheClientRequest{
 			AuthToken:         TestAuthToken,
 			DefaultTtlSeconds: DefaultTtlSeconds,
 		})
@@ -63,7 +73,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 
-	client, err := setUp(&testing.T{})
+	client, err = setUp(&testing.T{})
 	if err != nil {
 		t.Error("Set up error: " + err.Error())
 	}
@@ -112,5 +122,4 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	if deleteCacheErr != nil {
 		t.Error(deleteCacheErr.Error())
 	}
-	cleanUp(client)
 }
