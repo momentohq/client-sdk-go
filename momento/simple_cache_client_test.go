@@ -1,4 +1,4 @@
-package tests
+package momento
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
-	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/momento/requests"
 	"github.com/momentohq/client-sdk-go/momento/responses"
 )
@@ -20,7 +19,7 @@ var TestCacheName = os.Getenv("TEST_CACHE_NAME")
 const BadToken = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJpbnRlZ3JhdGlvbiIsImNwIjoiY29udHJvbC5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSIsImMiOiJjYWNoZS5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSJ9.gdghdjjfjyehhdkkkskskmmls76573jnajhjjjhjdhnndy"
 const DefaultTtlSeconds = 60
 
-func setUp(t *testing.T) (*momento.ScsClient, error) {
+func setUp(t *testing.T) (*ScsClient, error) {
 	if TestAuthToken == "" {
 		t.Error("Integration tests require TEST_AUTH_TOKEN env var.")
 	} else if TestCacheName == "" {
@@ -30,7 +29,7 @@ func setUp(t *testing.T) (*momento.ScsClient, error) {
 			AuthToken:         TestAuthToken,
 			DefaultTtlSeconds: DefaultTtlSeconds,
 		}
-		client, err := momento.SimpleCacheClient(simpleCacheClientRequest)
+		client, err := SimpleCacheClient(simpleCacheClientRequest)
 		if err != nil {
 			return nil, err
 		} else {
@@ -48,7 +47,7 @@ func setUp(t *testing.T) (*momento.ScsClient, error) {
 	return nil, nil
 }
 
-func cleanUp(client *momento.ScsClient) {
+func cleanUp(client *ScsClient) {
 	err := client.Close()
 	if err != nil {
 		log.Fatal(err.Error())
