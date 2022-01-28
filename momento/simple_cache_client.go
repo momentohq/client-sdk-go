@@ -15,54 +15,54 @@ type ScsClient struct {
 	dataClient        *scsmanagers.ScsDataClient
 }
 
-func SimpleCacheClient(ccr requests.SimpleCacheClientRequest) (*ScsClient, error) {
+func SimpleCacheClient(request requests.SimpleCacheClientRequest) (*ScsClient, error) {
 	endpoints, err := resolver.Resolve(&internalRequests.ResolveRequest{
-		AuthToken: ccr.AuthToken,
+		AuthToken: request.AuthToken,
 	})
 	if err != nil {
 		return nil, err
 	}
 	controlClient, err := scsmanagers.NewScsControlClient(&internalRequests.ControlClientRequest{
-		AuthToken: ccr.AuthToken,
+		AuthToken: request.AuthToken,
 		Endpoint:  endpoints.ControlEndpoint,
 	})
 	if err != nil {
 		return nil, err
 	}
 	dataClient, err := scsmanagers.NewScsDataClient(&internalRequests.DataClientRequest{
-		AuthToken:         ccr.AuthToken,
+		AuthToken:         request.AuthToken,
 		Endpoint:          endpoints.CacheEndpoint,
-		DefaultTtlSeconds: ccr.DefaultTtlSeconds,
+		DefaultTtlSeconds: request.DefaultTtlSeconds,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &ScsClient{authToken: ccr.AuthToken, defaultTtlSeconds: ccr.DefaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
+	return &ScsClient{authToken: request.AuthToken, defaultTtlSeconds: request.DefaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
 }
 
-func (scc *ScsClient) CreateCache(ccr *requests.CreateCacheRequest) error {
-	return scc.controlClient.CreateCache(ccr)
+func (client *ScsClient) CreateCache(request *requests.CreateCacheRequest) error {
+	return client.controlClient.CreateCache(request)
 }
 
-func (scc *ScsClient) DeleteCache(dcr *requests.DeleteCacheRequest) error {
-	return scc.controlClient.DeleteCache(dcr)
+func (client *ScsClient) DeleteCache(request *requests.DeleteCacheRequest) error {
+	return client.controlClient.DeleteCache(request)
 }
 
-func (scc *ScsClient) ListCaches(lcr *requests.ListCachesRequest) (*responses.ListCachesResponse, error) {
-	return scc.controlClient.ListCaches(lcr)
+func (client *ScsClient) ListCaches(request *requests.ListCachesRequest) (*responses.ListCachesResponse, error) {
+	return client.controlClient.ListCaches(request)
 }
 
-func (scc *ScsClient) Set(csr *requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
-	return scc.dataClient.Set(csr)
+func (client *ScsClient) Set(request *requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
+	return client.dataClient.Set(request)
 }
 
-func (scc *ScsClient) Get(cgr *requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
-	return scc.dataClient.Get(cgr)
+func (client *ScsClient) Get(request *requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
+	return client.dataClient.Get(request)
 }
 
-func (scc *ScsClient) Close() error {
-	ccErr := scc.controlClient.Close()
-	dErr := scc.dataClient.Close()
+func (client *ScsClient) Close() error {
+	ccErr := client.controlClient.Close()
+	dErr := client.dataClient.Close()
 	if ccErr != nil || dErr != nil {
 		if ccErr != nil {
 			return ccErr

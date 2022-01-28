@@ -20,11 +20,11 @@ type Endpoints struct {
 	CacheEndpoint   string
 }
 
-func Resolve(rr *requests.ResolveRequest) (*Endpoints, error) {
-	if rr.EndpointOverride != "" {
-		return &Endpoints{ControlEndpoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + rr.EndpointOverride, CacheEndpoint: MOMENTO_CACHE_ENDPOINT_PREFIX + rr.EndpointOverride}, nil
+func Resolve(request *requests.ResolveRequest) (*Endpoints, error) {
+	if request.EndpointOverride != "" {
+		return &Endpoints{ControlEndpoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + request.EndpointOverride, CacheEndpoint: MOMENTO_CACHE_ENDPOINT_PREFIX + request.EndpointOverride}, nil
 	}
-	return getEndpointsFromToken(rr.AuthToken)
+	return getEndpointsFromToken(request.AuthToken)
 }
 
 func getEndpointsFromToken(authToken string) (*Endpoints, error) {

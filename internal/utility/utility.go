@@ -11,6 +11,6 @@ func IsCacheNameValid(cacheName string) bool {
 	return len(strings.TrimSpace(cacheName)) != 0
 }
 
-func ConvertEcacheResult(resultRequest internalRequests.ConvertEcacheResultRequest) error {
-	return fmt.Errorf("CacheService returned an unexpected result: %v for operation: %s with message: %s", resultRequest.ECacheResult, resultRequest.OpName, resultRequest.Message)
+func ConvertEcacheResult(request internalRequests.ConvertEcacheResultRequest) error {
+	return fmt.Errorf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message)
 }

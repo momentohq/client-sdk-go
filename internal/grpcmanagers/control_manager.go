@@ -15,17 +15,17 @@ type ControlGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewControlGrpcManager(cgmr *internalRequests.ControlGrpcManagerRequest) (*ControlGrpcManager, error) {
+func NewControlGrpcManager(request *internalRequests.ControlGrpcManagerRequest) (*ControlGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
-	conn, err := grpc.Dial(cgmr.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(cgmr.AuthToken)))
+	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)))
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}
 	return &ControlGrpcManager{Conn: conn}, nil
 }
 
-func (cm *ControlGrpcManager) Close() error {
-	return cm.Conn.Close()
+func (controlManager *ControlGrpcManager) Close() error {
+	return controlManager.Conn.Close()
 }

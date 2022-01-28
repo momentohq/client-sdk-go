@@ -11,20 +11,20 @@ type ListCachesResponse struct {
 	caches    []CacheInfo
 }
 
-func NewListCacheResponse(lcr *pb.ListCachesResponse) *ListCachesResponse {
+func NewListCacheResponse(resp *pb.ListCachesResponse) *ListCachesResponse {
 	var caches = []CacheInfo{}
-	for _, cache := range lcr.Cache {
+	for _, cache := range resp.Cache {
 		caches = append(caches, NewCacheInfo(cache))
 	}
-	return &ListCachesResponse{nextToken: lcr.NextToken, caches: caches}
+	return &ListCachesResponse{nextToken: resp.NextToken, caches: caches}
 }
 
-func (lcr *ListCachesResponse) NextToken() string {
-	return lcr.nextToken
+func (resp *ListCachesResponse) NextToken() string {
+	return resp.nextToken
 }
 
-func (lcr *ListCachesResponse) Caches() []CacheInfo {
-	return lcr.caches
+func (resp *ListCachesResponse) Caches() []CacheInfo {
+	return resp.caches
 }
 
 type CacheInfo struct {
@@ -35,8 +35,8 @@ func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
-func NewCacheInfo(ci *pb.Cache) CacheInfo {
-	return CacheInfo{name: ci.CacheName}
+func NewCacheInfo(cache *pb.Cache) CacheInfo {
+	return CacheInfo{name: cache.CacheName}
 }
 
 const (
@@ -49,52 +49,52 @@ type GetCacheResponse struct {
 	result string
 }
 
-func NewGetCacheResponse(gr *pb.GetResponse) (*GetCacheResponse, error) {
+func NewGetCacheResponse(resp *pb.GetResponse) (*GetCacheResponse, error) {
 	var result string
-	if gr.Result == pb.ECacheResult_Hit {
+	if resp.Result == pb.ECacheResult_Hit {
 		result = HIT
-	} else if gr.Result == pb.ECacheResult_Miss {
+	} else if resp.Result == pb.ECacheResult_Miss {
 		result = MISS
 	} else {
 		return nil, utility.ConvertEcacheResult(internalRequests.ConvertEcacheResultRequest{
-			ECacheResult: gr.Result,
-			Message:      gr.Message,
+			ECacheResult: resp.Result,
+			Message:      resp.Message,
 			OpName:       "GET",
 		})
 	}
-	return &GetCacheResponse{value: gr.CacheBody, result: result}, nil
+	return &GetCacheResponse{value: resp.CacheBody, result: result}, nil
 }
 
-func (gcr *GetCacheResponse) StringValue() string {
-	if gcr.result == HIT {
-		return string(gcr.value)
+func (resp *GetCacheResponse) StringValue() string {
+	if resp.result == HIT {
+		return string(resp.value)
 	}
 	return ""
 }
 
-func (gcr *GetCacheResponse) ByteValue() []byte {
-	if gcr.result == HIT {
-		return gcr.value
+func (resp *GetCacheResponse) ByteValue() []byte {
+	if resp.result == HIT {
+		return resp.value
 	}
 	return nil
 }
 
-func (gcr *GetCacheResponse) Result() string {
-	return gcr.result
+func (resp *GetCacheResponse) Result() string {
+	return resp.result
 }
 
 type SetCacheResponse struct {
 	value []byte
 }
 
-func NewSetCacheResponse(sr *pb.SetResponse, value []byte) *SetCacheResponse {
+func NewSetCacheResponse(resp *pb.SetResponse, value []byte) *SetCacheResponse {
 	return &SetCacheResponse{value: value}
 }
 
-func (scr *SetCacheResponse) StringValue() string {
-	return string(scr.value)
+func (resp *SetCacheResponse) StringValue() string {
+	return string(resp.value)
 }
 
-func (scr *SetCacheResponse) ByteValue() []byte {
-	return scr.value
+func (resp *SetCacheResponse) ByteValue() []byte {
+	return resp.value
 }

@@ -35,10 +35,9 @@ func setUp(t *testing.T) (*ScsClient, error) {
 			return nil, err
 		} else {
 			// Check if TestCacheName exists
-			createCacheRequest := requests.CreateCacheRequest{
+			err := client.CreateCache(&requests.CreateCacheRequest{
 				CacheName: TestCacheName,
-			}
-			err := client.CreateCache(createCacheRequest)
+			})
 			if !strings.Contains(err.Error(), scserrors.AlreadyExists) {
 				t.Error(err.Error())
 			}
@@ -66,29 +65,26 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		t.Error("Set up error: " + err.Error())
 	}
 
-	createCacheRequest := requests.CreateCacheRequest{
+	err = client.CreateCache(&requests.CreateCacheRequest{
 		CacheName: cacheName,
-	}
-	err = client.CreateCache(createCacheRequest)
+	})
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	setRequest := requests.CacheSetRequest{
+	_, err = client.Set(&requests.CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
-	}
-	_, err = client.Set(setRequest)
+	})
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	getRequest := requests.CacheGetRequest{
+	getResp, err := client.Get(&requests.CacheGetRequest{
 		CacheName: cacheName,
 		Key:       key,
-	}
-	getResp, err := client.Get(getRequest)
+	})
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -99,19 +95,17 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		t.Error("Set byte value and returned byte value are not equal")
 	}
 
-	getRequest2 := requests.CacheGetRequest{
+	existingCacheResp, _ := client.Get(&requests.CacheGetRequest{
 		CacheName: TestCacheName,
 		Key:       key,
-	}
-	existingCacheResp, _ := client.Get(getRequest2)
+	})
 	if existingCacheResp.Result() != responses.MISS {
 		t.Errorf("key: %s shouldn't exist in %s since it's never set.", string(key), TestCacheName)
 	}
 
-	deleteCacheRequest := requests.DeleteCacheRequest{
+	deleteCacheErr := client.DeleteCache(&requests.DeleteCacheRequest{
 		CacheName: cacheName,
-	}
-	deleteCacheErr := client.DeleteCache(deleteCacheRequest)
+	})
 	if deleteCacheErr != nil {
 		t.Error(deleteCacheErr.Error())
 	}
