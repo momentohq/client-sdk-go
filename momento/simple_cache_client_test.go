@@ -14,11 +14,15 @@ import (
 	"github.com/google/uuid"
 )
 
-var TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
-var TestCacheName = os.Getenv("TEST_CACHE_NAME")
+var (
+	TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
+	TestCacheName = os.Getenv("TEST_CACHE_NAME")
+)
 
-const BadToken = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJpbnRlZ3JhdGlvbiIsImNwIjoiY29udHJvbC5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSIsImMiOiJjYWNoZS5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSJ9.gdghdjjfjyehhdkkkskskmmls76573jnajhjjjhjdhnndy"
-const DefaultTtlSeconds = 60
+const (
+	BadToken          = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJpbnRlZ3JhdGlvbiIsImNwIjoiY29udHJvbC5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSIsImMiOiJjYWNoZS5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSJ9.gdghdjjfjyehhdkkkskskmmls76573jnajhjjjhjdhnndy"
+	DefaultTtlSeconds = 60
+)
 
 func setUp(t *testing.T) (*ScsClient, error) {
 	if TestAuthToken == "" {
