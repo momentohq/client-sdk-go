@@ -52,7 +52,7 @@ func setUp() (*ScsClient, error) {
 			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
-			if !strings.Contains(err.Error(), scserrors.AlreadyExists) {
+			if err != nil && !strings.Contains(err.Error(), scserrors.AlreadyExists) {
 				return nil, err
 			}
 			return client, nil

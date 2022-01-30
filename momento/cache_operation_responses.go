@@ -1,21 +1,8 @@
 package momento
 
-import (
-	"github.com/momentohq/client-sdk-go/internal/models"
-	pb "github.com/momentohq/client-sdk-go/internal/protos"
-)
-
 type ListCachesResponse struct {
 	nextToken string
 	caches    []CacheInfo
-}
-
-func NewListCacheResponse(resp *pb.ListCachesResponse) *ListCachesResponse {
-	var caches = []CacheInfo{}
-	for _, cache := range resp.Cache {
-		caches = append(caches, NewCacheInfo(cache))
-	}
-	return &ListCachesResponse{nextToken: resp.NextToken, caches: caches}
 }
 
 func (resp *ListCachesResponse) NextToken() string {
@@ -34,10 +21,6 @@ func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
-func NewCacheInfo(cache *pb.Cache) CacheInfo {
-	return CacheInfo{name: cache.CacheName}
-}
-
 const (
 	HIT  string = "HIT"
 	MISS string = "MISS"
@@ -46,22 +29,6 @@ const (
 type GetCacheResponse struct {
 	value  []byte
 	result string
-}
-
-func NewGetCacheResponse(resp *pb.GetResponse) (*GetCacheResponse, error) {
-	var result string
-	if resp.Result == pb.ECacheResult_Hit {
-		result = HIT
-	} else if resp.Result == pb.ECacheResult_Miss {
-		result = MISS
-	} else {
-		return nil, models.ConvertEcacheResult(models.ConvertEcacheResultRequest{
-			ECacheResult: resp.Result,
-			Message:      resp.Message,
-			OpName:       "GET",
-		})
-	}
-	return &GetCacheResponse{value: resp.CacheBody, result: result}, nil
 }
 
 func (resp *GetCacheResponse) StringValue() string {
@@ -84,10 +51,6 @@ func (resp *GetCacheResponse) Result() string {
 
 type SetCacheResponse struct {
 	value []byte
-}
-
-func NewSetCacheResponse(resp *pb.SetResponse, value []byte) *SetCacheResponse {
-	return &SetCacheResponse{value: value}
 }
 
 func (resp *SetCacheResponse) StringValue() string {
