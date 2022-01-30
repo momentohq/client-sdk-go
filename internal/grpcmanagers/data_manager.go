@@ -2,9 +2,9 @@ package grpcmanagers
 
 import (
 	"crypto/tls"
+	"github.com/momentohq/client-sdk-go/internal/models"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
-	internalRequests "github.com/momentohq/client-sdk-go/internal/requests"
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
 
 	"google.golang.org/grpc"
@@ -15,7 +15,7 @@ type DataGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewDataGrpcManager(request *internalRequests.DataGrpcManagerRequest) (*DataGrpcManager, error) {
+func NewDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}

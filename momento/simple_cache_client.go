@@ -27,7 +27,7 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	dataClient, err := scsmanagers.NewScsDataClient(&internalRequests.DataClientRequest{
+	dataClient, err := scsmanagers.NewScsDataClient(&models.DataClientRequest{
 		AuthToken:         request.AuthToken,
 		Endpoint:          endpoints.CacheEndpoint,
 		DefaultTtlSeconds: request.DefaultTtlSeconds,
@@ -35,27 +35,77 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ScsClient{authToken: request.AuthToken, defaultTtlSeconds: request.DefaultTtlSeconds, controlClient: controlClient, dataClient: dataClient}, nil
+	return &ScsClient{
+		authToken:         request.AuthToken,
+		defaultTtlSeconds: request.DefaultTtlSeconds,
+		controlClient:     controlClient,
+		dataClient:        dataClient,
+	}, nil
 }
 
-func (client *ScsClient) CreateCache(request *requests.CreateCacheRequest) error {
-	return client.controlClient.CreateCache(request)
+func (client *ScsClient) CreateCache(request *CreateCacheRequest) error {
+	return client.controlClient.CreateCache(&models.CreateCacheRequest{
+		CacheName: request.CacheName,
+	})
 }
 
-func (client *ScsClient) DeleteCache(request *requests.DeleteCacheRequest) error {
-	return client.controlClient.DeleteCache(request)
+func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) error {
+
+	return client.controlClient.DeleteCache(&models.DeleteCacheRequest{
+		CacheName: request.CacheName,
+	})
 }
 
-func (client *ScsClient) ListCaches(request *requests.ListCachesRequest) (*responses.ListCachesResponse, error) {
-	return client.controlClient.ListCaches(request)
+func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, error) {
+	rsp, err := client.controlClient.ListCaches(&models.ListCachesRequest{
+		NextToken: request.NextToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &ListCachesResponse{
+		nextToken: rsp.NextToken,
+		caches:    convertCacheInfo(rsp.Caches),
+	}, nil
 }
 
-func (client *ScsClient) Set(request *requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
-	return client.dataClient.Set(request)
+func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
+	var convertedList []CacheInfo
+	for _, c := range i {
+		convertedList = append(convertedList, CacheInfo{
+			name: c.Name,
+		})
+	}
+	return convertedList
 }
 
-func (client *ScsClient) Get(request *requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
-	return client.dataClient.Get(request)
+func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, error) {
+	rsp, err := client.dataClient.Set(&models.CacheSetRequest{
+		CacheName:  request.CacheName,
+		Key:        request.Key,
+		Value:      request.Value,
+		TtlSeconds: request.TtlSeconds,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &SetCacheResponse{
+		value: rsp.Value,
+	}, nil
+}
+
+func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, error) {
+	rsp, err := client.dataClient.Get(&models.CacheGetRequest{
+		CacheName: request.CacheName,
+		Key:       request.Key,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &GetCacheResponse{
+		value:  rsp.Value,
+		result: rsp.Result,
+	}, nil
 }
 
 func (client *ScsClient) Close() error {

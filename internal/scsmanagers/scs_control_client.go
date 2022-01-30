@@ -35,7 +35,7 @@ func (client *ScsControlClient) Close() error {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsControlClient) CreateCache(request *requests.CreateCacheRequest) error {
+func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) error {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return fmt.Errorf("cache name cannot be empty")
 	}
@@ -48,7 +48,7 @@ func (client *ScsControlClient) CreateCache(request *requests.CreateCacheRequest
 	return nil
 }
 
-func (client *ScsControlClient) DeleteCache(request *requests.DeleteCacheRequest) error {
+func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) error {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return fmt.Errorf("cache name cannot be empty")
 	}
@@ -61,12 +61,12 @@ func (client *ScsControlClient) DeleteCache(request *requests.DeleteCacheRequest
 	return nil
 }
 
-func (client *ScsControlClient) ListCaches(request *requests.ListCachesRequest) (*responses.ListCachesResponse, error) {
+func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*models.ListCachesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
 	resp, err := client.controlClient.ListCaches(ctx, &pb.ListCachesRequest{NextToken: request.NextToken})
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}
-	return responses.NewListCacheResponse(resp), nil
+	return models.NewListCacheResponse(resp), nil
 }

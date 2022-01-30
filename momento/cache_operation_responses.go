@@ -3,7 +3,6 @@ package momento
 import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
 type ListCachesResponse struct {
@@ -56,7 +55,7 @@ func NewGetCacheResponse(resp *pb.GetResponse) (*GetCacheResponse, error) {
 	} else if resp.Result == pb.ECacheResult_Miss {
 		result = MISS
 	} else {
-		return nil, utility.ConvertEcacheResult(models.ConvertEcacheResultRequest{
+		return nil, models.ConvertEcacheResult(models.ConvertEcacheResultRequest{
 			ECacheResult: resp.Result,
 			Message:      resp.Message,
 			OpName:       "GET",

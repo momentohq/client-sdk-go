@@ -1,6 +1,9 @@
 package models
 
-import pb "github.com/momentohq/client-sdk-go/internal/protos"
+import (
+	"fmt"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+)
 
 type ResolveRequest struct {
 	AuthToken        string
@@ -32,4 +35,8 @@ type ConvertEcacheResultRequest struct {
 	ECacheResult pb.ECacheResult
 	Message      string
 	OpName       string
+}
+
+func ConvertEcacheResult(request ConvertEcacheResultRequest) error {
+	return fmt.Errorf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message)
 }

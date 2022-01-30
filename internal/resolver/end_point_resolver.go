@@ -3,7 +3,7 @@ package resolver
 import (
 	"reflect"
 
-	"github.com/momentohq/client-sdk-go/internal/requests"
+	"github.com/momentohq/client-sdk-go/internal/models"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -20,7 +20,7 @@ type Endpoints struct {
 	CacheEndpoint   string
 }
 
-func Resolve(request *requests.ResolveRequest) (*Endpoints, error) {
+func Resolve(request *models.ResolveRequest) (*Endpoints, error) {
 	if request.EndpointOverride != "" {
 		return &Endpoints{ControlEndpoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + request.EndpointOverride, CacheEndpoint: MOMENTO_CACHE_ENDPOINT_PREFIX + request.EndpointOverride}, nil
 	}

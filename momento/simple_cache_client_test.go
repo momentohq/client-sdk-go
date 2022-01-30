@@ -2,14 +2,13 @@ package momento
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/momentohq/client-sdk-go/internal/scserrors"
-	"github.com/momentohq/client-sdk-go/momento/requests"
-	"github.com/momentohq/client-sdk-go/momento/responses"
 
 	"github.com/google/uuid"
 )
@@ -22,25 +21,27 @@ var (
 )
 
 const (
-	BadToken          = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJpbnRlZ3JhdGlvbiIsImNwIjoiY29udHJvbC5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSIsImMiOiJjYWNoZS5jZWxsLWFscGhhLWRldi5wcmVwcm9kLmEubW9tZW50b2hxLmNvbSJ9.gdghdjjfjyehhdkkkskskmmls76573jnajhjjjhjdhnndy"
 	DefaultTtlSeconds = 60
 )
 
 func TestMain(m *testing.M) {
-	setUp(&testing.T{})
+	client, err := setUp()
+	if err != nil {
+		panic(err)
+	}
 	exitVal := m.Run()
 	cleanUp(client)
 
 	os.Exit(exitVal)
 }
 
-func setUp(t *testing.T) (*ScsClient, error) {
+func setUp() (*ScsClient, error) {
 	if TestAuthToken == "" {
-		t.Error("Integration tests require TEST_AUTH_TOKEN env var.")
+		return nil, fmt.Errorf("Integration tests require TEST_AUTH_TOKEN env var.")
 	} else if TestCacheName == "" {
-		t.Error("Integration tests require TEST_CACHE_NAME env var.")
+		return nil, fmt.Errorf("Integration tests require TEST_CACHE_NAME env var.")
 	} else {
-		client, err = SimpleCacheClient(&requests.SimpleCacheClientRequest{
+		client, err = SimpleCacheClient(&SimpleCacheClientRequest{
 			AuthToken:         TestAuthToken,
 			DefaultTtlSeconds: DefaultTtlSeconds,
 		})
@@ -48,16 +49,15 @@ func setUp(t *testing.T) (*ScsClient, error) {
 			return nil, err
 		} else {
 			// Check if TestCacheName exists
-			err := client.CreateCache(&requests.CreateCacheRequest{
+			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
 			if !strings.Contains(err.Error(), scserrors.AlreadyExists) {
-				t.Error(err.Error())
+				return nil, err
 			}
 			return client, nil
 		}
 	}
-	return nil, nil
 }
 
 func cleanUp(client *ScsClient) {
@@ -73,19 +73,19 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 
-	client, err = setUp(&testing.T{})
+	client, err = setUp()
 	if err != nil {
 		t.Error("Set up error: " + err.Error())
 	}
 
-	err = client.CreateCache(&requests.CreateCacheRequest{
+	err = client.CreateCache(&CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	_, err = client.Set(&requests.CacheSetRequest{
+	_, err = client.Set(&CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
@@ -94,29 +94,29 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	getResp, err := client.Get(&requests.CacheGetRequest{
+	getResp, err := client.Get(&CacheGetRequest{
 		CacheName: cacheName,
 		Key:       key,
 	})
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if getResp.Result() != responses.HIT {
+	if getResp.Result() != HIT {
 		t.Error("Cache miss")
 	}
 	if !bytes.Equal(getResp.ByteValue(), value) {
 		t.Error("Set byte value and returned byte value are not equal")
 	}
 
-	existingCacheResp, _ := client.Get(&requests.CacheGetRequest{
+	existingCacheResp, _ := client.Get(&CacheGetRequest{
 		CacheName: TestCacheName,
 		Key:       key,
 	})
-	if existingCacheResp.Result() != responses.MISS {
+	if existingCacheResp.Result() != MISS {
 		t.Errorf("key: %s shouldn't exist in %s since it's never set.", string(key), TestCacheName)
 	}
 
-	deleteCacheErr := client.DeleteCache(&requests.DeleteCacheRequest{
+	deleteCacheErr := client.DeleteCache(&DeleteCacheRequest{
 		CacheName: cacheName,
 	})
 	if deleteCacheErr != nil {

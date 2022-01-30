@@ -32,14 +32,18 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, error)
 	if err != nil {
 		return nil, err
 	}
-	return &ScsDataClient{grpcManager: dataManager, dataClient: pb.NewScsClient(dataManager.Conn), defaultTtlSeconds: request.DefaultTtlSeconds}, nil
+	return &ScsDataClient{
+		grpcManager:       dataManager,
+		dataClient:        pb.NewScsClient(dataManager.Conn),
+		defaultTtlSeconds: request.DefaultTtlSeconds,
+	}, nil
 }
 
 func (client *ScsDataClient) Close() error {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsDataClient) Set(request *requests.CacheSetRequest) (*responses.SetCacheResponse, error) {
+func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCacheResponse, error) {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return nil, scserrors.InvalidInputError("cache name cannot be empty")
 	}
@@ -57,14 +61,21 @@ func (client *ScsDataClient) Set(request *requests.CacheSetRequest) (*responses.
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 	defer cancel()
-	resp, err := client.dataClient.Set(metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)), &pb.SetRequest{CacheKey: byteKey, CacheBody: byteValue, TtlMilliseconds: itemTtlMils})
+	resp, err := client.dataClient.Set(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.SetRequest{
+			CacheKey:        byteKey,
+			CacheBody:       byteValue,
+			TtlMilliseconds: itemTtlMils,
+		},
+	)
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}
-	return responses.NewSetCacheResponse(resp, byteValue), nil
+	return models.NewSetCacheResponse(resp, byteValue), nil
 }
 
-func (client *ScsDataClient) Get(request *requests.CacheGetRequest) (*responses.GetCacheResponse, error) {
+func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCacheResponse, error) {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return nil, scserrors.InvalidInputError("cache name cannot be empty")
 	}
@@ -74,11 +85,14 @@ func (client *ScsDataClient) Get(request *requests.CacheGetRequest) (*responses.
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), CacheCtxTimeout)
 	defer cancel()
-	resp, err := client.dataClient.Get(metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)), &pb.GetRequest{CacheKey: byteKey})
+	resp, err := client.dataClient.Get(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.GetRequest{CacheKey: byteKey},
+	)
 	if err != nil {
 		return nil, scserrors.GrpcErrorConverter(err)
 	}
-	newResp, err := responses.NewGetCacheResponse(resp)
+	newResp, err := models.NewGetCacheResponse(resp)
 	if err != nil {
 		return nil, err
 	}
