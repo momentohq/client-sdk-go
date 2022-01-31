@@ -73,11 +73,6 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 
-	client, err = setUp()
-	if err != nil {
-		t.Error("Set up error: " + err.Error())
-	}
-
 	err = client.CreateCache(&CreateCacheRequest{
 		CacheName: cacheName,
 	})
@@ -108,18 +103,21 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		t.Error("Set byte value and returned byte value are not equal")
 	}
 
-	existingCacheResp, _ := client.Get(&CacheGetRequest{
+	existingCacheResp, err := client.Get(&CacheGetRequest{
 		CacheName: TestCacheName,
 		Key:       key,
 	})
+	if err != nil {
+		t.Error(err.Error())
+	}
 	if existingCacheResp.Result() != MISS {
 		t.Errorf("key: %s shouldn't exist in %s since it's never set.", string(key), TestCacheName)
 	}
 
-	deleteCacheErr := client.DeleteCache(&DeleteCacheRequest{
+	err = client.DeleteCache(&DeleteCacheRequest{
 		CacheName: cacheName,
 	})
-	if deleteCacheErr != nil {
-		t.Error(deleteCacheErr.Error())
+	if err != nil {
+		t.Error(err.Error())
 	}
 }
