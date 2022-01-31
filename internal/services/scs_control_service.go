@@ -1,4 +1,4 @@
-package scsmanagers
+package services
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
@@ -16,12 +16,12 @@ const ControlPort = ":443"
 const ControlCtxTimeout = 10 * time.Second
 
 type ScsControlClient struct {
-	grpcManager   *grpcmanagers.ControlGrpcManager
+	grpcManager   *grpcmanagers.ScsControlGrpcManager
 	controlClient pb.ScsControlClient
 }
 
 func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, error) {
-	controlManager, err := grpcmanagers.NewControlGrpcManager(&models.ControlGrpcManagerRequest{
+	controlManager, err := grpcmanagers.NewScsControlGrpcManager(&models.ControlGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, ControlPort),
 	})
@@ -43,7 +43,7 @@ func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) 
 	defer cancel()
 	_, err := client.controlClient.CreateCache(ctx, &pb.CreateCacheRequest{CacheName: request.CacheName})
 	if err != nil {
-		return scserrors.GrpcErrorConverter(err)
+		return momentoerrors.GrpcErrorConverter(err)
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) 
 	defer cancel()
 	_, err := client.controlClient.DeleteCache(ctx, &pb.DeleteCacheRequest{CacheName: request.CacheName})
 	if err != nil {
-		return scserrors.GrpcErrorConverter(err)
+		return momentoerrors.GrpcErrorConverter(err)
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*
 	defer cancel()
 	resp, err := client.controlClient.ListCaches(ctx, &pb.ListCachesRequest{NextToken: request.NextToken})
 	if err != nil {
-		return nil, scserrors.GrpcErrorConverter(err)
+		return nil, momentoerrors.GrpcErrorConverter(err)
 	}
 	return models.NewListCacheResponse(resp), nil
 }

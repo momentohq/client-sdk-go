@@ -1,4 +1,4 @@
-package scsmanagers
+package services
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/scserrors"
 	"github.com/momentohq/client-sdk-go/internal/utility"
 
 	"google.golang.org/grpc/metadata"
@@ -19,13 +19,13 @@ const CachePort = ":443"
 const CacheCtxTimeout = 10 * time.Second
 
 type ScsDataClient struct {
-	grpcManager       *grpcmanagers.DataGrpcManager
+	grpcManager       *grpcmanagers.ScsDataGrpcManager
 	dataClient        pb.ScsClient
 	defaultTtlSeconds uint32
 }
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, error) {
-	dataManager, err := grpcmanagers.NewDataGrpcManager(&models.DataGrpcManagerRequest{
+	dataManager, err := grpcmanagers.NewScsDataGrpcManager(&models.DataGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, CachePort),
 	})
@@ -45,7 +45,7 @@ func (client *ScsDataClient) Close() error {
 
 func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCacheResponse, error) {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return nil, scserrors.InvalidInputError("cache name cannot be empty")
+		return nil, momentoerrors.InvalidInputError("cache name cannot be empty")
 	}
 	byteKey, err := asBytes(request.Key, "Unsupported type for key: ")
 	if err != nil {
@@ -70,14 +70,14 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 		},
 	)
 	if err != nil {
-		return nil, scserrors.GrpcErrorConverter(err)
+		return nil, momentoerrors.GrpcErrorConverter(err)
 	}
 	return models.NewSetCacheResponse(resp, byteValue), nil
 }
 
 func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCacheResponse, error) {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return nil, scserrors.InvalidInputError("cache name cannot be empty")
+		return nil, momentoerrors.InvalidInputError("cache name cannot be empty")
 	}
 	byteKey, err := asBytes(request.Key, "Unsupported type for key: ")
 	if err != nil {
@@ -90,7 +90,7 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 		&pb.GetRequest{CacheKey: byteKey},
 	)
 	if err != nil {
-		return nil, scserrors.GrpcErrorConverter(err)
+		return nil, momentoerrors.GrpcErrorConverter(err)
 	}
 	newResp, err := models.NewGetCacheResponse(resp)
 	if err != nil {
@@ -107,7 +107,7 @@ func asBytes(data interface{}, message string) ([]byte, error) {
 	case []byte:
 		return reflect.ValueOf(data).Bytes(), nil
 	default:
-		return nil, scserrors.InvalidInputError(fmt.Sprintf("%s %s", message, reflect.TypeOf(data).String()))
+		return nil, momentoerrors.InvalidInputError(fmt.Sprintf("%s %s", message, reflect.TypeOf(data).String()))
 	}
 }
 

@@ -1,4 +1,4 @@
-package scserrors
+package momentoerrors
 
 import (
 	"errors"

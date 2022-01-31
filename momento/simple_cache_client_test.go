@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/momentohq/client-sdk-go/internal/scserrors"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/google/uuid"
 )
@@ -52,7 +52,7 @@ func setUp() (*ScsClient, error) {
 			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
-			if err != nil && !strings.Contains(err.Error(), scserrors.AlreadyExists) {
+			if err != nil && !strings.Contains(err.Error(), momentoerrors.AlreadyExists) {
 				return nil, err
 			}
 			return client, nil

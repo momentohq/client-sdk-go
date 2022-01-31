@@ -3,14 +3,14 @@ package momento
 import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
-	"github.com/momentohq/client-sdk-go/internal/scsmanagers"
+	"github.com/momentohq/client-sdk-go/internal/services"
 )
 
 type ScsClient struct {
 	authToken         string
 	defaultTtlSeconds uint32
-	controlClient     *scsmanagers.ScsControlClient
-	dataClient        *scsmanagers.ScsDataClient
+	controlClient     *services.ScsControlClient
+	dataClient        *services.ScsDataClient
 }
 
 func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
@@ -20,14 +20,14 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	controlClient, err := scsmanagers.NewScsControlClient(&models.ControlClientRequest{
+	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  endpoints.ControlEndpoint,
 	})
 	if err != nil {
 		return nil, err
 	}
-	dataClient, err := scsmanagers.NewScsDataClient(&models.DataClientRequest{
+	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		AuthToken:         request.AuthToken,
 		Endpoint:          endpoints.CacheEndpoint,
 		DefaultTtlSeconds: request.DefaultTtlSeconds,

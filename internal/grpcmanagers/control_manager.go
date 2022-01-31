@@ -5,27 +5,27 @@ import (
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
-	"github.com/momentohq/client-sdk-go/internal/scserrors"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
-type ControlGrpcManager struct {
+type ScsControlGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ControlGrpcManager, error) {
+func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsControlGrpcManager, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)))
 	if err != nil {
-		return nil, scserrors.GrpcErrorConverter(err)
+		return nil, momentoerrors.GrpcErrorConverter(err)
 	}
-	return &ControlGrpcManager{Conn: conn}, nil
+	return &ScsControlGrpcManager{Conn: conn}, nil
 }
 
-func (controlManager *ControlGrpcManager) Close() error {
+func (controlManager *ScsControlGrpcManager) Close() error {
 	return controlManager.Conn.Close()
 }
