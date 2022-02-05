@@ -41,7 +41,7 @@ func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) 
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
-	_, err := client.controlClient.CreateCache(ctx, &pb.CreateCacheRequest{CacheName: request.CacheName})
+	_, err := client.controlClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
 	if err != nil {
 		return momentoerrors.GrpcErrorConverter(err)
 	}
@@ -54,7 +54,7 @@ func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) 
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
-	_, err := client.controlClient.DeleteCache(ctx, &pb.DeleteCacheRequest{CacheName: request.CacheName})
+	_, err := client.controlClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
 	if err != nil {
 		return momentoerrors.GrpcErrorConverter(err)
 	}
@@ -64,7 +64,7 @@ func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) 
 func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*models.ListCachesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
-	resp, err := client.controlClient.ListCaches(ctx, &pb.ListCachesRequest{NextToken: request.NextToken})
+	resp, err := client.controlClient.ListCaches(ctx, &pb.XListCachesRequest{NextToken: request.NextToken})
 	if err != nil {
 		return nil, momentoerrors.GrpcErrorConverter(err)
 	}

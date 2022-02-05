@@ -18,28 +18,28 @@ enum ECacheResult {
 
 
 service Scs {
-  rpc Get (GetRequest) returns (GetResponse) {}
-  rpc Set (SetRequest) returns (SetResponse) {}
+  rpc Get (_GetRequest) returns (_GetResponse) {}
+  rpc Set (_SetRequest) returns (_SetResponse) {}
 }
 
 
-message GetRequest {
+message _GetRequest {
   bytes cache_key = 1;
 }
 
-message GetResponse {
+message _GetResponse {
   ECacheResult result = 1;
   bytes cache_body = 2;
   string message = 3;
 }
 
-message SetRequest {
+message _SetRequest {
   bytes cache_key = 1;
   bytes cache_body = 2;
   uint32 ttl_milliseconds = 3;
 }
 
-message SetResponse {
+message _SetResponse {
   ECacheResult result = 1;
   string message = 2;
 }
