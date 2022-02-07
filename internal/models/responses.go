@@ -21,7 +21,7 @@ type ListCachesResponse struct {
 	Caches    []CacheInfo
 }
 
-func NewListCacheResponse(resp *pb.ListCachesResponse) *ListCachesResponse {
+func NewListCacheResponse(resp *pb.XListCachesResponse) *ListCachesResponse {
 	var caches = []CacheInfo{}
 	for _, cache := range resp.Cache {
 		caches = append(caches, NewCacheInfo(cache))
@@ -33,7 +33,7 @@ type CacheInfo struct {
 	Name string
 }
 
-func NewCacheInfo(cache *pb.Cache) CacheInfo {
+func NewCacheInfo(cache *pb.XCache) CacheInfo {
 	return CacheInfo{Name: cache.CacheName}
 }
 
@@ -52,7 +52,7 @@ type GetCacheResponse struct {
 	Result string
 }
 
-func NewGetCacheResponse(resp *pb.GetResponse) (*GetCacheResponse, error) {
+func NewGetCacheResponse(resp *pb.XGetResponse) (*GetCacheResponse, error) {
 	var result string
 	if resp.Result == pb.ECacheResult_Hit {
 		result = HIT
@@ -79,6 +79,6 @@ type SetCacheResponse struct {
 	Value []byte
 }
 
-func NewSetCacheResponse(resp *pb.SetResponse, value []byte) *SetCacheResponse {
+func NewSetCacheResponse(resp *pb.XSetResponse, value []byte) *SetCacheResponse {
 	return &SetCacheResponse{Value: value}
 }

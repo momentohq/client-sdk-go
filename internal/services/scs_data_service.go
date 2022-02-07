@@ -63,7 +63,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	defer cancel()
 	resp, err := client.dataClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.SetRequest{
+		&pb.XSetRequest{
 			CacheKey:        byteKey,
 			CacheBody:       byteValue,
 			TtlMilliseconds: itemTtlMils,
@@ -87,7 +87,7 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 	defer cancel()
 	resp, err := client.dataClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.GetRequest{CacheKey: byteKey},
+		&pb.XGetRequest{CacheKey: byteKey},
 	)
 	if err != nil {
 		return nil, momentoerrors.GrpcErrorConverter(err)
