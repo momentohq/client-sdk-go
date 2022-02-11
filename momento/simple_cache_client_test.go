@@ -126,9 +126,9 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 func TestZeroRequestTimeout(t *testing.T) {
 	timeout := uint32(0)
 	_, err := SimpleCacheClient(&SimpleCacheClientRequest{
-		AuthToken:                         TestAuthToken,
-		DefaultTtlSeconds:                 DefaultTtlSeconds,
-		DataClientOperationTimeoutSeconds: &timeout,
+		AuthToken:             TestAuthToken,
+		DefaultTtlSeconds:     DefaultTtlSeconds,
+		RequestTimeoutSeconds: &timeout,
 	})
 	if assert.Error(t, err) {
 		assert.Equal(t, "InvalidInputError: Request timeout must be greater than zero.", err.Error())

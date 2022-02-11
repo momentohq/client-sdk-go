@@ -30,7 +30,7 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = validateRequestTimeout(request.DataClientOperationTimeoutSeconds)
+	err = validateRequestTimeout(request.RequestTimeoutSeconds)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 		AuthToken:         request.AuthToken,
 		Endpoint:          endpoints.CacheEndpoint,
 		DefaultTtlSeconds: request.DefaultTtlSeconds,
-		DataCtxTimeout:    request.DataClientOperationTimeoutSeconds,
+		DataCtxTimeout:    request.RequestTimeoutSeconds,
 	})
 	if err != nil {
 		return nil, err
