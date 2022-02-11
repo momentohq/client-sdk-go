@@ -27,7 +27,7 @@ jobs:
       - name: Install goimports
         run: go get golang.org/x/tools/cmd/goimports
 
-      - run: goimports -w .
+      - run: go imports -l -w ./internal/grpcmanagers ./internal/models ./internal/interceptor ./internal/momentoerrors ./internal/resolver ./internal/services ./internal/utility ./momento
       - run: go mod tidy
       # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
