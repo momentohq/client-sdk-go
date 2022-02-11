@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
@@ -29,6 +30,7 @@ type DataClientRequest struct {
 	AuthToken         string
 	Endpoint          string
 	DefaultTtlSeconds uint32
+	DataCtxTimeout    *uint32
 }
 
 type ConvertEcacheResultRequest struct {

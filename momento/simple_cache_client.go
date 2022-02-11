@@ -2,9 +2,12 @@ package momento
 
 import (
 	"github.com/momentohq/client-sdk-go/internal/models"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
 	"github.com/momentohq/client-sdk-go/internal/services"
 )
+
+const DeafultDataCtxTimeout = 5
 
 type ScsClient struct {
 	authToken         string
@@ -27,10 +30,15 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = validateRequestTimeout(request.RequestTimeoutSeconds)
+	if err != nil {
+		return nil, err
+	}
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		AuthToken:         request.AuthToken,
 		Endpoint:          endpoints.CacheEndpoint,
 		DefaultTtlSeconds: request.DefaultTtlSeconds,
+		DataCtxTimeout:    request.RequestTimeoutSeconds,
 	})
 	if err != nil {
 		return nil, err
@@ -117,6 +125,13 @@ func (client *ScsClient) Close() error {
 		} else if dErr != nil {
 			return dErr
 		}
+	}
+	return nil
+}
+
+func validateRequestTimeout(requestTimeout *uint32) (err error) {
+	if requestTimeout != nil && *requestTimeout == 0 {
+		return momentoerrors.InvalidInputError("Request timeout must be greater than zero.")
 	}
 	return nil
 }

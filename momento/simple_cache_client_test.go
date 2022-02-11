@@ -11,6 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -119,5 +120,17 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	})
 	if err != nil {
 		t.Error(err.Error())
+	}
+}
+
+func TestZeroRequestTimeout(t *testing.T) {
+	timeout := uint32(0)
+	_, err := SimpleCacheClient(&SimpleCacheClientRequest{
+		AuthToken:             TestAuthToken,
+		DefaultTtlSeconds:     DefaultTtlSeconds,
+		RequestTimeoutSeconds: &timeout,
+	})
+	if assert.Error(t, err) {
+		assert.Equal(t, "InvalidInputError: Request timeout must be greater than zero.", err.Error())
 	}
 }

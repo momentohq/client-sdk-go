@@ -24,6 +24,18 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
+      - name: Install goimports
+        run: go get golang.org/x/tools/cmd/goimports
+
+      - run: goimports -l -w ./internal/grpcmanagers ./internal/models ./internal/interceptor ./internal/momentoerrors ./internal/resolver ./internal/services ./internal/utility ./momento
+      - run: go mod tidy
+      # If there are any diffs from goimports or go mod tidy, fail.
+      - name: Verify no changes from goimports and go mod tidy
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            exit 1
+          fi
+
       - name: Format
         run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
 
