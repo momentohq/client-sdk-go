@@ -13,7 +13,7 @@ import (
 )
 
 const ControlPort = ":443"
-const ControlCtxTimeout = 10 * time.Second
+const ControlCtxTimeout = 60 * time.Second
 
 type ScsControlClient struct {
 	grpcManager   *grpcmanagers.ScsControlGrpcManager
