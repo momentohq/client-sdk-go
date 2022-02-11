@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
