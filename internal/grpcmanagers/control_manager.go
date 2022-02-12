@@ -21,7 +21,7 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	}
 	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)))
 	if err != nil {
-		return nil, momentoerrors.GrpcErrorConverter(err)
+		return nil, momentoerrors.ConvertError(err)
 	}
 	return &ScsControlGrpcManager{Conn: conn}, nil
 }

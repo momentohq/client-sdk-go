@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"testing"
-
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +50,7 @@ func setUp() (*ScsClient, error) {
 			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
-			if err != nil && !strings.Contains(err.Error(), momentoerrors.AlreadyExists) {
+			if err != nil && err.Code() != "AlreadyExists" {
 				return nil, err
 			}
 			return client, nil
@@ -81,7 +78,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	_, err = client.Set(&CacheSetRequest{
+	_, err := client.Set(&CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
@@ -131,6 +128,6 @@ func TestZeroRequestTimeout(t *testing.T) {
 		RequestTimeoutSeconds: &timeout,
 	})
 	if assert.Error(t, err) {
-		assert.Equal(t, "InvalidInputError: Request timeout must be greater than zero.", err.Error())
+		assert.Equal(t, "InvalidArgumentError", err.Code())
 	}
 }

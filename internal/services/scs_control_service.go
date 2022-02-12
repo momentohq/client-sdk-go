@@ -20,13 +20,13 @@ type ScsControlClient struct {
 	controlClient pb.ScsControlClient
 }
 
-func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, error) {
+func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, momentoerrors.MomentoBaseError) {
 	controlManager, err := grpcmanagers.NewScsControlGrpcManager(&models.ControlGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, ControlPort),
 	})
 	if err != nil {
-		return nil, err
+		return nil, momentoerrors.ConvertError(err)
 	}
 	return &ScsControlClient{grpcManager: controlManager, controlClient: pb.NewScsControlClient(controlManager.Conn)}, nil
 }
@@ -35,38 +35,38 @@ func (client *ScsControlClient) Close() error {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) error {
+func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) momentoerrors.MomentoBaseError {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return fmt.Errorf("cache name cannot be empty")
+		return momentoerrors.NewMomentoBaseError("InvalidArgumentError", "Cache name cannot be empty")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
 	_, err := client.controlClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
 	if err != nil {
-		return momentoerrors.GrpcErrorConverter(err)
+		return momentoerrors.ConvertError(err)
 	}
 	return nil
 }
 
-func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) error {
+func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) momentoerrors.MomentoBaseError {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return fmt.Errorf("cache name cannot be empty")
+		return momentoerrors.NewMomentoBaseError("InvalidArgumentError", "Cache name cannot be empty")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
 	_, err := client.controlClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
 	if err != nil {
-		return momentoerrors.GrpcErrorConverter(err)
+		return momentoerrors.ConvertError(err)
 	}
 	return nil
 }
 
-func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*models.ListCachesResponse, error) {
+func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*models.ListCachesResponse, momentoerrors.MomentoBaseError) {
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
 	resp, err := client.controlClient.ListCaches(ctx, &pb.XListCachesRequest{NextToken: request.NextToken})
 	if err != nil {
-		return nil, momentoerrors.GrpcErrorConverter(err)
+		return nil, momentoerrors.ConvertError(err)
 	}
 	return models.NewListCacheResponse(resp), nil
 }
