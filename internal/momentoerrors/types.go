@@ -4,26 +4,26 @@ import (
 	"fmt"
 )
 
-type momentoBaseError struct {
+type momentoSvcError struct {
 	code    string
 	message string
 }
 
-func newMomentoBaseError(code string, message string) *momentoBaseError {
-	return &momentoBaseError{
+func newMomentoSvcErr(code string, message string) *momentoSvcError {
+	return &momentoSvcError{
 		code,
 		message,
 	}
 }
 
-func (err momentoBaseError) Code() string {
+func (err momentoSvcError) Code() string {
 	return err.code
 }
 
-func (err momentoBaseError) Message() string {
+func (err momentoSvcError) Message() string {
 	return err.message
 }
 
-func (err momentoBaseError) Error() string {
+func (err momentoSvcError) Error() string {
 	return fmt.Sprintf("%s: %s", err.code, err.message)
 }

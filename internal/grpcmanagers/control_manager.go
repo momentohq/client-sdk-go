@@ -15,17 +15,17 @@ type ScsControlGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsControlGrpcManager, error) {
+func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsControlGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)))
 	if err != nil {
-		return nil, momentoerrors.ConvertError(err)
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return &ScsControlGrpcManager{Conn: conn}, nil
 }
 
-func (controlManager *ScsControlGrpcManager) Close() error {
-	return controlManager.Conn.Close()
+func (controlManager *ScsControlGrpcManager) Close() momentoerrors.MomentoSvcErr {
+	return momentoerrors.ConvertSvcErr(controlManager.Conn.Close())
 }

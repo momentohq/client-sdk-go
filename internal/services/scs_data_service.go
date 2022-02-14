@@ -25,13 +25,13 @@ type ScsDataClient struct {
 	dataCtxTimeout    time.Duration
 }
 
-func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoBaseError) {
+func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewScsDataGrpcManager(&models.DataGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, CachePort),
 	})
 	if err != nil {
-		return nil, momentoerrors.ConvertError(err)
+		return nil, err
 	}
 	var timeout time.Duration
 	if request.DataCtxTimeout == nil {
@@ -47,13 +47,13 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	}, nil
 }
 
-func (client *ScsDataClient) Close() error {
+func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCacheResponse, momentoerrors.MomentoBaseError) {
+func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCacheResponse, momentoerrors.MomentoSvcErr) {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return nil, momentoerrors.NewMomentoBaseError("InvalidArgumentError", "Cache name cannot be empty")
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty")
 	}
 	byteKey, err := asBytes(request.Key, "Unsupported type for key: ")
 	if err != nil {
@@ -78,14 +78,14 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 		},
 	)
 	if err != nil {
-		return nil, momentoerrors.ConvertError(setErr)
+		return nil, momentoerrors.ConvertSvcErr(setErr)
 	}
 	return models.NewSetCacheResponse(resp, byteValue), nil
 }
 
-func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCacheResponse, momentoerrors.MomentoBaseError) {
+func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCacheResponse, momentoerrors.MomentoSvcErr) {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return nil, momentoerrors.NewMomentoBaseError("InvalidArgumentError", "Cache name cannot be empty")
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty")
 	}
 	byteKey, err := asBytes(request.Key, "Unsupported type for key: ")
 	if err != nil {
@@ -98,24 +98,24 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 		&pb.XGetRequest{CacheKey: byteKey},
 	)
 	if getErr != nil {
-		return nil, momentoerrors.ConvertError(getErr)
+		return nil, momentoerrors.ConvertSvcErr(getErr)
 	}
-	newResp, respErr := models.NewGetCacheResponse(resp)
-	if respErr != nil {
-		return nil, momentoerrors.ConvertError(respErr)
+	newResp, err := models.NewGetCacheResponse(resp)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return newResp, nil
 
 }
 
-func asBytes(data interface{}, message string) ([]byte, momentoerrors.MomentoBaseError) {
+func asBytes(data interface{}, message string) ([]byte, momentoerrors.MomentoSvcErr) {
 	switch data.(type) {
 	case string:
 		return []byte(reflect.ValueOf(data).String()), nil
 	case []byte:
 		return reflect.ValueOf(data).Bytes(), nil
 	default:
-		return nil, momentoerrors.NewMomentoBaseError("InvalidArgumentError", fmt.Sprintf("%s %s", message, reflect.TypeOf(data).String()))
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, fmt.Sprintf("%s %s", message, reflect.TypeOf(data).String()))
 	}
 }
 

@@ -16,19 +16,19 @@ type ScsClient struct {
 	dataClient        *services.ScsDataClient
 }
 
-func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, momentoerrors.MomentoBaseError) {
-	endpoints, momentoErr := resolver.Resolve(&models.ResolveRequest{
+func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, momentoerrors.MomentoSvcErr) {
+	endpoints, err := resolver.Resolve(&models.ResolveRequest{
 		AuthToken: request.AuthToken,
 	})
-	if momentoErr != nil {
-		return nil, momentoErr
+	if err != nil {
+		return nil, err
 	}
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  endpoints.ControlEndpoint,
 	})
 	if err != nil {
-		return nil, momentoerrors.ConvertError(err)
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	err = validateRequestTimeout(request.RequestTimeoutSeconds)
 	if err != nil {
@@ -41,7 +41,7 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, momentoer
 		DataCtxTimeout:    request.RequestTimeoutSeconds,
 	})
 	if err != nil {
-		return nil, momentoerrors.ConvertError(err)
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return &ScsClient{
 		authToken:         request.AuthToken,
@@ -51,19 +51,19 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, momentoer
 	}, nil
 }
 
-func (client *ScsClient) CreateCache(request *CreateCacheRequest) momentoerrors.MomentoBaseError {
+func (client *ScsClient) CreateCache(request *CreateCacheRequest) momentoerrors.MomentoSvcErr {
 	return client.controlClient.CreateCache(&models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 }
 
-func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) momentoerrors.MomentoBaseError {
+func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) momentoerrors.MomentoSvcErr {
 	return client.controlClient.DeleteCache(&models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
 }
 
-func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, momentoerrors.MomentoBaseError) {
+func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, momentoerrors.MomentoSvcErr) {
 	rsp, err := client.controlClient.ListCaches(&models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
@@ -86,7 +86,7 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 	return convertedList
 }
 
-func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, momentoerrors.MomentoBaseError) {
+func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, momentoerrors.MomentoSvcErr) {
 	rsp, err := client.dataClient.Set(&models.CacheSetRequest{
 		CacheName:  request.CacheName,
 		Key:        request.Key,
@@ -101,7 +101,7 @@ func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, momen
 	}, nil
 }
 
-func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, momentoerrors.MomentoBaseError) {
+func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, momentoerrors.MomentoSvcErr) {
 	rsp, err := client.dataClient.Get(&models.CacheGetRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
@@ -128,9 +128,9 @@ func (client *ScsClient) Close() error {
 	return nil
 }
 
-func validateRequestTimeout(requestTimeout *uint32) (err momentoerrors.MomentoBaseError) {
+func validateRequestTimeout(requestTimeout *uint32) (err momentoerrors.MomentoSvcErr) {
 	if requestTimeout != nil && *requestTimeout == 0 {
-		return momentoerrors.NewMomentoBaseError("InvalidArgumentError", "Request timeout must be greater than zero.")
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero.")
 	}
 	return nil
 }

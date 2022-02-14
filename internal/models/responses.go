@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
@@ -52,7 +53,7 @@ type GetCacheResponse struct {
 	Result string
 }
 
-func NewGetCacheResponse(resp *pb.XGetResponse) (*GetCacheResponse, error) {
+func NewGetCacheResponse(resp *pb.XGetResponse) (*GetCacheResponse, momentoerrors.MomentoSvcErr) {
 	var result string
 	if resp.Result == pb.ECacheResult_Hit {
 		result = HIT

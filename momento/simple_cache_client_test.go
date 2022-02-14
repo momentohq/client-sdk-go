@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -128,6 +129,6 @@ func TestZeroRequestTimeout(t *testing.T) {
 		RequestTimeoutSeconds: &timeout,
 	})
 	if assert.Error(t, err) {
-		assert.Equal(t, "InvalidArgumentError", err.Code())
+		assert.Equal(t, momentoerrors.InvalidArgumentError, err.Code())
 	}
 }
