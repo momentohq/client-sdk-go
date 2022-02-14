@@ -31,7 +31,7 @@ func Resolve(request *models.ResolveRequest) (*Endpoints, momentoerrors.MomentoS
 func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoSvcErr) {
 	token, _, err := new(jwt.Parser).ParseUnverified(authToken, jwt.MapClaims{})
 	if err != nil {
-		return nil, momentoerrors.ConvertError(err)
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		return &Endpoints{ControlEndpoint: reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String(), CacheEndpoint: reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()}, nil
