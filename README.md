@@ -29,7 +29,7 @@ Go SDK for Momento, a serverless cache that automatically scales without any of 
 
 ## Installing Momento and Running the Example
 
-Check out our [Go SDK example repo](add_link_here)!
+Check out our [Go SDK example repo](https://github.com/momentohq/client-sdk-examples/tree/main/golang)!
 
 <br />
 
