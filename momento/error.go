@@ -43,7 +43,17 @@ func (momentoerror momentoError) Message() string {
 	return momentoerror.err.Message()
 }
 
+func (momentoerror momentoError) OriginalErr() error {
+	if momentoerror.err.OriginalErr() != nil {
+		return momentoerror.err.OriginalErr()
+	}
+	return nil
+}
+
 func (momentoerror momentoError) Error() string {
+	if momentoerror.err.OriginalErr() != nil {
+		return fmt.Sprintf("%s: %s\n%s", momentoerror.err.Code(), momentoerror.err.Message(), momentoerror.err.OriginalErr().Error())
+	}
 	return fmt.Sprintf("%s: %s", momentoerror.err.Code(), momentoerror.err.Message())
 }
 

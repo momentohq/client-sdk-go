@@ -37,7 +37,7 @@ func (client *ScsControlClient) Close() momentoerrors.MomentoSvcErr {
 
 func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty")
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
@@ -50,7 +50,7 @@ func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) 
 
 func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty")
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()

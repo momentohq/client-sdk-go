@@ -130,7 +130,7 @@ func (client *ScsClient) Close() MomentoError {
 
 func validateRequestTimeout(requestTimeout *uint32) (err MomentoError) {
 	if requestTimeout != nil && *requestTimeout == 0 {
-		return NewMomentoError(momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero."))
+		return NewMomentoError(momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero.", nil))
 	}
 	return nil
 }
