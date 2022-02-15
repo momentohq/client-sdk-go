@@ -118,7 +118,7 @@ func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, Momen
 func (client *ScsClient) Close() MomentoError {
 	ccErr := client.controlClient.Close()
 	dErr := client.dataClient.Close()
-	if ccErr != nil || dErr != nil {
+	if ccErr.OriginalErr() != nil || dErr.OriginalErr() != nil {
 		if ccErr != nil {
 			return NewMomentoError(ccErr)
 		} else if dErr != nil {
