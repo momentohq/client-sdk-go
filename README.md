@@ -22,7 +22,7 @@ Go SDK for Momento, a serverless cache that automatically scales without any of 
 
 ## Requirements
 
-- [Go version 0.17.\*](https://go.dev/dl/)
+- [Go version 1.17.\*](https://go.dev/dl/)
 - A Momento Auth Token is required, you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli)
 
 <br/>
