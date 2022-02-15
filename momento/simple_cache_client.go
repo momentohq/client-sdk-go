@@ -116,9 +116,9 @@ func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, momen
 }
 
 func (client *ScsClient) Close() momentoerrors.MomentoSvcErr {
-	ccErr := client.controlClient.Close()
 	dErr := client.dataClient.Close()
-	if ccErr != nil || dErr != nil {
+	ccErr := client.controlClient.Close()
+	if ccErr.OriginalErr() != nil || dErr.OriginalErr() != nil {
 		if ccErr != nil {
 			return ccErr
 		} else if dErr != nil {
