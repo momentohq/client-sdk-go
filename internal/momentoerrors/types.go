@@ -1,5 +1,7 @@
 package momentoerrors
 
+import "fmt"
+
 type momentoSvcError struct {
 	code    string
 	message string
@@ -21,9 +23,5 @@ func (err momentoSvcError) Message() string {
 }
 
 func (err momentoSvcError) Error() string {
-	return err.Error()
+	return fmt.Sprintf("%s: %s", err.code, err.message)
 }
-
-// func (err momentoSvcError) Error() string {
-// 	return fmt.Sprintf("%s: %s", err.code, err.message)
-// }

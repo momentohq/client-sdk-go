@@ -31,7 +31,7 @@ func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClien
 	return &ScsControlClient{grpcManager: controlManager, controlClient: pb.NewScsControlClient(controlManager.Conn)}, nil
 }
 
-func (client *ScsControlClient) Close() momentoerrors.MomentoSvcErr {
+func (client *ScsControlClient) Close() error {
 	return client.grpcManager.Close()
 }
 

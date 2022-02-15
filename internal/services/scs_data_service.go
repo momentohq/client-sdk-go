@@ -47,7 +47,7 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	}, nil
 }
 
-func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
+func (client *ScsDataClient) Close() error {
 	return client.grpcManager.Close()
 }
 
