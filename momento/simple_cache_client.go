@@ -21,18 +21,19 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, MomentoEr
 		AuthToken: request.AuthToken,
 	})
 	if err != nil {
-		return nil, NewMomentoError(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  endpoints.ControlEndpoint,
 	})
 	if err != nil {
-		return nil, NewMomentoError(momentoerrors.ConvertSvcErr(err))
+		err = momentoerrors.ConvertSvcErr(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	err = validateRequestTimeout(request.RequestTimeoutSeconds)
 	if err != nil {
-		return nil, NewMomentoError(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		AuthToken:         request.AuthToken,
@@ -41,7 +42,8 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, MomentoEr
 		DataCtxTimeout:    request.RequestTimeoutSeconds,
 	})
 	if err != nil {
-		return nil, NewMomentoError(momentoerrors.ConvertSvcErr(err))
+		err = momentoerrors.ConvertSvcErr(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	return &ScsClient{
 		authToken:         request.AuthToken,
@@ -52,15 +54,23 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, MomentoEr
 }
 
 func (client *ScsClient) CreateCache(request *CreateCacheRequest) MomentoError {
-	return NewMomentoError(client.controlClient.CreateCache(&models.CreateCacheRequest{
+	err := client.controlClient.CreateCache(&models.CreateCacheRequest{
 		CacheName: request.CacheName,
-	}))
+	})
+	if err != nil {
+		return NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
+	}
+	return nil
 }
 
 func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) MomentoError {
-	return NewMomentoError(client.controlClient.DeleteCache(&models.DeleteCacheRequest{
+	err := client.controlClient.DeleteCache(&models.DeleteCacheRequest{
 		CacheName: request.CacheName,
-	}))
+	})
+	if err != nil {
+		return NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
+	}
+	return nil
 }
 
 func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, MomentoError) {
@@ -68,7 +78,7 @@ func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResp
 		NextToken: request.NextToken,
 	})
 	if err != nil {
-		return nil, NewMomentoError(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	return &ListCachesResponse{
 		nextToken: rsp.NextToken,
@@ -94,7 +104,7 @@ func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, Momen
 		TtlSeconds: request.TtlSeconds,
 	})
 	if err != nil {
-		return nil, NewMomentoError(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	return &SetCacheResponse{
 		value: rsp.Value,
@@ -107,7 +117,7 @@ func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, Momen
 		Key:       request.Key,
 	})
 	if err != nil {
-		return nil, NewMomentoError(err)
+		return nil, NewMomentoError(err.Code(), err.Message(), err.OriginalErr())
 	}
 	return &GetCacheResponse{
 		value:  rsp.Value,
@@ -120,9 +130,9 @@ func (client *ScsClient) Close() MomentoError {
 	dErr := client.dataClient.Close()
 	if ccErr.OriginalErr() != nil || dErr.OriginalErr() != nil {
 		if ccErr != nil {
-			return NewMomentoError(ccErr)
+			return NewMomentoError(ccErr.Code(), ccErr.Message(), ccErr.OriginalErr())
 		} else if dErr != nil {
-			return NewMomentoError(dErr)
+			return NewMomentoError(dErr.Code(), dErr.Message(), dErr.OriginalErr())
 		}
 	}
 	return nil
@@ -130,7 +140,7 @@ func (client *ScsClient) Close() MomentoError {
 
 func validateRequestTimeout(requestTimeout *uint32) (err MomentoError) {
 	if requestTimeout != nil && *requestTimeout == 0 {
-		return NewMomentoError(momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero.", nil))
+		return NewMomentoError(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero.", nil)
 	}
 	return nil
 }

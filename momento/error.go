@@ -2,8 +2,6 @@ package momento
 
 import (
 	"fmt"
-
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
 
 const (
@@ -22,41 +20,48 @@ const (
 )
 
 type MomentoError interface {
-	momentoerrors.MomentoSvcErr
+	error
+	Code() string
+	Message() string
+	OriginalErr() error
 }
 
 type momentoError struct {
-	err momentoerrors.MomentoSvcErr
+	code        string
+	message     string
+	originalErr error
 }
 
-func newMomentoError(err momentoerrors.MomentoSvcErr) *momentoError {
+func newMomentoError(code string, message string, originalErr error) *momentoError {
 	return &momentoError{
-		err,
+		code,
+		message,
+		originalErr,
 	}
 }
 
-func (momentoerror momentoError) Code() string {
-	return momentoerror.err.Code()
+func (err momentoError) Code() string {
+	return err.code
 }
 
-func (momentoerror momentoError) Message() string {
-	return momentoerror.err.Message()
+func (err momentoError) Message() string {
+	return err.message
 }
 
-func (momentoerror momentoError) OriginalErr() error {
-	if momentoerror.err.OriginalErr() != nil {
-		return momentoerror.err.OriginalErr()
+func (err momentoError) OriginalErr() error {
+	if err.originalErr != nil {
+		return err.originalErr
 	}
 	return nil
 }
 
-func (momentoerror momentoError) Error() string {
-	if momentoerror.err.OriginalErr() != nil {
-		return fmt.Sprintf("%s: %s\n%s", momentoerror.err.Code(), momentoerror.err.Message(), momentoerror.err.OriginalErr().Error())
+func (err momentoError) Error() string {
+	if err.originalErr != nil {
+		return fmt.Sprintf("%s: %s\n%s", err.code, err.message, err.originalErr)
 	}
-	return fmt.Sprintf("%s: %s", momentoerror.err.Code(), momentoerror.err.Message())
+	return fmt.Sprintf("%s: %s", err.code, err.message)
 }
 
-func NewMomentoError(err momentoerrors.MomentoSvcErr) MomentoError {
-	return newMomentoError(err)
+func NewMomentoError(code string, message string, originalErr error) MomentoError {
+	return newMomentoError(code, message, originalErr)
 }

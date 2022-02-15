@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +23,7 @@ const (
 
 func TestMain(m *testing.M) {
 	client, err := setUp()
-	if err.OriginalErr() != nil {
+	if err != nil {
 		panic(err.Error())
 	}
 	exitVal := m.Run()
@@ -35,22 +34,22 @@ func TestMain(m *testing.M) {
 
 func setUp() (*ScsClient, MomentoError) {
 	if TestAuthToken == "" {
-		return nil, NewMomentoError(momentoerrors.NewMomentoSvcErr("", "Integration tests require TEST_CACHE_NAME env var.", nil))
+		return nil, NewMomentoError("", "Integration tests require TEST_CACHE_NAME env var.", nil)
 	} else if TestCacheName == "" {
-		return nil, NewMomentoError(momentoerrors.NewMomentoSvcErr("", "Integration tests require TEST_CACHE_NAME env var.", nil))
+		return nil, NewMomentoError("", "Integration tests require TEST_CACHE_NAME env var.", nil)
 	} else {
 		client, err = SimpleCacheClient(&SimpleCacheClientRequest{
 			AuthToken:         TestAuthToken,
 			DefaultTtlSeconds: DefaultTtlSeconds,
 		})
-		if err.OriginalErr() != nil {
+		if err != nil {
 			return nil, err
 		} else {
 			// Check if TestCacheName exists
 			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
-			if err.OriginalErr() != nil && err.Code() != AlreadyExists {
+			if err != nil && err.Code() != AlreadyExists {
 				return nil, err
 			}
 			return client, nil
@@ -60,7 +59,7 @@ func setUp() (*ScsClient, MomentoError) {
 
 func cleanUp(client *ScsClient) {
 	err := client.Close()
-	if err.OriginalErr() != nil {
+	if err != nil {
 		log.Fatal(err.Error())
 	}
 }
@@ -74,7 +73,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	err = client.CreateCache(&CreateCacheRequest{
 		CacheName: cacheName,
 	})
-	if err.OriginalErr() != nil {
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -83,7 +82,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		Key:       key,
 		Value:     value,
 	})
-	if err.OriginalErr() != nil {
+	if err != nil {
 		t.Error(err.Error())
 	}
 
@@ -91,7 +90,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		CacheName: cacheName,
 		Key:       key,
 	})
-	if err.OriginalErr() != nil {
+	if err != nil {
 		t.Error(err.Error())
 	}
 	if getResp.Result() != HIT {
@@ -105,7 +104,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		CacheName: TestCacheName,
 		Key:       key,
 	})
-	if err.OriginalErr() != nil {
+	if err != nil {
 		t.Error(err.Error())
 	}
 	if existingCacheResp.Result() != MISS {
@@ -115,7 +114,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 	err = client.DeleteCache(&DeleteCacheRequest{
 		CacheName: cacheName,
 	})
-	if err.OriginalErr() != nil {
+	if err != nil {
 		t.Error(err.Error())
 	}
 }
@@ -127,7 +126,7 @@ func TestZeroRequestTimeout(t *testing.T) {
 		DefaultTtlSeconds:     DefaultTtlSeconds,
 		RequestTimeoutSeconds: &timeout,
 	})
-	if assert.Error(t, err.OriginalErr()) {
+	if err != nil {
 		assert.Equal(t, InvalidArgumentError, err.Code())
 	}
 }
