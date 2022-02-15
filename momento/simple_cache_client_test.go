@@ -15,7 +15,7 @@ var (
 	TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
 	TestCacheName = os.Getenv("TEST_CACHE_NAME")
 	client        *ScsClient
-	err           error
+	err           MomentoError
 )
 
 const (
@@ -75,7 +75,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		CacheName: cacheName,
 	})
 	if err != nil {
-		t.Error(err.Error())
+		t.Error(err)
 	}
 
 	_, err := client.Set(&CacheSetRequest{
