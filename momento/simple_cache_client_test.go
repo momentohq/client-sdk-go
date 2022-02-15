@@ -61,7 +61,7 @@ func setUp() (*ScsClient, error) {
 func cleanUp(client *ScsClient) {
 	err := client.Close()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err.OriginalErr())
 	}
 }
 
