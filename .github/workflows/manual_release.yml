@@ -55,12 +55,6 @@ jobs:
       - name: Format
         run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: latest
-          only-new-issues: true
-
       - name: Run test
         run: |
           go vet ./...
