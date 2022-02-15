@@ -1,0 +1,81 @@
+name: Manual Release
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.release }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set release
+        id: semrel
+        uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-initial-development-versions: true
+          force-bump-patch-version: true
+
+      - name: Output release
+        id: release
+        run: echo "::set-output name=release::${{ steps.semrel.outputs.version }}"
+  publish_golang:
+    strategy:
+      matrix:
+        go-version: [1.17.x]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    env:
+      TEST_AUTH_TOKEN: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+      TEST_CACHE_NAME: "client-sdk-go-test"
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v2
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install goimports
+        run: go get golang.org/x/tools/cmd/goimports
+
+      - run: goimports -l -w ./internal/grpcmanagers ./internal/models ./internal/interceptor ./internal/momentoerrors ./internal/resolver ./internal/services ./internal/utility ./momento
+      - run: go mod tidy
+      # If there are any diffs from goimports or go mod tidy, fail.
+      - name: Verify no changes from goimports and go mod tidy
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            exit 1
+          fi
+
+      - name: Format
+        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+          only-new-issues: true
+
+      - name: Run test
+        run: |
+          go vet ./...
+          go test -v ./momento
+
+      - name: Publish package
+        run: |
+          set -e
+          set -x
+          export MOMENTO_SDK_VERSION="${{needs.release.outputs.version}}"
+          if [ -z "$MOMENTO_SDK_VERSION"]
+          then
+            echo "Unable to determine SDK version!  Exiting!"
+            exit 1
+          fi
+          echo "MOMENTO_SDK_VERSION=${MOMENTO_SDK_VERSION}"
+          GOPROXY=proxy.golang.org go list -m example.com/mymodule@v${MOMENTO_SDK_VERSION}
+        shell: bash
