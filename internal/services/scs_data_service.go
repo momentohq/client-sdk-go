@@ -55,13 +55,13 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty")
 	}
-	byteKey, err := asBytes(request.Key, "Unsupported type for key: ")
-	if err != nil {
-		return nil, err
+	byteKey, momentoSvcErr := asBytes(request.Key, "Unsupported type for key: ")
+	if momentoSvcErr != nil {
+		return nil, momentoSvcErr
 	}
-	byteValue, err := asBytes(request.Value, "Unsupported type for value: ")
-	if err != nil {
-		return nil, err
+	byteValue, momentoSvcErr := asBytes(request.Value, "Unsupported type for value: ")
+	if momentoSvcErr != nil {
+		return nil, momentoSvcErr
 	}
 	itemTtlMils := client.defaultTtlSeconds * 1000
 	if request.TtlSeconds > 0 {
@@ -69,7 +69,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.dataCtxTimeout)
 	defer cancel()
-	resp, setErr := client.dataClient.Set(
+	resp, err := client.dataClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XSetRequest{
 			CacheKey:        byteKey,
@@ -78,7 +78,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 		},
 	)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(setErr)
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return models.NewSetCacheResponse(resp, byteValue), nil
 }
@@ -87,22 +87,22 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty")
 	}
-	byteKey, err := asBytes(request.Key, "Unsupported type for key: ")
-	if err != nil {
-		return nil, err
+	byteKey, momentoSvcErr := asBytes(request.Key, "Unsupported type for key: ")
+	if momentoSvcErr != nil {
+		return nil, momentoSvcErr
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.dataCtxTimeout)
 	defer cancel()
-	resp, getErr := client.dataClient.Get(
+	resp, err := client.dataClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XGetRequest{CacheKey: byteKey},
 	)
-	if getErr != nil {
-		return nil, momentoerrors.ConvertSvcErr(getErr)
-	}
-	newResp, err := models.NewGetCacheResponse(resp)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	newResp, momentoSvcErr := models.NewGetCacheResponse(resp)
+	if momentoSvcErr != nil {
+		return nil, momentoSvcErr
 	}
 	return newResp, nil
 
