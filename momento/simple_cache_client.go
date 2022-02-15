@@ -1,6 +1,8 @@
 package momento
 
 import (
+	"log"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
@@ -120,8 +122,10 @@ func (client *ScsClient) Close() error {
 	dErr := client.dataClient.Close()
 	if ccErr != nil || dErr != nil {
 		if ccErr != nil {
+			log.Fatalf("control client did not close: %s", ccErr.Error())
 			return ccErr
 		} else if dErr != nil {
+			log.Fatalf("data client did not close: %s", dErr.Error())
 			return dErr
 		}
 	}
