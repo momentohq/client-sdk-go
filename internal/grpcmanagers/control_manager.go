@@ -26,6 +26,6 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	return &ScsControlGrpcManager{Conn: conn}, nil
 }
 
-func (controlManager *ScsControlGrpcManager) Close() error {
-	return controlManager.Conn.Close()
+func (controlManager *ScsControlGrpcManager) Close() momentoerrors.MomentoSvcErr {
+	return momentoerrors.ConvertSvcErr(controlManager.Conn.Close())
 }

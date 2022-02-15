@@ -41,5 +41,5 @@ type ConvertEcacheResultRequest struct {
 }
 
 func ConvertEcacheResult(request ConvertEcacheResultRequest) momentoerrors.MomentoSvcErr {
-	return momentoerrors.NewMomentoSvcErr(momentoerrors.InternalServerError, fmt.Sprintf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message))
+	return momentoerrors.NewMomentoSvcErr(momentoerrors.InternalServerError, fmt.Sprintf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message), nil)
 }

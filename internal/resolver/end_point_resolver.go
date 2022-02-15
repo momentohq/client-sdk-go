@@ -36,6 +36,6 @@ func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoS
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		return &Endpoints{ControlEndpoint: reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String(), CacheEndpoint: reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()}, nil
 	} else {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Invalid Auth token.")
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Invalid Auth token.", nil)
 	}
 }

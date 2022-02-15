@@ -27,6 +27,6 @@ func NewScsDataGrpcManager(request *models.DataGrpcManagerRequest) (*ScsDataGrpc
 	return &ScsDataGrpcManager{Conn: conn}, nil
 }
 
-func (dataManager *ScsDataGrpcManager) Close() error {
-	return dataManager.Conn.Close()
+func (dataManager *ScsDataGrpcManager) Close() momentoerrors.MomentoSvcErr {
+	return momentoerrors.ConvertSvcErr(dataManager.Conn.Close())
 }

@@ -1,8 +1,6 @@
 package momento
 
 import (
-	"log"
-
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
@@ -117,15 +115,13 @@ func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, momen
 	}, nil
 }
 
-func (client *ScsClient) Close() error {
+func (client *ScsClient) Close() momentoerrors.MomentoSvcErr {
 	ccErr := client.controlClient.Close()
 	dErr := client.dataClient.Close()
 	if ccErr != nil || dErr != nil {
 		if ccErr != nil {
-			log.Fatalf("control client did not close: %s", ccErr.Error())
 			return ccErr
 		} else if dErr != nil {
-			log.Fatalf("data client did not close: %s", dErr.Error())
 			return dErr
 		}
 	}
@@ -134,7 +130,7 @@ func (client *ScsClient) Close() error {
 
 func validateRequestTimeout(requestTimeout *uint32) (err momentoerrors.MomentoSvcErr) {
 	if requestTimeout != nil && *requestTimeout == 0 {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero.")
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Request timeout must be greater than zero.", nil)
 	}
 	return nil
 }
