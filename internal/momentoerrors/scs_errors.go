@@ -1,45 +1,66 @@
 package momentoerrors
 
 import (
-	"errors"
 	"fmt"
 
 	"google.golang.org/grpc/status"
 )
 
-func InvalidInputError(errMessage string) error {
-	return errors.New("InvalidInputError: " + errMessage)
+type MomentoSvcErr interface {
+	error
+	Code() string
+	Message() string
+	OriginalErr() error
 }
 
-func InternalServerError(errMessage string) error {
-	return errors.New("InternalServerError: " + errMessage)
+func NewMomentoSvcErr(code string, message string, originalErr error) MomentoSvcErr {
+	return newMomentoSvcErr(code, message, originalErr)
 }
 
-func ClientSdkError(errMessage string) error {
-	return errors.New("ClientSdkError: " + errMessage)
-}
+const InternalServerErrorMessage = "Unexpected exception occurred while trying to fulfill the request."
+const ClientSdkErrorMessage = "SDK Failed to process the request."
+const InvalidArgumentError = "InvalidArgumentError"
+const InternalServerError = "InternalServerError"
+const ClientSdkError = "ClientSdkError"
 
-const (
-	AlreadyExists    = "AlreadyExists"
-	InvalidArgument  = "InvalidArgument"
-	NotFound         = "NotFound"
-	PermissionDenied = "PermissionDenied"
-)
-
-func GrpcErrorConverter(grpcErr error) error {
-	if grpcStatus, ok := status.FromError(grpcErr); ok {
+func ConvertSvcErr(err error) MomentoSvcErr {
+	if grpcStatus, ok := status.FromError(err); ok {
 		switch grpcStatus.Code().String() {
-		case AlreadyExists:
-			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
-		case InvalidArgument:
-			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
-		case NotFound:
-			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
-		case PermissionDenied:
-			return fmt.Errorf("%s: %s", grpcStatus.Code().String(), grpcStatus.Message())
+		case "InvalidArgument":
+			fallthrough
+		case "Unimplemented":
+			fallthrough
+		case "OutOfRange":
+			fallthrough
+		case "FailedPrecondition":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "Canceled":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "DeadlineExceeded":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "PermissionDenied":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "Unauthenticated":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "ResourceExhausted":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "NotFound":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "AlreadyExists":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), grpcStatus.Message(), err)
+		case "Unknown":
+			fallthrough
+		case "Aborted":
+			fallthrough
+		case "Internal":
+			fallthrough
+		case "Unavailable":
+			return NewMomentoSvcErr(grpcStatus.Code().String(), fmt.Sprintf("Unable to reach request endpoint. Request failed with %s", grpcStatus.Message()), err)
+		case "DataLoss":
+			fallthrough
+		default:
+			return NewMomentoSvcErr(InternalServerError, InternalServerErrorMessage, err)
 		}
-	} else {
-		return InternalServerError("CacheService failed with an internal error")
 	}
-	return ClientSdkError(fmt.Sprintf("Operation failed with error: %s", grpcErr.Error()))
+	return NewMomentoSvcErr(ClientSdkError, ClientSdkErrorMessage, err)
 }

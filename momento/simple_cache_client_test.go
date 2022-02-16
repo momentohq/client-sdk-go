@@ -2,13 +2,9 @@ package momento
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
-	"strings"
 	"testing"
-
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +24,7 @@ const (
 func TestMain(m *testing.M) {
 	client, err := setUp()
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	exitVal := m.Run()
 	cleanUp(client)
@@ -38,9 +34,9 @@ func TestMain(m *testing.M) {
 
 func setUp() (*ScsClient, error) {
 	if TestAuthToken == "" {
-		return nil, fmt.Errorf("Integration tests require TEST_AUTH_TOKEN env var.")
+		return nil, NewMomentoError("", "Integration tests require TEST_CACHE_NAME env var.", nil)
 	} else if TestCacheName == "" {
-		return nil, fmt.Errorf("Integration tests require TEST_CACHE_NAME env var.")
+		return nil, NewMomentoError("", "Integration tests require TEST_CACHE_NAME env var.", nil)
 	} else {
 		client, err = SimpleCacheClient(&SimpleCacheClientRequest{
 			AuthToken:         TestAuthToken,
@@ -53,8 +49,10 @@ func setUp() (*ScsClient, error) {
 			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
-			if err != nil && !strings.Contains(err.Error(), momentoerrors.AlreadyExists) {
-				return nil, err
+			if momentoErr, ok := err.(MomentoError); ok {
+				if momentoErr.Code() != AlreadyExists {
+					return nil, err
+				}
 			}
 			return client, nil
 		}
@@ -81,7 +79,7 @@ func TestCreateCacheGetSetValueAndDeleteCache(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	_, err = client.Set(&CacheSetRequest{
+	_, err := client.Set(&CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
@@ -130,7 +128,9 @@ func TestZeroRequestTimeout(t *testing.T) {
 		DefaultTtlSeconds:     DefaultTtlSeconds,
 		RequestTimeoutSeconds: &timeout,
 	})
-	if assert.Error(t, err) {
-		assert.Equal(t, "InvalidInputError: Request timeout must be greater than zero.", err.Error())
+	if momentoErr, ok := err.(MomentoError); ok {
+		assert.Equal(t, InvalidArgumentError, momentoErr.Code())
+	} else {
+		t.Errorf("Unexpected error: %v", err)
 	}
 }

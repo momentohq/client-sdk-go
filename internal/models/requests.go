@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
@@ -39,6 +40,6 @@ type ConvertEcacheResultRequest struct {
 	OpName       string
 }
 
-func ConvertEcacheResult(request ConvertEcacheResultRequest) error {
-	return fmt.Errorf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message)
+func ConvertEcacheResult(request ConvertEcacheResultRequest) momentoerrors.MomentoSvcErr {
+	return momentoerrors.NewMomentoSvcErr(momentoerrors.InternalServerError, fmt.Sprintf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message), nil)
 }
