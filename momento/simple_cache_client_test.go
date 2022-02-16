@@ -58,13 +58,13 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	value := []byte(uuid.NewString())
 	client, err := setUp()
 	if err != nil {
-		t.Error(fmt.Errorf("error occured setting up client err=%+v", err))
+		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
 	err = client.CreateCache(&CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
-		t.Error(fmt.Errorf("error occured creating cache err=%+v", err))
+		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
 
 	_, err = client.Set(&CacheSetRequest{
@@ -73,7 +73,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		Value:     value,
 	})
 	if err != nil {
-		t.Errorf("error occured setting key err=%+v", err)
+		t.Errorf("error occurred setting key err=%+v", err)
 	}
 
 	getResp, err := client.Get(&CacheGetRequest{
@@ -81,7 +81,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		Key:       key,
 	})
 	if err != nil {
-		t.Errorf("error occured getting key err=%+v", err)
+		t.Errorf("error occurred getting key err=%+v", err)
 		return
 	}
 
@@ -114,7 +114,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		CacheName: cacheName,
 	})
 	if err != nil {
-		t.Errorf("error occured deleting cache err=%+v", err)
+		t.Errorf("error occurred deleting cache err=%+v", err)
 	}
 
 	cleanUp(client)
@@ -168,13 +168,13 @@ func TestClientInitialization(t *testing.T) {
 					}
 				}
 				t.Errorf(
-					"unexpected error occured initilizing client got=%+v expected=%+v",
+					"unexpected error occurred initializing client got=%+v expected=%+v",
 					err, tt.expectedErr,
 				)
 			}
 
 			if tt.expectedErr == "" && err != nil {
-				t.Errorf("unexpected error occured on init expected=%+v got=%+v", tt.expectedErr, err)
+				t.Errorf("unexpected error occurred on init expected=%+v got=%+v", tt.expectedErr, err)
 			}
 		})
 	}
