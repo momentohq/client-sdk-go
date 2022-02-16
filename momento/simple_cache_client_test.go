@@ -130,3 +130,19 @@ func TestZeroRequestTimeout(t *testing.T) {
 		assert.Equal(t, InvalidArgumentError, err.Code())
 	}
 }
+
+func TestMomentoErrorTypeAssertion(t *testing.T) {
+	timeout := uint32(0)
+	_, err := SimpleCacheClient(&SimpleCacheClientRequest{
+		AuthToken:             TestAuthToken,
+		DefaultTtlSeconds:     DefaultTtlSeconds,
+		RequestTimeoutSeconds: &timeout,
+	})
+	if err != nil {
+		if momentoErr, ok := err.(MomentoError); ok {
+			assert.Equal(t, InvalidArgumentError, momentoErr.Code())
+		} else {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
