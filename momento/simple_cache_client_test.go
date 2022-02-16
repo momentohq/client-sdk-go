@@ -14,7 +14,7 @@ var (
 	TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
 	TestCacheName = os.Getenv("TEST_CACHE_NAME")
 	client        *ScsClient
-	err           MomentoError
+	err           error
 )
 
 const (
@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitVal)
 }
 
-func setUp() (*ScsClient, MomentoError) {
+func setUp() (*ScsClient, error) {
 	if TestAuthToken == "" {
 		return nil, NewMomentoError("", "Integration tests require TEST_CACHE_NAME env var.", nil)
 	} else if TestCacheName == "" {
@@ -49,8 +49,10 @@ func setUp() (*ScsClient, MomentoError) {
 			err := client.CreateCache(&CreateCacheRequest{
 				CacheName: TestCacheName,
 			})
-			if err != nil && err.Code() != AlreadyExists {
-				return nil, err
+			if momentoErr, ok := err.(MomentoError); ok {
+				if momentoErr.Code() != AlreadyExists {
+					return nil, err
+				}
 			}
 			return client, nil
 		}
@@ -126,23 +128,9 @@ func TestZeroRequestTimeout(t *testing.T) {
 		DefaultTtlSeconds:     DefaultTtlSeconds,
 		RequestTimeoutSeconds: &timeout,
 	})
-	if err != nil {
-		assert.Equal(t, InvalidArgumentError, err.Code())
-	}
-}
-
-func TestMomentoErrorTypeAssertion(t *testing.T) {
-	timeout := uint32(0)
-	_, err := SimpleCacheClient(&SimpleCacheClientRequest{
-		AuthToken:             TestAuthToken,
-		DefaultTtlSeconds:     DefaultTtlSeconds,
-		RequestTimeoutSeconds: &timeout,
-	})
-	if err != nil {
-		if momentoErr, ok := err.(MomentoError); ok {
-			assert.Equal(t, InvalidArgumentError, momentoErr.Code())
-		} else {
-			t.Errorf("Unexpected error: %v", err)
-		}
+	if momentoErr, ok := err.(MomentoError); ok {
+		assert.Equal(t, InvalidArgumentError, momentoErr.Code())
+	} else {
+		t.Errorf("Unexpected error: %v", err)
 	}
 }

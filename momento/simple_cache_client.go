@@ -16,7 +16,7 @@ type ScsClient struct {
 	dataClient        *services.ScsDataClient
 }
 
-func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, MomentoError) {
+func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, error) {
 	endpoints, err := resolver.Resolve(&models.ResolveRequest{
 		AuthToken: request.AuthToken,
 	})
@@ -53,7 +53,7 @@ func SimpleCacheClient(request *SimpleCacheClientRequest) (*ScsClient, MomentoEr
 	}, nil
 }
 
-func (client *ScsClient) CreateCache(request *CreateCacheRequest) MomentoError {
+func (client *ScsClient) CreateCache(request *CreateCacheRequest) error {
 	err := client.controlClient.CreateCache(&models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
@@ -63,7 +63,7 @@ func (client *ScsClient) CreateCache(request *CreateCacheRequest) MomentoError {
 	return nil
 }
 
-func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) MomentoError {
+func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) error {
 	err := client.controlClient.DeleteCache(&models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
@@ -73,7 +73,7 @@ func (client *ScsClient) DeleteCache(request *DeleteCacheRequest) MomentoError {
 	return nil
 }
 
-func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, MomentoError) {
+func (client *ScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := client.controlClient.ListCaches(&models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
@@ -96,7 +96,7 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 	return convertedList
 }
 
-func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, MomentoError) {
+func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, error) {
 	rsp, err := client.dataClient.Set(&models.CacheSetRequest{
 		CacheName:  request.CacheName,
 		Key:        request.Key,
@@ -111,7 +111,7 @@ func (client *ScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, Momen
 	}, nil
 }
 
-func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, MomentoError) {
+func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, error) {
 	rsp, err := client.dataClient.Get(&models.CacheGetRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
@@ -125,7 +125,7 @@ func (client *ScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, Momen
 	}, nil
 }
 
-func (client *ScsClient) Close() MomentoError {
+func (client *ScsClient) Close() error {
 	ccErr := client.controlClient.Close()
 	dErr := client.dataClient.Close()
 	if ccErr.OriginalErr() != nil || dErr.OriginalErr() != nil {
