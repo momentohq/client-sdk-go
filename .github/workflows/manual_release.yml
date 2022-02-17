@@ -28,6 +28,7 @@ jobs:
         go-version: [1.17.x]
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
+    needs: release
     env:
       TEST_AUTH_TOKEN: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
       TEST_CACHE_NAME: "client-sdk-go-test"
