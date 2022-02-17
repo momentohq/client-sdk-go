@@ -28,10 +28,10 @@ type ControlClientRequest struct {
 }
 
 type DataClientRequest struct {
-	AuthToken         string
-	Endpoint          string
-	DefaultTtlSeconds uint32
-	RequestTimeout    uint32
+	AuthToken             string
+	Endpoint              string
+	DefaultTtlSeconds     uint32
+	RequestTimeoutSeconds uint32
 }
 
 type ConvertEcacheResultRequest struct {

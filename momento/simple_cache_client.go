@@ -89,10 +89,10 @@ func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Op
 	}
 
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
-		AuthToken:         authToken,
-		Endpoint:          endpoints.CacheEndpoint,
-		DefaultTtlSeconds: defaultTtlSeconds,
-		RequestTimeout:    requestTimeoutToUse,
+		AuthToken:             authToken,
+		Endpoint:              endpoints.CacheEndpoint,
+		DefaultTtlSeconds:     defaultTtlSeconds,
+		RequestTimeoutSeconds: requestTimeoutToUse,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
