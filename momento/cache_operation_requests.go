@@ -22,7 +22,18 @@ type CacheSetRequest struct {
 	CacheName  string
 	Key        interface{}
 	Value      interface{}
-	TtlSeconds uint32
+	TtlSeconds TimeToLive
+}
+
+func TTL(ttl uint32) TimeToLive {
+	pInt := &ttl
+	return TimeToLive{
+		_ttl: pInt,
+	}
+}
+
+type TimeToLive struct {
+	_ttl *uint32
 }
 
 type CacheGetRequest struct {

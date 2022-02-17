@@ -50,30 +50,30 @@ import (
 )
 
 func main() {
-	var AuthToken = os.Getenv("MOMENTO_AUTH_TOKEN")
+	authToken := os.Getenv("MOMENTO_AUTH_TOKEN")
 	const (
-		CacheName             = "cache"
-		ItemDefaultTtlSeconds = 60
+		cacheName             = "cache"
+		itemDefaultTtlSeconds = 60
 	)
 
-	if AuthToken == "" {
+	if authToken == "" {
 		log.Fatal("Missing required environment variable MOMENTO_AUTH_TOKEN")
 	}
 
 	// Initializes Momento
-	client, err := momento.SimpleCacheClient(&momento.SimpleCacheClientRequest{
-		AuthToken:         AuthToken,
-		DefaultTtlSeconds: ItemDefaultTtlSeconds,
-	})
+	client, err := momento.NewSimpleCacheClient(authToken, itemDefaultTtlSeconds)
 	if err != nil {
 		panic(err)
 	}
+
 	// Create Cache and check if CacheName exists
 	err = client.CreateCache(&momento.CreateCacheRequest{
 		CacheName: CacheName,
 	})
-	if err != nil && !strings.Contains(err.Error(), "AlreadyExists") {
-		panic(err)
+	if momentoErr, ok := err.(momento.MomentoError); ok {
+        if momentoErr.Code() != AlreadyExists {
+            return nil, err
+        }
 	}
 	log.Printf("Cache named %s is created\n", CacheName)
 

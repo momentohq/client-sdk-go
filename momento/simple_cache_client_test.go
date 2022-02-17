@@ -11,52 +11,20 @@ import (
 )
 
 var (
-	TestAuthToken = os.Getenv("TEST_AUTH_TOKEN")
-	TestCacheName = os.Getenv("TEST_CACHE_NAME")
+	testAuthToken = os.Getenv("TEST_AUTH_TOKEN")
+	testCacheName = os.Getenv("TEST_CACHE_NAME")
 )
 
 const (
 	defaultTtlSeconds = 60
 )
 
-func setUp() (ScsClient, error) {
-	if TestAuthToken == "" {
-		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
-	}
-	if TestCacheName == "" {
-		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
-	}
-
-	client, err := NewSimpleCacheClient(&SimpleCacheClientRequest{
-		AuthToken:         TestAuthToken,
-		DefaultTtlSeconds: defaultTtlSeconds,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if TestCacheName exists
-	err = client.CreateCache(&CreateCacheRequest{
-		CacheName: TestCacheName,
-	})
-	if momentoErr, ok := err.(MomentoError); ok {
-		if momentoErr.Code() != AlreadyExists {
-			return nil, err
-		}
-	}
-	return client, nil
-}
-
-func cleanUp(client ScsClient) {
-	_ = client.Close()
-}
-
 // Basic happy path test - create a cache, operate set/get, and delete the cache
 func TestBasicHappyPathSDKFlow(t *testing.T) {
 	cacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
-	client, err := setUp()
+	client, err := newTestClient()
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
@@ -74,6 +42,16 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key err=%+v", err)
+	}
+
+	_, err = client.Set(&CacheSetRequest{
+		CacheName:  cacheName,
+		Key:        uuid.NewString(),
+		Value:      value,
+		TtlSeconds: TTL(1),
+	})
+	if err != nil {
+		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
 	}
 
 	getResp, err := client.Get(&CacheGetRequest{
@@ -96,7 +74,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	}
 
 	existingCacheResp, err := client.Get(&CacheGetRequest{
-		CacheName: TestCacheName,
+		CacheName: testCacheName,
 		Key:       key,
 	})
 	if err != nil {
@@ -106,7 +84,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	if existingCacheResp.Result() != MISS {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
-			TestCacheName, existingCacheResp.StringValue(),
+			testCacheName, existingCacheResp.StringValue(),
 		)
 	}
 
@@ -117,46 +95,53 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Errorf("error occurred deleting cache err=%+v", err)
 	}
 
-	cleanUp(client)
+	cleanUpClient(client)
 }
 
 func TestClientInitialization(t *testing.T) {
 
+	testRequestTimeout := uint32(100)
+	badRequestTimeout := uint32(0)
 	tests := map[string]struct {
-		expectedErr string
-		req         *SimpleCacheClientRequest
+		expectedErr           string
+		authToken             string
+		defaultTtlSeconds     uint32
+		requestTimeoutSeconds *uint32
 	}{
 		"happy path": {
-			req: &SimpleCacheClientRequest{
-				AuthToken: TestAuthToken,
-			},
+			authToken:         testAuthToken,
+			defaultTtlSeconds: defaultTtlSeconds,
 		},
 		"happy path custom timeout": {
-			req: &SimpleCacheClientRequest{
-				AuthToken:             TestAuthToken,
-				RequestTimeoutSeconds: 100,
-			},
-		},
-		"happy path custom timeout and ttl": {
-			req: &SimpleCacheClientRequest{
-				AuthToken:             TestAuthToken,
-				RequestTimeoutSeconds: 100,
-				DefaultTtlSeconds:     defaultTtlSeconds,
-			},
+			authToken:             testAuthToken,
+			defaultTtlSeconds:     defaultTtlSeconds,
+			requestTimeoutSeconds: &testRequestTimeout,
 		},
 		"test invalid auth token": {
-			expectedErr: ClientSdkError,
-			req: &SimpleCacheClientRequest{
-				AuthToken:         "NOT_A_VALID_JWT",
-				DefaultTtlSeconds: defaultTtlSeconds,
-			},
+			expectedErr:       ClientSdkError,
+			authToken:         "NOT_A_VALID_JWT",
+			defaultTtlSeconds: defaultTtlSeconds,
+		},
+		"test invalid default ttl": {
+			expectedErr:       InvalidArgumentError,
+			authToken:         testAuthToken,
+			defaultTtlSeconds: 0,
+		},
+		"test invalid request timeout": {
+			expectedErr:           InvalidArgumentError,
+			authToken:             testAuthToken,
+			defaultTtlSeconds:     defaultTtlSeconds,
+			requestTimeoutSeconds: &badRequestTimeout,
 		},
 	}
 	for name, tt := range tests {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, err := NewSimpleCacheClient(tt.req)
+			c, err := NewSimpleCacheClient(tt.authToken, tt.defaultTtlSeconds)
+			if tt.requestTimeoutSeconds != nil {
+				c, err = NewSimpleCacheClient(tt.authToken, tt.defaultTtlSeconds, WithRequestTimeout(*tt.requestTimeoutSeconds))
+			}
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
@@ -176,6 +161,36 @@ func TestClientInitialization(t *testing.T) {
 			if tt.expectedErr == "" && err != nil {
 				t.Errorf("unexpected error occurred on init expected=%+v got=%+v", tt.expectedErr, err)
 			}
+			cleanUpClient(c)
 		})
 	}
+}
+
+func newTestClient() (ScsClient, error) {
+	if testAuthToken == "" {
+		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
+	}
+	if testCacheName == "" {
+		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
+	}
+
+	client, err := NewSimpleCacheClient(testAuthToken, defaultTtlSeconds)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if testCacheName exists
+	err = client.CreateCache(&CreateCacheRequest{
+		CacheName: testCacheName,
+	})
+	if momentoErr, ok := err.(MomentoError); ok {
+		if momentoErr.Code() != AlreadyExists {
+			return nil, err
+		}
+	}
+	return client, nil
+}
+
+func cleanUpClient(client ScsClient) {
+	_ = client.Close()
 }

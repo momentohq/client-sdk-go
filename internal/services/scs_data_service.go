@@ -20,7 +20,7 @@ const defaultRequestTimeoutSeconds = 5
 
 type ScsDataClient struct {
 	grpcManager       *grpcmanagers.ScsDataGrpcManager
-	dataClient        pb.ScsClient
+	grpcClient        pb.ScsClient
 	defaultTtlSeconds uint32
 	requestTimeout    time.Duration
 }
@@ -41,7 +41,7 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	}
 	return &ScsDataClient{
 		grpcManager:       dataManager,
-		dataClient:        pb.NewScsClient(dataManager.Conn),
+		grpcClient:        pb.NewScsClient(dataManager.Conn),
 		defaultTtlSeconds: request.DefaultTtlSeconds,
 		requestTimeout:    timeout,
 	}, nil
@@ -69,7 +69,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeout)
 	defer cancel()
-	resp, err := client.dataClient.Set(
+	resp, err := client.grpcClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XSetRequest{
 			CacheKey:        byteKey,
@@ -93,7 +93,7 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeout)
 	defer cancel()
-	resp, err := client.dataClient.Get(
+	resp, err := client.grpcClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XGetRequest{CacheKey: byteKey},
 	)

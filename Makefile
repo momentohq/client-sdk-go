@@ -9,6 +9,3 @@ lint:
 	@for pkg in $(shell go list ./...) ; do \
 		golint $(LINTARGS) $$pkg ; \
 	done
-
-
-

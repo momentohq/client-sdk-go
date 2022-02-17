@@ -21,47 +21,87 @@ type ScsClient interface {
 }
 
 type DefaultScsClient struct {
-	authToken         string
-	defaultTtlSeconds uint32
-	controlClient     *services.ScsControlClient
-	dataClient        *services.ScsDataClient
+	authToken             string
+	controlClient         *services.ScsControlClient
+	dataClient            *services.ScsDataClient
+	defaultTtlSeconds     uint32
+	defaultRequestTimeout uint32
 }
 
-func NewSimpleCacheClient(request *SimpleCacheClientRequest) (ScsClient, error) {
+type Option func(*DefaultScsClient) MomentoError
+
+func WithRequestTimeout(requestTimeout uint32) Option {
+	return func(c *DefaultScsClient) MomentoError {
+		if requestTimeout == 0 {
+			return NewMomentoError(
+				momentoerrors.InvalidArgumentError,
+				"request timeout must be greater than zero",
+				nil,
+			)
+		}
+		c.defaultRequestTimeout = requestTimeout
+		return nil
+	}
+}
+
+func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Option) (ScsClient, error) {
 	endpoints, err := resolver.Resolve(&models.ResolveRequest{
-		AuthToken: request.AuthToken,
+		AuthToken: authToken,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
+
+	if defaultTtlSeconds < 1 {
+		return nil, NewMomentoError(
+			momentoerrors.InvalidArgumentError,
+			"default ttl must be greater than zero",
+			nil,
+		)
+	}
+
+	client := &DefaultScsClient{
+		authToken:         authToken,
+		defaultTtlSeconds: defaultTtlSeconds,
+	}
+
+	// Loop through all user passed options before building up internal clients
+	for _, opt := range opts {
+		// Call the option giving the instantiated
+		// *House as the argument
+		err := opt(client)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	requestTimeoutToUse := defaultRequestTimeout
+	if client.defaultRequestTimeout > 0 {
+		requestTimeoutToUse = client.defaultRequestTimeout
+	}
+
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
-		AuthToken: request.AuthToken,
+		AuthToken: authToken,
 		Endpoint:  endpoints.ControlEndpoint,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
-	requestTimeoutToUse := defaultRequestTimeout
-	if request.RequestTimeoutSeconds > 1 {
-		requestTimeoutToUse = request.RequestTimeoutSeconds
-	}
-
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
-		AuthToken:         request.AuthToken,
+		AuthToken:         authToken,
 		Endpoint:          endpoints.CacheEndpoint,
-		DefaultTtlSeconds: request.DefaultTtlSeconds,
+		DefaultTtlSeconds: defaultTtlSeconds,
 		RequestTimeout:    requestTimeoutToUse,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
-	return &DefaultScsClient{
-		authToken:         request.AuthToken,
-		defaultTtlSeconds: request.DefaultTtlSeconds,
-		controlClient:     controlClient,
-		dataClient:        dataClient,
-	}, nil
+
+	client.dataClient = dataClient
+	client.controlClient = controlClient
+
+	return client, nil
 }
 
 func (c *DefaultScsClient) CreateCache(request *CreateCacheRequest) error {
@@ -98,11 +138,15 @@ func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesRe
 }
 
 func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, error) {
+	ttlToUse := c.defaultTtlSeconds
+	if request.TtlSeconds._ttl != nil {
+		ttlToUse = *request.TtlSeconds._ttl
+	}
 	rsp, err := c.dataClient.Set(&models.CacheSetRequest{
 		CacheName:  request.CacheName,
 		Key:        request.Key,
 		Value:      request.Value,
-		TtlSeconds: request.TtlSeconds,
+		TtlSeconds: ttlToUse,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
