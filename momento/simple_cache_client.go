@@ -52,14 +52,6 @@ func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Op
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 
-	if defaultTtlSeconds < 1 {
-		return nil, NewMomentoError(
-			momentoerrors.InvalidArgumentError,
-			"default ttl must be greater than zero",
-			nil,
-		)
-	}
-
 	client := &DefaultScsClient{
 		authToken:         authToken,
 		defaultTtlSeconds: defaultTtlSeconds,

@@ -122,11 +122,6 @@ func TestClientInitialization(t *testing.T) {
 			authToken:         "NOT_A_VALID_JWT",
 			defaultTtlSeconds: defaultTtlSeconds,
 		},
-		"test invalid default ttl": {
-			expectedErr:       InvalidArgumentError,
-			authToken:         testAuthToken,
-			defaultTtlSeconds: 0,
-		},
 		"test invalid request timeout": {
 			expectedErr:           InvalidArgumentError,
 			authToken:             testAuthToken,
