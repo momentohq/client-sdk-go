@@ -144,7 +144,7 @@ const (
 		itemDefaultTtlSeconds = 60
 		requestTimeoutSeconds = 10
 	)
-client, err = NewSimpleCacheClient(authToken, itemDefaultTtlSeconds, åWithRequestTimeout(requestTimeoutSeconds))
+client, err = NewSimpleCacheClient(authToken, itemDefaultTtlSeconds, WithRequestTimeout(requestTimeoutSeconds))
 ```
 
 <br />
