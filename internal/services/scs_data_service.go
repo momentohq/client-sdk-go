@@ -19,10 +19,10 @@ const cachePort = ":443"
 const defaultRequestTimeoutSeconds = 5
 
 type ScsDataClient struct {
-	grpcManager       *grpcmanagers.ScsDataGrpcManager
-	grpcClient        pb.ScsClient
-	defaultTtlSeconds uint32
-	requestTimeout    time.Duration
+	grpcManager           *grpcmanagers.ScsDataGrpcManager
+	grpcClient            pb.ScsClient
+	defaultTtlSeconds     uint32
+	requestTimeoutSeconds time.Duration
 }
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
@@ -40,10 +40,10 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 		timeout = time.Duration(request.RequestTimeout) * time.Second
 	}
 	return &ScsDataClient{
-		grpcManager:       dataManager,
-		grpcClient:        pb.NewScsClient(dataManager.Conn),
-		defaultTtlSeconds: request.DefaultTtlSeconds,
-		requestTimeout:    timeout,
+		grpcManager:           dataManager,
+		grpcClient:            pb.NewScsClient(dataManager.Conn),
+		defaultTtlSeconds:     request.DefaultTtlSeconds,
+		requestTimeoutSeconds: timeout,
 	}, nil
 }
 
@@ -67,7 +67,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	if request.TtlSeconds > 0 {
 		itemTtlMils = request.TtlSeconds * 1000
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
 	defer cancel()
 	resp, err := client.grpcClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
@@ -91,7 +91,7 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 	if momentoSvcErr != nil {
 		return nil, momentoSvcErr
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
 	defer cancel()
 	resp, err := client.grpcClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),

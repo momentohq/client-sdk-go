@@ -17,7 +17,7 @@ type ScsClient interface {
 	Set(request *CacheSetRequest) (*SetCacheResponse, error)
 	Get(request *CacheGetRequest) (*GetCacheResponse, error)
 
-	Close() error
+	Close()
 }
 
 type DefaultScsClient struct {
@@ -170,10 +170,10 @@ func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, err
 	}, nil
 }
 
-func (c *DefaultScsClient) Close() error {
-	err := c.controlClient.Close()
-	err = c.dataClient.Close()
-	return convertMomentoSvcErrorToCustomerError(err)
+func (c *DefaultScsClient) Close() {
+	defer c.controlClient.Close()
+	defer c.dataClient.Close()
+	return
 }
 
 func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {

@@ -192,5 +192,5 @@ func newTestClient() (ScsClient, error) {
 }
 
 func cleanUpClient(client ScsClient) {
-	_ = client.Close()
+	client.Close()
 }
