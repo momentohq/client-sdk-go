@@ -2,9 +2,9 @@
 
 :warning: Experimental SDK :warning:
 
-Go SDK for Momento is experimental and under active development.
-There could be non-backward compatible changes or removal in the future.
-Please be aware that you may need to update your source code with the current version of the SDK when its version gets upgraded.
+Go SDK for Momento is experimental and under active development. There could be non-backward compatible changes or
+removal in the future. Please be aware that you may need to update your source code with the current version of the SDK
+when its version gets upgraded.
 
 ---
 
@@ -14,7 +14,8 @@ Please be aware that you may need to update your source code with the current ve
     <img src="images/gopher.png" alt="Logo" width="200" height="150">
 </div>
 
-Go SDK for Momento, a serverless cache that automatically scales without any of the operational overhead required by traditional caching solutions.
+Go SDK for Momento, a serverless cache that automatically scales without any of the operational overhead required by
+traditional caching solutions.
 
 <br/>
 
@@ -23,7 +24,12 @@ Go SDK for Momento, a serverless cache that automatically scales without any of 
 ## Requirements
 
 - [Go version 1.17.\*](https://go.dev/dl/)
-- A Momento Auth Token is required, you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli)
+- A Momento Auth Token is required, you can generate one using
+  the [Momento CLI](https://github.com/momentohq/momento-cli)
+- golang
+    - `brew install go`
+- golint
+    - `go get -u golang.org/x/lint/golint`
 
 <br/>
 
@@ -36,71 +42,94 @@ Check out our [Go SDK example repo](https://github.com/momentohq/client-sdk-exam
 ## Using Momento
 
 ```go
+package main
+
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/momento"
+	. "github.com/momentohq/client-sdk-go/momento"
 )
 
 func main() {
-	var AuthToken = os.Getenv("MOMENTO_AUTH_TOKEN")
+	authToken := os.Getenv("MOMENTO_AUTH_TOKEN")
 	const (
-		CacheName             = "cache"
-		ItemDefaultTtlSeconds = 60
+		cacheName             = "my-first-cache-😊"
+		itemDefaultTtlSeconds = 60
 	)
 
-	if AuthToken == "" {
+	if authToken == "" {
 		log.Fatal("Missing required environment variable MOMENTO_AUTH_TOKEN")
 	}
 
 	// Initializes Momento
-	client, err := momento.SimpleCacheClient(&momento.SimpleCacheClientRequest{
-		AuthToken:         AuthToken,
-		DefaultTtlSeconds: ItemDefaultTtlSeconds,
-	})
+	client, err := NewSimpleCacheClient(authToken, itemDefaultTtlSeconds)
 	if err != nil {
-		panic(err)
+		log.Fatal(fmt.Sprintf("failed initilizing cache client with err %+v", err))
 	}
-	// Create Cache and check if CacheName exists
-	err = client.CreateCache(&momento.CreateCacheRequest{
-		CacheName: CacheName,
-	})
-	if err != nil && !strings.Contains(err.Error(), "AlreadyExists") {
-		panic(err)
-	}
-	log.Printf("Cache named %s is created\n", CacheName)
 
-	// Sets key with default TTL and gets value with that key
-	key := []byte(uuid.NewString())
-	value := []byte(uuid.NewString())
-	log.Printf("Setting key: %s, value: %s\n", key, value)
-	_, err = client.Set(&momento.CacheSetRequest{
-		CacheName: CacheName,
-		Key:       key,
-		Value:     value,
+	// Create Cache Ignore if Cache already exists
+	err = client.CreateCache(&CreateCacheRequest{
+		CacheName: cacheName,
 	})
 	if err != nil {
-		panic(err)
+		if momentoErr, ok := err.(MomentoError); ok {
+			if momentoErr.Code() != AlreadyExists {
+				log.Fatal(fmt.Sprintf(
+					"failed creating cache %s with err %+v",
+					cacheName, momentoErr,
+				))
+			}
+		}
 	}
-	log.Printf("Getting key: %s\n", key)
-	resp, err := client.Get(&momento.CacheGetRequest{
-		CacheName: CacheName,
-		Key:       key,
-	})
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Lookup resulted in a : %s\n", resp.Result())
-	log.Printf("Looked up value: %s\n", resp.StringValue())
+	log.Println(fmt.Sprintf("Cache %s is created", cacheName))
 
-	// Permanently delete the cache
-	err = client.DeleteCache(&momento.DeleteCacheRequest{CacheName: CacheName})
+	// Sets key with default TTL and custom ttl and then retrieves the items from cache
+	key1 := []byte(uuid.NewString())
+	key2 := []byte(uuid.NewString())
+	value1 := []byte(uuid.NewString())
+	value2 := []byte(uuid.NewString())
+
+	log.Println(fmt.Sprintf("Setting key: %s, value: %s", key1, value1))
+	_, err = client.Set(&CacheSetRequest{
+		CacheName: cacheName,
+		Key:       key1,
+		Value:     value2,
+	})
 	if err != nil {
-		panic(err)
+		log.Fatal(fmt.Sprintf("failed setting key %s with err %+v", key1, err))
 	}
-	log.Printf("Cache named %s is deleted\n", CacheName)
+	log.Println(fmt.Sprintf("Setting key with custom ttl key: %s, value: %s", key2, value2))
+	_, err = client.Set(&CacheSetRequest{
+		CacheName:  cacheName,
+		Key:        key2,
+		Value:      value2,
+		TtlSeconds: TTL(60),
+	})
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed setting key %s with err %+v", key2, err))
+	}
+	log.Println(fmt.Sprintf("Getting key: %s", key1))
+	resp, err := client.Get(&CacheGetRequest{
+		CacheName: cacheName,
+		Key:       key1,
+	})
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed getting key %s with err %+v", key1, err))
+	}
+	log.Println(fmt.Sprintf(
+		"Get request succeded result: %s value: %s",
+		resp.Result(), resp.StringValue(),
+	))
+
+	// Delete the cache
+	err = client.DeleteCache(&DeleteCacheRequest{CacheName: cacheName})
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed deleting cache %s with err %+v", cacheName, err))
+	}
+	log.Printf(fmt.Sprintf("Cache %s is deleted", cacheName))
 }
 ```
 

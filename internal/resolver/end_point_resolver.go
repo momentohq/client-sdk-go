@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	MOMENTO_CONTROL_ENDPOINT_PREFIX = "control."
-	MOMENTO_CACHE_ENDPOINT_PREFIX   = "cache."
-	CONTROL_ENDPOINT_CLAIM_ID       = "cp"
-	CACHE_ENDPOINT_CLAIM_ID         = "c"
+	momentoControlEndpointPrefix = "control."
+	momentoCacheEndpointPrefix   = "cache."
+	controlEndpointClaimId       = "cp"
+	cacheEndpointClaimId         = "c"
 )
 
 type Endpoints struct {
@@ -23,7 +23,10 @@ type Endpoints struct {
 
 func Resolve(request *models.ResolveRequest) (*Endpoints, momentoerrors.MomentoSvcErr) {
 	if request.EndpointOverride != "" {
-		return &Endpoints{ControlEndpoint: MOMENTO_CONTROL_ENDPOINT_PREFIX + request.EndpointOverride, CacheEndpoint: MOMENTO_CACHE_ENDPOINT_PREFIX + request.EndpointOverride}, nil
+		return &Endpoints{
+			ControlEndpoint: momentoControlEndpointPrefix + request.EndpointOverride,
+			CacheEndpoint:   momentoCacheEndpointPrefix + request.EndpointOverride,
+		}, nil
 	}
 	return getEndpointsFromToken(request.AuthToken)
 }
@@ -34,8 +37,14 @@ func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoS
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		return &Endpoints{ControlEndpoint: reflect.ValueOf(claims[CONTROL_ENDPOINT_CLAIM_ID]).String(), CacheEndpoint: reflect.ValueOf(claims[CACHE_ENDPOINT_CLAIM_ID]).String()}, nil
-	} else {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Invalid Auth token.", nil)
+		return &Endpoints{
+			ControlEndpoint: reflect.ValueOf(claims[controlEndpointClaimId]).String(),
+			CacheEndpoint:   reflect.ValueOf(claims[cacheEndpointClaimId]).String(),
+		}, nil
 	}
+	return nil, momentoerrors.NewMomentoSvcErr(
+		momentoerrors.InvalidArgumentError,
+		"Invalid Auth token.",
+		nil,
+	)
 }

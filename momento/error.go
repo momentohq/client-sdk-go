@@ -32,14 +32,6 @@ type momentoError struct {
 	originalErr error
 }
 
-func newMomentoError(code string, message string, originalErr error) *momentoError {
-	return &momentoError{
-		code,
-		message,
-		originalErr,
-	}
-}
-
 func (err momentoError) Code() string {
 	return err.code
 }
@@ -63,5 +55,9 @@ func (err momentoError) Error() string {
 }
 
 func NewMomentoError(code string, message string, originalErr error) MomentoError {
-	return newMomentoError(code, message, originalErr)
+	return &momentoError{
+		code,
+		message,
+		originalErr,
+	}
 }

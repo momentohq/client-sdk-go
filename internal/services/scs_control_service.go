@@ -16,8 +16,8 @@ const ControlPort = ":443"
 const ControlCtxTimeout = 60 * time.Second
 
 type ScsControlClient struct {
-	grpcManager   *grpcmanagers.ScsControlGrpcManager
-	controlClient pb.ScsControlClient
+	grpcManager *grpcmanagers.ScsControlGrpcManager
+	grpcClient  pb.ScsControlClient
 }
 
 func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, momentoerrors.MomentoSvcErr) {
@@ -28,7 +28,7 @@ func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClien
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return &ScsControlClient{grpcManager: controlManager, controlClient: pb.NewScsControlClient(controlManager.Conn)}, nil
+	return &ScsControlClient{grpcManager: controlManager, grpcClient: pb.NewScsControlClient(controlManager.Conn)}, nil
 }
 
 func (client *ScsControlClient) Close() momentoerrors.MomentoSvcErr {
@@ -41,7 +41,7 @@ func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) 
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
-	_, err := client.controlClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
+	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err)
 	}
@@ -54,7 +54,7 @@ func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) 
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
-	_, err := client.controlClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
+	_, err := client.grpcClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err)
 	}
@@ -64,7 +64,7 @@ func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) 
 func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*models.ListCachesResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
 	defer cancel()
-	resp, err := client.controlClient.ListCaches(ctx, &pb.XListCachesRequest{NextToken: request.NextToken})
+	resp, err := client.grpcClient.ListCaches(ctx, &pb.XListCachesRequest{NextToken: request.NextToken})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}

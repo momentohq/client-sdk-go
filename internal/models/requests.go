@@ -28,10 +28,10 @@ type ControlClientRequest struct {
 }
 
 type DataClientRequest struct {
-	AuthToken         string
-	Endpoint          string
-	DefaultTtlSeconds uint32
-	DataCtxTimeout    *uint32
+	AuthToken             string
+	Endpoint              string
+	DefaultTtlSeconds     uint32
+	RequestTimeoutSeconds uint32
 }
 
 type ConvertEcacheResultRequest struct {
@@ -41,5 +41,12 @@ type ConvertEcacheResultRequest struct {
 }
 
 func ConvertEcacheResult(request ConvertEcacheResultRequest) momentoerrors.MomentoSvcErr {
-	return momentoerrors.NewMomentoSvcErr(momentoerrors.InternalServerError, fmt.Sprintf("CacheService returned an unexpected result: %v for operation: %s with message: %s", request.ECacheResult, request.OpName, request.Message), nil)
+	return momentoerrors.NewMomentoSvcErr(
+		momentoerrors.InternalServerError,
+		fmt.Sprintf(
+			"CacheService returned an unexpected result: %v for operation: %s with message: %s",
+			request.ECacheResult, request.OpName, request.Message,
+		),
+		nil,
+	)
 }

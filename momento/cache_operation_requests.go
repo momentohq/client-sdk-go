@@ -1,11 +1,5 @@
 package momento
 
-type SimpleCacheClientRequest struct {
-	AuthToken             string
-	DefaultTtlSeconds     uint32
-	RequestTimeoutSeconds *uint32
-}
-
 type CreateCacheRequest struct {
 	CacheName string
 }
@@ -22,7 +16,18 @@ type CacheSetRequest struct {
 	CacheName  string
 	Key        interface{}
 	Value      interface{}
-	TtlSeconds uint32
+	TtlSeconds TimeToLive
+}
+
+func TTL(ttl uint32) TimeToLive {
+	pInt := &ttl
+	return TimeToLive{
+		_ttl: pInt,
+	}
+}
+
+type TimeToLive struct {
+	_ttl *uint32
 }
 
 type CacheGetRequest struct {
