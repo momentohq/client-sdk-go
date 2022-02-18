@@ -8,15 +8,14 @@ const (
 	InvalidArgumentError = "InvalidArgumentError"
 	InternalServerError  = "InternalServerError"
 	ClientSdkError       = "ClientSdkError"
-	FailedPrecondition   = "FailedPrecondition"
-	Canceled             = "Canceled"
-	DeadlineExceeded     = "DeadlineExceeded"
-	PermissionDenied     = "PermissionDenied"
-	Unauthenticated      = "Unauthenticated"
-	ResourceExhausted    = "ResourceExhausted"
-	NotFound             = "NotFound"
-	AlreadyExists        = "AlreadyExists"
-	Unavailable          = "Unavailable"
+	BadRequestError      = "BadRequestError"
+	CanceledError        = "CanceledError"
+	TimeoutError         = "TimeoutError"
+	PermissionError      = "PermissionError"
+	AuthenticationError  = "AuthenticationError"
+	LimitExceededError   = "LimitExceededError"
+	NotFoundError        = "NotFoundError"
+	AlreadyExistsError   = "AlreadyExistsError"
 )
 
 type MomentoError interface {

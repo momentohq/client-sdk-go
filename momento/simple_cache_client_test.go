@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -16,7 +17,7 @@ var (
 )
 
 const (
-	defaultTtlSeconds = 60
+	defaultTtlSeconds = 3
 )
 
 // Basic happy path test - create a cache, operate set/get, and delete the cache
@@ -92,14 +93,13 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		CacheName: cacheName,
 	})
 	if err != nil {
-		t.Errorf("error occurred deleting cache err=%+v", err)
+		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
 	}
 
 	cleanUpClient(client)
 }
 
 func TestClientInitialization(t *testing.T) {
-
 	testRequestTimeout := uint32(100)
 	badRequestTimeout := uint32(0)
 	tests := map[string]struct {
@@ -161,6 +161,384 @@ func TestClientInitialization(t *testing.T) {
 	}
 }
 
+func TestCreateCache(t *testing.T) {
+	const correctCacheName = "correct-cache-name"
+	tests := map[string]struct {
+		expectedErr string
+		cacheName   string
+	}{
+		"happy path": {
+			cacheName: correctCacheName,
+		},
+		"test creating already existing cache name": {
+			expectedErr: AlreadyExistsError,
+			cacheName:   testCacheName,
+		},
+		"test creating empty cache name": {
+			expectedErr: InvalidArgumentError,
+			cacheName:   "",
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			err = client.CreateCache(&CreateCacheRequest{CacheName: tt.cacheName})
+			if tt.expectedErr != "" && err == nil {
+				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr != "" && err != nil {
+				if momentoErr, ok := err.(MomentoError); ok {
+					if momentoErr.Code() == tt.expectedErr {
+						return // Success end test we expected this
+					}
+				}
+				t.Errorf(
+					"unexpected error occurred creating cache got=%+v expected=%+v",
+					err, tt.expectedErr,
+				)
+			}
+
+			if tt.expectedErr == "" && err != nil {
+				t.Errorf("unexpected error occurred on creating cache expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			// delete happy path cache for TestCreateCache
+			if tt.cacheName == correctCacheName {
+				err = client.DeleteCache(&DeleteCacheRequest{CacheName: tt.cacheName})
+				if err != nil {
+					t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", tt.cacheName, err))
+				}
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
+func TestDeleteCache(t *testing.T) {
+	var unknownCache = uuid.NewString()
+	tests := map[string]struct {
+		expectedErr string
+		cacheName   string
+	}{
+		"happy path": {
+			cacheName: testCacheName,
+		},
+		"test deleteing unknown cache name": {
+			expectedErr: NotFoundError,
+			cacheName:   unknownCache,
+		},
+		"test deleting empty cache name": {
+			expectedErr: InvalidArgumentError,
+			cacheName:   "",
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			err := client.DeleteCache(&DeleteCacheRequest{CacheName: tt.cacheName})
+			if tt.expectedErr != "" && err == nil {
+				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr != "" && err != nil {
+				if momentoErr, ok := err.(MomentoError); ok {
+					if momentoErr.Code() == tt.expectedErr {
+						return // Success end test we expected this
+					}
+				}
+				t.Errorf(
+					"unexpected error occurred deleteing cache got=%+v expected=%+v",
+					err, tt.expectedErr,
+				)
+			}
+
+			if tt.expectedErr == "" && err != nil {
+				t.Errorf("unexpected error occurred on deleteing cache expected=%+v got=%+v", tt.expectedErr, err)
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
+func TestListCache(t *testing.T) {
+	var unknownCache = uuid.NewString()
+	tests := map[string]struct {
+		cacheName string
+		inList    bool
+		notInList bool
+	}{
+		"happy path": {
+			cacheName: testCacheName,
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			resp, err := client.ListCaches(&ListCachesRequest{})
+			if err != nil {
+				t.Errorf("unexpected error occurred on listing caches err=%+v", err)
+			}
+			var cacheNameInList = false
+			var unknownCacheInList = false
+			for _, cache := range resp.Caches() {
+				if cache.Name() == tt.cacheName {
+					cacheNameInList = true
+				}
+				if cache.Name() == unknownCache {
+					unknownCacheInList = true
+				}
+			}
+			if cacheNameInList == false {
+				t.Errorf("cache=%s was not found in cache list", tt.cacheName)
+			}
+			if unknownCacheInList == true {
+				t.Errorf("unexpected cache=%s was found in cache list", unknownCache)
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
+func TestSetGet(t *testing.T) {
+	tests := map[string]struct {
+		key               string
+		value             string
+		expectedGetResult string
+		ttl               uint32
+	}{
+		"happy path with HIT": {
+			key:               uuid.NewString(),
+			value:             uuid.NewString(),
+			expectedGetResult: "HIT",
+		},
+		"test cache miss after ttl expired": {
+			key:               uuid.NewString(),
+			value:             uuid.NewString(),
+			expectedGetResult: "MISS",
+		},
+		"test set with different ttl and HIT": {
+			key:               uuid.NewString(),
+			value:             uuid.NewString(),
+			expectedGetResult: "HIT",
+			ttl:               2,
+		},
+		"test set with different ttl and MISS": {
+			key:               uuid.NewString(),
+			value:             uuid.NewString(),
+			expectedGetResult: "MISS",
+			ttl:               2,
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			if tt.ttl == 0 {
+				// set string key/value with default ttl
+				_, err := client.Set(&CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value})
+				if err != nil {
+					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
+				}
+			} else {
+				// set string key/value with different ttl
+				_, err := client.Set(&CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value, TtlSeconds: TTL(tt.ttl)})
+				if err != nil {
+					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
+				}
+			}
+			if tt.expectedGetResult == "HIT" {
+				resp, err := client.Get(&CacheGetRequest{CacheName: testCacheName, Key: tt.key})
+				if err != nil {
+					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
+				}
+				if tt.value != resp.StringValue() {
+					t.Errorf("set string value=%s is not the same as returned string value=%s", tt.value, resp.StringValue())
+				}
+				if tt.expectedGetResult != resp.Result() {
+					t.Errorf("expected result=%s but got result=%s", tt.expectedGetResult, resp.Result())
+				}
+			} else {
+				// make sure result it cache miss after ttl is expired
+				time.Sleep(5 * time.Second)
+				resp, err := client.Get(&CacheGetRequest{CacheName: testCacheName, Key: tt.key})
+				if err != nil {
+					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
+				}
+				if tt.expectedGetResult != resp.Result() {
+					t.Errorf("expected result=%s but got result=%s", tt.expectedGetResult, resp.Result())
+				}
+			}
+			// set byte key/value
+			_, err = client.Set(&CacheSetRequest{CacheName: testCacheName, Key: []byte(tt.key), Value: []byte(tt.value)})
+			if err != nil {
+				t.Errorf("unexpected error occurred on setting cache err=%+v", err)
+			}
+			if tt.expectedGetResult == "HIT" {
+				resp, err := client.Get(&CacheGetRequest{CacheName: testCacheName, Key: []byte(tt.key)})
+				if err != nil {
+					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
+				}
+				if tt.value != string(resp.ByteValue()) {
+					t.Errorf("set byte value=%s is not the same as returned byte value=%s", tt.value, resp.ByteValue())
+				}
+				if tt.expectedGetResult != resp.Result() {
+					t.Errorf("expected result=%s but got result=%s", tt.expectedGetResult, resp.Result())
+				}
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
+func TestSet(t *testing.T) {
+	tests := map[string]struct {
+		cacheName   string
+		key         interface{}
+		value       interface{}
+		expectedErr string
+	}{
+		"test set on non existant cache": {
+			cacheName:   uuid.NewString(),
+			key:         uuid.NewString(),
+			value:       uuid.NewString(),
+			expectedErr: NotFoundError,
+		},
+		"test set on empty cache name": {
+			cacheName:   "",
+			key:         uuid.NewString(),
+			value:       uuid.NewString(),
+			expectedErr: InvalidArgumentError,
+		},
+		"test set on nil key": {
+			cacheName:   testCacheName,
+			key:         nil,
+			value:       uuid.NewString(),
+			expectedErr: InvalidArgumentError,
+		},
+		"test set on nil value": {
+			cacheName:   testCacheName,
+			key:         uuid.NewString(),
+			value:       nil,
+			expectedErr: InvalidArgumentError,
+		},
+		"test set on bad key": {
+			cacheName:   testCacheName,
+			key:         1,
+			value:       uuid.NewString(),
+			expectedErr: InvalidArgumentError,
+		},
+		"test set on bad value": {
+			cacheName:   testCacheName,
+			key:         uuid.NewString(),
+			value:       1,
+			expectedErr: InvalidArgumentError,
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, err := client.Set(&CacheSetRequest{CacheName: tt.cacheName, Key: tt.key, Value: tt.value})
+			if tt.expectedErr != "" && err == nil {
+				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr != "" && err != nil {
+				if momentoErr, ok := err.(MomentoError); ok {
+					if momentoErr.Code() == tt.expectedErr {
+						return // Success end test we expected this
+					}
+				}
+				t.Errorf(
+					"unexpected error occurred setting cache got=%+v expected=%+v",
+					err, tt.expectedErr,
+				)
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	tests := map[string]struct {
+		cacheName   string
+		key         interface{}
+		expectedErr string
+	}{
+		"test get on non existant cache": {
+			cacheName:   uuid.NewString(),
+			key:         uuid.NewString(),
+			expectedErr: NotFoundError,
+		},
+		"test get on empty cache name": {
+			cacheName:   "",
+			key:         uuid.NewString(),
+			expectedErr: InvalidArgumentError,
+		},
+		"test get on nil key": {
+			cacheName:   testCacheName,
+			key:         nil,
+			expectedErr: InvalidArgumentError,
+		},
+		"test get on bad key": {
+			cacheName:   testCacheName,
+			key:         1,
+			expectedErr: InvalidArgumentError,
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, err := client.Get(&CacheGetRequest{CacheName: tt.cacheName, Key: tt.key})
+			if tt.expectedErr != "" && err == nil {
+				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr != "" && err != nil {
+				if momentoErr, ok := err.(MomentoError); ok {
+					if momentoErr.Code() == tt.expectedErr {
+						return // Success end test we expected this
+					}
+				}
+				t.Errorf(
+					"unexpected error occurred setting cache got=%+v expected=%+v",
+					err, tt.expectedErr,
+				)
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
 func newTestClient() (ScsClient, error) {
 	if testAuthToken == "" {
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
@@ -179,7 +557,7 @@ func newTestClient() (ScsClient, error) {
 		CacheName: testCacheName,
 	})
 	if momentoErr, ok := err.(MomentoError); ok {
-		if momentoErr.Code() != AlreadyExists {
+		if momentoErr.Code() != AlreadyExistsError {
 			return nil, err
 		}
 	}
