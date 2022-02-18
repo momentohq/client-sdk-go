@@ -5,6 +5,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
 	"github.com/momentohq/client-sdk-go/internal/services"
+	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
 const defaultRequestTimeout = uint32(5)
@@ -134,6 +135,14 @@ func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, err
 	if request.TtlSeconds._ttl != nil {
 		ttlToUse = *request.TtlSeconds._ttl
 	}
+	err := utility.IsKeyValid(request.Key)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	err = utility.IsValueValid(request.Value)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
 	rsp, err := c.dataClient.Set(&models.CacheSetRequest{
 		CacheName:  request.CacheName,
 		Key:        request.Key,
@@ -149,6 +158,10 @@ func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, err
 }
 
 func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, error) {
+	err := utility.IsKeyValid(request.Key)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
 	rsp, err := c.dataClient.Get(&models.CacheGetRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
