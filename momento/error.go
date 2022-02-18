@@ -63,7 +63,7 @@ func (err momentoError) Error() string {
 	return fmt.Sprintf("%s: %s", err.code, err.message)
 }
 
-// Constructs MomentoError.
+// NewMomentoError returns an initialized MomentoError wrapper.
 func NewMomentoError(code string, message string, originalErr error) MomentoError {
 	return &momentoError{
 		code,
