@@ -27,9 +27,9 @@ traditional caching solutions.
 - A Momento Auth Token is required, you can generate one using
   the [Momento CLI](https://github.com/momentohq/momento-cli)
 - golang
-    - `brew install go`
+  - `brew install go`
 - golint
-    - `go get -u golang.org/x/lint/golint`
+  - `go get -u golang.org/x/lint/golint`
 
 <br/>
 
@@ -131,6 +131,20 @@ func main() {
 	}
 	log.Printf(fmt.Sprintf("Cache %s is deleted", cacheName))
 }
+```
+
+<br />
+
+You can also specify request timeout for Momento client
+
+```golang
+var authToken = os.Getenv("MOMENTO_AUTH_TOKEN")
+const (
+		cacheName             = "cache"
+		itemDefaultTtlSeconds = 60
+		requestTimeoutSeconds = 10
+	)
+client, err = NewSimpleCacheClient(authToken, itemDefaultTtlSeconds, WithRequestTimeout(requestTimeoutSeconds))
 ```
 
 <br />
