@@ -1,3 +1,5 @@
+// Package momento represents API ScsClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
+
 package momento
 
 import (
@@ -10,6 +12,7 @@ import (
 
 const defaultRequestTimeout = uint32(5)
 
+// ScsClient wraps lower level cache control and data operations.
 type ScsClient interface {
 	CreateCache(request *CreateCacheRequest) error
 	DeleteCache(request *DeleteCacheRequest) error
@@ -21,6 +24,7 @@ type ScsClient interface {
 	Close()
 }
 
+// DefaultScsClient represents all information needed for momento client to enable cache control and data operations.
 type DefaultScsClient struct {
 	authToken             string
 	controlClient         *services.ScsControlClient
@@ -29,8 +33,10 @@ type DefaultScsClient struct {
 	defaultRequestTimeout uint32
 }
 
+// Option returns a function to configure various options for ScsClient.
 type Option func(*DefaultScsClient) MomentoError
 
+// WithRequestTimeout returns an Option that and set user-specified request timeout and  can be chained with other builder methods.
 func WithRequestTimeout(requestTimeout uint32) Option {
 	return func(c *DefaultScsClient) MomentoError {
 		if requestTimeout == 0 {
@@ -45,6 +51,7 @@ func WithRequestTimeout(requestTimeout uint32) Option {
 	}
 }
 
+// NewSimpleCacheClient returns a new ScsClient with provided authToken, defaultTtlSeconds, and opts arguments.
 func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Option) (ScsClient, error) {
 	endpoints, err := resolver.Resolve(&models.ResolveRequest{
 		AuthToken: authToken,
@@ -97,6 +104,11 @@ func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Op
 	return client, nil
 }
 
+// Create a new cache in your Momento account.
+// The following are possible errors that can be returned:
+// InvalidArgumentError: If provided CacheName is empty.
+// AlreadyExistsError: If cache with the given name already exists.
+// ClientSdkError: For any SDK checks that fail.
 func (c *DefaultScsClient) CreateCache(request *CreateCacheRequest) error {
 	err := c.controlClient.CreateCache(&models.CreateCacheRequest{
 		CacheName: request.CacheName,
@@ -107,6 +119,11 @@ func (c *DefaultScsClient) CreateCache(request *CreateCacheRequest) error {
 	return nil
 }
 
+// Deletes a cache and all the items within your Momento account.
+// The following are possible errors that can be returned:
+// InvalidArgumentError: If provided CacheName is empty.
+// NotFoundError: If an attempt is made to delete a MomentoCache that doesn't exist.
+// ClientSdkError: For any SDK checks that fail.
 func (c *DefaultScsClient) DeleteCache(request *DeleteCacheRequest) error {
 	err := c.controlClient.DeleteCache(&models.DeleteCacheRequest{
 		CacheName: request.CacheName,
@@ -117,6 +134,8 @@ func (c *DefaultScsClient) DeleteCache(request *DeleteCacheRequest) error {
 	return nil
 }
 
+// Lists all caches in your Momento account.
+// The following is a possible error that can be returned:
 func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(&models.ListCachesRequest{
 		NextToken: request.NextToken,
@@ -130,6 +149,11 @@ func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesRe
 	}, nil
 }
 
+// Stores an item in cache.
+// The following are possible errors that can be returned:
+// InvalidArgumentError: If provided CacheName is empty.
+// NotFoundError: If the cache with the given name doesn't exist.
+// InternalServerError: If server encountered an unknown error while trying to store the item.
 func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, error) {
 	ttlToUse := c.defaultTtlSeconds
 	if request.TtlSeconds._ttl != nil {
@@ -157,6 +181,11 @@ func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, err
 	}, nil
 }
 
+// Retrieve an item from the cache.
+// The following are possible errors that can be returned:
+// InvalidArgumentError: If provided CacheName is empty.
+// NotFoundError: If the cache with the given name doesn't exist.
+// InternalServerError: If server encountered an unknown error while trying to store the item.
 func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, error) {
 	err := utility.IsKeyValid(request.Key)
 	if err != nil {
@@ -175,6 +204,7 @@ func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, err
 	}, nil
 }
 
+// Closes both control and data gRPC client connections.
 func (c *DefaultScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
