@@ -136,6 +136,7 @@ func (c *DefaultScsClient) DeleteCache(request *DeleteCacheRequest) error {
 
 // Lists all caches in your Momento account.
 // The following is a possible error that can be returned:
+// AuthenticationError: If the provided Momento Auth Token is invalid.
 func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(&models.ListCachesRequest{
 		NextToken: request.NextToken,
@@ -204,7 +205,7 @@ func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, err
 	}, nil
 }
 
-// Closes both control and data gRPC client connections.
+// Closes the client.
 func (c *DefaultScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
