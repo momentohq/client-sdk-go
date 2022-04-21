@@ -23,10 +23,3 @@ func IsValueValid(value interface{}) momentoerrors.MomentoSvcErr {
 	}
 	return nil
 }
-
-func IsTtlValid(ttl uint64) momentoerrors.MomentoSvcErr {
-	if ttl < 0 {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "ttl cannot be negative", nil)
-	}
-	return nil
-}

@@ -154,7 +154,7 @@ func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesRe
 	}, nil
 }
 
-// Creates a Momento signing key in your Moemnto account
+// Creates a Momento signing key in your Momento account
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // InvalidArgumentError: If provided TtlMinutes is negative
@@ -174,7 +174,7 @@ func (c *DefaultScsClient) CreateSigningKey(request *CreateSigningKeyRequest) (*
 	}, nil
 }
 
-// Revokes a Momento signing key in your Moemnto account, all tokens signed by which will be invalid
+// Revokes a Momento signing key in your Momento account, all tokens signed by which will be invalid
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // ClientSdkError: For any SDK checks that fail.
@@ -188,7 +188,7 @@ func (c *DefaultScsClient) RevokeSigningKey(request *RevokeSigningKeyRequest) er
 	return nil
 }
 
-// Lists all Momento signing keys in your Moemnto account
+// Lists all Momento signing keys in your Momento account
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // ClientSdkError: For any SDK checks that fail.
