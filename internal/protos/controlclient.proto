@@ -10,6 +10,9 @@ service ScsControl {
   rpc CreateCache (_CreateCacheRequest) returns (_CreateCacheResponse) {}
   rpc DeleteCache (_DeleteCacheRequest) returns (_DeleteCacheResponse) {}
   rpc ListCaches (_ListCachesRequest) returns (_ListCachesResponse) {}
+  rpc CreateSigningKey (_CreateSigningKeyRequest) returns (_CreateSigningKeyResponse) {}
+  rpc RevokeSigningKey (_RevokeSigningKeyRequest) returns (_RevokeSigningKeyResponse) {}
+  rpc ListSigningKeys (_ListSigningKeysRequest) returns (_ListSigningKeysResponse) {}
 }
 
 message _DeleteCacheRequest {
@@ -36,5 +39,37 @@ message _Cache {
 
 message _ListCachesResponse {
   repeated _Cache cache = 1;
+  string next_token = 2;
+}
+
+message _CreateSigningKeyRequest {
+  uint32 ttl_minutes = 1;
+}
+
+message _CreateSigningKeyResponse {
+  string key = 1;
+  uint64 expires_at = 2;
+}
+
+message _RevokeSigningKeyRequest {
+  string key_id = 1;
+}
+
+message _RevokeSigningKeyResponse {
+}
+
+message _SigningKey {
+  // The id of the signing key
+  string key_id = 1;
+  // Epoch time in seconds when the signing key expires
+  uint64 expires_at = 2;
+}
+
+message _ListSigningKeysRequest {
+  string next_token = 1;
+}
+
+message _ListSigningKeysResponse {
+  repeated _SigningKey signing_key = 1;
   string next_token = 2;
 }

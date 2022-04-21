@@ -15,6 +15,21 @@ type ListCachesRequest struct {
 	NextToken string
 }
 
+type CreateSigningKeyRequest struct {
+	// Ttl in minutes before the Momento signing key expires
+	TtlMinutes uint32
+}
+
+type RevokeSigningKeyRequest struct {
+	// Id of Momento signing key to revoke
+	KeyId string
+}
+
+type ListSigningKeysRequest struct {
+	// Token to continue paginating through the list. It's used to handle large paginated lists.
+	NextToken string
+}
+
 type CacheSetRequest struct {
 	// Name of the cache to store the item in.
 	CacheName string

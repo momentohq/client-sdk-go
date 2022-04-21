@@ -1,6 +1,9 @@
 package models
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
@@ -36,6 +39,54 @@ type CacheInfo struct {
 
 func NewCacheInfo(cache *pb.XCache) CacheInfo {
 	return CacheInfo{Name: cache.CacheName}
+}
+
+type CreateSigningKeyRequest struct {
+	TtlMinutes uint32
+}
+
+type CreateSigningKeyResponse struct {
+	KeyId     string
+	Endpoint  string
+	Key       string
+	ExpiresAt time.Time
+}
+
+func NewCreateSigningKeyResponse(endpoint string, resp *pb.XCreateSigningKeyResponse) *CreateSigningKeyResponse {
+	keyObj := map[string]string{}
+	json.Unmarshal([]byte(resp.GetKey()), &keyObj)
+	return &CreateSigningKeyResponse{KeyId: keyObj["kid"], Endpoint: endpoint, Key: resp.GetKey(), ExpiresAt: time.Unix(int64(resp.GetExpiresAt()), 0)}
+}
+
+type RevokeSigningKeyRequest struct {
+	KeyId string
+}
+
+type ListSigningKeysRequest struct {
+	NextToken string
+}
+
+type ListSigningKeysResponse struct {
+	NextToken   string
+	SigningKeys []SigningKey
+}
+
+func NewListSigningKeysResponse(endpoint string, resp *pb.XListSigningKeysResponse) *ListSigningKeysResponse {
+	var signingKeys = []SigningKey{}
+	for _, signingKey := range resp.SigningKey {
+		signingKeys = append(signingKeys, NewSigningKey(endpoint, signingKey))
+	}
+	return &ListSigningKeysResponse{NextToken: resp.GetNextToken(), SigningKeys: signingKeys}
+}
+
+type SigningKey struct {
+	KeyId     string
+	Endpoint  string
+	ExpiresAt time.Time
+}
+
+func NewSigningKey(endpoint string, signingKey *pb.XSigningKey) SigningKey {
+	return SigningKey{KeyId: signingKey.GetKeyId(), Endpoint: endpoint, ExpiresAt: time.Unix(int64(signingKey.GetExpiresAt()), 0)}
 }
 
 const (

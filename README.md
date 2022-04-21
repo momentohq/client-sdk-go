@@ -161,3 +161,15 @@ client, err = NewSimpleCacheClient(authToken, itemDefaultTtlSeconds, WithRequest
 ```bash
 TEST_AUTH_TOKEN=<auth token> TEST_CACHE_NAME=<cache name> go test -v ./momento
 ```
+
+## Updating GRPC protos
+1. Follow the [quick-start instructions](https://grpc.io/docs/languages/go/quickstart/) to set up your environment
+2. Checkout the latest changes from https://github.com/momentohq/client_protos
+3. Copy the `.proto` files from `client_protos/proto` to `client-sdk-go/internal/protos/`
+4. `cd` to the `internal` directory and run:
+
+```protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative protos/*.proto
+```
+
+You should now have updated auto-generated files with the updated protos
