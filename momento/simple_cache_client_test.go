@@ -328,35 +328,18 @@ func TestCreateListRevokeSigningKeys(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error occurred on list signing keys err=%+v", err)
 	}
-	if len(listSigningKeysResponse.SigningKeys()) == 0 {
-		t.Error("Failed to create signing key, should have received at least one signing key")
-	}
 	var signingKeyFound = false
-	var foundSigningKey = SigningKey{}
 	for _, signingKey := range listSigningKeysResponse.SigningKeys() {
 		if signingKey.KeyId() == createSigningKeyResponse.KeyId() {
 			signingKeyFound = true
-			foundSigningKey = signingKey
-		}
-		err = client.RevokeSigningKey(&RevokeSigningKeyRequest{KeyId: createSigningKeyResponse.KeyId()})
-		if err != nil {
-			t.Errorf("unexpected error on revoke signing key err=%+v", err)
+			err = client.RevokeSigningKey(&RevokeSigningKeyRequest{KeyId: createSigningKeyResponse.KeyId()})
+			if err != nil {
+				t.Errorf("unexpected error on revoke signing key err=%+v", err)
+			}
 		}
 	}
 	if !signingKeyFound {
 		t.Errorf("expected to find %s keyId in ListSigningKeysResponse, never found", createSigningKeyResponse.KeyId())
-	}
-	keysMatch := foundSigningKey.Endpoint() == createSigningKeyResponse.Endpoint() && foundSigningKey.ExpiresAt() == createSigningKeyResponse.ExpiresAt()
-	if !keysMatch {
-		t.Error("returned signing key didn't match the one we created")
-	}
-
-	listSigningKeysResponse, err = client.ListSigningKeys(&ListSigningKeysRequest{})
-	if err != nil {
-		t.Errorf("unexpected error occurred on list signing keys err=%+v", err)
-	}
-	if len(listSigningKeysResponse.SigningKeys()) != 0 {
-		t.Error("failed to revoke all keys")
 	}
 	cleanUpClient(client)
 }
