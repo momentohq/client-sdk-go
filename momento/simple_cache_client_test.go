@@ -315,6 +315,35 @@ func TestListCache(t *testing.T) {
 	}
 }
 
+func TestCreateListRevokeSigningKeys(t *testing.T) {
+	client, err := newTestClient()
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+	}
+	createSigningKeyResponse, err := client.CreateSigningKey(&CreateSigningKeyRequest{TtlMinutes: 30})
+	if err != nil {
+		t.Errorf("unexpected error occurred on create signing key err=%+v", err)
+	}
+	listSigningKeysResponse, err := client.ListSigningKeys(&ListSigningKeysRequest{})
+	if err != nil {
+		t.Errorf("unexpected error occurred on list signing keys err=%+v", err)
+	}
+	var signingKeyFound = false
+	for _, signingKey := range listSigningKeysResponse.SigningKeys() {
+		if signingKey.KeyId() == createSigningKeyResponse.KeyId() {
+			signingKeyFound = true
+			err = client.RevokeSigningKey(&RevokeSigningKeyRequest{KeyId: createSigningKeyResponse.KeyId()})
+			if err != nil {
+				t.Errorf("unexpected error on revoke signing key err=%+v", err)
+			}
+		}
+	}
+	if !signingKeyFound {
+		t.Errorf("expected to find %s keyId in ListSigningKeysResponse, never found", createSigningKeyResponse.KeyId())
+	}
+	cleanUpClient(client)
+}
+
 func TestSetGet(t *testing.T) {
 	tests := map[string]struct {
 		key               string

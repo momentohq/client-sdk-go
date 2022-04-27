@@ -25,6 +25,9 @@ type ScsControlClient interface {
 	CreateCache(ctx context.Context, in *XCreateCacheRequest, opts ...grpc.CallOption) (*XCreateCacheResponse, error)
 	DeleteCache(ctx context.Context, in *XDeleteCacheRequest, opts ...grpc.CallOption) (*XDeleteCacheResponse, error)
 	ListCaches(ctx context.Context, in *XListCachesRequest, opts ...grpc.CallOption) (*XListCachesResponse, error)
+	CreateSigningKey(ctx context.Context, in *XCreateSigningKeyRequest, opts ...grpc.CallOption) (*XCreateSigningKeyResponse, error)
+	RevokeSigningKey(ctx context.Context, in *XRevokeSigningKeyRequest, opts ...grpc.CallOption) (*XRevokeSigningKeyResponse, error)
+	ListSigningKeys(ctx context.Context, in *XListSigningKeysRequest, opts ...grpc.CallOption) (*XListSigningKeysResponse, error)
 }
 
 type scsControlClient struct {
@@ -62,6 +65,33 @@ func (c *scsControlClient) ListCaches(ctx context.Context, in *XListCachesReques
 	return out, nil
 }
 
+func (c *scsControlClient) CreateSigningKey(ctx context.Context, in *XCreateSigningKeyRequest, opts ...grpc.CallOption) (*XCreateSigningKeyResponse, error) {
+	out := new(XCreateSigningKeyResponse)
+	err := c.cc.Invoke(ctx, "/control_client.ScsControl/CreateSigningKey", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsControlClient) RevokeSigningKey(ctx context.Context, in *XRevokeSigningKeyRequest, opts ...grpc.CallOption) (*XRevokeSigningKeyResponse, error) {
+	out := new(XRevokeSigningKeyResponse)
+	err := c.cc.Invoke(ctx, "/control_client.ScsControl/RevokeSigningKey", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsControlClient) ListSigningKeys(ctx context.Context, in *XListSigningKeysRequest, opts ...grpc.CallOption) (*XListSigningKeysResponse, error) {
+	out := new(XListSigningKeysResponse)
+	err := c.cc.Invoke(ctx, "/control_client.ScsControl/ListSigningKeys", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScsControlServer is the server API for ScsControl service.
 // All implementations must embed UnimplementedScsControlServer
 // for forward compatibility
@@ -69,6 +99,9 @@ type ScsControlServer interface {
 	CreateCache(context.Context, *XCreateCacheRequest) (*XCreateCacheResponse, error)
 	DeleteCache(context.Context, *XDeleteCacheRequest) (*XDeleteCacheResponse, error)
 	ListCaches(context.Context, *XListCachesRequest) (*XListCachesResponse, error)
+	CreateSigningKey(context.Context, *XCreateSigningKeyRequest) (*XCreateSigningKeyResponse, error)
+	RevokeSigningKey(context.Context, *XRevokeSigningKeyRequest) (*XRevokeSigningKeyResponse, error)
+	ListSigningKeys(context.Context, *XListSigningKeysRequest) (*XListSigningKeysResponse, error)
 	mustEmbedUnimplementedScsControlServer()
 }
 
@@ -84,6 +117,15 @@ func (UnimplementedScsControlServer) DeleteCache(context.Context, *XDeleteCacheR
 }
 func (UnimplementedScsControlServer) ListCaches(context.Context, *XListCachesRequest) (*XListCachesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCaches not implemented")
+}
+func (UnimplementedScsControlServer) CreateSigningKey(context.Context, *XCreateSigningKeyRequest) (*XCreateSigningKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSigningKey not implemented")
+}
+func (UnimplementedScsControlServer) RevokeSigningKey(context.Context, *XRevokeSigningKeyRequest) (*XRevokeSigningKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeSigningKey not implemented")
+}
+func (UnimplementedScsControlServer) ListSigningKeys(context.Context, *XListSigningKeysRequest) (*XListSigningKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSigningKeys not implemented")
 }
 func (UnimplementedScsControlServer) mustEmbedUnimplementedScsControlServer() {}
 
@@ -152,6 +194,60 @@ func _ScsControl_ListCaches_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ScsControl_CreateSigningKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XCreateSigningKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsControlServer).CreateSigningKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/control_client.ScsControl/CreateSigningKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsControlServer).CreateSigningKey(ctx, req.(*XCreateSigningKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ScsControl_RevokeSigningKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XRevokeSigningKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsControlServer).RevokeSigningKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/control_client.ScsControl/RevokeSigningKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsControlServer).RevokeSigningKey(ctx, req.(*XRevokeSigningKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ScsControl_ListSigningKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XListSigningKeysRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsControlServer).ListSigningKeys(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/control_client.ScsControl/ListSigningKeys",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsControlServer).ListSigningKeys(ctx, req.(*XListSigningKeysRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ScsControl_ServiceDesc is the grpc.ServiceDesc for ScsControl service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +266,18 @@ var ScsControl_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCaches",
 			Handler:    _ScsControl_ListCaches_Handler,
+		},
+		{
+			MethodName: "CreateSigningKey",
+			Handler:    _ScsControl_CreateSigningKey_Handler,
+		},
+		{
+			MethodName: "RevokeSigningKey",
+			Handler:    _ScsControl_RevokeSigningKey_Handler,
+		},
+		{
+			MethodName: "ListSigningKeys",
+			Handler:    _ScsControl_ListSigningKeys_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -18,6 +18,10 @@ type ScsClient interface {
 	DeleteCache(request *DeleteCacheRequest) error
 	ListCaches(request *ListCachesRequest) (*ListCachesResponse, error)
 
+	CreateSigningKey(request *CreateSigningKeyRequest) (*CreateSigningKeyResponse, error)
+	RevokeSigningKey(request *RevokeSigningKeyRequest) error
+	ListSigningKeys(request *ListSigningKeysRequest) (*ListSigningKeysResponse, error)
+
 	Set(request *CacheSetRequest) (*SetCacheResponse, error)
 	Get(request *CacheGetRequest) (*GetCacheResponse, error)
 
@@ -150,6 +154,57 @@ func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesRe
 	}, nil
 }
 
+// Creates a Momento signing key in your Momento account
+// The following are possible errors that can be returned:
+// AuthenticationError: If the provided Momento Auth Token is invalid.
+// InvalidArgumentError: If provided TtlMinutes is negative
+// ClientSdkError: For any SDK checks that fail.
+func (c *DefaultScsClient) CreateSigningKey(request *CreateSigningKeyRequest) (*CreateSigningKeyResponse, error) {
+	rsp, err := c.controlClient.CreateSigningKey(c.dataClient.Endpoint(), &models.CreateSigningKeyRequest{
+		TtlMinutes: request.TtlMinutes,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return &CreateSigningKeyResponse{
+		keyId:     rsp.KeyId,
+		endpoint:  rsp.Endpoint,
+		key:       rsp.Key,
+		expiresAt: rsp.ExpiresAt,
+	}, nil
+}
+
+// Revokes a Momento signing key in your Momento account, all tokens signed by which will be invalid
+// The following are possible errors that can be returned:
+// AuthenticationError: If the provided Momento Auth Token is invalid.
+// ClientSdkError: For any SDK checks that fail.
+func (c *DefaultScsClient) RevokeSigningKey(request *RevokeSigningKeyRequest) error {
+	err := c.controlClient.RevokeSigningKey(&models.RevokeSigningKeyRequest{
+		KeyId: request.KeyId,
+	})
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+	return nil
+}
+
+// Lists all Momento signing keys in your Momento account
+// The following are possible errors that can be returned:
+// AuthenticationError: If the provided Momento Auth Token is invalid.
+// ClientSdkError: For any SDK checks that fail.
+func (c *DefaultScsClient) ListSigningKeys(request *ListSigningKeysRequest) (*ListSigningKeysResponse, error) {
+	rsp, err := c.controlClient.ListSigningKeys(c.dataClient.Endpoint(), &models.ListSigningKeysRequest{
+		NextToken: request.NextToken,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return &ListSigningKeysResponse{
+		nextToken:   rsp.NextToken,
+		signingKeys: convertSigningKey(rsp.SigningKeys),
+	}, nil
+}
+
 // Stores an item in cache.
 // The following are possible errors that can be returned:
 // InvalidArgumentError: If provided CacheName is empty.
@@ -223,6 +278,18 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 	for _, c := range i {
 		convertedList = append(convertedList, CacheInfo{
 			name: c.Name,
+		})
+	}
+	return convertedList
+}
+
+func convertSigningKey(sk []models.SigningKey) []SigningKey {
+	var convertedList []SigningKey
+	for _, s := range sk {
+		convertedList = append(convertedList, SigningKey{
+			keyId:     s.KeyId,
+			endpoint:  s.Endpoint,
+			expiresAt: s.ExpiresAt,
 		})
 	}
 	return convertedList

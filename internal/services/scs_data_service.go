@@ -23,6 +23,7 @@ type ScsDataClient struct {
 	grpcClient            pb.ScsClient
 	defaultTtlSeconds     uint32
 	requestTimeoutSeconds time.Duration
+	endpoint              string
 }
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
@@ -44,7 +45,12 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 		grpcClient:            pb.NewScsClient(dataManager.Conn),
 		defaultTtlSeconds:     request.DefaultTtlSeconds,
 		requestTimeoutSeconds: timeout,
+		endpoint:              request.Endpoint,
 	}, nil
+}
+
+func (client *ScsDataClient) Endpoint() string {
+	return client.endpoint
 }
 
 func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {

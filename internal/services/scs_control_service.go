@@ -70,3 +70,37 @@ func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*
 	}
 	return models.NewListCacheResponse(resp), nil
 }
+
+func (client *ScsControlClient) CreateSigningKey(endpoint string, request *models.CreateSigningKeyRequest) (*models.CreateSigningKeyResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.CreateSigningKey(ctx, &pb.XCreateSigningKeyRequest{TtlMinutes: request.TtlMinutes})
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	createResp, err := models.NewCreateSigningKeyResponse(endpoint, resp)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return createResp, nil
+}
+
+func (client *ScsControlClient) RevokeSigningKey(request *models.RevokeSigningKeyRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	defer cancel()
+	_, err := client.grpcClient.RevokeSigningKey(ctx, &pb.XRevokeSigningKeyRequest{KeyId: request.KeyId})
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
+func (client *ScsControlClient) ListSigningKeys(endpoint string, request *models.ListSigningKeysRequest) (*models.ListSigningKeysResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListSigningKeys(ctx, &pb.XListSigningKeysRequest{NextToken: request.NextToken})
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return models.NewListSigningKeysResponse(endpoint, resp), nil
+}
