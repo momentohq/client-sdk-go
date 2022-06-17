@@ -146,3 +146,29 @@ type SetCacheResponse struct {
 func NewSetCacheResponse(resp *pb.XSetResponse, value []byte) *SetCacheResponse {
 	return &SetCacheResponse{Value: value}
 }
+
+type CacheDeleteRequest struct {
+	CacheName string
+	Key       interface{}
+}
+
+type DeleteCacheResponse struct {
+	Value  []byte
+	Result string
+}
+
+func NewDeleteCacheResponse(resp *pb.XGetResponse) (*DeleteCacheResponse, momentoerrors.MomentoSvcErr) {
+	var result string
+	if resp.Result == pb.ECacheResult_Hit {
+		result = HIT
+	} else if resp.Result == pb.ECacheResult_Miss {
+		result = MISS
+	} else {
+		return nil, ConvertEcacheResult(ConvertEcacheResultRequest{
+			ECacheResult: resp.Result,
+			Message:      resp.Message,
+			OpName:       "GET",
+		})
+	}
+	return &DeleteCacheResponse{Value: resp.CacheBody, Result: result}, nil
+}

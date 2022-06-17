@@ -568,6 +568,62 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestDelete(t *testing.T) {
+	tests := map[string]struct {
+		cacheName   string
+		key         interface{}
+		expectedErr string
+	}{
+		"test get on non existant cache": {
+			cacheName:   uuid.NewString(),
+			key:         uuid.NewString(),
+			expectedErr: NotFoundError,
+		},
+		"test get on empty cache name": {
+			cacheName:   "",
+			key:         uuid.NewString(),
+			expectedErr: InvalidArgumentError,
+		},
+		"test get on nil key": {
+			cacheName:   testCacheName,
+			key:         nil,
+			expectedErr: InvalidArgumentError,
+		},
+		"test get on bad key": {
+			cacheName:   testCacheName,
+			key:         1,
+			expectedErr: InvalidArgumentError,
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, err := client.Delete(&CacheDeleteRequest{CacheName: tt.cacheName, Key: tt.key})
+			if tt.expectedErr != "" && err == nil {
+				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr != "" && err != nil {
+				if momentoErr, ok := err.(MomentoError); ok {
+					if momentoErr.Code() == tt.expectedErr {
+						return // Success end test we expected this
+					}
+				}
+				t.Errorf(
+					"unexpected error occurred setting cache got=%+v expected=%+v",
+					err, tt.expectedErr,
+				)
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
 func newTestClient() (ScsClient, error) {
 	if testAuthToken == "" {
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
