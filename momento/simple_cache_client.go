@@ -271,7 +271,7 @@ func (c *DefaultScsClient) Delete(request *CacheDeleteRequest) (*DeleteCacheResp
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp, err := c.dataClient.Delete(&models.CacheGetRequest{
+	rsp, err := c.dataClient.Delete(&models.CacheDeleteRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
 	})

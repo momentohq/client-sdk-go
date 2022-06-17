@@ -157,7 +157,7 @@ type DeleteCacheResponse struct {
 	Result string
 }
 
-func NewDeleteCacheResponse(resp *pb.XGetResponse) (*DeleteCacheResponse, momentoerrors.MomentoSvcErr) {
+func NewDeleteCacheResponse(resp *pb.XDeleteResponse) (*DeleteCacheResponse, momentoerrors.MomentoSvcErr) {
 	var result string
 	if resp.Result == pb.ECacheResult_Hit {
 		result = HIT
