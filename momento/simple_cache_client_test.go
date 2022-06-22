@@ -89,6 +89,33 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		)
 	}
 
+	err = client.DeleteCache(&DeleteCacheRequest{
+		CacheName: cacheName,
+	})
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
+	}
+
+	cleanUpClient(client)
+}
+
+func TestBasicHappyPathDelete(t *testing.T) {
+	cacheName := uuid.NewString()
+	key := []byte(uuid.NewString())
+	client, err := newTestClient()
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+	}
+	err = client.CreateCache(&CreateCacheRequest{
+		CacheName: cacheName,
+	})
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
+	}
+	existingCacheResp, err := client.Get(&CacheGetRequest{
+		CacheName: testCacheName,
+		Key:       key,
+	})
 	err = client.Delete(&CacheDeleteRequest{
 		CacheName: cacheName,
 		Key:       key,
@@ -101,18 +128,12 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		CacheName: cacheName,
 		Key:       uuid.NewString(),
 	})
-	if err != nil {
-		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
+	if existingCacheResp.Result() != MISS {
+		t.Errorf(
+			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
+			testCacheName, existingCacheResp.StringValue(),
+		)
 	}
-
-	err = client.DeleteCache(&DeleteCacheRequest{
-		CacheName: cacheName,
-	})
-	if err != nil {
-		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
-	}
-
-	cleanUpClient(client)
 }
 
 func TestClientInitialization(t *testing.T) {
