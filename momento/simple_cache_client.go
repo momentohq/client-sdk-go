@@ -24,7 +24,7 @@ type ScsClient interface {
 
 	Set(request *CacheSetRequest) (*SetCacheResponse, error)
 	Get(request *CacheGetRequest) (*GetCacheResponse, error)
-	Delete(request *CacheDeleteRequest) (*DeleteCacheResponse, error)
+	Delete(request *CacheDeleteRequest) error
 
 	Close()
 }
@@ -266,22 +266,19 @@ func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, err
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
 // InternalServerError: If server encountered an unknown error while trying to delete? the item. (edit later?)
-func (c *DefaultScsClient) Delete(request *CacheDeleteRequest) (*DeleteCacheResponse, error) {
+func (c *DefaultScsClient) Delete(request *CacheDeleteRequest) error {
 	err := utility.IsKeyValid(request.Key)
 	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+		return convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp, err := c.dataClient.Delete(&models.CacheDeleteRequest{
+	err = c.dataClient.Delete(&models.CacheDeleteRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
 	})
 	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+		return convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &DeleteCacheResponse{
-		value:  rsp.Value,
-		result: rsp.Result,
-	}, nil
+	return nil
 }
 
 // Closes the client.

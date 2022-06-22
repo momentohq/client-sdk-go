@@ -603,7 +603,7 @@ func TestDelete(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, err := client.Delete(&CacheDeleteRequest{CacheName: tt.cacheName, Key: tt.key})
+			err = client.Delete(&CacheDeleteRequest{CacheName: tt.cacheName, Key: tt.key})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}

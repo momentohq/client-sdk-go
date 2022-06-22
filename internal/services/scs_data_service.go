@@ -114,28 +114,24 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 
 }
 
-func (client *ScsDataClient) Delete(request *models.CacheDeleteRequest) (*models.DeleteCacheResponse, momentoerrors.MomentoSvcErr) {
+func (client *ScsDataClient) Delete(request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.CacheName) {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
 	byteKey, momentoSvcErr := asBytes(request.Key, "Unsupported type for key: ")
 	if momentoSvcErr != nil {
-		return nil, momentoSvcErr
+		return momentoSvcErr
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
 	defer cancel()
-	resp, err := client.grpcClient.Delete(
+	_, err := client.grpcClient.Delete(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XDeleteRequest{CacheKey: byteKey},
 	)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err)
 	}
-	newResp, momentoSvcErr := models.NewDeleteCacheResponse(resp)
-	if momentoSvcErr != nil {
-		return nil, momentoSvcErr
-	}
-	return newResp, nil
+	return nil
 
 }
 
