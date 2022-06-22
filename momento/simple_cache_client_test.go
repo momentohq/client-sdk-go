@@ -89,6 +89,22 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		)
 	}
 
+	err = client.Delete(&CacheDeleteRequest{
+		CacheName: cacheName,
+		Key:       key,
+	})
+	if err != nil {
+		t.Errorf("error occurred setting key err=%+v", err)
+	}
+
+	err = client.Delete(&CacheDeleteRequest{
+		CacheName: cacheName,
+		Key:       uuid.NewString(),
+	})
+	if err != nil {
+		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
+	}
+
 	err = client.DeleteCache(&DeleteCacheRequest{
 		CacheName: cacheName,
 	})
