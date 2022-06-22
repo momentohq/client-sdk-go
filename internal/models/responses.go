@@ -151,8 +151,3 @@ type CacheDeleteRequest struct {
 	CacheName string
 	Key       interface{}
 }
-
-type DeleteCacheResponse struct {
-	Value  []byte
-	Result string
-}

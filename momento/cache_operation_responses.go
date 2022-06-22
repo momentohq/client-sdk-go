@@ -146,30 +146,3 @@ func (resp *SetCacheResponse) StringValue() string {
 func (resp *SetCacheResponse) ByteValue() []byte {
 	return resp.value
 }
-
-// Initializes DeleteCacheResponse to handle gRPC get response.
-type DeleteCacheResponse struct {
-	value  []byte
-	result string
-}
-
-// Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
-func (resp *DeleteCacheResponse) StringValue() string {
-	if resp.result == HIT {
-		return string(resp.value)
-	}
-	return ""
-}
-
-// Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
-func (resp *DeleteCacheResponse) ByteValue() []byte {
-	if resp.result == HIT {
-		return resp.value
-	}
-	return nil
-}
-
-// Returns get operation result such as HIT or MISS.
-func (resp *DeleteCacheResponse) Result() string {
-	return resp.result
-}
