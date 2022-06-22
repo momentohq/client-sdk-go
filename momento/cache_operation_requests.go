@@ -65,6 +65,6 @@ type CacheGetRequest struct {
 type CacheDeleteRequest struct {
 	// Name of the cache to get the item from to be deleted
 	CacheName string
-	// string ot byte key to be used to retrieve the item.
+	// string or byte key to be used to retrieve the item.
 	Key interface{}
 }

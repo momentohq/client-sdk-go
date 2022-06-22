@@ -574,22 +574,22 @@ func TestDelete(t *testing.T) {
 		key         interface{}
 		expectedErr string
 	}{
-		"test get on non existant cache": {
+		"test delete on non existant cache": {
 			cacheName:   uuid.NewString(),
 			key:         uuid.NewString(),
 			expectedErr: NotFoundError,
 		},
-		"test get on empty cache name": {
+		"test delete on empty cache name": {
 			cacheName:   "",
 			key:         uuid.NewString(),
 			expectedErr: InvalidArgumentError,
 		},
-		"test get on nil key": {
+		"test delete on nil key": {
 			cacheName:   testCacheName,
 			key:         nil,
 			expectedErr: InvalidArgumentError,
 		},
-		"test get on bad key": {
+		"test delete on bad key": {
 			cacheName:   testCacheName,
 			key:         1,
 			expectedErr: InvalidArgumentError,

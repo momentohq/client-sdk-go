@@ -265,7 +265,7 @@ func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, err
 // The following are possible errors that can be returned:
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
-// InternalServerError: If server encountered an unknown error while trying to delete? the item. (edit later?)
+// InternalServerError: If server encountered an unknown error while trying to delete? the item.
 func (c *DefaultScsClient) Delete(request *CacheDeleteRequest) error {
 	err := utility.IsKeyValid(request.Key)
 	if err != nil {
