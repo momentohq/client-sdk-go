@@ -690,7 +690,7 @@ func TestDelete(t *testing.T) {
 					}
 				}
 				t.Errorf(
-					"unexpected error occurred setting cache got=%+v expected=%+v",
+					"unexpected error occurred calling cache delete got=%+v expected=%+v",
 					err, tt.expectedErr,
 				)
 			}
