@@ -102,6 +102,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 func TestBasicHappyPathDelete(t *testing.T) {
 	cacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
+	value := []byte(uuid.NewString())
 	client, err := newTestClient()
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
@@ -112,10 +113,44 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
-	existingCacheResp, err := client.Get(&CacheGetRequest{
-		CacheName: testCacheName,
+
+	_, err = client.Set(&CacheSetRequest{
+		CacheName: cacheName,
+		Key:       key,
+		Value:     value,
+	})
+	if err != nil {
+		t.Errorf("error occurred setting key err=%+v", err)
+	}
+
+	_, err = client.Set(&CacheSetRequest{
+		CacheName:  cacheName,
+		Key:        uuid.NewString(),
+		Value:      value,
+		TtlSeconds: TTL(1),
+	})
+	if err != nil {
+		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
+	}
+
+	getResp, err := client.Get(&CacheGetRequest{
+		CacheName: cacheName,
 		Key:       key,
 	})
+	if err != nil {
+		t.Errorf("error occurred getting key err=%+v", err)
+		return
+	}
+
+	if getResp.Result() != HIT {
+		t.Errorf("unexpected result when getting test key got=%+v expected=%+v", getResp.Result(), HIT)
+	}
+	if !bytes.Equal(getResp.ByteValue(), value) {
+		t.Errorf(
+			"set byte value and returned byte value are not equal "+
+				"got=%+v expected=%+v", getResp.ByteValue(), value,
+		)
+	}
 	err = client.Delete(&CacheDeleteRequest{
 		CacheName: cacheName,
 		Key:       key,
@@ -128,6 +163,14 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		CacheName: cacheName,
 		Key:       uuid.NewString(),
 	})
+	existingCacheResp, err := client.Get(&CacheGetRequest{
+		CacheName: testCacheName,
+		Key:       key,
+	})
+	if err != nil {
+		t.Error(err.Error())
+	}
+
 	if existingCacheResp.Result() != MISS {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
