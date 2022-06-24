@@ -123,16 +123,6 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Errorf("error occurred setting key err=%+v", err)
 	}
 
-	_, err = client.Set(&CacheSetRequest{
-		CacheName:  cacheName,
-		Key:        uuid.NewString(),
-		Value:      value,
-		TtlSeconds: TTL(1),
-	})
-	if err != nil {
-		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
-	}
-
 	getResp, err := client.Get(&CacheGetRequest{
 		CacheName: cacheName,
 		Key:       key,
