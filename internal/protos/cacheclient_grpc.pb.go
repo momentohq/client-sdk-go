@@ -24,6 +24,10 @@ const _ = grpc.SupportPackageIsVersion7
 type ScsClient interface {
 	Get(ctx context.Context, in *XGetRequest, opts ...grpc.CallOption) (*XGetResponse, error)
 	Set(ctx context.Context, in *XSetRequest, opts ...grpc.CallOption) (*XSetResponse, error)
+	Delete(ctx context.Context, in *XDeleteRequest, opts ...grpc.CallOption) (*XDeleteResponse, error)
+	DictionaryGet(ctx context.Context, in *XDictionaryGetRequest, opts ...grpc.CallOption) (*XDictionaryGetResponse, error)
+	DictionaryGetAll(ctx context.Context, in *XDictionaryGetAllRequest, opts ...grpc.CallOption) (*XDictionaryGetAllResponse, error)
+	DictionarySet(ctx context.Context, in *XDictionarySetRequest, opts ...grpc.CallOption) (*XDictionarySetResponse, error)
 }
 
 type scsClient struct {
@@ -52,12 +56,52 @@ func (c *scsClient) Set(ctx context.Context, in *XSetRequest, opts ...grpc.CallO
 	return out, nil
 }
 
+func (c *scsClient) Delete(ctx context.Context, in *XDeleteRequest, opts ...grpc.CallOption) (*XDeleteResponse, error) {
+	out := new(XDeleteResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) DictionaryGet(ctx context.Context, in *XDictionaryGetRequest, opts ...grpc.CallOption) (*XDictionaryGetResponse, error) {
+	out := new(XDictionaryGetResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/DictionaryGet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) DictionaryGetAll(ctx context.Context, in *XDictionaryGetAllRequest, opts ...grpc.CallOption) (*XDictionaryGetAllResponse, error) {
+	out := new(XDictionaryGetAllResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/DictionaryGetAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) DictionarySet(ctx context.Context, in *XDictionarySetRequest, opts ...grpc.CallOption) (*XDictionarySetResponse, error) {
+	out := new(XDictionarySetResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/DictionarySet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScsServer is the server API for Scs service.
 // All implementations must embed UnimplementedScsServer
 // for forward compatibility
 type ScsServer interface {
 	Get(context.Context, *XGetRequest) (*XGetResponse, error)
 	Set(context.Context, *XSetRequest) (*XSetResponse, error)
+	Delete(context.Context, *XDeleteRequest) (*XDeleteResponse, error)
+	DictionaryGet(context.Context, *XDictionaryGetRequest) (*XDictionaryGetResponse, error)
+	DictionaryGetAll(context.Context, *XDictionaryGetAllRequest) (*XDictionaryGetAllResponse, error)
+	DictionarySet(context.Context, *XDictionarySetRequest) (*XDictionarySetResponse, error)
 	mustEmbedUnimplementedScsServer()
 }
 
@@ -70,6 +114,18 @@ func (UnimplementedScsServer) Get(context.Context, *XGetRequest) (*XGetResponse,
 }
 func (UnimplementedScsServer) Set(context.Context, *XSetRequest) (*XSetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+}
+func (UnimplementedScsServer) Delete(context.Context, *XDeleteRequest) (*XDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedScsServer) DictionaryGet(context.Context, *XDictionaryGetRequest) (*XDictionaryGetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DictionaryGet not implemented")
+}
+func (UnimplementedScsServer) DictionaryGetAll(context.Context, *XDictionaryGetAllRequest) (*XDictionaryGetAllResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DictionaryGetAll not implemented")
+}
+func (UnimplementedScsServer) DictionarySet(context.Context, *XDictionarySetRequest) (*XDictionarySetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DictionarySet not implemented")
 }
 func (UnimplementedScsServer) mustEmbedUnimplementedScsServer() {}
 
@@ -120,6 +176,78 @@ func _Scs_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Scs_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).Delete(ctx, req.(*XDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_DictionaryGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XDictionaryGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).DictionaryGet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/DictionaryGet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).DictionaryGet(ctx, req.(*XDictionaryGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_DictionaryGetAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XDictionaryGetAllRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).DictionaryGetAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/DictionaryGetAll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).DictionaryGetAll(ctx, req.(*XDictionaryGetAllRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_DictionarySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XDictionarySetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).DictionarySet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/DictionarySet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).DictionarySet(ctx, req.(*XDictionarySetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Scs_ServiceDesc is the grpc.ServiceDesc for Scs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +262,22 @@ var Scs_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Set",
 			Handler:    _Scs_Set_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Scs_Delete_Handler,
+		},
+		{
+			MethodName: "DictionaryGet",
+			Handler:    _Scs_DictionaryGet_Handler,
+		},
+		{
+			MethodName: "DictionaryGetAll",
+			Handler:    _Scs_DictionaryGetAll_Handler,
+		},
+		{
+			MethodName: "DictionarySet",
+			Handler:    _Scs_DictionarySet_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

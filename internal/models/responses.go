@@ -146,3 +146,8 @@ type SetCacheResponse struct {
 func NewSetCacheResponse(resp *pb.XSetResponse, value []byte) *SetCacheResponse {
 	return &SetCacheResponse{Value: value}
 }
+
+type CacheDeleteRequest struct {
+	CacheName string
+	Key       interface{}
+}

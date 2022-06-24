@@ -99,6 +99,80 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	cleanUpClient(client)
 }
 
+func TestBasicHappyPathDelete(t *testing.T) {
+	cacheName := uuid.NewString()
+	key := []byte(uuid.NewString())
+	value := []byte(uuid.NewString())
+	client, err := newTestClient()
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+	}
+	err = client.CreateCache(&CreateCacheRequest{
+		CacheName: cacheName,
+	})
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
+	}
+
+	_, err = client.Set(&CacheSetRequest{
+		CacheName: cacheName,
+		Key:       key,
+		Value:     value,
+	})
+	if err != nil {
+		t.Errorf("error occurred setting key err=%+v", err)
+	}
+
+	getResp, err := client.Get(&CacheGetRequest{
+		CacheName: cacheName,
+		Key:       key,
+	})
+	if err != nil {
+		t.Errorf("error occurred getting key err=%+v", err)
+		return
+	}
+
+	if getResp.Result() != HIT {
+		t.Errorf("unexpected result when getting test key got=%+v expected=%+v", getResp.Result(), HIT)
+	}
+	if !bytes.Equal(getResp.ByteValue(), value) {
+		t.Errorf(
+			"set byte value and returned byte value are not equal "+
+				"got=%+v expected=%+v", getResp.ByteValue(), value,
+		)
+	}
+	err = client.Delete(&CacheDeleteRequest{
+		CacheName: cacheName,
+		Key:       key,
+	})
+	if err != nil {
+		t.Errorf("error occurred deleting key err=%+v", err)
+	}
+	existingCacheResp, err := client.Get(&CacheGetRequest{
+		CacheName: testCacheName,
+		Key:       key,
+	})
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if existingCacheResp.Result() != MISS {
+		t.Errorf(
+			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
+			testCacheName, existingCacheResp.StringValue(),
+		)
+	}
+
+	err = client.DeleteCache(&DeleteCacheRequest{
+		CacheName: cacheName,
+	})
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
+	}
+
+	cleanUpClient(client)
+}
+
 func TestClientInitialization(t *testing.T) {
 	testRequestTimeout := uint32(100)
 	badRequestTimeout := uint32(0)
@@ -560,6 +634,62 @@ func TestGet(t *testing.T) {
 				}
 				t.Errorf(
 					"unexpected error occurred setting cache got=%+v expected=%+v",
+					err, tt.expectedErr,
+				)
+			}
+			cleanUpClient(client)
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	tests := map[string]struct {
+		cacheName   string
+		key         interface{}
+		expectedErr string
+	}{
+		"test delete on non existant cache": {
+			cacheName:   uuid.NewString(),
+			key:         uuid.NewString(),
+			expectedErr: NotFoundError,
+		},
+		"test delete on empty cache name": {
+			cacheName:   "",
+			key:         uuid.NewString(),
+			expectedErr: InvalidArgumentError,
+		},
+		"test delete on nil key": {
+			cacheName:   testCacheName,
+			key:         nil,
+			expectedErr: InvalidArgumentError,
+		},
+		"test delete on bad key": {
+			cacheName:   testCacheName,
+			key:         1,
+			expectedErr: InvalidArgumentError,
+		},
+	}
+	for name, tt := range tests {
+		client, err := newTestClient()
+		if err != nil {
+			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
+		}
+		tt := tt // for t.Parallel()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			err = client.Delete(&CacheDeleteRequest{CacheName: tt.cacheName, Key: tt.key})
+			if tt.expectedErr != "" && err == nil {
+				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr != "" && err != nil {
+				if momentoErr, ok := err.(MomentoError); ok {
+					if momentoErr.Code() == tt.expectedErr {
+						return // Success end test we expected this
+					}
+				}
+				t.Errorf(
+					"unexpected error occurred calling cache delete got=%+v expected=%+v",
 					err, tt.expectedErr,
 				)
 			}

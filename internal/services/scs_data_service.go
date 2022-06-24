@@ -21,7 +21,7 @@ const defaultRequestTimeoutSeconds = 5
 type ScsDataClient struct {
 	grpcManager           *grpcmanagers.ScsDataGrpcManager
 	grpcClient            pb.ScsClient
-	defaultTtlSeconds     uint32
+	defaultTtlSeconds     uint64
 	requestTimeoutSeconds time.Duration
 	endpoint              string
 }
@@ -43,7 +43,7 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	return &ScsDataClient{
 		grpcManager:           dataManager,
 		grpcClient:            pb.NewScsClient(dataManager.Conn),
-		defaultTtlSeconds:     request.DefaultTtlSeconds,
+		defaultTtlSeconds:     uint64(request.DefaultTtlSeconds),
 		requestTimeoutSeconds: timeout,
 		endpoint:              request.Endpoint,
 	}, nil
@@ -71,7 +71,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	}
 	itemTtlMils := client.defaultTtlSeconds * 1000
 	if request.TtlSeconds > 0 {
-		itemTtlMils = request.TtlSeconds * 1000
+		itemTtlMils = uint64(request.TtlSeconds * 1000)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
 	defer cancel()
@@ -111,6 +111,27 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 		return nil, momentoSvcErr
 	}
 	return newResp, nil
+
+}
+
+func (client *ScsDataClient) Delete(request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {
+	if !utility.IsCacheNameValid(request.CacheName) {
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
+	}
+	byteKey, momentoSvcErr := asBytes(request.Key, "Unsupported type for key: ")
+	if momentoSvcErr != nil {
+		return momentoSvcErr
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	defer cancel()
+	_, err := client.grpcClient.Delete(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XDeleteRequest{CacheKey: byteKey},
+	)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
 
 }
 
