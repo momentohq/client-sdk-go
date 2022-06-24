@@ -162,6 +162,15 @@ func TestBasicHappyPathDelete(t *testing.T) {
 			testCacheName, existingCacheResp.StringValue(),
 		)
 	}
+
+	err = client.DeleteCache(&DeleteCacheRequest{
+		CacheName: cacheName,
+	})
+	if err != nil {
+		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
+	}
+
+	cleanUpClient(client)
 }
 
 func TestClientInitialization(t *testing.T) {
