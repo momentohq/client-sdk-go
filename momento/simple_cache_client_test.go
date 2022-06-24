@@ -156,7 +156,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		Key:       key,
 	})
 	if err != nil {
-		t.Errorf("error occurred setting key err=%+v", err)
+		t.Errorf("error occurred deleting key err=%+v", err)
 	}
 	existingCacheResp, err := client.Get(&CacheGetRequest{
 		CacheName: testCacheName,
