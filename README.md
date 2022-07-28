@@ -168,7 +168,8 @@ TEST_AUTH_TOKEN=<auth token> TEST_CACHE_NAME=<cache name> go test -v ./momento
 3. Copy the `.proto` files from `client_protos/proto` to `client-sdk-go/internal/protos/`
 4. `cd` to the `internal` directory and run:
 
-```protoc --go_out=. --go_opt=paths=source_relative \
+```
+protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative protos/*.proto
 ```
 
