@@ -23,7 +23,7 @@ traditional caching solutions.
 
 ## Requirements
 
-- [Go version 1.17.\*](https://go.dev/dl/)
+- [Go version 1.18.\*](https://go.dev/dl/)
 - A Momento Auth Token is required, you can generate one using
   the [Momento CLI](https://github.com/momentohq/momento-cli)
 - golang
@@ -35,7 +35,7 @@ traditional caching solutions.
 
 ## Installing Momento and Running the Example
 
-Check out our [Go SDK example repo](https://github.com/momentohq/client-sdk-examples/tree/main/golang)!
+Check out our [Go SDK example repo](./examples/)!
 
 <br />
 
@@ -76,7 +76,7 @@ func main() {
 	})
 	if err != nil {
 		if momentoErr, ok := err.(MomentoError); ok {
-			if momentoErr.Code() != AlreadyExists {
+			if momentoErr.Code() != AlreadyExistsError {
 				log.Fatal(fmt.Sprintf(
 					"failed creating cache %s with err %+v",
 					cacheName, momentoErr,
@@ -163,6 +163,7 @@ TEST_AUTH_TOKEN=<auth token> TEST_CACHE_NAME=<cache name> go test -v ./momento
 ```
 
 ## Updating GRPC protos
+
 1. Follow the [quick-start instructions](https://grpc.io/docs/languages/go/quickstart/) to set up your environment
 2. Checkout the latest changes from https://github.com/momentohq/client_protos
 3. Copy the `.proto` files from `client_protos/proto` to `client-sdk-go/internal/protos/`

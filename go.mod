@@ -1,6 +1,6 @@
 module github.com/momentohq/client-sdk-go
 
-go 1.17
+go 1.19
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.2.0
