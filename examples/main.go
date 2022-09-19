@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/momento"
@@ -30,7 +29,7 @@ func main() {
 	err = client.CreateCache(&momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
-	if err != nil && !strings.Contains(err.Error(), momento.AlreadyExistsError) {
+	if err != nil && err.Error() != momento.AlreadyExistsError {
 		panic(err)
 	}
 	log.Printf("Cache named %s is created\n", cacheName)
