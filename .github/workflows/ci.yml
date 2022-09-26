@@ -20,6 +20,20 @@ jobs:
       - name: Setup repo
         uses: actions/checkout@v3
 
+      - name: Verify README generation
+        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
+        with:
+          project_status: official
+          project_stability: experimental
+          project_type: sdk
+          sdk_language: Go
+          usage_example_path: ./examples/main.go
+
+      - name: Commitlint and Other Shared Build Steps
+        uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install Go
         uses: actions/setup-go@v3
         with:
