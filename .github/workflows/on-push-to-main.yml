@@ -1,0 +1,55 @@
+name: Push to main
+
+on:
+  push:
+    branches: [main]
+
+jobs:     
+  build_go:
+    strategy:
+      matrix:
+        go-version: [1.19.x]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    env:
+      TEST_AUTH_TOKEN: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+      TEST_CACHE_NAME: "client-sdk-go-test"
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install goimports
+        run: go get golang.org/x/tools/cmd/goimports
+
+      - run: goimports -l -w $(ls -d */*/ | grep -v "internal/protos/") ./momento
+      - run: go mod tidy
+      # If there are any diffs from goimports or go mod tidy, fail.
+      - name: Verify no changes from goimports and go mod tidy
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            exit 1
+          fi
+
+      - name: Format
+        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
+
+      - name: Run test
+        run: |
+          go vet ./...
+          go test -v ./momento
+
+      - name: Generate README
+        uses: momentohq/standards-and-practices/github-actions/generate-and-commit-oss-readme@gh-actions-v1
+        with:
+          project_status: official
+          project_stability: experimental
+          project_type: sdk
+          sdk_language: Go
+          usage_example_path: ./examples/main.go
