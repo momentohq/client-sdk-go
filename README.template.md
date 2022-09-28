@@ -28,4 +28,12 @@ Here is a quickstart you can use in your own project:
 {{ usageExampleCode }}
 ```
 
+### Error Handling
+
+Coming soon...
+
+### Tuning
+
+Coming soon...
+
 {{ ossFooter }}
