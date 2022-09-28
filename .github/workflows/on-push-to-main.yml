@@ -1,13 +1,11 @@
-name: CI
+name: Push to main
+
 on:
-  pull_request:
   push:
     branches: [main]
-permissions:
-  contents: read
-  pull-requests: read
-jobs:
-  test:
+
+jobs:     
+  build_go:
     strategy:
       matrix:
         go-version: [1.19.x]
@@ -19,11 +17,8 @@ jobs:
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
-
-      - name: Commitlint and Other Shared Build Steps
-        uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
 
       - name: Install Go
         uses: actions/setup-go@v3
@@ -31,7 +26,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
 
       - name: Install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
+        run: go get golang.org/x/tools/cmd/goimports
 
       - run: goimports -l -w $(ls -d */*/ | grep -v "internal/protos/") ./momento
       - run: go mod tidy
@@ -50,8 +45,8 @@ jobs:
           go vet ./...
           go test -v ./momento
 
-      - name: Verify README generation
-        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
+      - name: Generate README
+        uses: momentohq/standards-and-practices/github-actions/generate-and-commit-oss-readme@gh-actions-v1
         with:
           project_status: official
           project_stability: experimental
