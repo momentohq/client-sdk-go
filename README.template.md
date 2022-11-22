@@ -12,6 +12,11 @@
 - golint
   - `go get -u golang.org/x/lint/golint`
 
+### Examples
+
+Ready to dive right in? Just check out the [examples](./examples/README.md) directory for complete, working examples of
+how to use the SDK.
+
 ### Installation
 
 ```bash
