@@ -29,6 +29,9 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
+      - name: Format
+        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
+
       - name: Install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
@@ -56,9 +59,6 @@ jobs:
           project_type: sdk
           sdk_language: Go
           usage_example_path: ./examples/main.go
-
-      - name: Format
-        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
 
       - name: Run test
         run: |
