@@ -45,8 +45,16 @@ jobs:
         run: go get golang.org/x/tools/cmd/goimports
 
       - run: goimports -l -w $(ls -d */*/ | grep -v "internal/protos/") ./momento
+
       - run: go mod tidy
-      # If there are any diffs from goimports or go mod tidy, fail.
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          only-new-issues: true
+
+    # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
         run: |
           if [ -n "$(git status --porcelain)" ]; then

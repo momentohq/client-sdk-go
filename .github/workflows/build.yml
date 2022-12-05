@@ -1,7 +1,6 @@
 name: CI
 on:
   pull_request:
-  push:
     branches: [main]
 permissions:
   contents: read
@@ -20,6 +19,15 @@ jobs:
       - name: Setup repo
         uses: actions/checkout@v3
 
+      - name: Verify README generation
+        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
+        with:
+          project_status: official
+          project_stability: experimental
+          project_type: sdk
+          sdk_language: Go
+          usage_example_path: ./examples/main.go
+
       - name: Commitlint and Other Shared Build Steps
         uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
         env:
@@ -35,6 +43,13 @@ jobs:
 
       - run: goimports -l -w $(ls -d */*/ | grep -v "internal/protos/") ./momento
       - run: go mod tidy
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          only-new-issues: true
+
       # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
         run: |
@@ -50,11 +65,4 @@ jobs:
           go vet ./...
           go test -v ./momento
 
-      - name: Verify README generation
-        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
-        with:
-          project_status: official
-          project_stability: experimental
-          project_type: sdk
-          sdk_language: Go
-          usage_example_path: ./examples/main.go
+
