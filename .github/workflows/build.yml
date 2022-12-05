@@ -19,15 +19,6 @@ jobs:
       - name: Setup repo
         uses: actions/checkout@v3
 
-      - name: Verify README generation
-        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
-        with:
-          project_status: official
-          project_stability: experimental
-          project_type: sdk
-          sdk_language: Go
-          usage_example_path: ./examples/main.go
-
       - name: Commitlint and Other Shared Build Steps
         uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
         env:
@@ -50,14 +41,21 @@ jobs:
           version: latest
           only-new-issues: true
 
-      - run: git status
-
       # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             exit 1
           fi
+
+      - name: Verify README generation
+        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
+        with:
+          project_status: official
+          project_stability: experimental
+          project_type: sdk
+          sdk_language: Go
+          usage_example_path: ./examples/main.go
 
       - name: Format
         run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
