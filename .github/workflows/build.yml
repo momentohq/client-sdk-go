@@ -50,6 +50,8 @@ jobs:
           version: latest
           only-new-issues: true
 
+      - run: git status
+
       # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
         run: |
