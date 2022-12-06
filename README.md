@@ -1,27 +1,28 @@
-# Momento client-sdk-go
+<head>
+  <meta name="Momento Go Client Library Documentation" content="Go client software development kit for Momento Serverless Cache">
+</head>
+<img src="https://docs.momentohq.com/img/logo.svg" alt="logo" width="400"/>
+
+[![project status](https://momentohq.github.io/standards-and-practices/badges/project-status-official.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md)
+[![project stability](https://momentohq.github.io/standards-and-practices/badges/project-stability-experimental.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md) 
+
+# Momento Go Client Library
+
 
 :warning: Experimental SDK :warning:
 
-Go SDK for Momento is experimental and under active development. There could be non-backward compatible changes or
-removal in the future. Please be aware that you may need to update your source code with the current version of the SDK
-when its version gets upgraded.
+This is an official Momento SDK, but the API is in an early experimental stage and subject to backward-incompatible
+changes.  For more info, click on the experimental badge above.
 
----
 
-<br />
+Go client SDK for Momento Serverless Cache: a fast, simple, pay-as-you-go caching solution without
+any of the operational overhead required by traditional caching solutions!
 
-<div align="center">
-    <img src="images/gopher.png" alt="Logo" width="200" height="150">
-</div>
 
-Go SDK for Momento, a serverless cache that automatically scales without any of the operational overhead required by
-traditional caching solutions.
 
-<br/>
+## Getting Started :running:
 
-# Getting Started :running:
-
-## Requirements
+### Requirements
 
 - [Go version 1.18.\*](https://go.dev/dl/)
 - A Momento Auth Token is required, you can generate one using
@@ -31,32 +32,38 @@ traditional caching solutions.
 - golint
   - `go get -u golang.org/x/lint/golint`
 
-<br/>
+### Examples
 
-## Installing Momento and Running the Example
+Ready to dive right in? Just check out the [examples](./examples/README.md) directory for complete, working examples of
+how to use the SDK.
 
-Check out our [Go SDK example repo](./examples/)!
+### Installation
 
-<br />
+```bash
+go get github.com/momentohq/client-sdk-go
+```
 
-## Using Momento
+### Usage
+
+Checkout our [examples](./examples/README.md) directory for complete examples of how to use the SDK.
+
+Here is a quickstart you can use in your own project:
 
 ```go
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/google/uuid"
-	. "github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/momento"
 )
 
 func main() {
-	authToken := os.Getenv("MOMENTO_AUTH_TOKEN")
+	var authToken = os.Getenv("MOMENTO_AUTH_TOKEN")
 	const (
-		cacheName             = "my-first-cache-😊"
+		cacheName             = "cache"
 		itemDefaultTtlSeconds = 60
 	)
 
@@ -65,113 +72,76 @@ func main() {
 	}
 
 	// Initializes Momento
-	client, err := NewSimpleCacheClient(authToken, itemDefaultTtlSeconds)
+	client, err := momento.NewSimpleCacheClient(authToken, itemDefaultTtlSeconds)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("failed initilizing cache client with err %+v", err))
+		panic(err)
 	}
 
-	// Create Cache Ignore if Cache already exists
-	err = client.CreateCache(&CreateCacheRequest{
+	// Create Cache and check if CacheName exists
+	err = client.CreateCache(&momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
-	if err != nil {
-		if momentoErr, ok := err.(MomentoError); ok {
-			if momentoErr.Code() != AlreadyExistsError {
-				log.Fatal(fmt.Sprintf(
-					"failed creating cache %s with err %+v",
-					cacheName, momentoErr,
-				))
-			}
+	if err != nil && err.Error() != momento.AlreadyExistsError {
+		panic(err)
+	}
+	log.Printf("Cache named %s is created\n", cacheName)
+
+	// List caches
+	token := ""
+	for {
+		listCacheResp, err := client.ListCaches(&momento.ListCachesRequest{NextToken: token})
+		if err != nil {
+			panic(err)
+		}
+		for _, cacheInfo := range listCacheResp.Caches() {
+			log.Printf("%s\n", cacheInfo.Name())
+		}
+		token = listCacheResp.NextToken()
+		if token == "" {
+			break
 		}
 	}
-	log.Println(fmt.Sprintf("Cache %s is created", cacheName))
 
-	// Sets key with default TTL and custom ttl and then retrieves the items from cache
-	key1 := []byte(uuid.NewString())
-	key2 := []byte(uuid.NewString())
-	value1 := []byte(uuid.NewString())
-	value2 := []byte(uuid.NewString())
-
-	log.Println(fmt.Sprintf("Setting key: %s, value: %s", key1, value1))
-	_, err = client.Set(&CacheSetRequest{
+	// Sets key with default TTL and gets value with that key
+	key := []byte(uuid.NewString())
+	value := []byte(uuid.NewString())
+	log.Printf("Setting key: %s, value: %s\n", key, value)
+	_, err = client.Set(&momento.CacheSetRequest{
 		CacheName: cacheName,
-		Key:       key1,
-		Value:     value2,
+		Key:       key,
+		Value:     value,
 	})
 	if err != nil {
-		log.Fatal(fmt.Sprintf("failed setting key %s with err %+v", key1, err))
+		panic(err)
 	}
-	log.Println(fmt.Sprintf("Setting key with custom ttl key: %s, value: %s", key2, value2))
-	_, err = client.Set(&CacheSetRequest{
-		CacheName:  cacheName,
-		Key:        key2,
-		Value:      value2,
-		TtlSeconds: TTL(60),
-	})
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed setting key %s with err %+v", key2, err))
-	}
-	log.Println(fmt.Sprintf("Getting key: %s", key1))
-	resp, err := client.Get(&CacheGetRequest{
+	log.Printf("Getting key: %s\n", key)
+	resp, err := client.Get(&momento.CacheGetRequest{
 		CacheName: cacheName,
-		Key:       key1,
+		Key:       key,
 	})
 	if err != nil {
-		log.Fatal(fmt.Sprintf("failed getting key %s with err %+v", key1, err))
+		panic(err)
 	}
-	log.Println(fmt.Sprintf(
-		"Get request succeded result: %s value: %s",
-		resp.Result(), resp.StringValue(),
-	))
+	log.Printf("Lookup resulted in a : %s\n", resp.Result())
+	log.Printf("Looked up value: %s\n", resp.StringValue())
 
-	// Delete the cache
-	err = client.DeleteCache(&DeleteCacheRequest{CacheName: cacheName})
+	// Permanently delete the cache
+	err = client.DeleteCache(&momento.DeleteCacheRequest{CacheName: cacheName})
 	if err != nil {
-		log.Fatal(fmt.Sprintf("failed deleting cache %s with err %+v", cacheName, err))
+		panic(err)
 	}
-	log.Printf(fmt.Sprintf("Cache %s is deleted", cacheName))
+	log.Printf("Cache named %s is deleted\n", cacheName)
 }
-```
-
-<br />
-
-You can also specify request timeout for Momento client
-
-```golang
-var authToken = os.Getenv("MOMENTO_AUTH_TOKEN")
-const (
-		cacheName             = "cache"
-		itemDefaultTtlSeconds = 60
-		requestTimeoutSeconds = 10
-	)
-client, err = NewSimpleCacheClient(authToken, itemDefaultTtlSeconds, WithRequestTimeout(requestTimeoutSeconds))
-```
-
-<br />
-
-# Running Tests :zap:
-
-## Requirements
-
-- `TEST_AUTH_TOKEN` - an auth token for testing
-- `TEST_CACHE_NAME` - any string value would work
-
-## How to Run Test
-
-```bash
-TEST_AUTH_TOKEN=<auth token> TEST_CACHE_NAME=<cache name> go test -v ./momento
-```
-
-## Updating GRPC protos
-
-1. Follow the [quick-start instructions](https://grpc.io/docs/languages/go/quickstart/) to set up your environment
-2. Checkout the latest changes from https://github.com/momentohq/client_protos
-3. Copy the `.proto` files from `client_protos/proto` to `client-sdk-go/internal/protos/`
-4. `cd` to the `internal` directory and run:
 
 ```
-protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative protos/*.proto
-```
 
-You should now have updated auto-generated files with the updated protos
+### Error Handling
+
+Coming soon...
+
+### Tuning
+
+Coming soon...
+
+----------------------------------------------------------------------------------------
+For more info, visit our website at [https://gomomento.com](https://gomomento.com)!
