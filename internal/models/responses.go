@@ -168,7 +168,7 @@ type TopicSubscribeResponse struct{}
 
 type TopicPublishRequest struct {
 	TopicName string
-	Value     interface{}
+	Value     string // TODO think about string vs byte more
 }
 
 type TopicPublishResponse struct{}

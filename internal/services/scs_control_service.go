@@ -48,11 +48,11 @@ func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) 
 	return nil
 }
 
-func (client *ScsControlClient) CreateTopic(request *models.CreateTopicRequest) momentoerrors.MomentoSvcErr {
+func (client *ScsControlClient) CreateTopic(ctx context.Context, request *models.CreateTopicRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.TopicName) {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Topic name cannot be empty", nil)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: "topic-" + request.TopicName})
 	if err != nil {
@@ -61,11 +61,11 @@ func (client *ScsControlClient) CreateTopic(request *models.CreateTopicRequest) 
 	return nil
 }
 
-func (client *ScsControlClient) DeleteTopic(request *models.DeleteTopicRequest) momentoerrors.MomentoSvcErr {
+func (client *ScsControlClient) DeleteTopic(ctx context.Context, request *models.DeleteTopicRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.TopicName) {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Topic name cannot be empty", nil)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: "topic-" + request.TopicName})
 	if err != nil {

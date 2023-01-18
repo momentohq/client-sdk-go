@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 )
 
 var (
@@ -13,6 +14,7 @@ var (
 
 // Basic happy path test - create a cache, operate set/get, and delete the cache
 func TestBasicHappyPathPubSub(t *testing.T) {
+	ctx := context.Background()
 	go func() {
 		newMockPubSubServer()
 	}()
@@ -20,18 +22,30 @@ func TestBasicHappyPathPubSub(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	sub, err := client.SubscribeTopic(&TopicSubscribeRequest{
+	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
 		TopicName: "test-topic",
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	err = sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
-		fmt.Println(fmt.Sprintf("got a msg! val=%s", m.StringValue()))
-	})
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		err = sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
+			fmt.Println(fmt.Sprintf("got a msg! val=%s", m.StringValue()))
+		})
+		if err != nil {
+			panic(err)
+		}
+	}()
 
+	for i := 0; i < 10; i++ {
+		err = client.PublishTopic(ctx, &TopicPublishRequest{
+			TopicName: "test-topic",
+			Value:     fmt.Sprintf("hello %d", i),
+		})
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Second)
+	}
 }

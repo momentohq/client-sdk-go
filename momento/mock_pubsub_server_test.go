@@ -1,10 +1,9 @@
 package momento
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net"
-	"time"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
@@ -13,6 +12,8 @@ import (
 
 type TestPubSubServer struct {
 	pb.UnimplementedPubsubServer
+	// TODO make this more sophisticated to support multiple subscriptions right now just support one global channel to start
+	basicMessageChannel chan string
 }
 
 func newMockPubSubServer() {
@@ -21,26 +22,33 @@ func newMockPubSubServer() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterPubsubServer(s, &TestPubSubServer{})
+	pb.RegisterPubsubServer(s, &TestPubSubServer{
+		basicMessageChannel: make(chan string),
+	})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
-func (TestPubSubServer) Subscribe(req *pb.XSubscriptionRequest, server pb.Pubsub_SubscribeServer) error {
+
+func (t TestPubSubServer) Publish(ctx context.Context, req *pb.XPublishRequest) (*pb.XEmpty, error) {
+	t.basicMessageChannel <- req.Value.String() // TODO think about bytes vs strings
+	return &pb.XEmpty{}, nil
+}
+func (t TestPubSubServer) Subscribe(req *pb.XSubscriptionRequest, server pb.Pubsub_SubscribeServer) error {
 	count := 0
-	for {
+	for msg := range t.basicMessageChannel {
 		err := server.SendMsg(&pb.XTopicItem{
 			TopicSequenceNumber: uint64(count),
 			Value: &pb.XTopicValue{
 				Kind: &pb.XTopicValue_Text{
-					Text: fmt.Sprintf("count %d", count),
+					Text: msg,
 				},
 			},
 		})
 		if err != nil {
 			return err
 		}
-		time.Sleep(time.Second)
 		count += 1
 	}
+	return nil
 }

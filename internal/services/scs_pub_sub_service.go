@@ -37,7 +37,7 @@ type PubSubSubscriptionWrapper struct {
 	grpcClient grpc.ClientStream
 }
 
-func (client *PubSubClient) Subscribe(request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
+func (client *PubSubClient) Subscribe(ctx context.Context, request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
 	streamClient, err := client.grpcClient.Subscribe(context.Background(), &pb.XSubscriptionRequest{
 		CacheName: "topic-" + request.TopicName,
 		Topic:     request.TopicName,
@@ -45,7 +45,18 @@ func (client *PubSubClient) Subscribe(request *models.TopicSubscribeRequest) (gr
 	})
 	return streamClient, err
 }
-func (client *PubSubClient) Publish() {}
+func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPublishRequest) error {
+	_, err := client.grpcClient.Publish(ctx, &pb.XPublishRequest{
+		CacheName: "topic-" + request.TopicName,
+		Topic:     request.TopicName,
+		Value: &pb.XTopicValue{
+			Kind: &pb.XTopicValue_Text{
+				Text: request.Value,
+			},
+		},
+	})
+	return err
+}
 
 func (client *PubSubClient) Endpoint() string {
 	return client.endpoint

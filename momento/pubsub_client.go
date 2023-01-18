@@ -3,6 +3,7 @@
 package momento
 
 import (
+	"context"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
@@ -10,8 +11,9 @@ import (
 )
 
 type PubSubClient interface {
-	CreateTopic(request *CreateTopicRequest) error
-	SubscribeTopic(request *TopicSubscribeRequest) (SubscriptionIFace, error)
+	CreateTopic(ctx context.Context, request *CreateTopicRequest) error
+	SubscribeTopic(ctx context.Context, request *TopicSubscribeRequest) (SubscriptionIFace, error)
+	PublishTopic(ctx context.Context, request *TopicPublishRequest) error
 
 	Close()
 }
@@ -73,18 +75,25 @@ func NewPubSubClient(authToken string, opts ...Option) (PubSubClient, error) {
 	return client, nil
 }
 
-func (c *DefaultPubSubClient) CreateTopic(request *CreateTopicRequest) error {
-	return c.controlClient.CreateTopic(&models.CreateTopicRequest{TopicName: request.TopicName})
+func (c *DefaultPubSubClient) CreateTopic(ctx context.Context, request *CreateTopicRequest) error {
+	return c.controlClient.CreateTopic(ctx, &models.CreateTopicRequest{TopicName: request.TopicName})
 }
 
-func (c *DefaultPubSubClient) SubscribeTopic(request *TopicSubscribeRequest) (SubscriptionIFace, error) {
-	clientStream, err := c.pubSubClient.Subscribe(&models.TopicSubscribeRequest{
+func (c *DefaultPubSubClient) SubscribeTopic(ctx context.Context, request *TopicSubscribeRequest) (SubscriptionIFace, error) {
+	clientStream, err := c.pubSubClient.Subscribe(ctx, &models.TopicSubscribeRequest{
 		TopicName: request.TopicName,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &Subscription{grpcClient: clientStream}, err
+}
+
+func (c *DefaultPubSubClient) PublishTopic(ctx context.Context, request *TopicPublishRequest) error {
+	return c.pubSubClient.Publish(ctx, &models.TopicPublishRequest{
+		TopicName: request.TopicName,
+		Value:     request.Value,
+	})
 }
 
 // Close shutdown the client.
