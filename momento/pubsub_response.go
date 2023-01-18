@@ -3,6 +3,7 @@ package momento
 type CreateTopicResponse struct{}
 
 type TopicMessageReceiveResponse struct {
+	// TODO talk about user experience for bytes/strings
 	value string
 }
 

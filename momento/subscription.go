@@ -26,6 +26,7 @@ func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m *
 			return err
 		}
 		f(ctx, &TopicMessageReceiveResponse{
+			// TODO talk about user experience for bytes/strings
 			value: rawMsg.GetValue().GetText(),
 		})
 	}
