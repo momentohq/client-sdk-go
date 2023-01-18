@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "momento.auth";
+
+package auth;
+
+service Auth {
+  rpc Login (_LoginRequest) returns (stream _LoginResponse) {}
+}
+
+message _LoginRequest {
+}
+
+message _LoginResponse {
+  oneof state {
+    DirectBrowser direct_browser = 1;
+    LoggedIn logged_in = 2;
+    Message message = 3;
+    Error error = 4;
+  }
+
+  // Terminal state, login success
+  message LoggedIn {
+    string session_token = 1;
+
+    // How many seconds the token was valid for when issued.
+    // Will vary slightly from reality upon receipt, as
+    // time has passed since the token was minted.
+    // You might expect to see this true to within 10
+    // seconds of client-side timekeeping but as is
+    // ever the case, there are no guarantees with
+    // public network timing.
+    uint32 valid_for_seconds = 2;
+  }
+
+  // Terminal state, login error
+  message Error {
+    string description = 1;
+  }
+
+  // Open a browser to a url, for interactive login
+  message DirectBrowser {
+    string url = 1;
+  }
+
+  // Logging info about the login process
+  message Message {
+    string text = 1;
+  }
+}

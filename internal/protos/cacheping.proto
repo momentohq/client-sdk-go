@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "grpc.cache_client";
+option csharp_namespace = "Momento.Protos.CachePing";
+
+package cache_client;
+
+service Ping {
+  rpc Ping (_PingRequest) returns (_PingResponse) {}
+}
+
+message _PingRequest {}
+message _PingResponse {}

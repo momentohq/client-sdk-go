@@ -2,6 +2,7 @@ package grpcmanagers
 
 import (
 	"crypto/tls"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 
@@ -21,6 +22,14 @@ func NewScsDataGrpcManager(request *models.DataGrpcManagerRequest) (*ScsDataGrpc
 		InsecureSkipVerify: false,
 	}
 	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)))
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &ScsDataGrpcManager{Conn: conn}, nil
+}
+
+func NewLocalScsDataGrpcManager(request *models.DataGrpcManagerRequest) (*ScsDataGrpcManager, momentoerrors.MomentoSvcErr) {
+	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}

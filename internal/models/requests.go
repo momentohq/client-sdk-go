@@ -34,6 +34,12 @@ type DataClientRequest struct {
 	RequestTimeoutSeconds uint32
 }
 
+type PubSubClientRequest struct {
+	AuthToken string
+	Endpoint  string
+	// TODO think about timeout settings more
+}
+
 type ConvertEcacheResultRequest struct {
 	ECacheResult pb.ECacheResult
 	Message      string
