@@ -1,6 +1,6 @@
-// Package momento represents API ScsClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
+// Package incubating represents experimental packages and clients for Momento
 
-package momento
+package incubating
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
 	"github.com/momentohq/client-sdk-go/internal/services"
+	"github.com/momentohq/client-sdk-go/momento"
 )
 
 type PubSubClient interface {
@@ -41,17 +42,6 @@ func NewPubSubClient(authToken string) (PubSubClient, error) {
 	client := &DefaultPubSubClient{
 		authToken: authToken,
 	}
-
-	// Loop through all user passed options before building up internal clients
-	// No options for now FIXME refactor how we do SDK options so not tied to just SCSClient
-	//for _, opt := range opts {
-	//	// Call the option giving the instantiated
-	//	// *House as the argument
-	//	err := opt(client)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		AuthToken: authToken,
@@ -103,10 +93,10 @@ func (c *DefaultPubSubClient) Close() {
 	defer c.pubSubClient.Close()
 }
 
-// TODO dry this up is copy pasta from simple cache client
-func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {
+// TODO figure out better way to dry this up is copy pasta from simple cache client
+func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) momento.MomentoError {
 	if e == nil {
 		return nil
 	}
-	return NewMomentoError(e.Code(), e.Message(), e.OriginalErr())
+	return momento.NewMomentoError(e.Code(), e.Message(), e.OriginalErr())
 }

@@ -1,4 +1,4 @@
-package momento
+package incubating
 
 type CreateTopicRequest struct {
 	// string used to create a topic.
