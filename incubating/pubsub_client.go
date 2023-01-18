@@ -4,6 +4,7 @@ package momento
 
 import (
 	"context"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
@@ -27,7 +28,7 @@ type DefaultPubSubClient struct {
 }
 
 // NewPubSubClient returns a new PubSubClient with provided authToken, and opts arguments.
-func NewPubSubClient(authToken string, opts ...Option) (PubSubClient, error) {
+func NewPubSubClient(authToken string) (PubSubClient, error) {
 	endpoints, err := resolver.Resolve(&models.ResolveRequest{
 		AuthToken:        authToken,
 		EndpointOverride: "localhost", // FIXME remove this just testing quick
@@ -100,4 +101,12 @@ func (c *DefaultPubSubClient) PublishTopic(ctx context.Context, request *TopicPu
 func (c *DefaultPubSubClient) Close() {
 	defer c.controlClient.Close()
 	defer c.pubSubClient.Close()
+}
+
+// TODO dry this up is copy pasta from simple cache client
+func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {
+	if e == nil {
+		return nil
+	}
+	return NewMomentoError(e.Code(), e.Message(), e.OriginalErr())
 }
