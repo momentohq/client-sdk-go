@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -10,17 +11,15 @@ import (
 )
 
 type PubSubClient struct {
-	grpcManager *grpcmanagers.ScsDataGrpcManager
+	grpcManager *grpcmanagers.DataGrpcManager
 	grpcClient  pb.PubsubClient
 	endpoint    string
 }
 
 func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, momentoerrors.MomentoSvcErr) {
-	//dataManager, err := grpcmanagers.NewScsDataGrpcManager(&models.DataGrpcManagerRequest{ // FIXME
-	dataManager, err := grpcmanagers.NewLocalScsDataGrpcManager(&models.DataGrpcManagerRequest{
+	dataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataGrpcManagerRequest{
 		AuthToken: request.AuthToken,
-		//Endpoint:  fmt.Sprint(request.Endpoint, cachePort), // FIXME
-		Endpoint: request.Endpoint,
+		Endpoint:  fmt.Sprint(request.Endpoint, cachePort),
 	})
 
 	if err != nil {
@@ -33,15 +32,30 @@ func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, moment
 	}, nil
 }
 
+func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr) {
+	dataManager, err := grpcmanagers.NewLocalDataGrpcManager(&models.DataGrpcManagerRequest{
+		Endpoint: fmt.Sprintf("localhost:%d", port),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &PubSubClient{
+		grpcManager: dataManager,
+		grpcClient:  pb.NewPubsubClient(dataManager.Conn),
+		endpoint:    "localhost",
+	}, nil
+}
+
 type PubSubSubscriptionWrapper struct {
 	grpcClient grpc.ClientStream
 }
 
 func (client *PubSubClient) Subscribe(ctx context.Context, request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
-	streamClient, err := client.grpcClient.Subscribe(context.Background(), &pb.XSubscriptionRequest{
+	streamClient, err := client.grpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName: "topic-" + request.TopicName,
 		Topic:     request.TopicName,
-		//ResumeAtTopicSequenceNumber: 0, TODO think about re-establish case may want to expose this
+		//ResumeAtTopicSequenceNumber: 0, TODO think about re-establish topic case
 	})
 	return streamClient, err
 }

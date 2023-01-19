@@ -2,6 +2,7 @@ package incubating
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -16,8 +17,8 @@ type TestPubSubServer struct {
 	basicMessageChannel chan string
 }
 
-func newMockPubSubServer() {
-	lis, err := net.Listen("tcp", "localhost:3000")
+func newMockPubSubServer(port int) {
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -37,11 +38,15 @@ func (t TestPubSubServer) Publish(ctx context.Context, req *pb.XPublishRequest) 
 func (t TestPubSubServer) Subscribe(req *pb.XSubscriptionRequest, server pb.Pubsub_SubscribeServer) error {
 	count := 0
 	for msg := range t.basicMessageChannel {
-		err := server.SendMsg(&pb.XTopicItem{
-			TopicSequenceNumber: uint64(count),
-			Value: &pb.XTopicValue{
-				Kind: &pb.XTopicValue_Text{
-					Text: msg,
+		err := server.SendMsg(&pb.XSubscriptionItem{
+			Kind: &pb.XSubscriptionItem_Item{
+				Item: &pb.XTopicItem{
+					TopicSequenceNumber: uint64(count),
+					Value: &pb.XTopicValue{
+						Kind: &pb.XTopicValue_Text{
+							Text: msg,
+						},
+					},
 				},
 			},
 		})

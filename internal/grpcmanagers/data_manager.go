@@ -2,40 +2,63 @@ package grpcmanagers
 
 import (
 	"crypto/tls"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/momentohq/client-sdk-go/internal/models"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
+	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-type ScsDataGrpcManager struct {
+type DataGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-func NewScsDataGrpcManager(request *models.DataGrpcManagerRequest) (*ScsDataGrpcManager, momentoerrors.MomentoSvcErr) {
+func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
-	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)))
+	conn, err := grpc.Dial(
+		request.Endpoint,
+		grpc.WithTransportCredentials(credentials.NewTLS(config)),
+		grpc.WithDisableRetry(),
+		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)),
+	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return &ScsDataGrpcManager{Conn: conn}, nil
+	return &DataGrpcManager{Conn: conn}, nil
 }
 
-func NewLocalScsDataGrpcManager(request *models.DataGrpcManagerRequest) (*ScsDataGrpcManager, momentoerrors.MomentoSvcErr) {
-	conn, err := grpc.Dial(request.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewStreamDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+	config := &tls.Config{
+		InsecureSkipVerify: false,
+	}
+	conn, err := grpc.Dial(
+		request.Endpoint,
+		grpc.WithTransportCredentials(credentials.NewTLS(config)),
+		grpc.WithDisableRetry(),
+		grpc.WithStreamInterceptor(interceptor.AddStreamHeaderInterceptor(request.AuthToken)),
+	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return &ScsDataGrpcManager{Conn: conn}, nil
+	return &DataGrpcManager{Conn: conn}, nil
 }
 
-func (dataManager *ScsDataGrpcManager) Close() momentoerrors.MomentoSvcErr {
+func NewLocalDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+	conn, err := grpc.Dial(
+		request.Endpoint,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDisableRetry(),
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &DataGrpcManager{Conn: conn}, nil
+}
+func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 	return momentoerrors.ConvertSvcErr(dataManager.Conn.Close())
 }
