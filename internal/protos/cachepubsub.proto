@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "grpc.cache_client.pubsub";
+option csharp_namespace = "Momento.Protos.CacheClient.Pubsub";
+
+package cache_client.pubsub;
+
+// For working with topics in a cache.
+// Momento topics are conceptually located on a cache. They are best-effort multicast.
+// To use them, create a cache then start subscribing and publishing!
+//
+// Momento topic subscriptions try to give you information about the quality of the
+//   stream you are receiving. For example, you might miss messages if your network
+//   is slow, or if some intermediate switch fails, or due to rate limiting. It is
+//   also possible, though we try to avoid it, that messages could briefly come out
+//   of order between subscribers.
+//   We try to tell you when things like this happen via a Discontinuity in your
+//   subscription stream. If you do not care about occasional discontinuities then
+//   don't bother handling them! You might still want to log them just in case ;-)
+service Pubsub {
+  // Publish a message to a topic.
+  //
+  // If a topic has no subscribers, then the effect of Publish MAY be either of:
+  // * It is dropped and the topic is nonexistent.
+  // * It is accepted to the topic as the next message.
+  //
+  // Publish() does not wait for subscribers to accept. It returns Ok upon accepting
+  // the topic value. It also returns Ok if there are no subscribers and the value
+  // happens to be dropped. Publish() can not guarantee delivery in theory but in
+  // practice it should almost always deliver to subscribers.
+  //
+  // REQUIRES HEADER authorization: Momento auth token
+  rpc Publish(_PublishRequest) returns (_Empty);
+
+  // Subscribe to notifications from a topic.
+  //
+  // You will receive a stream of values and (hopefully occasional) discontinuities.
+  // Values will appear as copies of the payloads you Publish() to the topic.
+  //
+  // REQUIRES HEADER authorization: Momento auth token
+  rpc Subscribe(_SubscriptionRequest) returns (stream _SubscriptionItem);
+}
+
+message _Empty {}
+
+// A value to publish through a topic.
+message _PublishRequest {
+  // Cache namespace for the topic to which you want to send the value.
+  string cache_name = 1;
+  // The literal topic name to which you want to send the value.
+  string topic = 2;
+  // The value you want to send to the topic. All current subscribers will receive
+  // this, should the whims of the Internet prove merciful.
+  _TopicValue value = 3;
+}
+
+// A description of how you want to subscribe to a topic.
+message _SubscriptionRequest {
+  // Cache namespace for the topic to which you want to subscribe.
+  string cache_name = 1;
+
+  // The literal topic name to which you want to subscribe.
+  string topic = 2;
+
+  // --> Providing this is not required. <--
+  //
+  // If provided, attempt to reconnect to the topic and replay messages starting from
+  // the provided sequence number. You may get a discontinuity if some (or all) of the
+  // messages are not available.
+  // If not provided (or 0), the subscription will begin with the latest messages.
+  uint64 resume_at_topic_sequence_number = 3;
+}
+
+// Possible message kinds from a topic. They can be items when they're from you, or
+// other kinds when we have something we think you might need to know about the
+// subscription's status.
+message _SubscriptionItem {
+  oneof kind {
+    // The subscription has yielded an item you previously published.
+    _TopicItem item = 1;
+    // Momento wants to let you know we detected some possible inconsistency at this
+    // point in the subscription stream.
+    //
+    // A lack of a discontinuity does not mean the subscription is guaranteed to be
+    // strictly perfect, but the presence of a discontinuity is very likely to
+    _Discontinuity discontinuity = 2;
+  }
+}
+
+// Your subscription has yielded an item you previously published. Here it is!
+message _TopicItem {
+  // Topic sequence numbers are **best-effort** and **informational**.
+  // They are not transactional.
+  // They exist:
+  // * to help reconnect to an existing topic while trying to avoid missing items.
+  // * to facilitate richer monitoring and logging.
+  // * to provide a best-effort awareness of stream contiguity, or lack thereof,
+  //   in case you need to know.
+  // You can safely ignore them if none of that matters to you!
+  uint64 topic_sequence_number = 1;
+  // The value you previously published to this topic.
+  _TopicValue value = 2;
+}
+
+// A value in a topic - published, duplicated and received in a subscription.
+message _TopicValue {
+  // Types of messages a topic may relay. You can mix types or you can make conventionally
+  // typed topics. Sticking with one kind will generally make your software easier to work
+  // with though, so we recommend picking the kind you like and using it for a topic!
+  oneof kind {
+    string text = 1;
+    bytes binary = 2;
+  }
+}
+
+// A message from Momento when we know a subscription to have skipped some messages.
+// We don't terminate your subscription in that case, but just in case you care, we
+// do our best to let you know about it.
+message _Discontinuity {
+  // The last topic value sequence number known to have been attempted (if known, 0 otherwise).
+  uint64 last_topic_sequence = 1;
+  // The new topic sequence number after which TopicItems will ostensibly resume.
+  uint64 new_topic_sequence = 2;
+}

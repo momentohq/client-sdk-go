@@ -3,9 +3,9 @@ syntax = "proto3";
 option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
 option java_multiple_files = true;
 option java_package = "grpc.cache_client";
+option csharp_namespace = "Momento.Protos.CacheClient";
 
 package cache_client;
-
 
 enum ECacheResult {
   Invalid = 0;
@@ -16,16 +16,34 @@ enum ECacheResult {
   reserved 4 to 6;
 }
 
-
 service Scs {
   rpc Get (_GetRequest) returns (_GetResponse) {}
   rpc Set (_SetRequest) returns (_SetResponse) {}
+  rpc SetIfNotExists (_SetIfNotExistsRequest) returns (_SetIfNotExistsResponse) {}
   rpc Delete (_DeleteRequest) returns (_DeleteResponse) {}
-  rpc DictionaryGet (_DictionaryGetRequest) returns (_DictionaryGetResponse) {}
-  rpc DictionaryGetAll (_DictionaryGetAllRequest) returns (_DictionaryGetAllResponse) {}
-  rpc DictionarySet (_DictionarySetRequest) returns (_DictionarySetResponse) {}
-}
+  rpc Increment (_IncrementRequest) returns (_IncrementResponse) {}
 
+  rpc DictionaryGet (_DictionaryGetRequest) returns (_DictionaryGetResponse) {}
+  rpc DictionaryFetch (_DictionaryFetchRequest) returns (_DictionaryFetchResponse) {}
+  rpc DictionarySet (_DictionarySetRequest) returns (_DictionarySetResponse) {}
+  rpc DictionaryIncrement (_DictionaryIncrementRequest) returns (_DictionaryIncrementResponse) {}
+  rpc DictionaryDelete (_DictionaryDeleteRequest) returns (_DictionaryDeleteResponse) {}
+
+  rpc SetFetch (_SetFetchRequest) returns (_SetFetchResponse) {}
+  rpc SetUnion (_SetUnionRequest) returns (_SetUnionResponse) {}
+  rpc SetDifference (_SetDifferenceRequest) returns (_SetDifferenceResponse) {}
+
+  rpc ListPushFront(_ListPushFrontRequest) returns (_ListPushFrontResponse) {}
+  rpc ListPushBack(_ListPushBackRequest) returns (_ListPushBackResponse) {}
+  rpc ListPopFront(_ListPopFrontRequest) returns (_ListPopFrontResponse) {}
+  rpc ListPopBack(_ListPopBackRequest) returns (_ListPopBackResponse) {}
+  rpc ListErase(_ListEraseRequest) returns (_ListEraseResponse) {}
+  rpc ListRemove(_ListRemoveRequest) returns (_ListRemoveResponse) {}
+  rpc ListFetch(_ListFetchRequest) returns (_ListFetchResponse) {}
+  rpc ListLength(_ListLengthRequest) returns (_ListLengthResponse) {}
+  rpc ListConcatenateFront(_ListConcatenateFrontRequest) returns (_ListConcatenateFrontResponse) {}
+  rpc ListConcatenateBack(_ListConcatenateBackRequest) returns (_ListConcatenateBackResponse) {}
+}
 
 message _GetRequest {
   bytes cache_key = 1;
@@ -54,9 +72,37 @@ message _SetResponse {
   string message = 2;
 }
 
+message _SetIfNotExistsRequest {
+  bytes cache_key = 1;
+  bytes cache_body = 2;
+  uint64 ttl_milliseconds = 3;
+}
+
+message _SetIfNotExistsResponse {
+  oneof result {
+    _Stored stored = 1;
+    _NotStored not_stored = 2;
+  }
+  message _Stored { }
+  message _NotStored { }
+}
+
+message _IncrementRequest {
+  bytes cache_key = 1;
+  // Amount to add to the stored value.
+  // If this key doesn't currently exist, it's created with this value (encoded as a base 10 string)
+  int64 increment_by = 2;
+  uint64 ttl_milliseconds = 3;
+}
+
+message _IncrementResponse {
+  // The value stored after the increment operation.
+  int64 value = 1;
+}
+
 message _DictionaryGetRequest {
   bytes dictionary_name = 1;
-  repeated bytes dictionary_keys = 2;
+  repeated bytes fields = 2;
 }
 
 message _DictionaryGetResponse {
@@ -64,31 +110,299 @@ message _DictionaryGetResponse {
     ECacheResult result = 1;
     bytes cache_body = 2;
   }
-  repeated _DictionaryGetResponsePart dictionary_body = 1;
-  string message = 2;
+
+  message _Found {
+    repeated _DictionaryGetResponsePart items = 1;
+  }
+
+  message _Missing {}
+
+  oneof dictionary {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
 }
 
-message _DictionaryGetAllRequest {
+message _DictionaryFetchRequest {
   bytes dictionary_name = 1;
 }
 
-message _DictionaryKeyValuePair {
-  bytes key = 1;
+message _DictionaryFieldValuePair {
+  bytes field = 1;
   bytes value = 2;
 }
 
-message _DictionaryGetAllResponse {
-  ECacheResult result = 1;
-  repeated _DictionaryKeyValuePair dictionary_body = 2;
-  string message = 3;
+message _DictionaryFetchResponse {
+  message _Found {
+    repeated _DictionaryFieldValuePair items = 1;
+  }
+
+  message _Missing {}
+
+  oneof dictionary {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
 }
 
 message _DictionarySetRequest {
   bytes dictionary_name = 1;
-  repeated _DictionaryKeyValuePair dictionary_body = 2;
+  repeated _DictionaryFieldValuePair items = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
 }
 
-message _DictionarySetResponse {
-  ECacheResult result = 1;
-  string message = 2;
+message _DictionarySetResponse {}
+
+message _DictionaryIncrementRequest {
+  bytes dictionary_name = 1;
+  bytes field = 2;
+  int64 amount = 3;
+  uint64 ttl_milliseconds = 4;
+  bool refresh_ttl = 5;
+}
+
+message _DictionaryIncrementResponse {
+  int64 value = 1;
+}
+
+message _DictionaryDeleteRequest {
+  message Some {
+    repeated bytes fields = 1;
+  }
+  message All { }
+
+  bytes dictionary_name = 1;
+  oneof delete {
+    Some some = 2;
+    All all = 3;
+  }
+}
+
+message _DictionaryDeleteResponse {}
+
+message _SetFetchRequest {
+  bytes set_name = 1;
+}
+
+message _SetFetchResponse {
+  message _Found {
+    repeated bytes elements = 1;
+  }
+
+  message _Missing {}
+
+  oneof set {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _SetUnionRequest {
+  bytes set_name = 1;
+  repeated bytes elements = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
+}
+
+message _SetUnionResponse {}
+
+message _SetDifferenceRequest {
+  // cache = request - stored
+  message _Minuend {
+    repeated bytes elements = 1;
+  }
+  // cache = stored - request
+  message _Subtrahend {
+    // Subtract a set of elements
+    message _Set {
+      repeated bytes elements = 1;
+    }
+    // Subtract the set's identity (itself) from itself - which deletes it.
+    message _Identity {}
+
+    oneof subtrahend_set {
+      _Set set = 1;
+      _Identity identity = 2;
+    }
+  }
+
+  bytes set_name = 1;
+  oneof difference {
+    _Minuend minuend = 2;
+    _Subtrahend subtrahend = 3;
+  }
+}
+
+message _SetDifferenceResponse {
+  message _Found {}
+
+  message _Missing {}
+
+  oneof set {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _ListConcatenateFrontRequest {
+  bytes list_name = 1;
+  repeated bytes values = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
+
+  // ensure total length <= this; remove excess from back of list
+  uint32 truncate_back_to_size = 5;
+}
+
+message _ListConcatenateFrontResponse {
+  // length of the list after the concatenation
+  uint32 list_length = 1;
+}
+
+
+message _ListConcatenateBackRequest {
+  bytes list_name = 1;
+  repeated bytes values = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
+
+  // ensure total length <= this; remove excess from front of list
+  uint32 truncate_front_to_size = 5;
+}
+
+message _ListConcatenateBackResponse {
+  // length of the list after the concatenation
+  uint32 list_length = 1;
+}
+
+// stored = request + stored
+message _ListPushFrontRequest {
+  bytes list_name = 1;
+  bytes value = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
+
+  // ensure total length <= this; remove excess from back of list
+  uint32 truncate_back_to_size = 5;
+}
+
+message _ListPushFrontResponse {
+  // length of the list after the push
+  uint32 list_length = 1;
+}
+
+// stored = stored + request
+message _ListPushBackRequest {
+  bytes list_name = 1;
+  bytes value = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
+
+  // ensure total length <= this; remove excess from front of list
+  uint32 truncate_front_to_size = 5;
+}
+
+message _ListPushBackResponse {
+  // length of the list after the push
+  uint32 list_length = 1;
+}
+
+message _ListPopFrontRequest {
+  bytes list_name = 1;
+}
+
+message _ListPopFrontResponse {
+  message _Found {
+    bytes front = 1;
+  }
+
+  message _Missing {}
+
+  oneof list {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _ListPopBackRequest {
+  bytes list_name = 1;
+}
+
+message _ListPopBackResponse {
+  message _Found {
+    bytes back = 1;
+  }
+
+  message _Missing {}
+
+  oneof list {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _ListRange {
+  uint32 begin_index = 1;
+  uint32 count = 2;
+}
+
+message _ListEraseRequest {
+  message _All {}
+
+  message _ListRanges {
+    repeated _ListRange ranges = 1;
+  }
+
+  bytes list_name = 1;
+  oneof erase {
+    _ListRanges some = 2;
+    _All all = 3;
+  }
+}
+
+message _ListEraseResponse {}
+
+message _ListRemoveRequest {
+  bytes list_name = 1;
+  oneof remove {
+    // Remove all appearances in the list where the element is this value
+    bytes all_elements_with_value = 2;
+  }
+}
+
+message _ListRemoveResponse {}
+
+message _ListFetchRequest {
+  bytes list_name = 1;
+}
+
+message _ListFetchResponse {
+  message _Found {
+    repeated bytes values = 1;
+  }
+
+  message _Missing {}
+
+  oneof list {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _ListLengthRequest {
+  bytes list_name = 1;
+}
+
+message _ListLengthResponse {
+  message _Found {
+    uint32 length = 1;
+  }
+
+  message _Missing {}
+
+  oneof list {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
 }

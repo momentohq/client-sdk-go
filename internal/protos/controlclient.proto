@@ -3,6 +3,7 @@ syntax = "proto3";
 option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
 option java_multiple_files = true;
 option java_package = "grpc.control_client";
+option csharp_namespace = "Momento.Protos.ControlClient";
 
 package control_client;
 
@@ -10,6 +11,7 @@ service ScsControl {
   rpc CreateCache (_CreateCacheRequest) returns (_CreateCacheResponse) {}
   rpc DeleteCache (_DeleteCacheRequest) returns (_DeleteCacheResponse) {}
   rpc ListCaches (_ListCachesRequest) returns (_ListCachesResponse) {}
+  rpc FlushCache (_FlushCacheRequest) returns (_FlushCacheResponse) {}
   rpc CreateSigningKey (_CreateSigningKeyRequest) returns (_CreateSigningKeyResponse) {}
   rpc RevokeSigningKey (_RevokeSigningKeyRequest) returns (_RevokeSigningKeyResponse) {}
   rpc ListSigningKeys (_ListSigningKeysRequest) returns (_ListSigningKeysResponse) {}
@@ -66,10 +68,18 @@ message _SigningKey {
 }
 
 message _ListSigningKeysRequest {
-  string next_token = 1; 
+  string next_token = 1;
 }
 
 message _ListSigningKeysResponse {
   repeated _SigningKey signing_key = 1;
   string next_token = 2;
+}
+
+message _FlushCacheRequest {
+  string cache_name = 1;
+}
+
+message _FlushCacheResponse {
+
 }
