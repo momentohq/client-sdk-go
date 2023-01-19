@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"time"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
@@ -31,6 +32,7 @@ func newMockPubSubServer() {
 }
 
 func (t TestPubSubServer) Publish(ctx context.Context, req *pb.XPublishRequest) (*pb.XEmpty, error) {
+	time.Sleep(30 * time.Millisecond)
 	t.basicMessageChannel <- req.Value.String() // TODO think about bytes vs strings
 	return &pb.XEmpty{}, nil
 }
