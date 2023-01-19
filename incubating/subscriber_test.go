@@ -34,7 +34,7 @@ func TestBasicHappyPathSubscriber(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(fmt.Sprintf("Recieved  time=%v", receivedTime))
+		fmt.Println(fmt.Sprintf("Received  time=%v", receivedTime))
 		currentTime := time.Now().Format(layout)
 		parsedCurrentTime, err := time.Parse(layout, currentTime)
 		if err != nil {
@@ -43,7 +43,7 @@ func TestBasicHappyPathSubscriber(t *testing.T) {
 		fmt.Println(fmt.Sprintf("Current  time=%v", parsedCurrentTime))
 		// latency is in nanoseconds so dividing it by a million
 		latency := parsedCurrentTime.Sub(receivedTime)
-		fmt.Println(fmt.Sprintf("Recieved a message! latency=%dms", latency/1000000))
+		fmt.Println(fmt.Sprintf("Received a message! latency=%dms", latency/1000000))
 		fmt.Println()
 	})
 	if err != nil {
