@@ -22,9 +22,8 @@ type PubSubClient interface {
 
 // DefaultPubSubClient represents all information needed for momento client to enable pubsub control and data operations.
 type DefaultPubSubClient struct {
-	controlClient         *services.ScsControlClient
-	pubSubClient          *services.PubSubClient
-	defaultRequestTimeout uint32
+	controlClient *services.ScsControlClient
+	pubSubClient  *services.PubSubClient
 }
 
 // NewPubSubClient returns a new PubSubClient with provided authToken, and opts arguments.

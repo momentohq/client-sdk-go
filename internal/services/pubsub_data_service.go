@@ -49,10 +49,6 @@ func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr)
 	}, nil
 }
 
-type PubSubSubscriptionWrapper struct {
-	grpcClient grpc.ClientStream
-}
-
 func (client *PubSubClient) Subscribe(ctx context.Context, request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
 	streamClient, err := client.grpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName: "topic-" + request.TopicName,
