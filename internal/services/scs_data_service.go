@@ -19,7 +19,7 @@ const cachePort = ":443"
 const defaultRequestTimeoutSeconds = 5
 
 type ScsDataClient struct {
-	grpcManager           *grpcmanagers.ScsDataGrpcManager
+	grpcManager           *grpcmanagers.DataGrpcManager
 	grpcClient            pb.ScsClient
 	defaultTtlSeconds     uint64
 	requestTimeoutSeconds time.Duration
@@ -27,7 +27,7 @@ type ScsDataClient struct {
 }
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
-	dataManager, err := grpcmanagers.NewScsDataGrpcManager(&models.DataGrpcManagerRequest{
+	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		AuthToken: request.AuthToken,
 		Endpoint:  fmt.Sprint(request.Endpoint, cachePort),
 	})

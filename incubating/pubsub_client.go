@@ -22,25 +22,17 @@ type PubSubClient interface {
 
 // DefaultPubSubClient represents all information needed for momento client to enable pubsub control and data operations.
 type DefaultPubSubClient struct {
-	authToken             string
-	controlClient         *services.ScsControlClient
-	pubSubClient          *services.PubSubClient
-	defaultRequestTimeout uint32
+	controlClient *services.ScsControlClient
+	pubSubClient  *services.PubSubClient
 }
 
 // NewPubSubClient returns a new PubSubClient with provided authToken, and opts arguments.
 func NewPubSubClient(authToken string) (PubSubClient, error) {
 	endpoints, err := resolver.Resolve(&models.ResolveRequest{
-		AuthToken:        authToken,
-		EndpointOverride: "localhost", // FIXME remove this just testing quick
-
+		AuthToken: authToken,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-
-	client := &DefaultPubSubClient{
-		authToken: authToken,
 	}
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
@@ -53,16 +45,38 @@ func NewPubSubClient(authToken string) (PubSubClient, error) {
 
 	pubSubClient, err := services.NewPubSubClient(&models.PubSubClientRequest{
 		AuthToken: authToken,
-		//Endpoint:  endpoints.CacheEndpoint,
-		Endpoint: "localhost:3000", // FIXME dont hard code here
+		Endpoint:  endpoints.CacheEndpoint,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
+	client := &DefaultPubSubClient{
+		controlClient: controlClient,
+		pubSubClient:  pubSubClient,
+	}
 
-	client.pubSubClient = pubSubClient
-	client.controlClient = controlClient
+	return client, nil
+}
 
+func NewLocalPubSubClient(port int) (PubSubClient, error) {
+	// TODO impl basic local control plane for pubsub topics
+	//controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
+	//	AuthToken: authToken,
+	//	Endpoint:  endpoints.ControlEndpoint,
+	//})
+	//if err != nil {
+	//	return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	//}
+
+	pubSubClient, err := services.NewLocalPubSubClient(port)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
+	client := &DefaultPubSubClient{
+		//controlClient: controlClient,
+		pubSubClient: pubSubClient,
+	}
 	return client, nil
 }
 

@@ -2,9 +2,11 @@ package incubating
 
 import (
 	"context"
-	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"google.golang.org/grpc"
 	"io"
+
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+
+	"google.golang.org/grpc"
 )
 
 type SubscriptionIFace interface {
@@ -17,17 +19,16 @@ type Subscription struct {
 
 func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m *TopicMessageReceiveResponse)) error {
 	for {
-		rawMsg := new(pb.XTopicItem)
-		err := s.grpcClient.RecvMsg(rawMsg)
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
+		rawMsg := new(pb.XSubscriptionItem)
+		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return err
 		}
 		f(ctx, &TopicMessageReceiveResponse{
-			// TODO talk about user experience for bytes/strings
-			value: rawMsg.GetValue().GetText(),
+			// TODO think about user experience for bytes/strings
+			value: rawMsg.GetItem().GetValue().GetText(),
 		})
 	}
 }

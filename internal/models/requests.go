@@ -40,6 +40,10 @@ type PubSubClientRequest struct {
 	// TODO think about timeout settings more
 }
 
+type NewLocalPubSubClientRequest struct {
+	Port int
+}
+
 type ConvertEcacheResultRequest struct {
 	ECacheResult pb.ECacheResult
 	Message      string
