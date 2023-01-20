@@ -73,7 +73,7 @@ func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRe
 	if request.TtlSeconds > 0 {
 		itemTtlMils = uint64(request.TtlSeconds * 1000)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeoutSeconds)
 	defer cancel()
 	resp, err := client.grpcClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
@@ -97,7 +97,7 @@ func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRe
 	if momentoSvcErr != nil {
 		return nil, momentoSvcErr
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeoutSeconds)
 	defer cancel()
 	resp, err := client.grpcClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
@@ -122,7 +122,7 @@ func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDe
 	if momentoSvcErr != nil {
 		return momentoSvcErr
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeoutSeconds)
 	defer cancel()
 	_, err := client.grpcClient.Delete(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
