@@ -102,7 +102,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 }
 
 func TestBasicHappyPathDelete(t *testing.T) {
-	ctx := context.Background()ctx
+	ctx := context.Background()
 	cacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
@@ -239,7 +239,7 @@ func TestClientInitialization(t *testing.T) {
 }
 
 func TestCreateCache(t *testing.T) {
-	ctx:= context.Background()
+	ctx := context.Background()
 	const correctCacheName = "correct-cache-name"
 	tests := map[string]struct {
 		expectedErr string
