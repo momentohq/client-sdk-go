@@ -3,19 +3,15 @@ package incubating
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 )
 
-var (
-	testSubscriberAuthToken = os.Getenv("TEST_AUTH_TOKEN")
-)
-
 func TestBasicHappyPathSubscriber(t *testing.T) {
 	ctx := context.Background()
-	client, err := NewPubSubClient(testSubscriberAuthToken) // TODO should we be returning error here?
+	testPortToUse := 3000
+	client, err := NewLocalPubSubClient(testPortToUse) // TODO should we be returning error here?
 	if err != nil {
 		panic(err)
 	}

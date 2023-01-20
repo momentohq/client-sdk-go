@@ -2,21 +2,17 @@ package incubating
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 )
 
-var (
-	testPublisherAuthToken = os.Getenv("TEST_AUTH_TOKEN")
-)
-
 func TestBasicHappyPathPublisher(t *testing.T) {
 	ctx := context.Background()
+	testPortToUse := 3000
 	go func() {
-		newMockPubSubServer()
+		newMockPubSubServer(testPortToUse)
 	}()
-	client, err := NewPubSubClient(testPublisherAuthToken) // TODO should we be returning error here?
+	client, err := NewLocalPubSubClient(testPortToUse) // TODO should we be returning error here?
 	if err != nil {
 		panic(err)
 	}
