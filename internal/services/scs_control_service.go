@@ -35,11 +35,11 @@ func (client *ScsControlClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsControlClient) CreateCache(request *models.CreateCacheRequest) momentoerrors.MomentoSvcErr {
+func (client *ScsControlClient) CreateCache(ctx context.Context, request *models.CreateCacheRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
 	if err != nil {
@@ -74,11 +74,11 @@ func (client *ScsControlClient) DeleteTopic(ctx context.Context, request *models
 	return nil
 }
 
-func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) momentoerrors.MomentoSvcErr {
+func (client *ScsControlClient) DeleteCache(ctx context.Context, request *models.DeleteCacheRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
 	if err != nil {
@@ -87,8 +87,8 @@ func (client *ScsControlClient) DeleteCache(request *models.DeleteCacheRequest) 
 	return nil
 }
 
-func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*models.ListCachesResponse, momentoerrors.MomentoSvcErr) {
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+func (client *ScsControlClient) ListCaches(ctx context.Context, request *models.ListCachesRequest) (*models.ListCachesResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	resp, err := client.grpcClient.ListCaches(ctx, &pb.XListCachesRequest{NextToken: request.NextToken})
 	if err != nil {
@@ -97,8 +97,8 @@ func (client *ScsControlClient) ListCaches(request *models.ListCachesRequest) (*
 	return models.NewListCacheResponse(resp), nil
 }
 
-func (client *ScsControlClient) CreateSigningKey(endpoint string, request *models.CreateSigningKeyRequest) (*models.CreateSigningKeyResponse, momentoerrors.MomentoSvcErr) {
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+func (client *ScsControlClient) CreateSigningKey(ctx context.Context, endpoint string, request *models.CreateSigningKeyRequest) (*models.CreateSigningKeyResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	resp, err := client.grpcClient.CreateSigningKey(ctx, &pb.XCreateSigningKeyRequest{TtlMinutes: request.TtlMinutes})
 	if err != nil {
@@ -111,8 +111,8 @@ func (client *ScsControlClient) CreateSigningKey(endpoint string, request *model
 	return createResp, nil
 }
 
-func (client *ScsControlClient) RevokeSigningKey(request *models.RevokeSigningKeyRequest) momentoerrors.MomentoSvcErr {
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+func (client *ScsControlClient) RevokeSigningKey(ctx context.Context, request *models.RevokeSigningKeyRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.RevokeSigningKey(ctx, &pb.XRevokeSigningKeyRequest{KeyId: request.KeyId})
 	if err != nil {
@@ -121,8 +121,8 @@ func (client *ScsControlClient) RevokeSigningKey(request *models.RevokeSigningKe
 	return nil
 }
 
-func (client *ScsControlClient) ListSigningKeys(endpoint string, request *models.ListSigningKeysRequest) (*models.ListSigningKeysResponse, momentoerrors.MomentoSvcErr) {
-	ctx, cancel := context.WithTimeout(context.Background(), ControlCtxTimeout)
+func (client *ScsControlClient) ListSigningKeys(ctx context.Context, endpoint string, request *models.ListSigningKeysRequest) (*models.ListSigningKeysResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	resp, err := client.grpcClient.ListSigningKeys(ctx, &pb.XListSigningKeysRequest{NextToken: request.NextToken})
 	if err != nil {

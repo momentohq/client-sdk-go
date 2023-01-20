@@ -3,6 +3,8 @@
 package momento
 
 import (
+	"context"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/resolver"
@@ -14,17 +16,17 @@ const defaultRequestTimeout = uint32(5)
 
 // ScsClient wraps lower level cache control and data operations.
 type ScsClient interface {
-	CreateCache(request *CreateCacheRequest) error
-	DeleteCache(request *DeleteCacheRequest) error
-	ListCaches(request *ListCachesRequest) (*ListCachesResponse, error)
+	CreateCache(ctx context.Context, request *CreateCacheRequest) error
+	DeleteCache(ctx context.Context, request *DeleteCacheRequest) error
+	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
 
-	CreateSigningKey(request *CreateSigningKeyRequest) (*CreateSigningKeyResponse, error)
-	RevokeSigningKey(request *RevokeSigningKeyRequest) error
-	ListSigningKeys(request *ListSigningKeysRequest) (*ListSigningKeysResponse, error)
+	CreateSigningKey(ctx context.Context, request *CreateSigningKeyRequest) (*CreateSigningKeyResponse, error)
+	RevokeSigningKey(ctx context.Context, request *RevokeSigningKeyRequest) error
+	ListSigningKeys(ctx context.Context, request *ListSigningKeysRequest) (*ListSigningKeysResponse, error)
 
-	Set(request *CacheSetRequest) (*SetCacheResponse, error)
-	Get(request *CacheGetRequest) (*GetCacheResponse, error)
-	Delete(request *CacheDeleteRequest) error
+	Set(ctx context.Context, request *CacheSetRequest) (*SetCacheResponse, error)
+	Get(ctx context.Context, request *CacheGetRequest) (*GetCacheResponse, error)
+	Delete(ctx context.Context, request *CacheDeleteRequest) error
 
 	Close()
 }
@@ -114,8 +116,8 @@ func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Op
 // InvalidArgumentError: If provided CacheName is empty.
 // AlreadyExistsError: If cache with the given name already exists.
 // ClientSdkError: For any SDK checks that fail.
-func (c *DefaultScsClient) CreateCache(request *CreateCacheRequest) error {
-	err := c.controlClient.CreateCache(&models.CreateCacheRequest{
+func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
@@ -129,8 +131,8 @@ func (c *DefaultScsClient) CreateCache(request *CreateCacheRequest) error {
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If an attempt is made to delete a MomentoCache that doesn't exist.
 // ClientSdkError: For any SDK checks that fail.
-func (c *DefaultScsClient) DeleteCache(request *DeleteCacheRequest) error {
-	err := c.controlClient.DeleteCache(&models.DeleteCacheRequest{
+func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
@@ -142,8 +144,8 @@ func (c *DefaultScsClient) DeleteCache(request *DeleteCacheRequest) error {
 // Lists all caches in your Momento account.
 // The following is a possible error that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
-func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesResponse, error) {
-	rsp, err := c.controlClient.ListCaches(&models.ListCachesRequest{
+func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
 	if err != nil {
@@ -160,8 +162,8 @@ func (c *DefaultScsClient) ListCaches(request *ListCachesRequest) (*ListCachesRe
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // InvalidArgumentError: If provided TtlMinutes is negative
 // ClientSdkError: For any SDK checks that fail.
-func (c *DefaultScsClient) CreateSigningKey(request *CreateSigningKeyRequest) (*CreateSigningKeyResponse, error) {
-	rsp, err := c.controlClient.CreateSigningKey(c.dataClient.Endpoint(), &models.CreateSigningKeyRequest{
+func (c *DefaultScsClient) CreateSigningKey(ctx context.Context, request *CreateSigningKeyRequest) (*CreateSigningKeyResponse, error) {
+	rsp, err := c.controlClient.CreateSigningKey(ctx, c.dataClient.Endpoint(), &models.CreateSigningKeyRequest{
 		TtlMinutes: request.TtlMinutes,
 	})
 	if err != nil {
@@ -179,8 +181,8 @@ func (c *DefaultScsClient) CreateSigningKey(request *CreateSigningKeyRequest) (*
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // ClientSdkError: For any SDK checks that fail.
-func (c *DefaultScsClient) RevokeSigningKey(request *RevokeSigningKeyRequest) error {
-	err := c.controlClient.RevokeSigningKey(&models.RevokeSigningKeyRequest{
+func (c *DefaultScsClient) RevokeSigningKey(ctx context.Context, request *RevokeSigningKeyRequest) error {
+	err := c.controlClient.RevokeSigningKey(ctx, &models.RevokeSigningKeyRequest{
 		KeyId: request.KeyId,
 	})
 	if err != nil {
@@ -193,8 +195,8 @@ func (c *DefaultScsClient) RevokeSigningKey(request *RevokeSigningKeyRequest) er
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // ClientSdkError: For any SDK checks that fail.
-func (c *DefaultScsClient) ListSigningKeys(request *ListSigningKeysRequest) (*ListSigningKeysResponse, error) {
-	rsp, err := c.controlClient.ListSigningKeys(c.dataClient.Endpoint(), &models.ListSigningKeysRequest{
+func (c *DefaultScsClient) ListSigningKeys(ctx context.Context, request *ListSigningKeysRequest) (*ListSigningKeysResponse, error) {
+	rsp, err := c.controlClient.ListSigningKeys(ctx, c.dataClient.Endpoint(), &models.ListSigningKeysRequest{
 		NextToken: request.NextToken,
 	})
 	if err != nil {
@@ -211,7 +213,7 @@ func (c *DefaultScsClient) ListSigningKeys(request *ListSigningKeysRequest) (*Li
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
 // InternalServerError: If server encountered an unknown error while trying to store the item.
-func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, error) {
+func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) (*SetCacheResponse, error) {
 	ttlToUse := c.defaultTtlSeconds
 	if request.TtlSeconds._ttl != nil {
 		ttlToUse = *request.TtlSeconds._ttl
@@ -224,7 +226,7 @@ func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, err
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp, err := c.dataClient.Set(&models.CacheSetRequest{
+	rsp, err := c.dataClient.Set(ctx, &models.CacheSetRequest{
 		CacheName:  request.CacheName,
 		Key:        request.Key,
 		Value:      request.Value,
@@ -243,12 +245,12 @@ func (c *DefaultScsClient) Set(request *CacheSetRequest) (*SetCacheResponse, err
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
 // InternalServerError: If server encountered an unknown error while trying to store the item.
-func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, error) {
+func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (*GetCacheResponse, error) {
 	err := utility.IsKeyValid(request.Key)
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp, err := c.dataClient.Get(&models.CacheGetRequest{
+	rsp, err := c.dataClient.Get(ctx, &models.CacheGetRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
 	})
@@ -266,12 +268,12 @@ func (c *DefaultScsClient) Get(request *CacheGetRequest) (*GetCacheResponse, err
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
 // InternalServerError: If server encountered an unknown error while trying to delete the item.
-func (c *DefaultScsClient) Delete(request *CacheDeleteRequest) error {
+func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
 	err := utility.IsKeyValid(request.Key)
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
-	err = c.dataClient.Delete(&models.CacheDeleteRequest{
+	err = c.dataClient.Delete(ctx, &models.CacheDeleteRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
 	})
