@@ -28,8 +28,7 @@ type ScsDataClient struct {
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
-		AuthToken: request.AuthToken,
-		Endpoint:  fmt.Sprint(request.Endpoint, cachePort),
+		CredentialProvider: request.CredentialProvider,
 	})
 	if err != nil {
 		return nil, err
@@ -40,12 +39,13 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	} else {
 		timeout = time.Duration(request.RequestTimeoutSeconds) * time.Second
 	}
+	// TODO: where is "endpoint" used? does it need the port appended?
 	return &ScsDataClient{
 		grpcManager:           dataManager,
 		grpcClient:            pb.NewScsClient(dataManager.Conn),
 		defaultTtlSeconds:     uint64(request.DefaultTtlSeconds),
 		requestTimeoutSeconds: timeout,
-		endpoint:              request.Endpoint,
+		endpoint:              request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
 

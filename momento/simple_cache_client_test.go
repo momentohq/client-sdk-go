@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/auth"
 )
 
 var (
-	testAuthToken = os.Getenv("TEST_AUTH_TOKEN")
-	testCacheName = os.Getenv("TEST_CACHE_NAME")
+	testCacheName          = os.Getenv("TEST_CACHE_NAME")
+	testCredentialProvider = newCredentialProvider("TEST_AUTH_TOKEN")
 )
 
 const (
@@ -27,7 +28,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	cacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
-	client, err := newTestClient()
+	client, err := newTestClient(testCredentialProvider)
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
@@ -106,7 +107,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	cacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
-	client, err := newTestClient()
+	client, err := newTestClient(testCredentialProvider)
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
@@ -181,27 +182,22 @@ func TestClientInitialization(t *testing.T) {
 	badRequestTimeout := uint32(0)
 	tests := map[string]struct {
 		expectedErr           string
-		authToken             string
 		defaultTtlSeconds     uint32
 		requestTimeoutSeconds *uint32
 	}{
 		"happy path": {
-			authToken:         testAuthToken,
 			defaultTtlSeconds: defaultTtlSeconds,
 		},
 		"happy path custom timeout": {
-			authToken:             testAuthToken,
 			defaultTtlSeconds:     defaultTtlSeconds,
 			requestTimeoutSeconds: &testRequestTimeout,
 		},
 		"test invalid auth token": {
 			expectedErr:       ClientSdkError,
-			authToken:         "NOT_A_VALID_JWT",
 			defaultTtlSeconds: defaultTtlSeconds,
 		},
 		"test invalid request timeout": {
 			expectedErr:           InvalidArgumentError,
-			authToken:             testAuthToken,
 			defaultTtlSeconds:     defaultTtlSeconds,
 			requestTimeoutSeconds: &badRequestTimeout,
 		},
@@ -210,9 +206,9 @@ func TestClientInitialization(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			c, err := NewSimpleCacheClient(tt.authToken, tt.defaultTtlSeconds)
+			c, err := NewSimpleCacheClient(testCredentialProvider, tt.defaultTtlSeconds)
 			if tt.requestTimeoutSeconds != nil {
-				c, err = NewSimpleCacheClient(tt.authToken, tt.defaultTtlSeconds, WithRequestTimeout(*tt.requestTimeoutSeconds))
+				c, err = NewSimpleCacheClient(testCredentialProvider, tt.defaultTtlSeconds, WithRequestTimeout(*tt.requestTimeoutSeconds))
 			}
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -258,7 +254,7 @@ func TestCreateCache(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -308,7 +304,7 @@ func TestDeleteCache(t *testing.T) {
 		"happy path": {
 			cacheName: testCacheName,
 		},
-		"test deleteing unknown cache name": {
+		"test deleting unknown cache name": {
 			expectedErr: NotFoundError,
 			cacheName:   unknownCache,
 		},
@@ -318,7 +314,7 @@ func TestDeleteCache(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -363,7 +359,7 @@ func TestListCache(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -397,7 +393,7 @@ func TestListCache(t *testing.T) {
 
 func TestCreateListRevokeSigningKeys(t *testing.T) {
 	ctx := context.Background()
-	client, err := newTestClient()
+	client, err := newTestClient(testCredentialProvider)
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
@@ -457,7 +453,7 @@ func TestSetGet(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -529,7 +525,7 @@ func TestSet(t *testing.T) {
 		value       interface{}
 		expectedErr string
 	}{
-		"test set on non existant cache": {
+		"test set on non existent cache": {
 			cacheName:   uuid.NewString(),
 			key:         uuid.NewString(),
 			value:       uuid.NewString(),
@@ -567,7 +563,7 @@ func TestSet(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -602,7 +598,7 @@ func TestGet(t *testing.T) {
 		key         interface{}
 		expectedErr string
 	}{
-		"test get on non existant cache": {
+		"test get on non existent cache": {
 			cacheName:   uuid.NewString(),
 			key:         uuid.NewString(),
 			expectedErr: NotFoundError,
@@ -624,7 +620,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -659,7 +655,7 @@ func TestDelete(t *testing.T) {
 		key         interface{}
 		expectedErr string
 	}{
-		"test delete on non existant cache": {
+		"test delete on non existent cache": {
 			cacheName:   uuid.NewString(),
 			key:         uuid.NewString(),
 			expectedErr: NotFoundError,
@@ -681,7 +677,7 @@ func TestDelete(t *testing.T) {
 		},
 	}
 	for name, tt := range tests {
-		client, err := newTestClient()
+		client, err := newTestClient(testCredentialProvider)
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -709,7 +705,15 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func newTestClient() (ScsClient, error) {
+func newCredentialProvider(envVarName string) auth.CredentialProvider {
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider(envVarName)
+	if err != nil {
+		panic(err)
+	}
+	return credentialProvider
+}
+		
+func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error) {
 	ctx := context.Background()
 	if testAuthToken == "" {
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
@@ -718,7 +722,7 @@ func newTestClient() (ScsClient, error) {
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
 	}
 
-	client, err := NewSimpleCacheClient(testAuthToken, defaultTtlSeconds)
+	client, err := NewSimpleCacheClient(credentialProvider, defaultTtlSeconds)
 	if err != nil {
 		return nil, err
 	}
@@ -728,6 +732,7 @@ func newTestClient() (ScsClient, error) {
 		CacheName: testCacheName,
 	})
 	if momentoErr, ok := err.(MomentoError); ok {
+		fmt.Println(momentoErr.Error())
 		if momentoErr.Code() != AlreadyExistsError {
 			return nil, err
 		}

@@ -20,8 +20,7 @@ type PubSubClient struct {
 
 func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataGrpcManagerRequest{
-		AuthToken: request.AuthToken,
-		Endpoint:  fmt.Sprint(request.Endpoint, cachePort),
+		CredentialProvider: request.CredentialProvider,
 	})
 
 	if err != nil {
@@ -30,12 +29,12 @@ func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, moment
 	return &PubSubClient{
 		grpcManager: dataManager,
 		grpcClient:  pb.NewPubsubClient(dataManager.Conn),
-		endpoint:    request.Endpoint,
+		endpoint:    request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
 
 func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr) {
-	dataManager, err := grpcmanagers.NewLocalDataGrpcManager(&models.DataGrpcManagerRequest{
+	dataManager, err := grpcmanagers.NewLocalDataGrpcManager(&models.LocalDataGrpcManagerRequest{
 		Endpoint: fmt.Sprintf("localhost:%d", port),
 	})
 

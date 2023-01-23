@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -12,7 +11,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
-const ControlPort = ":443"
 const ControlCtxTimeout = 60 * time.Second
 
 type ScsControlClient struct {
@@ -22,8 +20,7 @@ type ScsControlClient struct {
 
 func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, momentoerrors.MomentoSvcErr) {
 	controlManager, err := grpcmanagers.NewScsControlGrpcManager(&models.ControlGrpcManagerRequest{
-		AuthToken: request.AuthToken,
-		Endpoint:  fmt.Sprint(request.Endpoint, ControlPort),
+		CredentialProvider: request.CredentialProvider,
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
