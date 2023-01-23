@@ -57,7 +57,7 @@ func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCacheResponse, momentoerrors.MomentoSvcErr) {
+func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRequest) (*models.SetCacheResponse, momentoerrors.MomentoSvcErr) {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
@@ -73,7 +73,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	if request.TtlSeconds > 0 {
 		itemTtlMils = uint64(request.TtlSeconds * 1000)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeoutSeconds)
 	defer cancel()
 	resp, err := client.grpcClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
@@ -89,7 +89,7 @@ func (client *ScsDataClient) Set(request *models.CacheSetRequest) (*models.SetCa
 	return models.NewSetCacheResponse(resp, byteValue), nil
 }
 
-func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCacheResponse, momentoerrors.MomentoSvcErr) {
+func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (*models.GetCacheResponse, momentoerrors.MomentoSvcErr) {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
@@ -97,7 +97,7 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 	if momentoSvcErr != nil {
 		return nil, momentoSvcErr
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeoutSeconds)
 	defer cancel()
 	resp, err := client.grpcClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
@@ -114,7 +114,7 @@ func (client *ScsDataClient) Get(request *models.CacheGetRequest) (*models.GetCa
 
 }
 
-func (client *ScsDataClient) Delete(request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {
+func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {
 	if !utility.IsCacheNameValid(request.CacheName) {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
@@ -122,7 +122,7 @@ func (client *ScsDataClient) Delete(request *models.CacheDeleteRequest) momentoe
 	if momentoSvcErr != nil {
 		return momentoSvcErr
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), client.requestTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeoutSeconds)
 	defer cancel()
 	_, err := client.grpcClient.Delete(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
