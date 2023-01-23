@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	testCacheName          = os.Getenv("TEST_CACHE_NAME")
-	testCredentialProvider = newCredentialProvider("TEST_AUTH_TOKEN")
+	testCacheName             = os.Getenv("TEST_CACHE_NAME")
+	testCredentialProvider, _ = newCredentialProvider("TEST_AUTH_TOKEN")
 )
 
 const (
@@ -177,6 +177,23 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	cleanUpClient(client)
 }
 
+func TestCredentialProvider(t *testing.T) {
+	err := os.Setenv("BAD_TEST_AUTH_TOKEN", "Iamnotanauthtoken")
+	if err != nil {
+		return
+	}
+	_, err = newCredentialProvider("BAD_TEST_AUTH_TOKEN")
+	if err == nil {
+		t.Fatal("missing expected error for bad auth token")
+	}
+	var momentoErr MomentoError
+	if errors.As(err, &momentoErr) {
+		if momentoErr.Code() != ClientSdkError {
+			t.Error("missing expected ClientSdkError")
+		}
+	}
+}
+
 func TestClientInitialization(t *testing.T) {
 	testRequestTimeout := uint32(100)
 	badRequestTimeout := uint32(0)
@@ -191,10 +208,6 @@ func TestClientInitialization(t *testing.T) {
 		"happy path custom timeout": {
 			defaultTtlSeconds:     defaultTtlSeconds,
 			requestTimeoutSeconds: &testRequestTimeout,
-		},
-		"test invalid auth token": {
-			expectedErr:       ClientSdkError,
-			defaultTtlSeconds: defaultTtlSeconds,
 		},
 		"test invalid request timeout": {
 			expectedErr:           InvalidArgumentError,
@@ -215,11 +228,13 @@ func TestClientInitialization(t *testing.T) {
 			}
 
 			if tt.expectedErr != "" && err != nil {
-				if momentoErr, ok := err.(MomentoError); ok {
+				var momentoErr MomentoError
+				if errors.As(err, &momentoErr) {
 					if momentoErr.Code() == tt.expectedErr {
 						return // Success end test we expected this
 					}
 				}
+
 				t.Errorf(
 					"unexpected error occurred initializing client got=%+v expected=%+v",
 					err, tt.expectedErr,
@@ -267,7 +282,8 @@ func TestCreateCache(t *testing.T) {
 			}
 
 			if tt.expectedErr != "" && err != nil {
-				if momentoErr, ok := err.(MomentoError); ok {
+				var momentoErr MomentoError
+				if errors.As(err, &momentoErr) {
 					if momentoErr.Code() == tt.expectedErr {
 						return // Success end test we expected this
 					}
@@ -327,7 +343,8 @@ func TestDeleteCache(t *testing.T) {
 			}
 
 			if tt.expectedErr != "" && err != nil {
-				if momentoErr, ok := err.(MomentoError); ok {
+				var momentoErr MomentoError
+				if errors.As(err, &momentoErr) {
 					if momentoErr.Code() == tt.expectedErr {
 						return // Success end test we expected this
 					}
@@ -576,7 +593,8 @@ func TestSet(t *testing.T) {
 			}
 
 			if tt.expectedErr != "" && err != nil {
-				if momentoErr, ok := err.(MomentoError); ok {
+				var momentoErr MomentoError
+				if errors.As(err, &momentoErr) {
 					if momentoErr.Code() == tt.expectedErr {
 						return // Success end test we expected this
 					}
@@ -633,7 +651,8 @@ func TestGet(t *testing.T) {
 			}
 
 			if tt.expectedErr != "" && err != nil {
-				if momentoErr, ok := err.(MomentoError); ok {
+				var momentoErr MomentoError
+				if errors.As(err, &momentoErr) {
 					if momentoErr.Code() == tt.expectedErr {
 						return // Success end test we expected this
 					}
@@ -690,7 +709,8 @@ func TestDelete(t *testing.T) {
 			}
 
 			if tt.expectedErr != "" && err != nil {
-				if momentoErr, ok := err.(MomentoError); ok {
+				var momentoErr MomentoError
+				if errors.As(err, &momentoErr) {
 					if momentoErr.Code() == tt.expectedErr {
 						return // Success end test we expected this
 					}
@@ -705,19 +725,16 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func newCredentialProvider(envVarName string) auth.CredentialProvider {
+func newCredentialProvider(envVarName string) (auth.CredentialProvider, error) {
 	credentialProvider, err := auth.NewEnvMomentoTokenProvider(envVarName)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return credentialProvider
+	return credentialProvider, nil
 }
-		
+
 func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error) {
 	ctx := context.Background()
-	if testAuthToken == "" {
-		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
-	}
 	if testCacheName == "" {
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
 	}
@@ -731,8 +748,8 @@ func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error
 	err = client.CreateCache(ctx, &CreateCacheRequest{
 		CacheName: testCacheName,
 	})
-	if momentoErr, ok := err.(MomentoError); ok {
-		fmt.Println(momentoErr.Error())
+	var momentoErr MomentoError
+	if errors.As(err, &momentoErr) {
 		if momentoErr.Code() != AlreadyExistsError {
 			return nil, err
 		}

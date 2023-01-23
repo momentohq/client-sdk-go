@@ -39,7 +39,6 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	} else {
 		timeout = time.Duration(request.RequestTimeoutSeconds) * time.Second
 	}
-	// TODO: where is "endpoint" used? does it need the port appended?
 	return &ScsDataClient{
 		grpcManager:           dataManager,
 		grpcClient:            pb.NewScsClient(dataManager.Conn),

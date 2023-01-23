@@ -59,7 +59,7 @@ func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, err
 		AuthToken: authToken,
 	})
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err
 	}
 	provider := DefaultCredentialProvider{
 		authToken:       authToken,
