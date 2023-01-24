@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
@@ -21,18 +22,19 @@ type LocalDataGrpcManagerRequest struct {
 }
 
 type ControlClientRequest struct {
+	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
 }
 
 type DataClientRequest struct {
-	CredentialProvider    auth.CredentialProvider
-	DefaultTtlSeconds     uint32
-	RequestTimeoutSeconds uint32
+	Configuration      config.Configuration
+	CredentialProvider auth.CredentialProvider
+	DefaultTtlSeconds  uint32
 }
 
 type PubSubClientRequest struct {
+	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
-	// TODO think about timeout settings more
 }
 
 type NewLocalPubSubClientRequest struct {

@@ -6,7 +6,7 @@ import (
 	"context"
 
 	"github.com/momentohq/client-sdk-go/auth"
-
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
@@ -41,58 +41,31 @@ type DefaultScsClient struct {
 	defaultRequestTimeout uint32
 }
 
-// Option returns a function to configure various options for ScsClient.
-type Option func(*DefaultScsClient) MomentoError
-
-// WithRequestTimeout returns an Option that and set user-specified request timeout and  can be chained with other builder methods.
-func WithRequestTimeout(requestTimeout uint32) Option {
-	return func(c *DefaultScsClient) MomentoError {
-		if requestTimeout == 0 {
-			return NewMomentoError(
-				momentoerrors.InvalidArgumentError,
-				"request timeout must be greater than zero",
-				nil,
-			)
-		}
-		c.defaultRequestTimeout = requestTimeout
-		return nil
-	}
+type SimpleCacheClientProps struct {
+	Configuration      config.Configuration
+	CredentialProvider auth.CredentialProvider
+	DefaultTtlSeconds  uint32
 }
 
-// NewSimpleCacheClient returns a new ScsClient with provided authToken, defaultTtlSeconds, and opts arguments.
-func NewSimpleCacheClient(credentialProvider auth.CredentialProvider, defaultTtlSeconds uint32, opts ...Option) (ScsClient, error) {
+// NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTtlSeconds, and opts arguments.
+func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	client := &DefaultScsClient{
-		credentialProvider: credentialProvider,
-		defaultTtlSeconds:  defaultTtlSeconds,
-	}
-
-	// Loop through all user passed options before building up internal clients
-	for _, opt := range opts {
-		// Call the option giving the instantiated
-		// *House as the argument
-		err := opt(client)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	requestTimeoutToUse := defaultRequestTimeout
-	if client.defaultRequestTimeout > 0 {
-		requestTimeoutToUse = client.defaultRequestTimeout
+		credentialProvider: props.CredentialProvider,
+		defaultTtlSeconds:  props.DefaultTtlSeconds,
 	}
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
-		CredentialProvider: credentialProvider,
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
-	// TODO: just pass authProvider for token and endpoint
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
-		CredentialProvider:    credentialProvider,
-		DefaultTtlSeconds:     defaultTtlSeconds,
-		RequestTimeoutSeconds: requestTimeoutToUse,
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
+		DefaultTtlSeconds:  props.DefaultTtlSeconds,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
@@ -104,7 +77,7 @@ func NewSimpleCacheClient(credentialProvider auth.CredentialProvider, defaultTtl
 	return client, nil
 }
 
-// Create a new cache in your Momento account.
+// CreateCache Create a new cache in your Momento account.
 // The following are possible errors that can be returned:
 // InvalidArgumentError: If provided CacheName is empty.
 // AlreadyExistsError: If cache with the given name already exists.
@@ -119,7 +92,7 @@ func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCache
 	return nil
 }
 
-// Deletes a cache and all the items within your Momento account.
+// DeleteCache Deletes a cache and all the items within your Momento account.
 // The following are possible errors that can be returned:
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If an attempt is made to delete a MomentoCache that doesn't exist.
@@ -134,7 +107,7 @@ func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCache
 	return nil
 }
 
-// Lists all caches in your Momento account.
+// ListCaches Lists all caches in your Momento account.
 // The following is a possible error that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
@@ -150,7 +123,7 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 	}, nil
 }
 
-// Creates a Momento signing key in your Momento account
+// CreateSigningKey Creates a Momento signing key in your Momento account
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // InvalidArgumentError: If provided TtlMinutes is negative
@@ -170,7 +143,7 @@ func (c *DefaultScsClient) CreateSigningKey(ctx context.Context, request *Create
 	}, nil
 }
 
-// Revokes a Momento signing key in your Momento account, all tokens signed by which will be invalid
+// RevokeSigningKey Revokes a Momento signing key in your Momento account, all tokens signed by which will be invalid
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // ClientSdkError: For any SDK checks that fail.
@@ -184,7 +157,7 @@ func (c *DefaultScsClient) RevokeSigningKey(ctx context.Context, request *Revoke
 	return nil
 }
 
-// Lists all Momento signing keys in your Momento account
+// ListSigningKeys Lists all Momento signing keys in your Momento account
 // The following are possible errors that can be returned:
 // AuthenticationError: If the provided Momento Auth Token is invalid.
 // ClientSdkError: For any SDK checks that fail.
@@ -201,7 +174,7 @@ func (c *DefaultScsClient) ListSigningKeys(ctx context.Context, request *ListSig
 	}, nil
 }
 
-// Stores an item in cache.
+// Set Stores an item in cache.
 // The following are possible errors that can be returned:
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
@@ -233,7 +206,7 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) (*
 	}, nil
 }
 
-// Retrieve an item from the cache.
+// Get Retrieve an item from the cache.
 // The following are possible errors that can be returned:
 // InvalidArgumentError: If provided CacheName is empty.
 // NotFoundError: If the cache with the given name doesn't exist.
@@ -276,7 +249,7 @@ func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteReque
 	return nil
 }
 
-// Closes the client.
+// Close Closes the client.
 func (c *DefaultScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
