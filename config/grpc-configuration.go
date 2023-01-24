@@ -1,9 +1,11 @@
 package config
 
+import "time"
+
 type GrpcConfigurationProps struct {
 	// number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
 	// with a DeadlineExceeded error.
-	deadlineMillis uint32
+	deadline time.Duration
 	// the maximum amount of memory, in megabytes, that a session is allowed to consume.  Sessions that consume
 	// more than this amount will return a ResourceExhausted error.
 	maxSessionMemoryMb uint32
@@ -11,13 +13,13 @@ type GrpcConfigurationProps struct {
 
 // GrpcConfiguration Encapsulates gRPC configuration tunables.
 type GrpcConfiguration interface {
-	// GetDeadlineMillis Returns number of milliseconds the client is willing to wait for an RPC to complete before
+	// GetDeadline Returns number of milliseconds the client is willing to wait for an RPC to complete before
 	//it is terminated with a DeadlineExceeded error.
-	GetDeadlineMillis() uint32
+	GetDeadline() time.Duration
 
-	// WithDeadlineMillis Copy constructor for overriding the client-side deadline. Returns a new GrpcConfiguration
+	// WithDeadline Copy constructor for overriding the client-side deadline. Returns a new GrpcConfiguration
 	//with the specified client-side deadline
-	WithDeadlineMillis(deadlineMillis uint32) GrpcConfiguration
+	WithDeadline(deadline time.Duration) GrpcConfiguration
 
 	// GetMaxSessionMemoryMb the maximum amount of memory, in megabytes, that a session is allowed to consume.
 	//Sessions that consume more than this amount will return a ResourceExhausted error.

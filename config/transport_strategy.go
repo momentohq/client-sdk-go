@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type TransportStrategyProps struct {
 	// low-level gRPC settings for communication with the Momento server
 	GrpcConfiguration GrpcConfiguration
@@ -10,7 +12,7 @@ type TransportStrategyProps struct {
 	// may be closed by the load balancer, resulting in an error on the subsequent request.  If
 	// this setting is set to a duration less than the load balancer timeout, we can ensure that
 	// the connection will be refreshed to avoid errors.
-	MaxIdleMillis uint32
+	MaxIdle time.Duration
 }
 
 type TransportStrategy interface {
@@ -24,31 +26,31 @@ type TransportStrategy interface {
 	WithGrpcConfig(grpcConfig GrpcConfiguration) TransportStrategy
 
 	// GetClientSideTimeout Gets configuration for client side timeout from transport strategy
-	GetClientSideTimeout() uint32
+	GetClientSideTimeout() time.Duration
 
-	// WithClientTimeoutMillis Copy constructor for overriding the client sie timeout. Returns a new
+	// WithClientTimeout Copy constructor for overriding the client sie timeout. Returns a new
 	// TransportStrategy with the specified client side timeout.
-	WithClientTimeoutMillis(clientTimeoutMillis uint32) TransportStrategy
+	WithClientTimeout(clientTimeout time.Duration) TransportStrategy
 
-	// WithMaxIdleMillis Copy constructor for overriding the max idle connection timeout. Returns a new
+	// WithMaxIdle Copy constructor for overriding the max idle connection timeout. Returns a new
 	// TransportStrategy with the specified client side idle connection timeout.
-	WithMaxIdleMillis(maxIdleMillis uint32) TransportStrategy
+	WithMaxIdle(maxIdle time.Duration) TransportStrategy
 }
 
 type StaticGrpcConfiguration struct {
-	deadlineMillis     uint32
+	deadline           time.Duration
 	maxSessionMemoryMb uint32
 }
 
 func NewStaticGrpcConfiguration(grpcConfiguration *GrpcConfigurationProps) *StaticGrpcConfiguration {
 	return &StaticGrpcConfiguration{
-		deadlineMillis:     grpcConfiguration.deadlineMillis,
+		deadline:           grpcConfiguration.deadline,
 		maxSessionMemoryMb: grpcConfiguration.maxSessionMemoryMb,
 	}
 }
 
-func (s *StaticGrpcConfiguration) GetDeadlineMillis() uint32 {
-	return s.deadlineMillis
+func (s *StaticGrpcConfiguration) GetDeadline() time.Duration {
+	return s.deadline
 }
 
 func (s *StaticGrpcConfiguration) GetMaxSessionMemoryMb() uint32 {
@@ -57,38 +59,38 @@ func (s *StaticGrpcConfiguration) GetMaxSessionMemoryMb() uint32 {
 
 func (s *StaticGrpcConfiguration) WithMaxSessionMb(maxSessionMemoryMb uint32) GrpcConfiguration {
 	return &StaticGrpcConfiguration{
-		deadlineMillis:     s.deadlineMillis,
+		deadline:           s.deadline,
 		maxSessionMemoryMb: maxSessionMemoryMb,
 	}
 }
 
-func (s *StaticGrpcConfiguration) WithDeadlineMillis(deadlineMillis uint32) GrpcConfiguration {
+func (s *StaticGrpcConfiguration) WithDeadline(deadline time.Duration) GrpcConfiguration {
 	return &StaticGrpcConfiguration{
-		deadlineMillis:     deadlineMillis,
+		deadline:           deadline,
 		maxSessionMemoryMb: s.maxSessionMemoryMb,
 	}
 }
 
 type StaticTransportStrategy struct {
-	grpcConfig    GrpcConfiguration
-	maxIdleMillis uint32
+	grpcConfig GrpcConfiguration
+	maxIdle    time.Duration
 }
 
-func (s *StaticTransportStrategy) GetClientSideTimeout() uint32 {
-	return s.grpcConfig.GetDeadlineMillis()
+func (s *StaticTransportStrategy) GetClientSideTimeout() time.Duration {
+	return s.grpcConfig.GetDeadline()
 }
 
-func (s *StaticTransportStrategy) WithClientTimeoutMillis(clientTimeoutMillis uint32) TransportStrategy {
+func (s *StaticTransportStrategy) WithClientTimeout(clientTimeout time.Duration) TransportStrategy {
 	return &StaticTransportStrategy{
-		grpcConfig:    s.grpcConfig.WithDeadlineMillis(clientTimeoutMillis),
-		maxIdleMillis: s.maxIdleMillis,
+		grpcConfig: s.grpcConfig.WithDeadline(clientTimeout),
+		maxIdle:    s.maxIdle,
 	}
 }
 
 func NewStaticTransportStrategy(props *TransportStrategyProps) TransportStrategy {
 	return &StaticTransportStrategy{
-		grpcConfig:    props.GrpcConfiguration,
-		maxIdleMillis: props.MaxIdleMillis,
+		grpcConfig: props.GrpcConfiguration,
+		maxIdle:    props.MaxIdle,
 	}
 }
 
@@ -96,20 +98,20 @@ func (s *StaticTransportStrategy) GetGrpcConfig() GrpcConfiguration {
 	return s.grpcConfig
 }
 
-func (s *StaticTransportStrategy) GetMaxIdleMillis() uint32 {
-	return s.maxIdleMillis
+func (s *StaticTransportStrategy) GetMaxIdle() time.Duration {
+	return s.maxIdle
 }
 
 func (s *StaticTransportStrategy) WithGrpcConfig(grpcConfig GrpcConfiguration) TransportStrategy {
 	return &StaticTransportStrategy{
-		grpcConfig:    grpcConfig,
-		maxIdleMillis: s.maxIdleMillis,
+		grpcConfig: grpcConfig,
+		maxIdle:    s.maxIdle,
 	}
 }
 
-func (s *StaticTransportStrategy) WithMaxIdleMillis(maxIdleMillis uint32) TransportStrategy {
+func (s *StaticTransportStrategy) WithMaxIdle(maxIdle time.Duration) TransportStrategy {
 	return &StaticTransportStrategy{
-		grpcConfig:    s.grpcConfig,
-		maxIdleMillis: maxIdleMillis,
+		grpcConfig: s.grpcConfig,
+		maxIdle:    maxIdle,
 	}
 }

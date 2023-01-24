@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type Laptop struct {
 	Configuration
 }
@@ -7,17 +9,17 @@ type Laptop struct {
 const defaultMaxSessionMemoryMb = 256
 
 // 4 minutes.  We want to remain comfortably underneath the idle timeout for AWS NLB, which is 350s.
-const defaultMaxIdleMillis = 4 * 60 * 1_000
+const defaultMaxIdle = 4 * time.Minute
 
 func LatestLaptopConfig() *Laptop {
 	return &Laptop{
 		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-					deadlineMillis:     5000,
+					deadline:           5 * time.Second,
 					maxSessionMemoryMb: defaultMaxSessionMemoryMb,
 				}),
-				MaxIdleMillis: defaultMaxIdleMillis,
+				MaxIdle: defaultMaxIdle,
 			}),
 		}),
 	}
@@ -32,10 +34,10 @@ func LatestInRegionConfig() *InRegion {
 		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-					deadlineMillis:     1100,
+					deadline:           1100 * time.Millisecond,
 					maxSessionMemoryMb: defaultMaxSessionMemoryMb,
 				}),
-				MaxIdleMillis: defaultMaxIdleMillis,
+				MaxIdle: defaultMaxIdle,
 			}),
 		}),
 	}

@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type ConfigurationProps struct {
 	TransportStrategy TransportStrategy
 }
@@ -13,18 +15,18 @@ type Configuration interface {
 	WithTransportStrategy(transportStrategy TransportStrategy) Configuration
 
 	// GetClientSideTimeoutMillis Returns the current configuration options for client side timeout with the Momento service
-	GetClientSideTimeoutMillis() uint32
+	GetClientSideTimeoutMillis() time.Duration
 
 	// WithClientTimeoutMillis Copy constructor for overriding TransportStrategy client side timeout. Returns a new Configuration object
 	// with the specified momento.TransportStrategy using passed client side timeout.
-	WithClientTimeoutMillis(clientTimeoutMillis uint32) Configuration
+	WithClientTimeoutMillis(clientTimeoutMillis time.Duration) Configuration
 }
 
 type SimpleCacheConfiguration struct {
 	transportStrategy TransportStrategy
 }
 
-func (s *SimpleCacheConfiguration) GetClientSideTimeoutMillis() uint32 {
+func (s *SimpleCacheConfiguration) GetClientSideTimeoutMillis() time.Duration {
 	return s.transportStrategy.GetClientSideTimeout()
 }
 
@@ -44,8 +46,8 @@ func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy Trans
 	}
 }
 
-func (s *SimpleCacheConfiguration) WithClientTimeoutMillis(clientTimeoutMillis uint32) Configuration {
+func (s *SimpleCacheConfiguration) WithClientTimeoutMillis(clientTimeout time.Duration) Configuration {
 	return &SimpleCacheConfiguration{
-		transportStrategy: s.transportStrategy.WithClientTimeoutMillis(clientTimeoutMillis),
+		transportStrategy: s.transportStrategy.WithClientTimeout(clientTimeout),
 	}
 }
