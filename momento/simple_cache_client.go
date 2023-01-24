@@ -4,8 +4,9 @@ package momento
 
 import (
 	"context"
-	
+
 	"github.com/momentohq/client-sdk-go/auth"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
