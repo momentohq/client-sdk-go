@@ -14,8 +14,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
-const defaultRequestTimeout = uint32(5)
-
 // ScsClient wraps lower level cache control and data operations.
 type ScsClient interface {
 	CreateCache(ctx context.Context, request *CreateCacheRequest) error
