@@ -4,6 +4,7 @@ package momento
 
 import (
 	"context"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -38,7 +39,7 @@ type DefaultScsClient struct {
 	controlClient         *services.ScsControlClient
 	dataClient            *services.ScsDataClient
 	defaultTtlSeconds     uint32
-	defaultRequestTimeout uint32
+	defaultRequestTimeout time.Duration
 }
 
 type SimpleCacheClientProps struct {

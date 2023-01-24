@@ -197,24 +197,24 @@ func TestCredentialProvider(t *testing.T) {
 }
 
 func TestClientInitialization(t *testing.T) {
-	testRequestTimeout := uint32(100)
-	badRequestTimeout := uint32(0)
+	testRequestTimeout := 100 * time.Second
+	badRequestTimeout := 0 * time.Second
 	tests := map[string]struct {
-		expectedErr           string
-		defaultTtlSeconds     uint32
-		requestTimeoutSeconds *uint32
+		expectedErr       string
+		defaultTtlSeconds uint32
+		requestTimeout    *time.Duration
 	}{
 		"happy path": {
 			defaultTtlSeconds: defaultTtlSeconds,
 		},
 		"happy path custom timeout": {
-			defaultTtlSeconds:     defaultTtlSeconds,
-			requestTimeoutSeconds: &testRequestTimeout,
+			defaultTtlSeconds: defaultTtlSeconds,
+			requestTimeout:    &testRequestTimeout,
 		},
 		"test invalid request timeout": {
-			expectedErr:           InvalidArgumentError,
-			defaultTtlSeconds:     defaultTtlSeconds,
-			requestTimeoutSeconds: &badRequestTimeout,
+			expectedErr:       InvalidArgumentError,
+			defaultTtlSeconds: defaultTtlSeconds,
+			requestTimeout:    &badRequestTimeout,
 		},
 	}
 	for name, tt := range tests {
@@ -226,9 +226,9 @@ func TestClientInitialization(t *testing.T) {
 				CredentialProvider: testCredentialProvider,
 				DefaultTtlSeconds:  tt.defaultTtlSeconds,
 			})
-			if tt.requestTimeoutSeconds != nil {
+			if tt.requestTimeout != nil {
 				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
-					Configuration:      config.LatestLaptopConfig().WithClientTimeoutMillis(*tt.requestTimeoutSeconds),
+					Configuration:      config.LatestLaptopConfig().WithClientTimeoutMillis(*tt.requestTimeout),
 					CredentialProvider: nil,
 					DefaultTtlSeconds:  0,
 				})
