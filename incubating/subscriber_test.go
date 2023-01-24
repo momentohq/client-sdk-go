@@ -3,9 +3,14 @@ package incubating
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
+)
+
+var (
+	subscriberTopicName = os.Getenv("TEST_TOPIC_NAME")
 )
 
 func TestBasicHappyPathSubscriber(t *testing.T) {
@@ -16,7 +21,7 @@ func TestBasicHappyPathSubscriber(t *testing.T) {
 		panic(err)
 	}
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
-		TopicName: "test-topic",
+		TopicName: subscriberTopicName,
 	})
 	if err != nil {
 		panic(err)

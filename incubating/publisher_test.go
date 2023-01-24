@@ -2,8 +2,13 @@ package incubating
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
+)
+
+var (
+	publisherTopicName = os.Getenv("TEST_TOPIC_NAME")
 )
 
 func TestBasicHappyPathPublisher(t *testing.T) {
@@ -18,7 +23,7 @@ func TestBasicHappyPathPublisher(t *testing.T) {
 	}
 	for {
 		err = client.PublishTopic(ctx, &TopicPublishRequest{
-			TopicName: "test-topic",
+			TopicName: publisherTopicName,
 			Value:     time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
 		})
 		if err != nil {
