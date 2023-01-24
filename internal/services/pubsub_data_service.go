@@ -24,10 +24,12 @@ func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, moment
 	streamDataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 	})
+	if err != nil {
+		return nil, err
+	}
 	unaryDataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 	})
-
 	if err != nil {
 		return nil, err
 	}
