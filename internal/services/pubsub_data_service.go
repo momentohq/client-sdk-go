@@ -50,7 +50,7 @@ func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr)
 
 func (client *PubSubClient) Subscribe(ctx context.Context, request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
 	streamClient, err := client.grpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
-		CacheName: "topic-" + request.TopicName,
+		CacheName: request.CacheName,
 		Topic:     request.TopicName,
 		//ResumeAtTopicSequenceNumber: 0, TODO think about re-establish topic case
 	})
@@ -58,7 +58,7 @@ func (client *PubSubClient) Subscribe(ctx context.Context, request *models.Topic
 }
 func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPublishRequest) error {
 	_, err := client.grpcClient.Publish(ctx, &pb.XPublishRequest{
-		CacheName: "topic-" + request.TopicName,
+		CacheName: request.CacheName,
 		Topic:     request.TopicName,
 		Value: &pb.XTopicValue{
 			Kind: &pb.XTopicValue_Text{
