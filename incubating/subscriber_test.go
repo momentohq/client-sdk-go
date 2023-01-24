@@ -13,10 +13,10 @@ var (
 	subscriberTopicName = os.Getenv("TEST_TOPIC_NAME")
 )
 
-func TestBasicHappyPathSubscriber(t *testing.T) {
+func TestLocalBasicHappyPathSubscriber(t *testing.T) {
 	ctx := context.Background()
 	testPortToUse := 3000
-	client, err := NewLocalPubSubClient(testPortToUse) // TODO should we be returning error here?
+	client, err := newLocalScsClient(testPortToUse) // TODO should we be returning error here?
 	if err != nil {
 		panic(err)
 	}
