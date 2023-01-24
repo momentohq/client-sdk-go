@@ -22,6 +22,7 @@ func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m *
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 			if err == io.EOF {
+				// TODO think about retry and re-establish more
 				return nil
 			}
 			return err

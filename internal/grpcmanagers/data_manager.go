@@ -2,6 +2,7 @@ package grpcmanagers
 
 import (
 	"crypto/tls"
+	"fmt"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -16,15 +17,19 @@ type DataGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
+const CachePort = ":443"
+
 func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
+	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
+	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.Dial(
-		request.Endpoint,
+		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithDisableRetry(),
-		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(request.AuthToken)),
+		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -36,11 +41,13 @@ func NewStreamDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpc
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
+	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
+	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.Dial(
-		request.Endpoint,
+		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithDisableRetry(),
-		grpc.WithStreamInterceptor(interceptor.AddStreamHeaderInterceptor(request.AuthToken)),
+		grpc.WithStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -48,7 +55,7 @@ func NewStreamDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpc
 	return &DataGrpcManager{Conn: conn}, nil
 }
 
-func NewLocalDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	conn, err := grpc.Dial(
 		request.Endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

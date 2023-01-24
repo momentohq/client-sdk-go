@@ -12,14 +12,6 @@ type CreateCacheRequest struct {
 	CacheName string
 }
 
-type CreateTopicRequest struct {
-	TopicName string
-}
-
-type DeleteTopicRequest struct {
-	TopicName string
-}
-
 type DeleteCacheRequest struct {
 	CacheName string
 }
@@ -161,12 +153,14 @@ type CacheDeleteRequest struct {
 }
 
 type TopicSubscribeRequest struct {
+	CacheName string
 	TopicName string
 }
 
 type TopicSubscribeResponse struct{}
 
 type TopicPublishRequest struct {
+	CacheName string
 	TopicName string
 	Value     string // TODO think about string vs byte more
 }

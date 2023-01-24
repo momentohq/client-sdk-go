@@ -28,8 +28,7 @@ type ScsDataClient struct {
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
-		AuthToken: request.AuthToken,
-		Endpoint:  fmt.Sprint(request.Endpoint, cachePort),
+		CredentialProvider: request.CredentialProvider,
 	})
 	if err != nil {
 		return nil, err
@@ -45,7 +44,7 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 		grpcClient:            pb.NewScsClient(dataManager.Conn),
 		defaultTtlSeconds:     uint64(request.DefaultTtlSeconds),
 		requestTimeoutSeconds: timeout,
-		endpoint:              request.Endpoint,
+		endpoint:              request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
 

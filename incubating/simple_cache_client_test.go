@@ -4,15 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/momento"
-)
-
-var (
-	authToken = os.Getenv("TEST_AUTH_TOKEN")
 )
 
 // Basic happy path test - create a cache, operate set/get, and delete the cache
@@ -20,15 +16,16 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	ctx := context.Background()
 	testPortToUse := 3000
 	go func() {
-		newMockPubSubServer(testPortToUse)
+		newMomentoLocalTestServer(testPortToUse)
 	}()
 
-	client, err := NewLocalPubSubClient(testPortToUse)
+	client, err := newLocalScsClient(testPortToUse)
 	if err != nil {
 		panic(err)
 	}
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
+		CacheName: "test-cache",
 		TopicName: "test-topic",
 	})
 	if err != nil {
@@ -46,6 +43,7 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		err = client.PublishTopic(ctx, &TopicPublishRequest{
+			CacheName: "test-cache",
 			TopicName: "test-topic",
 			Value:     fmt.Sprintf("hello %d", i),
 		})
@@ -59,13 +57,16 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 // Basic happy path test - create a cache, operate set/get, and delete the cache
 func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 	ctx := context.Background()
-
-	client, err := NewPubSubClient(authToken)
+	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
-	err = client.CreateTopic(ctx, &CreateTopicRequest{
-		TopicName: "test-topic",
+	client, err := NewScsClient(credProvider, 3600)
+	if err != nil {
+		panic(err)
+	}
+	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: "test-cache",
 	})
 	if err != nil {
 		var momentoErr momento.MomentoError
@@ -77,6 +78,7 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 	}
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
+		CacheName: "test-cache",
 		TopicName: "test-topic",
 	})
 	if err != nil {

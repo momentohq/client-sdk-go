@@ -5,9 +5,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/auth"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/internal/resolver"
 	"github.com/momentohq/client-sdk-go/internal/services"
 	"github.com/momentohq/client-sdk-go/internal/utility"
 )
@@ -33,7 +34,7 @@ type ScsClient interface {
 
 // DefaultScsClient represents all information needed for momento client to enable cache control and data operations.
 type DefaultScsClient struct {
-	authToken             string
+	credentialProvider    auth.CredentialProvider
 	controlClient         *services.ScsControlClient
 	dataClient            *services.ScsDataClient
 	defaultTtlSeconds     uint32
@@ -59,17 +60,10 @@ func WithRequestTimeout(requestTimeout uint32) Option {
 }
 
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, defaultTtlSeconds, and opts arguments.
-func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Option) (ScsClient, error) {
-	endpoints, err := resolver.Resolve(&models.ResolveRequest{
-		AuthToken: authToken,
-	})
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-
+func NewSimpleCacheClient(credentialProvider auth.CredentialProvider, defaultTtlSeconds uint32, opts ...Option) (ScsClient, error) {
 	client := &DefaultScsClient{
-		authToken:         authToken,
-		defaultTtlSeconds: defaultTtlSeconds,
+		credentialProvider: credentialProvider,
+		defaultTtlSeconds:  defaultTtlSeconds,
 	}
 
 	// Loop through all user passed options before building up internal clients
@@ -88,16 +82,15 @@ func NewSimpleCacheClient(authToken string, defaultTtlSeconds uint32, opts ...Op
 	}
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
-		AuthToken: authToken,
-		Endpoint:  endpoints.ControlEndpoint,
+		CredentialProvider: credentialProvider,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
+	// TODO: just pass authProvider for token and endpoint
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
-		AuthToken:             authToken,
-		Endpoint:              endpoints.CacheEndpoint,
+		CredentialProvider:    credentialProvider,
 		DefaultTtlSeconds:     defaultTtlSeconds,
 		RequestTimeoutSeconds: requestTimeoutToUse,
 	})

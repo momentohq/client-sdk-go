@@ -20,8 +20,7 @@ type PubSubClient struct {
 
 func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataGrpcManagerRequest{
-		AuthToken: request.AuthToken,
-		Endpoint:  fmt.Sprint(request.Endpoint, cachePort),
+		CredentialProvider: request.CredentialProvider,
 	})
 
 	if err != nil {
@@ -30,12 +29,12 @@ func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, moment
 	return &PubSubClient{
 		grpcManager: dataManager,
 		grpcClient:  pb.NewPubsubClient(dataManager.Conn),
-		endpoint:    request.Endpoint,
+		endpoint:    request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
 
 func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr) {
-	dataManager, err := grpcmanagers.NewLocalDataGrpcManager(&models.DataGrpcManagerRequest{
+	dataManager, err := grpcmanagers.NewLocalDataGrpcManager(&models.LocalDataGrpcManagerRequest{
 		Endpoint: fmt.Sprintf("localhost:%d", port),
 	})
 
@@ -51,7 +50,7 @@ func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr)
 
 func (client *PubSubClient) Subscribe(ctx context.Context, request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
 	streamClient, err := client.grpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
-		CacheName: "topic-" + request.TopicName,
+		CacheName: request.CacheName,
 		Topic:     request.TopicName,
 		//ResumeAtTopicSequenceNumber: 0, TODO think about re-establish topic case
 	})
@@ -59,7 +58,7 @@ func (client *PubSubClient) Subscribe(ctx context.Context, request *models.Topic
 }
 func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPublishRequest) error {
 	_, err := client.grpcClient.Publish(ctx, &pb.XPublishRequest{
-		CacheName: "topic-" + request.TopicName,
+		CacheName: request.CacheName,
 		Topic:     request.TopicName,
 		Value: &pb.XTopicValue{
 			Kind: &pb.XTopicValue_Text{

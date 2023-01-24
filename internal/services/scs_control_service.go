@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -12,7 +11,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
-const ControlPort = ":443"
 const ControlCtxTimeout = 60 * time.Second
 
 type ScsControlClient struct {
@@ -22,8 +20,7 @@ type ScsControlClient struct {
 
 func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, momentoerrors.MomentoSvcErr) {
 	controlManager, err := grpcmanagers.NewScsControlGrpcManager(&models.ControlGrpcManagerRequest{
-		AuthToken: request.AuthToken,
-		Endpoint:  fmt.Sprint(request.Endpoint, ControlPort),
+		CredentialProvider: request.CredentialProvider,
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -42,32 +39,6 @@ func (client *ScsControlClient) CreateCache(ctx context.Context, request *models
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
-	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
-	}
-	return nil
-}
-
-func (client *ScsControlClient) CreateTopic(ctx context.Context, request *models.CreateTopicRequest) momentoerrors.MomentoSvcErr {
-	if !utility.IsCacheNameValid(request.TopicName) {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Topic name cannot be empty", nil)
-	}
-	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
-	defer cancel()
-	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: "topic-" + request.TopicName})
-	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
-	}
-	return nil
-}
-
-func (client *ScsControlClient) DeleteTopic(ctx context.Context, request *models.DeleteTopicRequest) momentoerrors.MomentoSvcErr {
-	if !utility.IsCacheNameValid(request.TopicName) {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Topic name cannot be empty", nil)
-	}
-	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
-	defer cancel()
-	_, err := client.grpcClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: "topic-" + request.TopicName})
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err)
 	}
