@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
 	"os"
 	"testing"
@@ -42,12 +43,15 @@ func TestBasicHappyPathPublisher(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	client, err := NewScsClient(credProvider, 3600)
+	client, err := NewScsClient(&momento.SimpleCacheClientProps{
+		Configuration:      config.LatestLaptopConfig(),
+		CredentialProvider: credProvider,
+	})
 	if err != nil {
 		panic(err)
 	}
 	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "test-cache",
+		CacheName: "default",
 	})
 	if err != nil {
 		var momentoErr momento.MomentoError
@@ -59,6 +63,7 @@ func TestBasicHappyPathPublisher(t *testing.T) {
 	}
 	for {
 		err = client.PublishTopic(ctx, &TopicPublishRequest{
+			CacheName: "default",
 			TopicName: publisherTopicName,
 			Value:     time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
 		})

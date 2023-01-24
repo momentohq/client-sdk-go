@@ -1,14 +1,22 @@
-import {App, Duration, Stack} from 'aws-cdk-lib'
-import {Cluster, Compatibility, ContainerImage, FargateService, LogDriver, TaskDefinition} from 'aws-cdk-lib/aws-ecs'
+import {App, Stack} from 'aws-cdk-lib'
+import {
+    Cluster,
+    Compatibility,
+    ContainerImage,
+    FargateService,
+    LogDriver,
+    Secret,
+    TaskDefinition
+} from 'aws-cdk-lib/aws-ecs'
 import {resolve} from "path";
 import {Vpc} from "aws-cdk-lib/aws-ec2";
 import {Platform} from "aws-cdk-lib/aws-ecr-assets";
 import {LogGroup} from "aws-cdk-lib/aws-logs";
-import {DnsRecordType, PrivateDnsNamespace, RoutingPolicy, Service} from "aws-cdk-lib/aws-servicediscovery";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 
 const app = new App();
 const stack = new Stack(app, 'pub-sub-demo');
-
+const pubSubSecret = secretsmanager.Secret.fromSecretCompleteArn(stack, "pub-sub-secret", "arn:aws:secretsmanager:us-west-2:871491162332:secret:pubsub/secret-bGqyZv");
 const vpc = new Vpc(stack, 'pub-sub-vpc', { maxAzs: 2 });
 const publisherCluster = new Cluster(stack, 'publisher-cluster', {vpc});
 const subscriberCluster = new Cluster(stack, 'subscriber-cluster', {vpc});
@@ -29,27 +37,17 @@ publisherTaskDefinition.addContainer("publisher-container", {
     image: ContainerImage.fromAsset(resolve(__dirname, '..'), {platform: Platform.LINUX_AMD64}),
     environment: {"TEST_TOPIC_NAME": "test-topic", "TEST_NAME": "TestBasicHappyPathPublisher"},
     portMappings: [{containerPort: 3000}],
-    logging: LogDriver.awsLogs({streamPrefix: 'publisher', logGroup})
+    logging: LogDriver.awsLogs({streamPrefix: 'publisher', logGroup}),
+    secrets: {"TEST_AUTH_TOKEN": Secret.fromSecretsManager(pubSubSecret)}
 });
 subscriberTaskDefinition.addContainer("subscriber-container", {
     containerName: 'subscriber',
     image: ContainerImage.fromAsset(resolve(__dirname, '..'), {platform: Platform.LINUX_AMD64}),
     environment: {"TEST_TOPIC_NAME": "test-topic", "TEST_NAME": "TestBasicHappyPathSubscriber"},
-    logging: LogDriver.awsLogs({streamPrefix: 'subscriber', logGroup})
+    logging: LogDriver.awsLogs({streamPrefix: 'subscriber', logGroup}),
+    secrets: {"TEST_AUTH_TOKEN": Secret.fromSecretsManager(pubSubSecret)}
 });
 
-const cloudMapNamespace = new PrivateDnsNamespace(stack, 'pub-sub-service-discovery-namespace', {
-    name: 'pubsub.com',
-    vpc: vpc
-});
-const pubsubMapService = new Service(stack, 'pub-sub-service-discovery', {
-    namespace: cloudMapNamespace,
-    dnsRecordType: DnsRecordType.A,
-    dnsTtl: Duration.seconds(300),
-    name: 'pub-sub',
-    routingPolicy: RoutingPolicy.WEIGHTED,
-    loadBalancer: true,
-});
 const publisherService = new FargateService(stack, "publisher-fargate-service", {
    cluster:  publisherCluster,
     taskDefinition: publisherTaskDefinition,
@@ -60,8 +58,5 @@ const subscriberService = new FargateService(stack, "subscriber-fargate-service"
     taskDefinition: subscriberTaskDefinition,
     desiredCount: 1
 });
-
-publisherService.associateCloudMapService({service: pubsubMapService})
-subscriberService.associateCloudMapService({service: pubsubMapService})
 
 app.synth();
