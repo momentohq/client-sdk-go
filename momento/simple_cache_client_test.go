@@ -9,8 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -219,9 +221,17 @@ func TestClientInitialization(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			c, err := NewSimpleCacheClient(testCredentialProvider, tt.defaultTtlSeconds)
+			c, err := NewSimpleCacheClient(&SimpleCacheClientProps{
+				Configuration:      config.LatestLaptopConfig(),
+				CredentialProvider: testCredentialProvider,
+				DefaultTtlSeconds:  tt.defaultTtlSeconds,
+			})
 			if tt.requestTimeoutSeconds != nil {
-				c, err = NewSimpleCacheClient(testCredentialProvider, tt.defaultTtlSeconds, WithRequestTimeout(*tt.requestTimeoutSeconds))
+				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
+					Configuration:      config.LatestLaptopConfig().WithClientTimeoutMillis(*tt.requestTimeoutSeconds),
+					CredentialProvider: nil,
+					DefaultTtlSeconds:  0,
+				})
 			}
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -739,7 +749,11 @@ func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
 	}
 
-	client, err := NewSimpleCacheClient(credentialProvider, defaultTtlSeconds)
+	client, err := NewSimpleCacheClient(&SimpleCacheClientProps{
+		Configuration:      config.LatestLaptopConfig(),
+		CredentialProvider: credentialProvider,
+		DefaultTtlSeconds:  defaultTtlSeconds,
+	})
 	if err != nil {
 		return nil, err
 	}
