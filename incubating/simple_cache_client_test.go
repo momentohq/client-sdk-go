@@ -34,7 +34,7 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	}
 
 	go func() {
-		err = sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
+		err := sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
 			fmt.Printf("got a msg! val=%s\n", m.StringValue())
 		})
 		if err != nil {
@@ -43,7 +43,7 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	}()
 
 	for i := 0; i < 10; i++ {
-		err = client.PublishTopic(ctx, &TopicPublishRequest{
+		err := client.PublishTopic(ctx, &TopicPublishRequest{
 			CacheName: "test-cache",
 			TopicName: "test-topic",
 			Value:     fmt.Sprintf("hello %d", i),
@@ -91,7 +91,7 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 
 	go func() {
 		// Just block and make sure we get stubbed messages for now for quick test
-		err = sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
+		err := sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
 			fmt.Printf("got a msg! val=%s\n", m.StringValue())
 		})
 		if err != nil {
@@ -100,7 +100,7 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 	}()
 
 	for i := 0; i < 10; i++ {
-		err = client.PublishTopic(ctx, &TopicPublishRequest{
+		err := client.PublishTopic(ctx, &TopicPublishRequest{
 			CacheName: "default",
 			TopicName: "test-topic",
 			Value:     fmt.Sprintf("hello %d", i),
