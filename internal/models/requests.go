@@ -3,40 +3,35 @@ package models
 import (
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-type ResolveRequest struct {
-	AuthToken        string
-	EndpointOverride string
-}
-
 type ControlGrpcManagerRequest struct {
-	AuthToken string
-	Endpoint  string
+	CredentialProvider auth.CredentialProvider
 }
 
 type DataGrpcManagerRequest struct {
-	AuthToken string
-	Endpoint  string
+	CredentialProvider auth.CredentialProvider
+}
+
+type LocalDataGrpcManagerRequest struct {
+	Endpoint string
 }
 
 type ControlClientRequest struct {
-	AuthToken string
-	Endpoint  string
+	CredentialProvider auth.CredentialProvider
 }
 
 type DataClientRequest struct {
-	AuthToken             string
-	Endpoint              string
+	CredentialProvider    auth.CredentialProvider
 	DefaultTtlSeconds     uint32
 	RequestTimeoutSeconds uint32
 }
 
 type PubSubClientRequest struct {
-	AuthToken string
-	Endpoint  string
+	CredentialProvider auth.CredentialProvider
 	// TODO think about timeout settings more
 }
 
