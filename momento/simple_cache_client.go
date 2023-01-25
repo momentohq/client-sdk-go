@@ -4,7 +4,6 @@ package momento
 
 import (
 	"context"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -33,11 +32,10 @@ type ScsClient interface {
 
 // DefaultScsClient represents all information needed for momento client to enable cache control and data operations.
 type DefaultScsClient struct {
-	credentialProvider    auth.CredentialProvider
-	controlClient         *services.ScsControlClient
-	dataClient            *services.ScsDataClient
-	defaultTtlSeconds     uint32
-	defaultRequestTimeout time.Duration
+	credentialProvider auth.CredentialProvider
+	controlClient      *services.ScsControlClient
+	dataClient         *services.ScsDataClient
+	defaultTtlSeconds  uint32
 }
 
 type SimpleCacheClientProps struct {
@@ -48,6 +46,9 @@ type SimpleCacheClientProps struct {
 
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTtlSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
+	if props.Configuration.GetClientSideTimeoutMillis() < 1 {
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
+	}
 	client := &DefaultScsClient{
 		credentialProvider: props.CredentialProvider,
 		defaultTtlSeconds:  props.DefaultTtlSeconds,

@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const cachePort = ":443"
 const defaultRequestTimeoutSeconds = 5
 
 type ScsDataClient struct {

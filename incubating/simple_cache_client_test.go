@@ -82,7 +82,7 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 	}
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
-		CacheName: "default",
+		CacheName: "test-cache",
 		TopicName: "test-topic",
 	})
 	if err != nil {
@@ -101,7 +101,7 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		err := client.PublishTopic(ctx, &TopicPublishRequest{
-			CacheName: "default",
+			CacheName: "test-cache",
 			TopicName: "test-topic",
 			Value:     fmt.Sprintf("hello %d", i),
 		})
