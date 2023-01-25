@@ -6,6 +6,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/prozz/aws-embedded-metrics-golang/emf"
 	"os"
 	"strings"
 	"testing"
@@ -92,8 +93,9 @@ func TestBasicHappyPathSubscriber(t *testing.T) {
 		}
 		fmt.Println(fmt.Sprintf("Current  time=%v", parsedCurrentTime))
 		// latency is in nanoseconds so dividing it by a million
-		latency := parsedCurrentTime.Sub(receivedTime)
-		fmt.Println(fmt.Sprintf("Received a message! latency=%dms", latency/1000000))
+		latency := parsedCurrentTime.Sub(receivedTime) / 1000000
+		emf.New(emf.WithLogGroup("pubsub/subscriber")).MetricAs("ReceivingMessageLatency", int(latency), emf.Milliseconds).Dimension("subscriber", "receiving").Log()
+		fmt.Println(fmt.Sprintf("Received a message! latency=%dms", latency))
 		fmt.Println()
 	})
 	if err != nil {
