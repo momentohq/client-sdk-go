@@ -94,7 +94,7 @@ func TestBasicHappyPathSubscriber(t *testing.T) {
 		fmt.Println(fmt.Sprintf("Current  time=%v", parsedCurrentTime))
 		// latency is in nanoseconds so dividing it by a million
 		latency := parsedCurrentTime.Sub(receivedTime) / 1000000
-		emf.New(emf.WithLogGroup("pubsub/subscriber")).MetricAs("ReceivingMessageLatency", int(latency), emf.Milliseconds).Dimension("subscriber", "receiving").Log()
+		emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", int(latency), emf.Milliseconds).Dimension("subscriber", "receiving").Log()
 		fmt.Println(fmt.Sprintf("Received a message! latency=%dms", latency))
 		fmt.Println()
 	})

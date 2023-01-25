@@ -3,6 +3,7 @@ package incubating
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
@@ -61,6 +62,7 @@ func TestBasicHappyPathPublisher(t *testing.T) {
 			}
 		}
 	}
+	fmt.Println(fmt.Sprintf("Publishing topic: %s", publisherTopicName))
 	for {
 		err = client.PublishTopic(ctx, &TopicPublishRequest{
 			CacheName: "default",

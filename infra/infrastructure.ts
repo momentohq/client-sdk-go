@@ -56,7 +56,7 @@ new FargateService(stack, "publisher-fargate-service", {
 new FargateService(stack, "subscriber-fargate-service", {
     cluster:  subscriberCluster,
     taskDefinition: subscriberTaskDefinition,
-    desiredCount: 5
+    desiredCount: 1
 });
 
 app.synth();
