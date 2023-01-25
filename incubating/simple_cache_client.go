@@ -5,7 +5,6 @@ package incubating
 import (
 	"context"
 
-	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
@@ -29,22 +28,24 @@ type DefaultScsClient struct {
 }
 
 // NewScsClient returns a new ScsClient with provided authToken, defaultTtl,, and opts arguments.
-func NewScsClient(credentialProvider auth.CredentialProvider, defaultTtlSeconds uint32, opts ...momento.Option) (ScsClient, error) {
+func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
-		CredentialProvider: credentialProvider,
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
 	pubSubClient, err := services.NewPubSubClient(&models.PubSubClientRequest{
-		CredentialProvider: credentialProvider,
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
-	internalClient, mErr := momento.NewSimpleCacheClient(credentialProvider, defaultTtlSeconds, opts...)
+	internalClient, mErr := momento.NewSimpleCacheClient(props)
 	if mErr != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}

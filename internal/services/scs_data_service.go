@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const cachePort = ":443"
 const defaultRequestTimeoutSeconds = 5
 
 type ScsDataClient struct {
@@ -34,10 +33,10 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 		return nil, err
 	}
 	var timeout time.Duration
-	if request.RequestTimeoutSeconds < 1 {
+	if request.Configuration.GetClientSideTimeoutMillis() < 1 {
 		timeout = time.Duration(defaultRequestTimeoutSeconds) * time.Second
 	} else {
-		timeout = time.Duration(request.RequestTimeoutSeconds) * time.Second
+		timeout = time.Duration(request.Configuration.GetClientSideTimeoutMillis()) * time.Second
 	}
 	return &ScsDataClient{
 		grpcManager:           dataManager,

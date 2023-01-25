@@ -9,8 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -195,33 +197,41 @@ func TestCredentialProvider(t *testing.T) {
 }
 
 func TestClientInitialization(t *testing.T) {
-	testRequestTimeout := uint32(100)
-	badRequestTimeout := uint32(0)
+	testRequestTimeout := 100 * time.Second
+	badRequestTimeout := 0 * time.Second
 	tests := map[string]struct {
-		expectedErr           string
-		defaultTtlSeconds     uint32
-		requestTimeoutSeconds *uint32
+		expectedErr       string
+		defaultTtlSeconds uint32
+		requestTimeout    *time.Duration
 	}{
 		"happy path": {
 			defaultTtlSeconds: defaultTtlSeconds,
 		},
 		"happy path custom timeout": {
-			defaultTtlSeconds:     defaultTtlSeconds,
-			requestTimeoutSeconds: &testRequestTimeout,
+			defaultTtlSeconds: defaultTtlSeconds,
+			requestTimeout:    &testRequestTimeout,
 		},
 		"test invalid request timeout": {
-			expectedErr:           InvalidArgumentError,
-			defaultTtlSeconds:     defaultTtlSeconds,
-			requestTimeoutSeconds: &badRequestTimeout,
+			expectedErr:       InvalidArgumentError,
+			defaultTtlSeconds: defaultTtlSeconds,
+			requestTimeout:    &badRequestTimeout,
 		},
 	}
 	for name, tt := range tests {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			c, err := NewSimpleCacheClient(testCredentialProvider, tt.defaultTtlSeconds)
-			if tt.requestTimeoutSeconds != nil {
-				c, err = NewSimpleCacheClient(testCredentialProvider, tt.defaultTtlSeconds, WithRequestTimeout(*tt.requestTimeoutSeconds))
+			c, err := NewSimpleCacheClient(&SimpleCacheClientProps{
+				Configuration:      config.LatestLaptopConfig(),
+				CredentialProvider: testCredentialProvider,
+				DefaultTtlSeconds:  tt.defaultTtlSeconds,
+			})
+			if tt.requestTimeout != nil {
+				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
+					Configuration:      config.LatestLaptopConfig().WithClientTimeoutMillis(*tt.requestTimeout),
+					CredentialProvider: testCredentialProvider,
+					DefaultTtlSeconds:  tt.defaultTtlSeconds,
+				})
 			}
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -739,7 +749,11 @@ func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
 	}
 
-	client, err := NewSimpleCacheClient(credentialProvider, defaultTtlSeconds)
+	client, err := NewSimpleCacheClient(&SimpleCacheClientProps{
+		Configuration:      config.LatestLaptopConfig(),
+		CredentialProvider: credentialProvider,
+		DefaultTtlSeconds:  defaultTtlSeconds,
+	})
 	if err != nil {
 		return nil, err
 	}
