@@ -55,6 +55,12 @@ func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, err
 			errors.New("invalid argument"),
 		)
 	}
+	return NewStringMomentoTokenProvider(authToken)
+}
+
+// NewStringMomentoTokenProvider
+// TODO: add overrides for endpoints
+func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error) {
 	endpoints, err := resolve(&ResolveRequest{
 		AuthToken: authToken,
 	})
