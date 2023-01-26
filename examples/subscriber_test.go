@@ -1,16 +1,18 @@
-package incubating
+package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/incubating"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/prozz/aws-embedded-metrics-golang/emf"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/prozz/aws-embedded-metrics-golang/emf"
 )
 
 var (
@@ -20,18 +22,18 @@ var (
 func TestLocalBasicHappyPathSubscriber(t *testing.T) {
 	ctx := context.Background()
 	testPortToUse := 3000
-	client, err := newLocalScsClient(testPortToUse) // TODO should we be returning error here?
+	client, err := incubating.NewLocalScsClient(testPortToUse) // TODO should we be returning error here?
 	if err != nil {
 		panic(err)
 	}
-	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
+	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
 		TopicName: subscriberTopicName,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	err = sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
+	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
 		layout := "2006-01-02T15:04:05.000Z07:00"
 		trimmedValue := strings.ReplaceAll(m.StringValue(), "text:", "")
 		trimmedValue = strings.ReplaceAll(trimmedValue, "\"", "")
@@ -62,22 +64,22 @@ func TestBasicHappyPathSubscriber(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	client, err := NewScsClient(&momento.SimpleCacheClientProps{
+	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
 	})
 	if err != nil {
 		panic(err)
 	}
-	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
+	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
 		CacheName: "default",
-		TopicName: publisherTopicName,
+		TopicName: subscriberTopicName,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	err = sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
+	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
 		layout := "2006-01-02T15:04:05.000Z07:00"
 		trimmedValue := strings.ReplaceAll(m.StringValue(), "text:", "")
 		trimmedValue = strings.ReplaceAll(trimmedValue, "\"", "")

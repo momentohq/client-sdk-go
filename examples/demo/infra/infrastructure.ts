@@ -35,7 +35,7 @@ const logGroup = new LogGroup(stack, 'pub-sub-log-group', {logGroupName: "pubsub
 publisherTaskDefinition.addContainer("publisher-container", {
     containerName: 'publisher',
     image: ContainerImage.fromAsset(resolve(__dirname, '..'), {platform: Platform.LINUX_AMD64}),
-    environment: {"TEST_TOPIC_NAME": "test-topic", "TEST_NAME": "TestBasicHappyPathPublisher"},
+    environment: {"TEST_TOPIC_NAME": "test-topic", "SERVICE_TO_RUN": "publisher"},
     portMappings: [{containerPort: 3000}],
     logging: LogDriver.awsLogs({streamPrefix: 'publisher', logGroup}),
     secrets: {"TEST_AUTH_TOKEN": Secret.fromSecretsManager(pubSubSecret, "AUTH_TOKEN")}
@@ -43,7 +43,7 @@ publisherTaskDefinition.addContainer("publisher-container", {
 subscriberTaskDefinition.addContainer("subscriber-container", {
     containerName: 'subscriber',
     image: ContainerImage.fromAsset(resolve(__dirname, '..'), {platform: Platform.LINUX_AMD64}),
-    environment: {"TEST_TOPIC_NAME": "test-topic", "TEST_NAME": "TestBasicHappyPathSubscriber"},
+    environment: {"TEST_TOPIC_NAME": "test-topic", "SERVICE_TO_RUN": "subscriber"},
     logging: LogDriver.awsLogs({streamPrefix: 'subscriber', logGroup}),
     secrets: {"TEST_AUTH_TOKEN": Secret.fromSecretsManager(pubSubSecret, "AUTH_TOKEN")}
 });
@@ -51,12 +51,12 @@ subscriberTaskDefinition.addContainer("subscriber-container", {
 new FargateService(stack, "publisher-fargate-service", {
    cluster:  publisherCluster,
     taskDefinition: publisherTaskDefinition,
-    desiredCount: 1
+    desiredCount: 0
 });
 new FargateService(stack, "subscriber-fargate-service", {
     cluster:  subscriberCluster,
     taskDefinition: subscriberTaskDefinition,
-    desiredCount: 1
+    desiredCount: 0
 });
 
 app.synth();

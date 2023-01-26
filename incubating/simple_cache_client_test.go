@@ -20,7 +20,7 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 		newMomentoLocalTestServer(testPortToUse)
 	}()
 
-	client, err := newLocalScsClient(testPortToUse)
+	client, err := NewLocalScsClient(testPortToUse)
 	if err != nil {
 		panic(err)
 	}

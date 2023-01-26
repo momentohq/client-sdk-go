@@ -58,7 +58,7 @@ func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 	return client, nil
 }
 
-func newLocalScsClient(port int) (ScsClient, error) {
+func NewLocalScsClient(port int) (ScsClient, error) {
 	// TODO impl basic local control plane for pubsub topics
 	//controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 	//	AuthToken: authToken,

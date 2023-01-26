@@ -1,4 +1,4 @@
-package incubating
+package main
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/incubating"
 	"github.com/momentohq/client-sdk-go/momento"
 	"os"
 	"testing"
@@ -20,14 +21,14 @@ func TestLocalBasicHappyPathPublisher(t *testing.T) {
 	ctx := context.Background()
 	testPortToUse := 3000
 	go func() {
-		newMomentoLocalTestServer(testPortToUse)
+		incubating.NewLocalScsClient(testPortToUse)
 	}()
-	client, err := newLocalScsClient(testPortToUse) // TODO should we be returning error here?
+	client, err := incubating.NewLocalScsClient(testPortToUse) // TODO should we be returning error here?
 	if err != nil {
 		panic(err)
 	}
 	for {
-		err = client.PublishTopic(ctx, &TopicPublishRequest{
+		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
 			TopicName: publisherTopicName,
 			Value:     time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
 		})
@@ -44,7 +45,7 @@ func TestBasicHappyPathPublisher(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	client, err := NewScsClient(&momento.SimpleCacheClientProps{
+	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
 	})
@@ -64,7 +65,7 @@ func TestBasicHappyPathPublisher(t *testing.T) {
 	}
 	fmt.Println(fmt.Sprintf("Publishing topic: %s", publisherTopicName))
 	for {
-		err = client.PublishTopic(ctx, &TopicPublishRequest{
+		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
 			CacheName: "default",
 			TopicName: publisherTopicName,
 			Value:     time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
