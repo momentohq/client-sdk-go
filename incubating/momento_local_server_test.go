@@ -53,7 +53,7 @@ func (t TestMomentoLocalServer) Subscribe(req *pb.XSubscriptionRequest, server p
 		if err != nil {
 			return err
 		}
-		count += 1
+		count++
 	}
 	return nil
 }

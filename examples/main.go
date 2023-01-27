@@ -21,14 +21,14 @@ func main() {
 
 	const (
 		cacheName             = "cache"
-		itemDefaultTtlSeconds = 60
+		itemDefaultTTLSeconds = 60
 	)
 
 	// Initializes Momento
 	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTtlSeconds:  itemDefaultTtlSeconds,
+		DefaultTtlSeconds:  itemDefaultTTLSeconds,
 	})
 	if err != nil {
 		panic(err)

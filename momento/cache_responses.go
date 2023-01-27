@@ -1,148 +1,85 @@
 package momento
 
-import "time"
-
-// Output of the List caches operation.
+// ListCachesResponse Output of the List caches operation.
 type ListCachesResponse struct {
 	nextToken string
 	caches    []CacheInfo
 }
 
-// Next Page Token returned by Simple Cache Service along with the list of caches.
+// NextToken Next Page Token returned by Simple Cache Service along with the list of caches.
 // If nextToken is present, then this token must be provided in the next call to continue paginating through the list.
 // This is done by setting this value in ListCachesRequest.
 func (resp *ListCachesResponse) NextToken() string {
 	return resp.nextToken
 }
 
-// Returns all caches.
+// Caches Returns all caches.
 func (resp *ListCachesResponse) Caches() []CacheInfo {
 	return resp.caches
 }
 
-// Output of the Create Signing Key operationn
-type CreateSigningKeyResponse struct {
-	keyId     string
-	endpoint  string
-	key       string
-	expiresAt time.Time
-}
-
-// Returns the Momento signing key's ID
-func (resp *CreateSigningKeyResponse) KeyId() string {
-	return resp.keyId
-}
-
-// Returns the Momento signing key's endpoint
-func (resp *CreateSigningKeyResponse) Endpoint() string {
-	return resp.endpoint
-}
-
-// Returns the Momento signing key's metadata as a JSON string
-func (resp *CreateSigningKeyResponse) Key() string {
-	return resp.key
-}
-
-// Returns the Momento signing key's time in which it expires
-func (resp *CreateSigningKeyResponse) ExpiresAt() time.Time {
-	return resp.expiresAt
-}
-
-// Output of the List Signing Keys operation
-type ListSigningKeysResponse struct {
-	nextToken   string
-	signingKeys []SigningKey
-}
-
-// Next Page Token returned by Simple Cache Service along with the list of Momento signing keys.
-// If nextToken is present, then this token must be provided in the next call to continue paginating through the list.
-// This is done by setting this value in ListSigningKeysRequest.
-func (resp *ListSigningKeysResponse) NextToken() string {
-	return resp.nextToken
-}
-
-// Returns all Momento signing keys
-func (resp *ListSigningKeysResponse) SigningKeys() []SigningKey {
-	return resp.signingKeys
-}
-
-// Information about the Signing Key
-type SigningKey struct {
-	keyId     string
-	endpoint  string
-	expiresAt time.Time
-}
-
-// Returns the Momento signing key's ID
-func (sk SigningKey) KeyId() string {
-	return sk.keyId
-}
-
-// Returns the Momento signing key's endpoint
-func (sk SigningKey) Endpoint() string {
-	return sk.endpoint
-}
-
-// Returns the Momento signing key's time in which it expires
-func (sk SigningKey) ExpiresAt() time.Time {
-	return sk.expiresAt
-}
-
-// Information about the Cache.
+// CacheInfo Information about a Cache.
 type CacheInfo struct {
 	name string
 }
 
-// Returns cache's name.
+// Name Returns cache's name.
 func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
+type cacheGetResponseTypes string
+
 const (
-	// Represents cache hit.
-	HIT string = "HIT"
-	// Represents cache miss.
-	MISS string = "MISS"
+	hit  cacheGetResponseTypes = "HIT"
+	miss cacheGetResponseTypes = "MISS"
 )
 
-// Initializes GetCacheResponse to handle gRPC get response.
-type GetCacheResponse struct {
-	value  []byte
-	result string
+// CacheGetResponse Base type for possible responses a cache GET can return. Miss || Hit
+type CacheGetResponse struct {
+	responseType cacheGetResponseTypes
+	value        []byte
 }
 
-// Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
-func (resp *GetCacheResponse) StringValue() string {
-	if resp.result == HIT {
-		return string(resp.value)
-	}
-	return ""
+// IsHit returns true if successfully fetched request item from cache otherwise returns false
+func (r *CacheGetResponse) IsHit() bool {
+	return r.responseType == hit
 }
 
-// Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
-func (resp *GetCacheResponse) ByteValue() []byte {
-	if resp.result == HIT {
-		return resp.value
+// AsHit returns CacheGetHitResponse pointer if successfully fetched request item otherwise returns nil
+func (r *CacheGetResponse) AsHit() *CacheGetHitResponse {
+	if r.IsHit() {
+		return &CacheGetHitResponse{
+			value: r.value,
+		}
 	}
 	return nil
 }
 
-// Returns get operation result such as HIT or MISS.
-func (resp *GetCacheResponse) Result() string {
-	return resp.result
+func (r *CacheGetResponse) IsMiss() bool {
+	return r.responseType == miss
+}
+func (r *CacheGetResponse) AsMiss() *CacheGetMissResponse {
+	if r.IsMiss() {
+		return &CacheGetMissResponse{}
+	}
+	return nil
 }
 
-// Initializes SetCacheResponse to handle gRPC set response.
-type SetCacheResponse struct {
+// CacheGetMissResponse Miss Response to a cache Get api request.
+type CacheGetMissResponse struct{}
+
+// CacheGetHitResponse Hit Response to a cache Get api request.
+type CacheGetHitResponse struct {
 	value []byte
 }
 
-// Decodes and returns byte value set in cache to string.
-func (resp *SetCacheResponse) StringValue() string {
+// ValueString Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
+func (resp *CacheGetHitResponse) ValueString() string {
 	return string(resp.value)
 }
 
-// Returns byte value set in cache.
-func (resp *SetCacheResponse) ByteValue() []byte {
+// ValueByte Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
+func (resp *CacheGetHitResponse) ValueByte() []byte {
 	return resp.value
 }
