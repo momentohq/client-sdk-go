@@ -78,8 +78,8 @@ func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error)
 const (
 	momentoControlEndpointPrefix = "control."
 	momentoCacheEndpointPrefix   = "cache."
-	controlEndpointClaimId       = "cp"
-	cacheEndpointClaimId         = "c"
+	controlEndpointClaimID       = "cp"
+	cacheEndpointClaimID         = "c"
 )
 
 func resolve(request *ResolveRequest) (*Endpoints, momentoerrors.MomentoSvcErr) {
@@ -99,8 +99,8 @@ func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoS
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		return &Endpoints{
-			ControlEndpoint: reflect.ValueOf(claims[controlEndpointClaimId]).String(),
-			CacheEndpoint:   reflect.ValueOf(claims[cacheEndpointClaimId]).String(),
+			ControlEndpoint: reflect.ValueOf(claims[controlEndpointClaimID]).String(),
+			CacheEndpoint:   reflect.ValueOf(claims[cacheEndpointClaimID]).String(),
 		}, nil
 	}
 	return nil, momentoerrors.NewMomentoSvcErr(
