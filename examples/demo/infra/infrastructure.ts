@@ -59,4 +59,5 @@ new FargateService(stack, "subscriber-fargate-service", {
     desiredCount: 5
 });
 
+
 app.synth();

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/incubating"
@@ -19,6 +20,7 @@ var (
 )
 
 func Subscriber() {
+	idForDimension := uuid.NewString()
 	ctx := context.Background()
 	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	if err != nil {
@@ -52,7 +54,7 @@ func Subscriber() {
 			}
 			latency := currentTime - receivedTime
 			// send metrics to CloudWatch
-			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskIdTime", time.Now().Format(time.RFC3339))).Log()
+			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskId", idForDimension)).Log()
 		}
 	})
 	if err != nil {
