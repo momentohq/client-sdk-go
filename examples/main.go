@@ -28,7 +28,7 @@ func main() {
 	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTtlSeconds:  itemDefaultTTLSeconds,
+		DefaultTTLSeconds:  itemDefaultTTLSeconds,
 	})
 	if err != nil {
 		panic(err)
@@ -67,7 +67,7 @@ func main() {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 	log.Printf("Setting key: %s, value: %s\n", key, value)
-	_, err = client.Set(ctx, &momento.CacheSetRequest{
+	err = client.Set(ctx, &momento.CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
@@ -84,8 +84,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Lookup resulted in a : %s\n", resp.Result())
-	log.Printf("Looked up value: %s\n", resp.StringValue())
+	if resp.IsHit() {
+		log.Printf("Lookup resulted in cahce HIT. value=%s\n", resp.AsHit().ValueString())
+	} else {
+		log.Printf("Look up did not find a value key=%s", key)
+	}
 
 	// Permanently delete the cache
 	err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName})
