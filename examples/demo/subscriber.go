@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"os"
 	"strconv"
 	"time"
@@ -53,7 +52,7 @@ func Subscriber() {
 			}
 			latency := currentTime - receivedTime
 			// send metrics to CloudWatch
-			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskId", uuid.NewString())).Log()
+			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskId", time.RFC3339)).Log()
 		}
 	})
 	if err != nil {
