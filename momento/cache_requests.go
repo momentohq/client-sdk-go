@@ -15,21 +15,6 @@ type ListCachesRequest struct {
 	NextToken string
 }
 
-type CreateSigningKeyRequest struct {
-	// Ttl in minutes before the Momento signing key expires
-	TtlMinutes uint32
-}
-
-type RevokeSigningKeyRequest struct {
-	// Id of Momento signing key to revoke
-	KeyId string
-}
-
-type ListSigningKeysRequest struct {
-	// Token to continue paginating through the list. It's used to handle large paginated lists.
-	NextToken string
-}
-
 type CacheSetRequest struct {
 	// Name of the cache to store the item in.
 	CacheName string
@@ -42,7 +27,7 @@ type CacheSetRequest struct {
 	TtlSeconds TimeToLive
 }
 
-// Helper function that returns an initialized TimeToLive containing a pointer to ttl.
+// TTL Helper function that returns an initialized TimeToLive containing a pointer to ttl.
 func TTL(ttl uint32) TimeToLive {
 	pInt := &ttl
 	return TimeToLive{
@@ -56,10 +41,8 @@ type TimeToLive struct {
 }
 
 type CacheGetRequest struct {
-	// Name of the cache to get the item from
 	CacheName string
-	// string ot byte key to be used to retrieve the item.
-	Key interface{}
+	Key       interface{}
 }
 
 type CacheDeleteRequest struct {

@@ -41,7 +41,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
 
-	_, err = client.Set(ctx, &CacheSetRequest{
+	err = client.Set(ctx, &CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
@@ -50,7 +50,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Errorf("error occurred setting key err=%+v", err)
 	}
 
-	_, err = client.Set(ctx, &CacheSetRequest{
+	err = client.Set(ctx, &CacheSetRequest{
 		CacheName:  cacheName,
 		Key:        uuid.NewString(),
 		Value:      value,
@@ -69,13 +69,13 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		return
 	}
 
-	if getResp.Result() != HIT {
-		t.Errorf("unexpected result when getting test key got=%+v expected=%+v", getResp.Result(), HIT)
+	if !getResp.IsHit() {
+		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHitResponse{})
 	}
-	if !bytes.Equal(getResp.ByteValue(), value) {
+	if !bytes.Equal(getResp.AsHit().ByteValue(), value) {
 		t.Errorf(
 			"set byte value and returned byte value are not equal "+
-				"got=%+v expected=%+v", getResp.ByteValue(), value,
+				"got=%+v expected=%+v", getResp.AsHit().ByteValue(), value,
 		)
 	}
 
@@ -87,10 +87,10 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	if existingCacheResp.Result() != MISS {
+	if !existingCacheResp.IsMiss() {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
-			testCacheName, existingCacheResp.StringValue(),
+			testCacheName, existingCacheResp.AsHit().StringValue(),
 		)
 	}
 
@@ -120,7 +120,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
 
-	_, err = client.Set(ctx, &CacheSetRequest{
+	err = client.Set(ctx, &CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
 		Value:     value,
@@ -138,13 +138,13 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		return
 	}
 
-	if getResp.Result() != HIT {
-		t.Errorf("unexpected result when getting test key got=%+v expected=%+v", getResp.Result(), HIT)
+	if !getResp.IsHit() {
+		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHitResponse{})
 	}
-	if !bytes.Equal(getResp.ByteValue(), value) {
+	if !bytes.Equal(getResp.AsHit().ByteValue(), value) {
 		t.Errorf(
 			"set byte value and returned byte value are not equal "+
-				"got=%+v expected=%+v", getResp.ByteValue(), value,
+				"got=%+v expected=%+v", getResp.AsHit().ByteValue(), value,
 		)
 	}
 	err = client.Delete(ctx, &CacheDeleteRequest{
@@ -162,10 +162,10 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	if existingCacheResp.Result() != MISS {
+	if !existingCacheResp.IsMiss() {
 		t.Errorf(
-			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
-			testCacheName, existingCacheResp.StringValue(),
+			"key: %s shouldn't exist in %s since it's never set. got=%s",
+			string(key), testCacheName, existingCacheResp.AsHit().StringValue(),
 		)
 	}
 
@@ -418,36 +418,6 @@ func TestListCache(t *testing.T) {
 	}
 }
 
-func TestCreateListRevokeSigningKeys(t *testing.T) {
-	ctx := context.Background()
-	client, err := newTestClient(testCredentialProvider)
-	if err != nil {
-		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
-	}
-	createSigningKeyResponse, err := client.CreateSigningKey(ctx, &CreateSigningKeyRequest{TtlMinutes: 30})
-	if err != nil {
-		t.Errorf("unexpected error occurred on create signing key err=%+v", err)
-	}
-	listSigningKeysResponse, err := client.ListSigningKeys(ctx, &ListSigningKeysRequest{})
-	if err != nil {
-		t.Errorf("unexpected error occurred on list signing keys err=%+v", err)
-	}
-	var signingKeyFound = false
-	for _, signingKey := range listSigningKeysResponse.SigningKeys() {
-		if signingKey.KeyId() == createSigningKeyResponse.KeyId() {
-			signingKeyFound = true
-			err = client.RevokeSigningKey(ctx, &RevokeSigningKeyRequest{KeyId: createSigningKeyResponse.KeyId()})
-			if err != nil {
-				t.Errorf("unexpected error on revoke signing key err=%+v", err)
-			}
-		}
-	}
-	if !signingKeyFound {
-		t.Errorf("expected to find %s keyId in ListSigningKeysResponse, never found", createSigningKeyResponse.KeyId())
-	}
-	cleanUpClient(client)
-}
-
 func TestSetGet(t *testing.T) {
 	ctx := context.Background()
 	tests := map[string]struct {
@@ -489,13 +459,13 @@ func TestSetGet(t *testing.T) {
 			t.Parallel()
 			if tt.ttl == 0 {
 				// set string key/value with default ttl
-				_, err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value})
+				err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 				}
 			} else {
 				// set string key/value with different ttl
-				_, err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value, TtlSeconds: TTL(tt.ttl)})
+				err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value, TtlSeconds: TTL(tt.ttl)})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 				}
@@ -505,25 +475,32 @@ func TestSetGet(t *testing.T) {
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
-				if tt.value != resp.StringValue() {
-					t.Errorf("set string value=%s is not the same as returned string value=%s", tt.value, resp.StringValue())
+				if !resp.IsHit() {
+					t.Errorf("expected hit but got responseType=%+v", resp)
 				}
-				if tt.expectedGetResult != resp.Result() {
-					t.Errorf("expected result=%s but got result=%s", tt.expectedGetResult, resp.Result())
+				if tt.value != resp.AsHit().StringValue() {
+					t.Errorf(
+						"set string value=%s is not the same as returned string value=%s",
+						tt.value, resp.AsHit().StringValue(),
+					)
 				}
 			} else {
-				// make sure result it cache miss after ttl is expired
+				// make sure responseType it cache miss after ttl is expired
 				time.Sleep(5 * time.Second)
 				resp, err := client.Get(ctx, &CacheGetRequest{CacheName: testCacheName, Key: tt.key})
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
-				if tt.expectedGetResult != resp.Result() {
-					t.Errorf("expected result=%s but got result=%s", tt.expectedGetResult, resp.Result())
+				if !resp.IsMiss() {
+					t.Errorf("expected miss but got responseType=%+v", resp)
 				}
 			}
 			// set byte key/value
-			_, err = client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: []byte(tt.key), Value: []byte(tt.value)})
+			err = client.Set(ctx, &CacheSetRequest{
+				CacheName: testCacheName,
+				Key:       []byte(tt.key),
+				Value:     []byte(tt.value)},
+			)
 			if err != nil {
 				t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 			}
@@ -532,11 +509,11 @@ func TestSetGet(t *testing.T) {
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
-				if tt.value != string(resp.ByteValue()) {
-					t.Errorf("set byte value=%s is not the same as returned byte value=%s", tt.value, resp.ByteValue())
+				if !resp.IsHit() {
+					t.Errorf("expected hit but got responseType=%+v", resp)
 				}
-				if tt.expectedGetResult != resp.Result() {
-					t.Errorf("expected result=%s but got result=%s", tt.expectedGetResult, resp.Result())
+				if tt.value != string(resp.AsHit().ByteValue()) {
+					t.Errorf("set byte value=%s is not the same as returned byte value=%s", tt.value, resp.AsHit().ByteValue())
 				}
 			}
 			cleanUpClient(client)
@@ -597,7 +574,7 @@ func TestSet(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, err := client.Set(ctx, &CacheSetRequest{CacheName: tt.cacheName, Key: tt.key, Value: tt.value})
+			err := client.Set(ctx, &CacheSetRequest{CacheName: tt.cacheName, Key: tt.key, Value: tt.value})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}

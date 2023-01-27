@@ -112,39 +112,21 @@ func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) moment
 	}
 	return momento.NewMomentoError(e.Code(), e.Message(), e.OriginalErr())
 }
-
 func (c *DefaultScsClient) CreateCache(ctx context.Context, request *momento.CreateCacheRequest) error {
 	return c.internalClient.CreateCache(ctx, request)
 }
-
 func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *momento.DeleteCacheRequest) error {
 	return c.internalClient.DeleteCache(ctx, request)
 }
-
 func (c *DefaultScsClient) ListCaches(ctx context.Context, request *momento.ListCachesRequest) (*momento.ListCachesResponse, error) {
 	return c.internalClient.ListCaches(ctx, request)
 }
-
-func (c *DefaultScsClient) CreateSigningKey(ctx context.Context, request *momento.CreateSigningKeyRequest) (*momento.CreateSigningKeyResponse, error) {
-	return c.internalClient.CreateSigningKey(ctx, request)
-}
-
-func (c *DefaultScsClient) RevokeSigningKey(ctx context.Context, request *momento.RevokeSigningKeyRequest) error {
-	return c.internalClient.RevokeSigningKey(ctx, request)
-}
-
-func (c *DefaultScsClient) ListSigningKeys(ctx context.Context, request *momento.ListSigningKeysRequest) (*momento.ListSigningKeysResponse, error) {
-	return c.internalClient.ListSigningKeys(ctx, request)
-}
-
-func (c *DefaultScsClient) Set(ctx context.Context, request *momento.CacheSetRequest) (*momento.SetCacheResponse, error) {
+func (c *DefaultScsClient) Set(ctx context.Context, request *momento.CacheSetRequest) error {
 	return c.internalClient.Set(ctx, request)
 }
-
-func (c *DefaultScsClient) Get(ctx context.Context, request *momento.CacheGetRequest) (*momento.GetCacheResponse, error) {
+func (c *DefaultScsClient) Get(ctx context.Context, request *momento.CacheGetRequest) (*momento.CacheGetResponse, error) {
 	return c.internalClient.Get(ctx, request)
 }
-
 func (c *DefaultScsClient) Delete(ctx context.Context, request *momento.CacheDeleteRequest) error {
 	return c.internalClient.Delete(ctx, request)
 }
