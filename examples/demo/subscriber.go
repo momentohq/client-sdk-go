@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -40,25 +39,14 @@ func Subscriber() {
 	}
 
 	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
-		layout := "2006-01-02T15:04:05.000Z07:00"
-		trimmedValue := strings.ReplaceAll(m.StringValue(), "text:", "")
-		trimmedValue = strings.ReplaceAll(trimmedValue, "\"", "")
-		receivedTime, err := time.Parse(layout, trimmedValue)
+		currentTime := int(time.Now().UnixMilli())
+		receivedTime, err := strconv.Atoi(m.StringValue())
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(fmt.Sprintf("Received  time=%v", receivedTime))
-		currentTime := time.Now().Format(layout)
-		parsedCurrentTime, err := time.Parse(layout, currentTime)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(fmt.Sprintf("Current  time=%v", parsedCurrentTime))
-		// latency is in nanoseconds so dividing it by a million
-		latency := parsedCurrentTime.Sub(receivedTime) / 1000000
-		emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", int(latency), emf.Milliseconds).Dimension("subscriber", "receiving").Log()
-		fmt.Println(fmt.Sprintf("Received a message! latency=%dms", latency))
-		fmt.Println()
+		latency := currentTime - receivedTime
+		// send metrics to CloudWatch
+		emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).Dimension("subscriber", "receiving").Log()
 	})
 	if err != nil {
 		panic(err)

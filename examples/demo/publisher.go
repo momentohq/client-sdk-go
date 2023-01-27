@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -46,7 +47,7 @@ func Publisher() {
 		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
 			CacheName: "default",
 			TopicName: publisherTopicName,
-			Value:     time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
+			Value:     strconv.Itoa(int(time.Now().UnixMilli())),
 		})
 		if err != nil {
 			panic(err)
