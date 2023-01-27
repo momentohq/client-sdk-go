@@ -18,8 +18,10 @@ type LocalDataGrpcManagerRequest struct {
 	Endpoint string
 }
 type CacheGetRequest struct {
+	// CacheName Name of the cache to get the item from
 	CacheName string
-	Key       interface{}
+	// Key string ot []byte key to be used to retrieve the item.
+	Key interface{}
 }
 
 type ControlClientRequest struct {
