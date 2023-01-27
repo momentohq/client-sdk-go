@@ -43,10 +43,7 @@ type CacheGetResponse struct {
 
 // IsHit returns true if successfully fetched request item from cache otherwise returns false
 func (r *CacheGetResponse) IsHit() bool {
-	if r.responseType == hit {
-		return true
-	}
-	return false
+	return r.responseType == hit
 }
 
 // AsHit returns CacheGetHitResponse pointer if successfully fetched request item otherwise returns nil
@@ -60,10 +57,7 @@ func (r *CacheGetResponse) AsHit() *CacheGetHitResponse {
 }
 
 func (r *CacheGetResponse) IsMiss() bool {
-	if r.responseType == miss {
-		return true
-	}
-	return false
+	return r.responseType == miss
 }
 func (r *CacheGetResponse) AsMiss() *CacheGetMissResponse {
 	if r.IsMiss() {
