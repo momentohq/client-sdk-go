@@ -49,7 +49,7 @@ type SimpleCacheClientProps struct {
 
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTtlSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
-	if props.Configuration.GetClientSideTimeoutMillis() < 1 {
+	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
 	client := &DefaultScsClient{
