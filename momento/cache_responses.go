@@ -1,7 +1,5 @@
 package momento
 
-type SuccessResponse struct{}
-
 // ListCachesResponse Output of the List caches operation.
 type ListCachesResponse struct {
 	nextToken string
