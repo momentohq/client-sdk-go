@@ -125,7 +125,6 @@ func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRe
 		}, nil
 	} else if resp.Result == pb.ECacheResult_Miss {
 		return &models.CacheGetResponse{
-			Value:  resp.CacheBody,
 			Result: models.MISS,
 		}, nil
 	} else {
