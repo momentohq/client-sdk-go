@@ -74,12 +74,12 @@ type CacheGetHitResponse struct {
 	value []byte
 }
 
-// StringValue Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
-func (resp *CacheGetHitResponse) StringValue() string {
+// ValueString Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
+func (resp *CacheGetHitResponse) ValueString() string {
 	return string(resp.value)
 }
 
-// ByteValue Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
-func (resp *CacheGetHitResponse) ByteValue() []byte {
+// ValueByte Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
+func (resp *CacheGetHitResponse) ValueByte() []byte {
 	return resp.value
 }

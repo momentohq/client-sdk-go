@@ -72,10 +72,10 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	if !getResp.IsHit() {
 		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHitResponse{})
 	}
-	if !bytes.Equal(getResp.AsHit().ByteValue(), value) {
+	if !bytes.Equal(getResp.AsHit().ValueByte(), value) {
 		t.Errorf(
 			"set byte value and returned byte value are not equal "+
-				"got=%+v expected=%+v", getResp.AsHit().ByteValue(), value,
+				"got=%+v expected=%+v", getResp.AsHit().ValueByte(), value,
 		)
 	}
 
@@ -90,7 +90,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	if !existingCacheResp.IsMiss() {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
-			testCacheName, existingCacheResp.AsHit().StringValue(),
+			testCacheName, existingCacheResp.AsHit().ValueString(),
 		)
 	}
 
@@ -141,10 +141,10 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	if !getResp.IsHit() {
 		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHitResponse{})
 	}
-	if !bytes.Equal(getResp.AsHit().ByteValue(), value) {
+	if !bytes.Equal(getResp.AsHit().ValueByte(), value) {
 		t.Errorf(
 			"set byte value and returned byte value are not equal "+
-				"got=%+v expected=%+v", getResp.AsHit().ByteValue(), value,
+				"got=%+v expected=%+v", getResp.AsHit().ValueByte(), value,
 		)
 	}
 	err = client.Delete(ctx, &CacheDeleteRequest{
@@ -165,7 +165,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	if !existingCacheResp.IsMiss() {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's never set. got=%s",
-			string(key), testCacheName, existingCacheResp.AsHit().StringValue(),
+			string(key), testCacheName, existingCacheResp.AsHit().ValueString(),
 		)
 	}
 
@@ -478,10 +478,10 @@ func TestSetGet(t *testing.T) {
 				if !resp.IsHit() {
 					t.Errorf("expected hit but got responseType=%+v", resp)
 				}
-				if tt.value != resp.AsHit().StringValue() {
+				if tt.value != resp.AsHit().ValueString() {
 					t.Errorf(
 						"set string value=%s is not the same as returned string value=%s",
-						tt.value, resp.AsHit().StringValue(),
+						tt.value, resp.AsHit().ValueString(),
 					)
 				}
 			} else {
@@ -512,8 +512,8 @@ func TestSetGet(t *testing.T) {
 				if !resp.IsHit() {
 					t.Errorf("expected hit but got responseType=%+v", resp)
 				}
-				if tt.value != string(resp.AsHit().ByteValue()) {
-					t.Errorf("set byte value=%s is not the same as returned byte value=%s", tt.value, resp.AsHit().ByteValue())
+				if tt.value != string(resp.AsHit().ValueByte()) {
+					t.Errorf("set byte value=%s is not the same as returned byte value=%s", tt.value, resp.AsHit().ValueByte())
 				}
 			}
 			cleanUpClient(client)
