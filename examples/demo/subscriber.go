@@ -52,7 +52,7 @@ func Subscriber() {
 			}
 			latency := currentTime - receivedTime
 			// send metrics to CloudWatch
-			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskId", time.RFC3339)).Log()
+			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskIdTime", time.Now().Format(time.RFC3339))).Log()
 		}
 	})
 	if err != nil {
