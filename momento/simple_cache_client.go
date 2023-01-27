@@ -1,5 +1,4 @@
 // Package momento represents API ScsClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
-
 package momento
 
 import (
@@ -38,16 +37,16 @@ type DefaultScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *services.ScsDataClient
-	defaultTtlSeconds  uint32
+	defaultTTLSeconds  uint32
 }
 
 type SimpleCacheClientProps struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
-	DefaultTtlSeconds  uint32
+	DefaultTTLSeconds  uint32
 }
 
-// NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTtlSeconds, and opts arguments.
+// NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
@@ -67,7 +66,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
-		DefaultTtlSeconds:  props.DefaultTtlSeconds,
+		DefaultTtlSeconds:  props.DefaultTTLSeconds,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
@@ -113,9 +112,9 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 }
 
 func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) error {
-	ttlToUse := c.defaultTtlSeconds
-	if request.TtlSeconds._ttl != nil {
-		ttlToUse = *request.TtlSeconds._ttl
+	ttlToUse := c.defaultTTLSeconds
+	if request.TTLSeconds._ttl != nil {
+		ttlToUse = *request.TTLSeconds._ttl
 	}
 	err := c.dataClient.Set(ctx, &models.CacheSetRequest{
 		CacheName:  request.CacheName,

@@ -24,7 +24,7 @@ type CacheSetRequest struct {
 	Value interface{}
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
-	TtlSeconds TimeToLive
+	TTLSeconds TimeToLive
 }
 
 // TTL Helper function that returns an initialized TimeToLive containing a pointer to ttl.

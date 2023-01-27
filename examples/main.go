@@ -12,7 +12,7 @@ func main() {
 	var authToken = os.Getenv("MOMENTO_AUTH_TOKEN")
 	const (
 		cacheName             = "cache"
-		itemDefaultTtlSeconds = 60
+		itemDefaultTTLSeconds = 60
 	)
 
 	if authToken == "" {
@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// Initializes Momento
-	client, err := momento.NewSimpleCacheClient(authToken, itemDefaultTtlSeconds)
+	client, err := momento.NewSimpleCacheClient(authToken, itemDefaultTTLSeconds)
 	if err != nil {
 		panic(err)
 	}

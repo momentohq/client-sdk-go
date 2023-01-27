@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	defaultTtlSeconds = 3
+	defaultTTLSeconds = 3
 )
 
 // Basic happy path test - create a cache, operate set/get, and delete the cache
@@ -54,7 +54,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		CacheName:  cacheName,
 		Key:        uuid.NewString(),
 		Value:      value,
-		TtlSeconds: TTL(1),
+		TTLSeconds: TTL(1),
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
@@ -201,19 +201,19 @@ func TestClientInitialization(t *testing.T) {
 	badRequestTimeout := 0 * time.Second
 	tests := map[string]struct {
 		expectedErr       string
-		defaultTtlSeconds uint32
+		defaultTTLSeconds uint32
 		requestTimeout    *time.Duration
 	}{
 		"happy path": {
-			defaultTtlSeconds: defaultTtlSeconds,
+			defaultTTLSeconds: defaultTTLSeconds,
 		},
 		"happy path custom timeout": {
-			defaultTtlSeconds: defaultTtlSeconds,
+			defaultTTLSeconds: defaultTTLSeconds,
 			requestTimeout:    &testRequestTimeout,
 		},
 		"test invalid request timeout": {
 			expectedErr:       InvalidArgumentError,
-			defaultTtlSeconds: defaultTtlSeconds,
+			defaultTTLSeconds: defaultTTLSeconds,
 			requestTimeout:    &badRequestTimeout,
 		},
 	}
@@ -224,13 +224,13 @@ func TestClientInitialization(t *testing.T) {
 			c, err := NewSimpleCacheClient(&SimpleCacheClientProps{
 				Configuration:      config.LatestLaptopConfig(),
 				CredentialProvider: testCredentialProvider,
-				DefaultTtlSeconds:  tt.defaultTtlSeconds,
+				DefaultTTLSeconds:  tt.defaultTTLSeconds,
 			})
 			if tt.requestTimeout != nil {
 				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
 					Configuration:      config.LatestLaptopConfig().WithClientTimeoutMillis(*tt.requestTimeout),
 					CredentialProvider: testCredentialProvider,
-					DefaultTtlSeconds:  tt.defaultTtlSeconds,
+					DefaultTTLSeconds:  tt.defaultTTLSeconds,
 				})
 			}
 			if tt.expectedErr != "" && err == nil {
@@ -465,7 +465,7 @@ func TestSetGet(t *testing.T) {
 				}
 			} else {
 				// set string key/value with different ttl
-				err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value, TtlSeconds: TTL(tt.ttl)})
+				err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value, TTLSeconds: TTL(tt.ttl)})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 				}
@@ -729,7 +729,7 @@ func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error
 	client, err := NewSimpleCacheClient(&SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTtlSeconds:  defaultTtlSeconds,
+		DefaultTTLSeconds:  defaultTTLSeconds,
 	})
 	if err != nil {
 		return nil, err

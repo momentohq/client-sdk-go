@@ -1,5 +1,4 @@
 // Package incubating represents experimental packages and clients for Momento
-
 package incubating
 
 import (
