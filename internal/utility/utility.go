@@ -35,7 +35,7 @@ func EncodeKey(key interface{}) ([]byte, momentoerrors.MomentoSvcErr) {
 	case []byte:
 		return reflect.ValueOf(key).Bytes(), nil
 	default:
-		// If target is not string or byte[] then use default gob encoder.
+		// If target is not string or byte[] then throw error for now. In future should do marshaling here.
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"error encoding cache key only support []byte or string currently",
@@ -51,27 +51,10 @@ func EncodeValue(value interface{}) ([]byte, momentoerrors.MomentoSvcErr) {
 	case []byte:
 		return reflect.ValueOf(value).Bytes(), nil
 	default:
-		// If target is not string or byte[] then use default gob encoder.
+		// If target is not string or byte[] then throw error. In future should do marshaling here.
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"error encoding cache value  only support []byte or string currently", nil,
 		)
 	}
-}
-
-func DecodeValue(rawBytes []byte, target interface{}) momentoerrors.MomentoSvcErr {
-	switch target.(type) {
-	case []byte:
-		target = rawBytes
-	case string:
-		target = string(rawBytes)
-	default:
-		// If target is not string or byte[]
-		return momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"error decoding cache value only support []byte or string currently",
-			nil,
-		)
-	}
-	return nil
 }
