@@ -8,10 +8,12 @@ import (
 
 type ControlGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	Config             config.Configuration
 }
 
 type DataGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	Config             config.Configuration
 }
 
 type LocalDataGrpcManagerRequest struct {

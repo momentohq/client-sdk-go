@@ -21,6 +21,7 @@ type ScsControlClient struct {
 func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClient, momentoerrors.MomentoSvcErr) {
 	controlManager, err := grpcmanagers.NewScsControlGrpcManager(&models.ControlGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
+		Config:             request.Configuration,
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

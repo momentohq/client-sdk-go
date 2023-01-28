@@ -8,6 +8,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -24,7 +25,15 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	}
 	authToken := request.CredentialProvider.GetAuthToken()
 	endpoint := fmt.Sprint(request.CredentialProvider.GetControlEndpoint(), ControlPort)
-	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)))
+	conn, err := grpc.Dial(endpoint,
+		grpc.WithTransportCredentials(credentials.NewTLS(config)),
+		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
+		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor([]grpc_retry.CallOption{
+			grpc_retry.WithMax(request.Config.GetRetryStrategy().GetMaxRetries()),
+			grpc_retry.WithPerRetryTimeout(request.Config.GetRetryStrategy().GetPerRetryTimeout()),
+			grpc_retry.WithCodes(request.Config.GetRetryStrategy().GetRetryableRequestStatuses()...),
+		}...)),
+	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}

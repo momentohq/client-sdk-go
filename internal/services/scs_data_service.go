@@ -27,6 +27,7 @@ type ScsDataClient struct {
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
+		Config:             request.Configuration,
 	})
 	if err != nil {
 		return nil, err
