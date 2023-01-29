@@ -228,7 +228,7 @@ func TestClientInitialization(t *testing.T) {
 			})
 			if tt.requestTimeout != nil {
 				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
-					Configuration:      config.LatestLaptopConfig().WithClientTimeoutMillis(*tt.requestTimeout),
+					Configuration:      config.LatestLaptopConfig().WithClientTimeout(*tt.requestTimeout),
 					CredentialProvider: testCredentialProvider,
 					DefaultTTLSeconds:  tt.defaultTTLSeconds,
 				})
