@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
-
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
-
-	"github.com/google/uuid"
 )
 
 func main() {
@@ -33,8 +31,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	logger := config.LatestLaptopConfig().GetLogger()
 	// Create Cache and check if CacheName exists
+	logger.Info("Creating cache")
 	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
@@ -55,7 +54,7 @@ func main() {
 			panic(err)
 		}
 		for _, cacheInfo := range listCacheResp.Caches() {
-			log.Printf("%s\n", cacheInfo.Name())
+			logger.Info(fmt.Sprintf("%s", cacheInfo.Name()))
 		}
 		token = listCacheResp.NextToken()
 		if token == "" {
@@ -66,7 +65,7 @@ func main() {
 	// Sets key with default TTL and gets value with that key
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
-	log.Printf("Setting key: %s, value: %s\n", key, value)
+	logger.Info(fmt.Sprintf("Setting key: %s, value: %s", key, value))
 	err = client.Set(ctx, &momento.CacheSetRequest{
 		CacheName: cacheName,
 		Key:       key,
@@ -76,7 +75,7 @@ func main() {
 		panic(err)
 	}
 
-	log.Printf("Getting key: %s\n", key)
+	logger.Info(fmt.Sprintf("Getting key: %s", key))
 	resp, err := client.Get(ctx, &momento.CacheGetRequest{
 		CacheName: cacheName,
 		Key:       key,
@@ -85,9 +84,9 @@ func main() {
 		panic(err)
 	}
 	if resp.IsHit() {
-		log.Printf("Lookup resulted in cahce HIT. value=%s\n", resp.AsHit().ValueString())
+		logger.Info(fmt.Sprintf("Lookup resulted in cahce HIT. value=%s", resp.AsHit().ValueString()))
 	} else {
-		log.Printf("Look up did not find a value key=%s", key)
+		logger.Info(fmt.Sprintf("Look up did not find a value key=%s", key))
 	}
 
 	// Permanently delete the cache
@@ -95,5 +94,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Cache named %s is deleted\n", cacheName)
+	logger.Info(fmt.Sprintf("Cache named %s is deleted", cacheName))
 }
