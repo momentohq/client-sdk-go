@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -43,19 +42,13 @@ func Subscriber() {
 
 	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
 		currentTime := int(time.Now().UnixMilli())
-		receivedValue := m.StringValue()
-		// for this demo, check if the value is not empty. Handle Discontinuity later
-		if len(receivedValue) == 0 {
-			fmt.Println("discontinuity is detected.")
-		} else {
-			receivedTime, err := strconv.Atoi(receivedValue)
-			if err != nil {
-				panic(err)
-			}
-			latency := currentTime - receivedTime
-			// send metrics to CloudWatch
-			emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskId", idForDimension)).Log()
+		receivedTime, err := strconv.Atoi(m.StringValue())
+		if err != nil {
+			panic(err)
 		}
+		latency := currentTime - receivedTime
+		// send metrics to CloudWatch
+		emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving"), emf.NewDimension("taskId", idForDimension)).Log()
 	})
 	if err != nil {
 		panic(err)

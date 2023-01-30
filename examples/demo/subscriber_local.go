@@ -36,13 +36,7 @@ func SubscriberLocal() {
 	}
 
 	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
-		receivedValue := m.StringValue()
-		// for this demo, check if the value is not empty. Handle Discontinuity later
-		if len(receivedValue) == 0 {
-			fmt.Println("discontinuity is detected.")
-		} else {
-			fmt.Println(fmt.Sprintf("Received value: %s", receivedValue))
-		}
+		fmt.Println(fmt.Sprintf("Received value: %s", m.StringValue()))
 	})
 	if err != nil {
 		panic(err)
