@@ -9,7 +9,11 @@ var (
 func main() {
 	if serviceToRun == "publisher" {
 		Publisher()
-	} else {
+	} else if serviceToRun == "subscriber" {
 		Subscriber()
+	} else if serviceToRun == "publisherlocal" {
+		PublisherLocal()
+	} else if serviceToRun == "subscriberlocal" {
+		SubscriberLocal()
 	}
 }
