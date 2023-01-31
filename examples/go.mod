@@ -4,7 +4,8 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/momentohq/client-sdk-go v0.4.0
+	github.com/momentohq/client-sdk-go v0.5.0
+	github.com/prozz/aws-embedded-metrics-golang v1.2.0
 )
 
 require (
@@ -16,5 +17,4 @@ require (
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 	google.golang.org/grpc v1.52.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	github.com/prozz/aws-embedded-metrics-golang v1.2.0 // indirect
 )
