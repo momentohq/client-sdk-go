@@ -71,7 +71,7 @@ type TopicSubscribeResponse struct{}
 type TopicPublishRequest struct {
 	CacheName string
 	TopicName string
-	Value     string // TODO think about string vs byte more
+	Value     interface{}
 }
 
 type TopicPublishResponse struct{}
