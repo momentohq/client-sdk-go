@@ -51,12 +51,12 @@ subscriberTaskDefinition.addContainer("subscriber-container", {
 new FargateService(stack, "publisher-fargate-service", {
    cluster:  publisherCluster,
     taskDefinition: publisherTaskDefinition,
-    desiredCount: 1
+    desiredCount: 0
 });
 new FargateService(stack, "subscriber-fargate-service", {
     cluster:  subscriberCluster,
     taskDefinition: subscriberTaskDefinition,
-    desiredCount: 5
+    desiredCount: 0
 });
 
 app.synth();
