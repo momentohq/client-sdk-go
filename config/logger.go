@@ -11,28 +11,34 @@ type Logger interface {
 }
 
 type LoggerConfiguration struct {
-	Name string
+	Name       string
 }
 
-type LoggerClient struct {
+type BuiltInLoggerClient struct {
 	logger *log.Logger
 	name   string
 }
 
-func NewLogger(l *LoggerConfiguration) Logger {
-	return &LoggerClient{
+func NewMomentoLogger(l *LoggerConfiguration) Logger {
+	if l.LoggerType == builtin {
+		return &BuiltInLoggerClient{
+			logger: l.,
+			name:   l.Name,
+		}
+	}
+	return &BuiltInLoggerClient{
 		logger: log.Default(),
 		name:   l.Name,
 	}
 }
 
-func (lc *LoggerClient) Info(message string) {
+func (lc *BuiltInLoggerClient) Info(message string) {
 	str := fmt.Sprintf(`{"level": "INFO", "%s": "%s"}`, lc.name, message)
 	log.SetFlags(0)
 	log.Print(str)
 }
 
-func (lc *LoggerClient) Debug(message string) {
+func (lc *BuiltInLoggerClient) Debug(message string) {
 	str := fmt.Sprintf(`{"level": "DEBUG", "%s": "%s"}`, lc.name, message)
 	log.SetFlags(0)
 	log.Print(str)
