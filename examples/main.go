@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logger := config.LatestLaptopConfig().GetLogger()
+	logger := config.LatestLaptopConfig().GetLogger("builtin")
 	// Create Cache and check if CacheName exists
 	logger.Info("Creating cache")
 	err = client.CreateCache(ctx, &momento.CreateCacheRequest{

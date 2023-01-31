@@ -5,17 +5,20 @@ import (
 )
 
 type ConfigurationProps struct {
-	Logger            Logger
+	LoggerOptions     LoggerOptions
 	TransportStrategy TransportStrategy
 }
 
 type Configuration interface {
 	// GetLogger Returns the currently configured logger with the Momento service
-	GetLogger() Logger
+	GetLogger(loggerType loggerType) Logger
 
-	// WithCustomLogger Copy constructor for overriding Logger returns a new Configuration object
-	// with the specified logger name.
-	WithCustomLogger(logger Logger) Configuration
+	// GetLoggerOptions Returns the currently configured logger options with the Momento service
+	GetLoggerOptions() LoggerOptions
+
+	// WithCustomLoggerOptions Copy constructor for overriding LoggerOptions returns a new Configuration object
+	// with the specified logger options.
+	WithCustomLoggerOptions(loggerOptions LoggerOptions) Configuration
 
 	// GetTransportStrategy Returns the current configuration options for wire interactions with the Momento service
 	GetTransportStrategy() TransportStrategy
@@ -33,12 +36,12 @@ type Configuration interface {
 }
 
 type SimpleCacheConfiguration struct {
-	logger            Logger
+	loggerOptions     LoggerOptions
 	transportStrategy TransportStrategy
 }
 
-func (s *SimpleCacheConfiguration) GetLogger() Logger {
-	return s.logger
+func (s *SimpleCacheConfiguration) GetLoggerOptions() LoggerOptions {
+	return s.loggerOptions
 }
 
 func (s *SimpleCacheConfiguration) GetClientSideTimeout() time.Duration {
@@ -47,7 +50,7 @@ func (s *SimpleCacheConfiguration) GetClientSideTimeout() time.Duration {
 
 func NewSimpleCacheConfiguration(props *ConfigurationProps) Configuration {
 	return &SimpleCacheConfiguration{
-		logger:            props.Logger,
+		loggerOptions:     props.LoggerOptions,
 		transportStrategy: props.TransportStrategy,
 	}
 }
@@ -56,23 +59,30 @@ func (s *SimpleCacheConfiguration) GetTransportStrategy() TransportStrategy {
 	return s.transportStrategy
 }
 
-func (s *SimpleCacheConfiguration) WithCustomLogger(logger Logger) Configuration {
+func (s *SimpleCacheConfiguration) WithCustomLoggerOptions(loggerOptions LoggerOptions) Configuration {
 	return &SimpleCacheConfiguration{
-		logger:            logger,
+		loggerOptions:     loggerOptions,
 		transportStrategy: s.transportStrategy,
 	}
 }
 
 func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {
 	return &SimpleCacheConfiguration{
-		logger:            s.logger,
+		loggerOptions:     s.loggerOptions,
 		transportStrategy: transportStrategy,
 	}
 }
 
 func (s *SimpleCacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
 	return &SimpleCacheConfiguration{
-		logger:            s.logger,
+		loggerOptions:     s.loggerOptions,
 		transportStrategy: s.transportStrategy.WithClientTimeout(clientTimeout),
 	}
+}
+
+func (s *SimpleCacheConfiguration) GetLogger(loggerType loggerType) Logger {
+	if loggerType == builtin {
+		return NewBuiltInLogger(&s.loggerOptions)
+	}
+	return NewBuiltInLogger(&s.loggerOptions)
 }
