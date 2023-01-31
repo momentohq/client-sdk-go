@@ -1,7 +1,5 @@
 package incubating
 
-type topicResponseTypes string
-
 // TopicMessage Base type for possible messages received on a topic
 type TopicMessage struct {
 	value interface{}
