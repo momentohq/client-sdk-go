@@ -10,14 +10,14 @@ import (
 )
 
 type SubscriptionIFace interface {
-	Recv(ctx context.Context, f func(ctx context.Context, m *TopicMessage)) error
+	Recv(ctx context.Context, f func(ctx context.Context, m TopicMessage)) error
 }
 
 type Subscription struct {
 	grpcClient grpc.ClientStream
 }
 
-func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m *TopicMessage)) error {
+func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m TopicMessage)) error {
 	for {
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
@@ -29,15 +29,14 @@ func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m *
 		}
 
 		// Don't pass discontinuity messages back to user for now
-
 		if rawMsg.GetItem() != nil {
 			if rawMsg.GetItem().GetValue().GetBinary() != nil {
-				f(ctx, &TopicMessage{
-					value: rawMsg.GetItem().GetValue().GetBinary(),
+				f(ctx, &TopicMessageBytes{
+					Value: rawMsg.GetItem().GetValue().GetBinary(),
 				})
 			} else if rawMsg.GetItem().GetValue().GetText() != "" {
-				f(ctx, &TopicMessage{
-					value: rawMsg.GetItem().GetValue().GetText(),
+				f(ctx, &TopicMessageString{
+					Value: rawMsg.GetItem().GetValue().GetText(),
 				})
 			}
 		}

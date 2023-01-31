@@ -92,7 +92,7 @@ func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRe
 	return nil
 }
 
-func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (*models.CacheGetResponse, momentoerrors.MomentoSvcErr) {
+func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (models.CacheGetResponse, momentoerrors.MomentoSvcErr) {
 
 	// Validate input
 	if err := utility.IsKeyValid(request.Key); err != nil {
@@ -119,14 +119,9 @@ func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRe
 
 	// Convert from grpc struct to internal struct
 	if resp.Result == pb.ECacheResult_Hit {
-		return &models.CacheGetResponse{
-			Value:  resp.CacheBody,
-			Result: models.HIT,
-		}, nil
+		return &models.CacheGetHit{Value: resp.CacheBody}, nil
 	} else if resp.Result == pb.ECacheResult_Miss {
-		return &models.CacheGetResponse{
-			Result: models.MISS,
-		}, nil
+		return &models.CacheGetMiss{}, nil
 	} else {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,

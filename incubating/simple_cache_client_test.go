@@ -34,11 +34,12 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	}
 
 	go func() {
-		err := sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessage) {
-			if m.IsStringMessage() {
-				fmt.Printf("got a msg! val=%s\n", m.AsStringMessage().Value())
-			} else {
-				fmt.Printf("got a msg! val=%s\n", m.AsByteMessage().Value())
+		err := sub.Recv(context.Background(), func(ctx context.Context, m TopicMessage) {
+			switch msg := m.(type) {
+			case *TopicMessageString:
+				fmt.Printf("got a msg! val=%s\n", msg.Value)
+			case *TopicMessageBytes:
+				fmt.Printf("got a msg! val=%s\n", msg.Value)
 			}
 		})
 		if err != nil {
@@ -106,11 +107,12 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 
 	go func() {
 		// Just block and make sure we get stubbed messages for now for quick test
-		err := sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessage) {
-			if m.IsStringMessage() {
-				fmt.Printf("got a msg! val=%s\n", m.AsStringMessage().Value())
-			} else {
-				fmt.Printf("got a msg! val=%s\n", m.AsByteMessage().Value())
+		err := sub.Recv(context.Background(), func(ctx context.Context, m TopicMessage) {
+			switch msg := m.(type) {
+			case *TopicMessageString:
+				fmt.Printf("got a msg! val=%s\n", msg.Value)
+			case *TopicMessageBytes:
+				fmt.Printf("got a msg! val=%s\n", msg.Value)
 			}
 		})
 		if err != nil {

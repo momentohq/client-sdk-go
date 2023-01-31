@@ -27,7 +27,7 @@ const (
 // Basic happy path test - create a cache, operate set/get, and delete the cache
 func TestBasicHappyPathSDKFlow(t *testing.T) {
 	ctx := context.Background()
-	cacheName := uuid.NewString()
+	randomCacheName := uuid.NewString()
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 	client, err := newTestClient(testCredentialProvider)
@@ -35,14 +35,14 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
 	err = client.CreateCache(ctx, &CreateCacheRequest{
-		CacheName: cacheName,
+		CacheName: randomCacheName,
 	})
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
 
 	err = client.Set(ctx, &CacheSetRequest{
-		CacheName: cacheName,
+		CacheName: randomCacheName,
 		Key:       key,
 		Value:     value,
 	})
@@ -51,7 +51,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	}
 
 	err = client.Set(ctx, &CacheSetRequest{
-		CacheName:  cacheName,
+		CacheName:  randomCacheName,
 		Key:        uuid.NewString(),
 		Value:      value,
 		TTLSeconds: TTL(1),
@@ -61,7 +61,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	}
 
 	getResp, err := client.Get(ctx, &CacheGetRequest{
-		CacheName: cacheName,
+		CacheName: randomCacheName,
 		Key:       key,
 	})
 	if err != nil {
@@ -69,14 +69,17 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		return
 	}
 
-	if !getResp.IsHit() {
-		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHitResponse{})
-	}
-	if !bytes.Equal(getResp.AsHit().ValueByte(), value) {
-		t.Errorf(
-			"set byte value and returned byte value are not equal "+
-				"got=%+v expected=%+v", getResp.AsHit().ValueByte(), value,
-		)
+	switch result := getResp.(type) {
+	case *CacheGetHit:
+		if !bytes.Equal(result.ValueByte(), value) {
+			t.Errorf(
+				"set byte value and returned byte value are not equal "+
+					"got=%+v expected=%+v", result.ValueByte(), value,
+			)
+		}
+		break
+	default:
+		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHit{})
 	}
 
 	existingCacheResp, err := client.Get(ctx, &CacheGetRequest{
@@ -87,18 +90,18 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	if !existingCacheResp.IsMiss() {
+	if r, ok := existingCacheResp.(*CacheGetHit); ok {
 		t.Errorf(
-			"key: %s shouldn't exist in %s since it's never set. got=%s", string(key),
-			testCacheName, existingCacheResp.AsHit().ValueString(),
+			"key: %s shouldn't exist in %s since it's got deleted. got=%s",
+			string(key), testCacheName, r.ValueString(),
 		)
 	}
 
 	err = client.DeleteCache(ctx, &DeleteCacheRequest{
-		CacheName: cacheName,
+		CacheName: randomCacheName,
 	})
 	if err != nil {
-		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
+		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", randomCacheName, err))
 	}
 
 	cleanUpClient(client)
@@ -138,15 +141,19 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		return
 	}
 
-	if !getResp.IsHit() {
-		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHitResponse{})
+	switch result := getResp.(type) {
+	case *CacheGetHit:
+		if !bytes.Equal(result.ValueByte(), value) {
+			t.Errorf(
+				"set byte value and returned byte value are not equal "+
+					"got=%+v expected=%+v", result.ValueByte(), value,
+			)
+		}
+		break
+	default:
+		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHit{})
 	}
-	if !bytes.Equal(getResp.AsHit().ValueByte(), value) {
-		t.Errorf(
-			"set byte value and returned byte value are not equal "+
-				"got=%+v expected=%+v", getResp.AsHit().ValueByte(), value,
-		)
-	}
+
 	err = client.Delete(ctx, &CacheDeleteRequest{
 		CacheName: cacheName,
 		Key:       key,
@@ -162,10 +169,10 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	if !existingCacheResp.IsMiss() {
+	if r, ok := existingCacheResp.(*CacheGetHit); ok {
 		t.Errorf(
-			"key: %s shouldn't exist in %s since it's never set. got=%s",
-			string(key), testCacheName, existingCacheResp.AsHit().ValueString(),
+			"key: %s shouldn't exist in %s since it's got deleted. got=%s",
+			string(key), testCacheName, r.ValueString(),
 		)
 	}
 
@@ -470,20 +477,24 @@ func TestSetGet(t *testing.T) {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 				}
 			}
+
 			if tt.expectedGetResult == "HIT" {
 				resp, err := client.Get(ctx, &CacheGetRequest{CacheName: testCacheName, Key: tt.key})
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
-				if !resp.IsHit() {
+				switch result := resp.(type) {
+				case *CacheGetHit:
+					if tt.value != result.ValueString() {
+						t.Errorf(
+							"set string value=%s is not the same as returned string value=%s",
+							tt.value, result.ValueString(),
+						)
+					}
+				default:
 					t.Errorf("expected hit but got responseType=%+v", resp)
 				}
-				if tt.value != resp.AsHit().ValueString() {
-					t.Errorf(
-						"set string value=%s is not the same as returned string value=%s",
-						tt.value, resp.AsHit().ValueString(),
-					)
-				}
+
 			} else {
 				// make sure responseType it cache miss after ttl is expired
 				time.Sleep(5 * time.Second)
@@ -491,30 +502,14 @@ func TestSetGet(t *testing.T) {
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
-				if !resp.IsMiss() {
-					t.Errorf("expected miss but got responseType=%+v", resp)
+				switch result := resp.(type) {
+				case *CacheGetMiss:
+					// We expect miss
+					break
+				default:
+					t.Errorf("expected miss but got responseType=%+v", result)
 				}
-			}
-			// set byte key/value
-			err = client.Set(ctx, &CacheSetRequest{
-				CacheName: testCacheName,
-				Key:       []byte(tt.key),
-				Value:     []byte(tt.value)},
-			)
-			if err != nil {
-				t.Errorf("unexpected error occurred on setting cache err=%+v", err)
-			}
-			if tt.expectedGetResult == "HIT" {
-				resp, err := client.Get(ctx, &CacheGetRequest{CacheName: testCacheName, Key: []byte(tt.key)})
-				if err != nil {
-					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
-				}
-				if !resp.IsHit() {
-					t.Errorf("expected hit but got responseType=%+v", resp)
-				}
-				if tt.value != string(resp.AsHit().ValueByte()) {
-					t.Errorf("set byte value=%s is not the same as returned byte value=%s", tt.value, resp.AsHit().ValueByte())
-				}
+
 			}
 			cleanUpClient(client)
 		})

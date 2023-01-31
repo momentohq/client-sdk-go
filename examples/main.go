@@ -84,9 +84,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if resp.IsHit() {
-		log.Printf("Lookup resulted in cahce HIT. value=%s\n", resp.AsHit().ValueString())
-	} else {
+
+	switch result := resp.(type) {
+	case *momento.CacheGetHit:
+		log.Printf("Lookup resulted in cahce HIT. value=%s\n", result.ValueString())
+	case *momento.CacheGetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
 

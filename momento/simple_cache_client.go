@@ -24,7 +24,7 @@ type ScsClient interface {
 	// Set Stores an item in cache.
 	Set(ctx context.Context, request *CacheSetRequest) error
 	// Get Retrieve an item from the cache. Using cache key of type []bytes.
-	Get(ctx context.Context, request *CacheGetRequest) (*CacheGetResponse, error)
+	Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error)
 	// Delete an item from the cache.
 	Delete(ctx context.Context, request *CacheDeleteRequest) error
 
@@ -125,7 +125,7 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) er
 	return convertMomentoSvcErrorToCustomerError(err)
 }
 
-func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (*CacheGetResponse, error) {
+func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error) {
 	rsp, err := c.dataClient.Get(ctx, &models.CacheGetRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
@@ -153,18 +153,14 @@ func (c *DefaultScsClient) Close() {
 	defer c.dataClient.Close()
 }
 
-func convertCacheGetResponse(r *models.CacheGetResponse) *CacheGetResponse {
-	var response *CacheGetResponse
-	switch r.Result {
-	case models.MISS:
-		response = &CacheGetResponse{
-			responseType: miss,
-			value:        r.Value,
-		}
-	case models.HIT:
-		response = &CacheGetResponse{
-			responseType: hit,
-			value:        r.Value,
+func convertCacheGetResponse(r models.CacheGetResponse) CacheGetResponse {
+	var response CacheGetResponse
+	switch r := r.(type) {
+	case *models.CacheGetMiss:
+		response = &CacheGetMiss{}
+	case *models.CacheGetHit:
+		response = &CacheGetHit{
+			value: r.Value,
 		}
 	}
 	return response

@@ -44,9 +44,14 @@ const (
 	MISS CacheResult = "MISS"
 )
 
-type CacheGetResponse struct {
-	Value  []byte
-	Result CacheResult
+type CacheGetResponse interface{}
+
+// CacheGetMiss Miss Response to a cache Get api request.
+type CacheGetMiss struct{}
+
+// CacheGetHit Hit Response to a cache Get api request.
+type CacheGetHit struct {
+	Value []byte
 }
 
 type CacheSetRequest struct {

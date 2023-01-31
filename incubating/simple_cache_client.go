@@ -123,7 +123,7 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *momento.List
 func (c *DefaultScsClient) Set(ctx context.Context, request *momento.CacheSetRequest) error {
 	return c.internalClient.Set(ctx, request)
 }
-func (c *DefaultScsClient) Get(ctx context.Context, request *momento.CacheGetRequest) (*momento.CacheGetResponse, error) {
+func (c *DefaultScsClient) Get(ctx context.Context, request *momento.CacheGetRequest) (momento.CacheGetResponse, error) {
 	return c.internalClient.Get(ctx, request)
 }
 func (c *DefaultScsClient) Delete(ctx context.Context, request *momento.CacheDeleteRequest) error {
