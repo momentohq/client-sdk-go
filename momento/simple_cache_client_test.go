@@ -77,7 +77,6 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 					"got=%+v expected=%+v", result.ValueByte(), value,
 			)
 		}
-		break
 	default:
 		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHit{})
 	}
@@ -149,7 +148,6 @@ func TestBasicHappyPathDelete(t *testing.T) {
 					"got=%+v expected=%+v", result.ValueByte(), value,
 			)
 		}
-		break
 	default:
 		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHit{})
 	}
@@ -505,7 +503,6 @@ func TestSetGet(t *testing.T) {
 				switch result := resp.(type) {
 				case *CacheGetMiss:
 					// We expect miss
-					break
 				default:
 					t.Errorf("expected miss but got responseType=%+v", result)
 				}
