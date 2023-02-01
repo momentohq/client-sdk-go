@@ -84,6 +84,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	if resp.IsHit() {
 		log.Printf("Lookup resulted in cahce HIT. value=%s\n", resp.AsHit().ValueString())
 	} else {

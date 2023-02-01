@@ -3,6 +3,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -24,7 +25,7 @@ type ScsClient interface {
 	// Set Stores an item in cache.
 	Set(ctx context.Context, request *CacheSetRequest) error
 	// Get Retrieve an item from the cache. Using cache key of type []bytes.
-	Get(ctx context.Context, request *CacheGetRequest) (*CacheGetResponse, error)
+	Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error)
 	// Delete an item from the cache.
 	Delete(ctx context.Context, request *CacheDeleteRequest) error
 
@@ -125,7 +126,7 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) er
 	return convertMomentoSvcErrorToCustomerError(err)
 }
 
-func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (*CacheGetResponse, error) {
+func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error) {
 	rsp, err := c.dataClient.Get(ctx, &models.CacheGetRequest{
 		CacheName: request.CacheName,
 		Key:       request.Key,
@@ -133,7 +134,7 @@ func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (*
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return convertCacheGetResponse(rsp), nil
+	return convertCacheGetResponse(rsp)
 }
 
 func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
@@ -153,21 +154,21 @@ func (c *DefaultScsClient) Close() {
 	defer c.dataClient.Close()
 }
 
-func convertCacheGetResponse(r *models.CacheGetResponse) *CacheGetResponse {
-	var response *CacheGetResponse
-	switch r.Result {
-	case models.MISS:
-		response = &CacheGetResponse{
-			responseType: miss,
-			value:        r.Value,
-		}
-	case models.HIT:
-		response = &CacheGetResponse{
-			responseType: hit,
-			value:        r.Value,
-		}
+func convertCacheGetResponse(r models.CacheGetResponse) (CacheGetResponse, MomentoError) {
+	switch response := r.(type) {
+	case *models.CacheGetMiss:
+		return &CacheGetMiss{}, nil
+	case *models.CacheGetHit:
+		return &CacheGetHit{
+			value: response.Value,
+		}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			ClientSdkError,
+			fmt.Sprintf("unexpected cache get status returned %+v", response),
+			nil,
+		)
 	}
-	return response
 }
 
 func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {

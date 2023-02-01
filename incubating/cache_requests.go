@@ -9,5 +9,5 @@ type TopicSubscribeRequest struct {
 type TopicPublishRequest struct {
 	CacheName string
 	TopicName string
-	Value     string // TODO think about string vs byte more
+	Value     TopicValue
 }

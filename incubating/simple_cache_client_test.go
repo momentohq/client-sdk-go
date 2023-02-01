@@ -34,8 +34,13 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	}
 
 	go func() {
-		err := sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
-			fmt.Printf("got a msg! val=%s\n", m.StringValue())
+		err := sub.Recv(context.Background(), func(ctx context.Context, m TopicValue) {
+			switch msg := m.(type) {
+			case *TopicValueString:
+				fmt.Printf("got a msg! val=%s\n", msg.Text)
+			case *TopicValueBytes:
+				fmt.Printf("got a msg! val=%s\n", msg.Bytes)
+			}
 		})
 		if err != nil {
 			panic(err)
@@ -43,19 +48,34 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	}()
 
 	for i := 0; i < 10; i++ {
-		err := client.PublishTopic(ctx, &TopicPublishRequest{
-			CacheName: "test-cache",
-			TopicName: "test-topic",
-			Value:     fmt.Sprintf("hello %d", i),
-		})
-		if err != nil {
-			panic(err)
+		if i%2 == 0 {
+			err := client.PublishTopic(ctx, &TopicPublishRequest{
+				CacheName: "test-cache",
+				TopicName: "test-topic",
+				Value: &TopicValueString{
+					Text: fmt.Sprintf("string hello %d", i),
+				},
+			})
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := client.PublishTopic(ctx, &TopicPublishRequest{
+				CacheName: "test-cache",
+				TopicName: "test-topic",
+				Value: &TopicValueBytes{
+					Bytes: []byte(fmt.Sprintf("byte hello %d", i)),
+				},
+			})
+			if err != nil {
+				panic(err)
+			}
 		}
 		time.Sleep(time.Second)
 	}
 }
 
-// Basic happy path test - create a cache, operate set/get, and delete the cache
+// Basic happy path pubsub integration test
 func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 	ctx := context.Background()
 	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
@@ -91,8 +111,13 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 
 	go func() {
 		// Just block and make sure we get stubbed messages for now for quick test
-		err := sub.Recv(context.Background(), func(ctx context.Context, m *TopicMessageReceiveResponse) {
-			fmt.Printf("got a msg! val=%s\n", m.StringValue())
+		err := sub.Recv(context.Background(), func(ctx context.Context, m TopicValue) {
+			switch msg := m.(type) {
+			case *TopicValueString:
+				fmt.Printf("got a msg! val=%s\n", msg.Text)
+			case *TopicValueBytes:
+				fmt.Printf("got a msg! val=%s\n", msg.Bytes)
+			}
 		})
 		if err != nil {
 			panic(err)
@@ -100,13 +125,28 @@ func TestBasicHappyPathPubSubIntegrationTest(t *testing.T) {
 	}()
 
 	for i := 0; i < 10; i++ {
-		err := client.PublishTopic(ctx, &TopicPublishRequest{
-			CacheName: "test-cache",
-			TopicName: "test-topic",
-			Value:     fmt.Sprintf("hello %d", i),
-		})
-		if err != nil {
-			panic(err)
+		if i%2 == 0 {
+			err := client.PublishTopic(ctx, &TopicPublishRequest{
+				CacheName: "test-cache",
+				TopicName: "test-topic",
+				Value: &TopicValueString{
+					Text: fmt.Sprintf("string hello %d", i),
+				},
+			})
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := client.PublishTopic(ctx, &TopicPublishRequest{
+				CacheName: "test-cache",
+				TopicName: "test-topic",
+				Value: &TopicValueBytes{
+					Bytes: []byte(fmt.Sprintf("byte hello %d", i)),
+				},
+			})
+			if err != nil {
+				panic(err)
+			}
 		}
 		time.Sleep(time.Second)
 	}

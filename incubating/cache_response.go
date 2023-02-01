@@ -1,13 +1,18 @@
 package incubating
 
-type CreateTopicResponse struct{}
-
-type TopicMessageReceiveResponse struct {
-	// TODO talk about user experience for bytes/strings
-	value string
+// TopicValue Base type for possible messages received on a topic
+type TopicValue interface {
+	isTopicValue()
 }
 
-// StringValue Decodes and returns byte value sent in topic to string.
-func (resp *TopicMessageReceiveResponse) StringValue() string {
-	return resp.value
+type TopicValueBytes struct {
+	Bytes []byte
 }
+
+func (_ TopicValueBytes) isTopicValue() {}
+
+type TopicValueString struct {
+	Text string
+}
+
+func (_ TopicValueString) isTopicValue() {}
