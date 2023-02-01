@@ -3,6 +3,7 @@ package incubating
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -90,11 +91,30 @@ func (c *DefaultScsClient) SubscribeTopic(ctx context.Context, request *TopicSub
 }
 
 func (c *DefaultScsClient) PublishTopic(ctx context.Context, request *TopicPublishRequest) error {
-	return c.pubSubClient.Publish(ctx, &models.TopicPublishRequest{
-		CacheName: request.CacheName,
-		TopicName: request.TopicName,
-		Value:     request.Value,
-	})
+	switch value := request.Value.(type) {
+	case *TopicValueBytes:
+		return c.pubSubClient.Publish(ctx, &models.TopicPublishRequest{
+			CacheName: request.CacheName,
+			TopicName: request.TopicName,
+			Value: &models.TopicValueBytes{
+				Bytes: value.Bytes,
+			},
+		})
+	case *TopicValueString:
+		return c.pubSubClient.Publish(ctx, &models.TopicPublishRequest{
+			CacheName: request.CacheName,
+			TopicName: request.TopicName,
+			Value: &models.TopicValueString{
+				Text: value.Text,
+			},
+		})
+	default:
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			fmt.Sprintf("unexpected TopicPublishRequest type passed %+v", value),
+			nil,
+		)
+	}
 }
 
 // Close shutdown the client.

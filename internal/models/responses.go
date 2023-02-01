@@ -4,18 +4,6 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-type CreateCacheRequest struct {
-	CacheName string
-}
-
-type DeleteCacheRequest struct {
-	CacheName string
-}
-
-type ListCachesRequest struct {
-	NextToken string
-}
-
 type ListCachesResponse struct {
 	NextToken string
 	Caches    []CacheInfo
@@ -53,29 +41,6 @@ type CacheGetHit struct {
 
 func (_ CacheGetHit) isCacheGetResponse() {}
 
-type CacheSetRequest struct {
-	CacheName  string
-	Key        interface{}
-	Value      interface{}
-	TtlSeconds uint32
-}
-
-type CacheDeleteRequest struct {
-	CacheName string
-	Key       interface{}
-}
-
-type TopicSubscribeRequest struct {
-	CacheName string
-	TopicName string
-}
-
 type TopicSubscribeResponse struct{}
-
-type TopicPublishRequest struct {
-	CacheName string
-	TopicName string
-	Value     interface{}
-}
 
 type TopicPublishResponse struct{}

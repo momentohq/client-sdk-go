@@ -24,6 +24,57 @@ type CacheGetRequest struct {
 	Key interface{}
 }
 
+type CacheSetRequest struct {
+	CacheName  string
+	Key        interface{}
+	Value      interface{}
+	TtlSeconds uint32
+}
+
+type CacheDeleteRequest struct {
+	CacheName string
+	Key       interface{}
+}
+
+type CreateCacheRequest struct {
+	CacheName string
+}
+
+type DeleteCacheRequest struct {
+	CacheName string
+}
+
+type ListCachesRequest struct {
+	NextToken string
+}
+
+type TopicSubscribeRequest struct {
+	CacheName string
+	TopicName string
+}
+
+type TopicPublishRequest struct {
+	CacheName string
+	TopicName string
+	Value     TopicValue
+}
+
+type TopicValue interface {
+	isTopicValue()
+}
+
+type TopicValueBytes struct {
+	Bytes []byte
+}
+
+func (_ TopicValueBytes) isTopicValue() {}
+
+type TopicValueString struct {
+	Text string
+}
+
+func (_ TopicValueString) isTopicValue() {}
+
 type ControlClientRequest struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
