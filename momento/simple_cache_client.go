@@ -249,14 +249,14 @@ func encodeValue(value Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
 }
 
 func isValueValid(value []byte) ([]byte, momentoerrors.MomentoSvcErr) {
-	if value == nil || len(value) == 0 {
+	if len(value) == 0 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "value cannot be empty", nil)
 	}
 	return value, nil
 }
 
 func isKeyValid(key []byte) ([]byte, momentoerrors.MomentoSvcErr) {
-	if key == nil || len(key) == 0 {
+	if len(key) == 0 {
 		return key, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
 	}
 	return key, nil
