@@ -4,13 +4,13 @@ package momento
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
-	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
 // ScsClient wraps lower level cache control and data operations.
@@ -24,7 +24,7 @@ type ScsClient interface {
 
 	// Set Stores an item in cache.
 	Set(ctx context.Context, request *CacheSetRequest) error
-	// Get Retrieve an item from the cache. Using cache key of type []bytes.
+	// Get Retrieve an item from the cache.
 	Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error)
 	// Delete an item from the cache.
 	Delete(ctx context.Context, request *CacheDeleteRequest) error
@@ -80,6 +80,9 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 }
 
 func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
 	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
@@ -90,6 +93,9 @@ func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCache
 }
 
 func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
 	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
@@ -113,23 +119,43 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 }
 
 func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) error {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
 	ttlToUse := c.defaultTTLSeconds
 	if request.TTLSeconds._ttl != nil {
 		ttlToUse = *request.TTLSeconds._ttl
 	}
-	err := c.dataClient.Set(ctx, &models.CacheSetRequest{
+
+	key, err := encodeKey(request.Key)
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+	value, err := encodeValue(request.Value)
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+
+	err = c.dataClient.Set(ctx, &models.CacheSetRequest{
 		CacheName:  request.CacheName,
-		Key:        request.Key,
-		Value:      request.Value,
+		Key:        key,
+		Value:      value,
 		TtlSeconds: ttlToUse,
 	})
 	return convertMomentoSvcErrorToCustomerError(err)
 }
 
 func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	key, err := encodeKey(request.Key)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
 	rsp, err := c.dataClient.Get(ctx, &models.CacheGetRequest{
 		CacheName: request.CacheName,
-		Key:       request.Key,
+		Key:       key,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
@@ -138,13 +164,16 @@ func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (C
 }
 
 func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
-	err := utility.IsKeyValid(request.Key)
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
+	byteKey, err := encodeKey(request.Key)
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
 	err = c.dataClient.Delete(ctx, &models.CacheDeleteRequest{
 		CacheName: request.CacheName,
-		Key:       request.Key,
+		Key:       byteKey,
 	})
 	return convertMomentoSvcErrorToCustomerError(err)
 }
@@ -186,4 +215,56 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 		})
 	}
 	return convertedList
+}
+
+func encodeKey(key Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
+	switch k := key.(type) {
+	case *StringBytes:
+		return isKeyValid([]byte(k.Text))
+	case *RawBytes:
+		return isKeyValid(k.Bytes)
+	default:
+		// If target is not string or byte[] then throw error for now. In future should do marshaling here.
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"error encoding cache key only support []byte or string currently",
+			nil,
+		)
+	}
+}
+
+func encodeValue(value Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
+	switch k := value.(type) {
+	case StringBytes:
+		return isValueValid([]byte(k.Text))
+	case RawBytes:
+		return isValueValid(k.Bytes)
+	default:
+		// If target is not string or byte[] then throw error. In future should do marshaling here.
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"error encoding cache value  only support []byte or string currently", nil,
+		)
+	}
+}
+
+func isValueValid(value []byte) ([]byte, momentoerrors.MomentoSvcErr) {
+	if value == nil || len(value) == 0 {
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "value cannot be empty", nil)
+	}
+	return value, nil
+}
+
+func isKeyValid(key []byte) ([]byte, momentoerrors.MomentoSvcErr) {
+	if key == nil || len(key) == 0 {
+		return key, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
+	}
+	return key, nil
+}
+
+func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
+	if len(strings.TrimSpace(cacheName)) < 1 {
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
+	}
+	return nil
 }

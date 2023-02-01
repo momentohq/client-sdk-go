@@ -8,7 +8,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/utility"
 )
 
 const ControlCtxTimeout = 60 * time.Second
@@ -33,9 +32,6 @@ func (client *ScsControlClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (client *ScsControlClient) CreateCache(ctx context.Context, request *models.CreateCacheRequest) momentoerrors.MomentoSvcErr {
-	if err := utility.IsCacheNameValid(request.CacheName); err != nil {
-		return err
-	}
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
@@ -46,9 +42,6 @@ func (client *ScsControlClient) CreateCache(ctx context.Context, request *models
 }
 
 func (client *ScsControlClient) DeleteCache(ctx context.Context, request *models.DeleteCacheRequest) momentoerrors.MomentoSvcErr {
-	if err := utility.IsCacheNameValid(request.CacheName); err != nil {
-		return err
-	}
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
 	_, err := client.grpcClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
