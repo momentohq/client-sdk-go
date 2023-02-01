@@ -219,15 +219,19 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 
 func encodeKey(key Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
 	switch k := key.(type) {
+	case StringBytes:
+		return isKeyValid([]byte(k.Text))
 	case *StringBytes:
 		return isKeyValid([]byte(k.Text))
+	case RawBytes:
+		return isKeyValid(k.Bytes)
 	case *RawBytes:
 		return isKeyValid(k.Bytes)
 	default:
 		// If target is not string or byte[] then throw error for now. In future should do marshaling here.
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"error encoding cache key only support *momento.StringBytes or *momento.RawBytes currently",
+			"error encoding cache key only support momento.StringBytes or momento.RawBytes currently",
 			nil,
 		)
 	}
@@ -235,15 +239,19 @@ func encodeKey(key Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
 
 func encodeValue(value Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
 	switch k := value.(type) {
+	case StringBytes:
+		return isValueValid([]byte(k.Text))
 	case *StringBytes:
 		return isValueValid([]byte(k.Text))
+	case RawBytes:
+		return isValueValid(k.Bytes)
 	case *RawBytes:
 		return isValueValid(k.Bytes)
 	default:
 		// If target is not string or byte[] then throw error. In future should do marshaling here.
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"error encoding cache value only support *momento.StringBytes or *momento.RawBytes currently", nil,
+			"error encoding cache value only support momento.StringBytes or momento.RawBytes currently", nil,
 		)
 	}
 }
