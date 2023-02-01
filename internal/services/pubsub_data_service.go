@@ -66,14 +66,14 @@ func (client *PubSubClient) Subscribe(ctx context.Context, request *models.Topic
 	return streamClient, err
 }
 func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPublishRequest) error {
-	switch request.Value.(type) {
+	switch value := request.Value.(type) {
 	case string:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
 				Kind: &pb.XTopicValue_Text{
-					Text: request.Value.(string),
+					Text: value,
 				},
 			},
 		})
@@ -84,7 +84,7 @@ func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPu
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
 				Kind: &pb.XTopicValue_Binary{
-					Binary: request.Value.([]byte),
+					Binary: value,
 				},
 			},
 		})

@@ -22,7 +22,7 @@ type ListCachesResponse struct {
 }
 
 func NewListCacheResponse(resp *pb.XListCachesResponse) *ListCachesResponse {
-	var caches = []CacheInfo{}
+	var caches []CacheInfo
 	for _, cache := range resp.Cache {
 		caches = append(caches, NewCacheInfo(cache))
 	}
@@ -37,22 +37,21 @@ func NewCacheInfo(cache *pb.XCache) CacheInfo {
 	return CacheInfo{Name: cache.CacheName}
 }
 
-type CacheResult string
-
-const (
-	HIT  CacheResult = "HIT"
-	MISS CacheResult = "MISS"
-)
-
-type CacheGetResponse interface{}
+type CacheGetResponse interface {
+	isCacheGetResponse()
+}
 
 // CacheGetMiss Miss Response to a cache Get api request.
 type CacheGetMiss struct{}
+
+func (_ CacheGetMiss) isCacheGetResponse() {}
 
 // CacheGetHit Hit Response to a cache Get api request.
 type CacheGetHit struct {
 	Value []byte
 }
+
+func (_ CacheGetHit) isCacheGetResponse() {}
 
 type CacheSetRequest struct {
 	CacheName  string

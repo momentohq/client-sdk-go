@@ -1,18 +1,18 @@
 package incubating
 
-// TopicMessage Base type for possible messages received on a topic
-type TopicMessage interface {
-	isTopicMsg()
+// TopicValue Base type for possible messages received on a topic
+type TopicValue interface {
+	isTopicValue()
 }
 
-type TopicMessageBytes struct {
-	Value []byte
+type TopicValueBytes struct {
+	Bytes []byte
 }
 
-func (_ TopicMessageBytes) isTopicMsg() {}
+func (_ TopicValueBytes) isTopicValue() {}
 
-type TopicMessageString struct {
-	Value string
+type TopicValueString struct {
+	Text string
 }
 
-func (_ TopicMessageString) isTopicMsg() {}
+func (_ TopicValueString) isTopicValue() {}

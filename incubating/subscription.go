@@ -10,14 +10,14 @@ import (
 )
 
 type SubscriptionIFace interface {
-	Recv(ctx context.Context, f func(ctx context.Context, m TopicMessage)) error
+	Recv(ctx context.Context, f func(ctx context.Context, m TopicValue)) error
 }
 
 type Subscription struct {
 	grpcClient grpc.ClientStream
 }
 
-func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m TopicMessage)) error {
+func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m TopicValue)) error {
 	for {
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
@@ -28,15 +28,19 @@ func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m T
 			return err
 		}
 
-		// Don't pass discontinuity messages back to user for now
-		if rawMsg.GetItem() != nil {
-			if rawMsg.GetItem().GetValue().GetBinary() != nil {
-				f(ctx, &TopicMessageBytes{
-					Value: rawMsg.GetItem().GetValue().GetBinary(),
+		switch typedMsg := rawMsg.Kind.(type) {
+		case *pb.XSubscriptionItem_Discontinuity:
+			// Don't pass discontinuity messages back to user for now
+			// TODO decide how want to notify client
+		case *pb.XSubscriptionItem_Item:
+			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
+			case *pb.XTopicValue_Text:
+				f(ctx, &TopicValueString{
+					Text: subscriptionItem.Text,
 				})
-			} else if rawMsg.GetItem().GetValue().GetText() != "" {
-				f(ctx, &TopicMessageString{
-					Value: rawMsg.GetItem().GetValue().GetText(),
+			case *pb.XTopicValue_Binary:
+				f(ctx, &TopicValueBytes{
+					Bytes: subscriptionItem.Binary,
 				})
 			}
 		}

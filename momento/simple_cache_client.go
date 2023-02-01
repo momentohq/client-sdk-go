@@ -3,6 +3,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -133,7 +134,7 @@ func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (C
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return convertCacheGetResponse(rsp), nil
+	return convertCacheGetResponse(rsp)
 }
 
 func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
@@ -153,17 +154,21 @@ func (c *DefaultScsClient) Close() {
 	defer c.dataClient.Close()
 }
 
-func convertCacheGetResponse(r models.CacheGetResponse) CacheGetResponse {
-	var response CacheGetResponse
-	switch r := r.(type) {
+func convertCacheGetResponse(r models.CacheGetResponse) (CacheGetResponse, MomentoError) {
+	switch response := r.(type) {
 	case *models.CacheGetMiss:
-		response = &CacheGetMiss{}
+		return &CacheGetMiss{}, nil
 	case *models.CacheGetHit:
-		response = &CacheGetHit{
-			value: r.Value,
-		}
+		return &CacheGetHit{
+			value: response.Value,
+		}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			ClientSdkError,
+			fmt.Sprintf("unexpected cache get status returned %+v", response),
+			nil,
+		)
 	}
-	return response
 }
 
 func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {
