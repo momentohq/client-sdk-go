@@ -4,15 +4,9 @@
 <img src="https://docs.momentohq.com/img/logo.svg" alt="logo" width="400"/>
 
 [![project status](https://momentohq.github.io/standards-and-practices/badges/project-status-official.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md)
-[![project stability](https://momentohq.github.io/standards-and-practices/badges/project-stability-experimental.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md) 
+[![project stability](https://momentohq.github.io/standards-and-practices/badges/project-stability-alpha.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md) 
 
 # Momento Go Client Library
-
-
-:warning: Experimental SDK :warning:
-
-This is an official Momento SDK, but the API is in an early experimental stage and subject to backward-incompatible
-changes.  For more info, click on the experimental badge above.
 
 
 Go client SDK for Momento Serverless Cache: a fast, simple, pay-as-you-go caching solution without
