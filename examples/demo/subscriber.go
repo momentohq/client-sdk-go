@@ -6,12 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/incubating"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/prozz/aws-embedded-metrics-golang/emf"
 )
 
 var (
@@ -19,12 +17,13 @@ var (
 )
 
 func Subscriber() {
-	idForDimension := uuid.NewString()
 	ctx := context.Background()
 	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
+
+	// Create Momento client
 	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
@@ -32,6 +31,8 @@ func Subscriber() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Subscribe to a topic
 	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
 		CacheName: "default",
 		TopicName: subscriberTopicName,
@@ -40,6 +41,10 @@ func Subscriber() {
 		panic(err)
 	}
 
+	// Kick off goroutine to send subscriber count to CloudWatch
+	sendSubscriberCountToCw()
+
+	// Start receiving events
 	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
 		currentTime := int(time.Now().UnixMilli())
 		receivedTime, err := strconv.Atoi(m.StringValue())
@@ -47,8 +52,8 @@ func Subscriber() {
 			panic(err)
 		}
 		latency := currentTime - receivedTime
-		// send metrics to CloudWatch
-		emf.New(emf.WithLogGroup("pubsub")).MetricAs("ReceivingMessageLatency", latency, emf.Milliseconds).DimensionSet(emf.NewDimension("subscriber", "receiving-test"), emf.NewDimension("taskId", idForDimension)).Log()
+		// Send metrics to CloudWatch
+		sendLatencyToCw(latency)
 	})
 	if err != nil {
 		panic(err)

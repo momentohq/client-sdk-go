@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -24,6 +23,8 @@ func Publisher() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Create Momento client
 	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
@@ -31,17 +32,11 @@ func Publisher() {
 	if err != nil {
 		panic(err)
 	}
-	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "default",
-	})
-	if err != nil {
-		var momentoErr momento.MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != momento.AlreadyExistsError {
-				panic(err)
-			}
-		}
-	}
+
+	// Create cache
+	createCacheIfNotExist(ctx, client, "default")
+
+	// Start publishing events to the topic
 	fmt.Println(fmt.Sprintf("Publishing topic: %s", publisherTopicName))
 	for {
 		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
@@ -52,6 +47,7 @@ func Publisher() {
 		if err != nil {
 			panic(err)
 		}
+		// Send an event every 2 seconds = total of 30 events per minute
 		time.Sleep(2 * time.Second)
 	}
 }

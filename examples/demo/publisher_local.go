@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -13,16 +11,14 @@ import (
 	"github.com/momentohq/client-sdk-go/momento"
 )
 
-var (
-	publisherLocalTopicName = os.Getenv("TEST_TOPIC_NAME")
-)
-
 func PublisherLocal() {
 	ctx := context.Background()
 	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
+
+	// Create Momento client
 	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
@@ -30,27 +26,22 @@ func PublisherLocal() {
 	if err != nil {
 		panic(err)
 	}
-	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "default",
-	})
-	if err != nil {
-		var momentoErr momento.MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != momento.AlreadyExistsError {
-				panic(err)
-			}
-		}
-	}
-	fmt.Println(fmt.Sprintf("Publishing topic: %s", publisherLocalTopicName))
+
+	// Create cache
+	createCacheIfNotExist(ctx, client, "default")
+
+	// Start publishing events to the topic
+	fmt.Println("Publishing topic: local-test-topic")
 	for {
 		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
 			CacheName: "default",
-			TopicName: publisherLocalTopicName,
-			Value:     "Yay!",
+			TopicName: "local-test-topic",
+			Value:     "TacoBell!",
 		})
 		if err != nil {
 			panic(err)
 		}
+		// Send an event every 2 seconds = total of 30 events per minute
 		time.Sleep(2 * time.Second)
 	}
 }
