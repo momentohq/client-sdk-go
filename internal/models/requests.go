@@ -20,20 +20,20 @@ type LocalDataGrpcManagerRequest struct {
 type CacheGetRequest struct {
 	// CacheName Name of the cache to get the item from
 	CacheName string
-	// Key string or []byte key to be used to retrieve the item.
-	Key interface{}
+	// Key []byte key to be used to retrieve item from cache
+	Key []byte
 }
 
 type CacheSetRequest struct {
 	CacheName  string
-	Key        interface{}
-	Value      interface{}
+	Key        []byte
+	Value      []byte
 	TtlSeconds uint32
 }
 
 type CacheDeleteRequest struct {
 	CacheName string
-	Key       interface{}
+	Key       []byte
 }
 
 type CreateCacheRequest struct {

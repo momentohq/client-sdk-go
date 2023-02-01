@@ -43,8 +43,8 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	err = client.Set(ctx, &CacheSetRequest{
 		CacheName: randomCacheName,
-		Key:       key,
-		Value:     value,
+		Key:       RawBytes{Bytes: key},
+		Value:     RawBytes{Bytes: value},
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key err=%+v", err)
@@ -52,8 +52,8 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	err = client.Set(ctx, &CacheSetRequest{
 		CacheName:  randomCacheName,
-		Key:        uuid.NewString(),
-		Value:      value,
+		Key:        StringBytes{Text: uuid.NewString()},
+		Value:      RawBytes{Bytes: value},
 		TTLSeconds: TTL(1),
 	})
 	if err != nil {
@@ -62,7 +62,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	getResp, err := client.Get(ctx, &CacheGetRequest{
 		CacheName: randomCacheName,
-		Key:       key,
+		Key:       RawBytes{Bytes: key},
 	})
 	if err != nil {
 		t.Errorf("error occurred getting key err=%+v", err)
@@ -83,7 +83,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	existingCacheResp, err := client.Get(ctx, &CacheGetRequest{
 		CacheName: testCacheName,
-		Key:       key,
+		Key:       RawBytes{Bytes: key},
 	})
 	if err != nil {
 		t.Error(err.Error())
@@ -124,8 +124,8 @@ func TestBasicHappyPathDelete(t *testing.T) {
 
 	err = client.Set(ctx, &CacheSetRequest{
 		CacheName: cacheName,
-		Key:       key,
-		Value:     value,
+		Key:       RawBytes{Bytes: key},
+		Value:     RawBytes{Bytes: value},
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key err=%+v", err)
@@ -133,7 +133,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 
 	getResp, err := client.Get(ctx, &CacheGetRequest{
 		CacheName: cacheName,
-		Key:       key,
+		Key:       RawBytes{Bytes: key},
 	})
 	if err != nil {
 		t.Errorf("error occurred getting key err=%+v", err)
@@ -154,14 +154,14 @@ func TestBasicHappyPathDelete(t *testing.T) {
 
 	err = client.Delete(ctx, &CacheDeleteRequest{
 		CacheName: cacheName,
-		Key:       key,
+		Key:       RawBytes{Bytes: key},
 	})
 	if err != nil {
 		t.Errorf("error occurred deleting key err=%+v", err)
 	}
 	existingCacheResp, err := client.Get(ctx, &CacheGetRequest{
 		CacheName: testCacheName,
-		Key:       key,
+		Key:       RawBytes{Bytes: key},
 	})
 	if err != nil {
 		t.Error(err.Error())
@@ -464,20 +464,32 @@ func TestSetGet(t *testing.T) {
 			t.Parallel()
 			if tt.ttl == 0 {
 				// set string key/value with default ttl
-				err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value})
+				err := client.Set(ctx, &CacheSetRequest{
+					CacheName: testCacheName,
+					Key:       &StringBytes{Text: tt.key},
+					Value:     &StringBytes{Text: tt.value},
+				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 				}
 			} else {
 				// set string key/value with different ttl
-				err := client.Set(ctx, &CacheSetRequest{CacheName: testCacheName, Key: tt.key, Value: tt.value, TTLSeconds: TTL(tt.ttl)})
+				err := client.Set(ctx, &CacheSetRequest{
+					CacheName:  testCacheName,
+					Key:        &StringBytes{Text: tt.key},
+					Value:      &StringBytes{Text: tt.value},
+					TTLSeconds: TTL(tt.ttl),
+				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
 				}
 			}
 
 			if tt.expectedGetResult == "HIT" {
-				resp, err := client.Get(ctx, &CacheGetRequest{CacheName: testCacheName, Key: tt.key})
+				resp, err := client.Get(ctx, &CacheGetRequest{
+					CacheName: testCacheName,
+					Key:       &StringBytes{Text: tt.key},
+				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
@@ -496,7 +508,10 @@ func TestSetGet(t *testing.T) {
 			} else {
 				// make sure responseType it cache miss after ttl is expired
 				time.Sleep(5 * time.Second)
-				resp, err := client.Get(ctx, &CacheGetRequest{CacheName: testCacheName, Key: tt.key})
+				resp, err := client.Get(ctx, &CacheGetRequest{
+					CacheName: testCacheName,
+					Key:       &StringBytes{Text: tt.key},
+				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
@@ -517,8 +532,8 @@ func TestSet(t *testing.T) {
 	ctx := context.Background()
 	tests := map[string]struct {
 		cacheName   string
-		key         interface{}
-		value       interface{}
+		key         string
+		value       string
 		expectedErr string
 	}{
 		"test set on non existent cache": {
@@ -535,26 +550,14 @@ func TestSet(t *testing.T) {
 		},
 		"test set on nil key": {
 			cacheName:   testCacheName,
-			key:         nil,
+			key:         "",
 			value:       uuid.NewString(),
 			expectedErr: InvalidArgumentError,
 		},
 		"test set on nil value": {
 			cacheName:   testCacheName,
 			key:         uuid.NewString(),
-			value:       nil,
-			expectedErr: InvalidArgumentError,
-		},
-		"test set on bad key": {
-			cacheName:   testCacheName,
-			key:         1,
-			value:       uuid.NewString(),
-			expectedErr: InvalidArgumentError,
-		},
-		"test set on bad value": {
-			cacheName:   testCacheName,
-			key:         uuid.NewString(),
-			value:       1,
+			value:       "",
 			expectedErr: InvalidArgumentError,
 		},
 	}
@@ -566,7 +569,11 @@ func TestSet(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			err := client.Set(ctx, &CacheSetRequest{CacheName: tt.cacheName, Key: tt.key, Value: tt.value})
+			err := client.Set(ctx, &CacheSetRequest{
+				CacheName: tt.cacheName,
+				Key:       &StringBytes{Text: tt.key},
+				Value:     &StringBytes{Text: tt.value},
+			})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
@@ -592,7 +599,7 @@ func TestGet(t *testing.T) {
 	ctx := context.Background()
 	tests := map[string]struct {
 		cacheName   string
-		key         interface{}
+		key         string
 		expectedErr string
 	}{
 		"test get on non existent cache": {
@@ -605,14 +612,9 @@ func TestGet(t *testing.T) {
 			key:         uuid.NewString(),
 			expectedErr: InvalidArgumentError,
 		},
-		"test get on nil key": {
-			cacheName:   testCacheName,
-			key:         nil,
-			expectedErr: InvalidArgumentError,
-		},
-		"test get on bad key": {
-			cacheName:   testCacheName,
-			key:         1,
+		"test get on empty key": {
+			cacheName:   uuid.NewString(),
+			key:         "",
 			expectedErr: InvalidArgumentError,
 		},
 	}
@@ -624,7 +626,10 @@ func TestGet(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, err := client.Get(ctx, &CacheGetRequest{CacheName: tt.cacheName, Key: tt.key})
+			_, err := client.Get(ctx, &CacheGetRequest{
+				CacheName: tt.cacheName,
+				Key:       &StringBytes{Text: tt.key},
+			})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
@@ -650,7 +655,7 @@ func TestDelete(t *testing.T) {
 	ctx := context.Background()
 	tests := map[string]struct {
 		cacheName   string
-		key         interface{}
+		key         string
 		expectedErr string
 	}{
 		"test delete on non existent cache": {
@@ -663,14 +668,9 @@ func TestDelete(t *testing.T) {
 			key:         uuid.NewString(),
 			expectedErr: InvalidArgumentError,
 		},
-		"test delete on nil key": {
-			cacheName:   testCacheName,
-			key:         nil,
-			expectedErr: InvalidArgumentError,
-		},
 		"test delete on bad key": {
 			cacheName:   testCacheName,
-			key:         1,
+			key:         "",
 			expectedErr: InvalidArgumentError,
 		},
 	}
@@ -682,7 +682,10 @@ func TestDelete(t *testing.T) {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			err = client.Delete(ctx, &CacheDeleteRequest{CacheName: tt.cacheName, Key: tt.key})
+			err = client.Delete(ctx, &CacheDeleteRequest{
+				CacheName: tt.cacheName,
+				Key:       StringBytes{Text: tt.key},
+			})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
