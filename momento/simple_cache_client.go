@@ -127,11 +127,11 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) er
 		ttlToUse = *request.TTLSeconds._ttl
 	}
 
-	key, err := encodeKey(request.Key)
+	key, err := isKeyValid(request.Key.asBytes())
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
-	value, err := encodeValue(request.Value)
+	value, err := isValueValid(request.Value.asBytes())
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -149,7 +149,7 @@ func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (C
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	key, err := encodeKey(request.Key)
+	key, err := isKeyValid(request.Key.asBytes())
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -167,13 +167,13 @@ func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteReque
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
-	byteKey, err := encodeKey(request.Key)
+	key, err := isKeyValid(request.Key.asBytes())
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
 	err = c.dataClient.Delete(ctx, &models.CacheDeleteRequest{
 		CacheName: request.CacheName,
-		Key:       byteKey,
+		Key:       key,
 	})
 	return convertMomentoSvcErrorToCustomerError(err)
 }
@@ -215,45 +215,6 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 		})
 	}
 	return convertedList
-}
-
-func encodeKey(key Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
-	switch k := key.(type) {
-	case StringBytes:
-		return isKeyValid([]byte(k.Text))
-	case *StringBytes:
-		return isKeyValid([]byte(k.Text))
-	case RawBytes:
-		return isKeyValid(k.Bytes)
-	case *RawBytes:
-		return isKeyValid(k.Bytes)
-	default:
-		// If target is not string or byte[] then throw error for now. In future should do marshaling here.
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"error encoding cache key only support momento.StringBytes or momento.RawBytes currently",
-			nil,
-		)
-	}
-}
-
-func encodeValue(value Bytes) ([]byte, momentoerrors.MomentoSvcErr) {
-	switch k := value.(type) {
-	case StringBytes:
-		return isValueValid([]byte(k.Text))
-	case *StringBytes:
-		return isValueValid([]byte(k.Text))
-	case RawBytes:
-		return isValueValid(k.Bytes)
-	case *RawBytes:
-		return isValueValid(k.Bytes)
-	default:
-		// If target is not string or byte[] then throw error. In future should do marshaling here.
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"error encoding cache value only support momento.StringBytes or momento.RawBytes currently", nil,
-		)
-	}
 }
 
 func isValueValid(value []byte) ([]byte, momentoerrors.MomentoSvcErr) {
