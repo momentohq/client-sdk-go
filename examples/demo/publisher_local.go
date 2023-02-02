@@ -36,7 +36,7 @@ func PublisherLocal() {
 		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
 			CacheName: "default",
 			TopicName: "local-test-topic",
-			Value:     "TacoBell!",
+			Value:     "Hello!",
 		})
 		if err != nil {
 			panic(err)

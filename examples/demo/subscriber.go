@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -49,7 +50,8 @@ func Subscriber() {
 		currentTime := int(time.Now().UnixMilli())
 		receivedTime, err := strconv.Atoi(m.StringValue())
 		if err != nil {
-			panic(err)
+			fmt.Printf("Received non-time value: %s\n", m.StringValue())
+			fmt.Printf("momento topic publish --cache default %s 'Hello there!'\n", subscriberTopicName)
 		}
 		latency := currentTime - receivedTime
 		// Send metrics to CloudWatch
