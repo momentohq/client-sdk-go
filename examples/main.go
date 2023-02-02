@@ -20,7 +20,7 @@ func main() {
 	}
 
 	const (
-		cacheName             = "cache"
+		cacheName             = "my-test-cache"
 		itemDefaultTTLSeconds = 60
 	)
 
@@ -47,30 +47,14 @@ func main() {
 		}
 	}
 
-	// List caches
-	token := ""
-	for {
-		listCacheResp, err := client.ListCaches(ctx, &momento.ListCachesRequest{NextToken: token})
-		if err != nil {
-			panic(err)
-		}
-		for _, cacheInfo := range listCacheResp.Caches() {
-			log.Printf("%s\n", cacheInfo.Name())
-		}
-		token = listCacheResp.NextToken()
-		if token == "" {
-			break
-		}
-	}
-
 	// Sets key with default TTL and gets value with that key
-	key := []byte(uuid.NewString())
-	value := []byte(uuid.NewString())
+	key := uuid.NewString()
+	value := uuid.NewString()
 	log.Printf("Setting key: %s, value: %s\n", key, value)
 	err = client.Set(ctx, &momento.CacheSetRequest{
 		CacheName: cacheName,
-		Key:       key,
-		Value:     value,
+		Key:       &momento.StringBytes{Text: key},
+		Value:     &momento.StringBytes{Text: value},
 	})
 	if err != nil {
 		panic(err)
@@ -79,21 +63,21 @@ func main() {
 	log.Printf("Getting key: %s\n", key)
 	resp, err := client.Get(ctx, &momento.CacheGetRequest{
 		CacheName: cacheName,
-		Key:       key,
+		Key:       &momento.StringBytes{Text: key},
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	if resp.IsHit() {
-		log.Printf("Lookup resulted in cahce HIT. value=%s\n", resp.AsHit().ValueString())
-	} else {
+	switch r := resp.(type) {
+	case *momento.CacheGetHit:
+		log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
+	case *momento.CacheGetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
 
 	// Permanently delete the cache
-	err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName})
-	if err != nil {
+	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
 		panic(err)
 	}
 	log.Printf("Cache named %s is deleted\n", cacheName)

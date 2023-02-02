@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/momentohq/client-sdk-go v0.4.0
+	github.com/momentohq/client-sdk-go v0.6.0
 )
 
 require (
