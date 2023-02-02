@@ -225,7 +225,6 @@ func TestClientInitialization(t *testing.T) {
 	for name, tt := range tests {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			c, err := NewSimpleCacheClient(&SimpleCacheClientProps{
 				Configuration:      config.LatestLaptopConfig(),
 				CredentialProvider: testCredentialProvider,
@@ -290,7 +289,6 @@ func TestCreateCache(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			err = client.CreateCache(ctx, &CreateCacheRequest{CacheName: tt.cacheName})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -351,7 +349,6 @@ func TestDeleteCache(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: tt.cacheName})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -397,7 +394,6 @@ func TestListCache(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			resp, err := client.ListCaches(ctx, &ListCachesRequest{})
 			if err != nil {
 				t.Errorf("unexpected error occurred on listing caches err=%+v", err)
@@ -461,7 +457,6 @@ func TestSetGet(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			if tt.ttl == 0 {
 				// set string key/value with default ttl
 				err := client.Set(ctx, &CacheSetRequest{
@@ -568,7 +563,6 @@ func TestSet(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			err := client.Set(ctx, &CacheSetRequest{
 				CacheName: tt.cacheName,
 				Key:       &StringBytes{Text: tt.key},
@@ -625,7 +619,6 @@ func TestGet(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			_, err := client.Get(ctx, &CacheGetRequest{
 				CacheName: tt.cacheName,
 				Key:       &StringBytes{Text: tt.key},
@@ -681,7 +674,6 @@ func TestDelete(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			err = client.Delete(ctx, &CacheDeleteRequest{
 				CacheName: tt.cacheName,
 				Key:       StringBytes{Text: tt.key},
