@@ -51,7 +51,6 @@ func Subscriber() {
 		receivedTime, err := strconv.Atoi(m.StringValue())
 		if err != nil {
 			fmt.Printf("Received non-time value: %s\n", m.StringValue())
-			fmt.Printf("momento topic publish --cache default %s 'Hello there!'\n", subscriberTopicName)
 		}
 		latency := currentTime - receivedTime
 		// Send metrics to CloudWatch

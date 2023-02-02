@@ -41,6 +41,7 @@ func PublisherLocal() {
 		if err != nil {
 			panic(err)
 		}
+
 		// Send an event every 2 seconds = total of 30 events per minute
 		time.Sleep(2 * time.Second)
 	}
