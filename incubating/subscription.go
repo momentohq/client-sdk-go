@@ -28,6 +28,13 @@ func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m T
 			return err
 		}
 
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			// pass
+		}
+
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
 			// Don't pass discontinuity messages back to user for now

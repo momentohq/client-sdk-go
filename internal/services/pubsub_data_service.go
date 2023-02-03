@@ -78,7 +78,7 @@ func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPu
 			},
 		})
 		return err
-	case models.TopicValueBytes:
+	case *models.TopicValueBytes:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
