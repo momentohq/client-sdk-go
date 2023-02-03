@@ -67,7 +67,7 @@ jobs:
       - name: Run test
         run: |
           go vet ./...
-          go test -v ./momento
+          go test -v ./momento ./incubating
 
       - name: Publish package
         run: |
