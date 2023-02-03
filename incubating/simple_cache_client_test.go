@@ -78,6 +78,7 @@ func publishTopic(pubClient ScsClient, i int, ctx context.Context) {
 func TestHappyPathPubSubCancelContext(t *testing.T) {
 	ctx := context.Background()
 	cancelContext, cancelFunction := context.WithCancel(ctx)
+	defer cancelFunction()
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
 		CacheName: "test-cache",
@@ -113,9 +114,6 @@ func TestHappyPathPubSubCancelContext(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 
-	// Ensure cancelFunction is called to quiet a context leak warning
-	cancelFunction()
-
 	// if we have received more than cancelAtNumber, our cancel failed
 	if numMessagesReceived > cancelAtNumber {
 		t.Errorf("expected no more than %d messages but received %d", cancelAtNumber, numMessagesReceived)
@@ -127,6 +125,7 @@ func TestHappyPathPubSubTimeoutContext(t *testing.T) {
 	var timeoutUnits time.Duration = 5
 	ctx := context.Background()
 	timeoutContext, cancelFunc := context.WithTimeout(ctx, timeoutUnits*time.Second)
+	defer cancelFunc()
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
 		CacheName: "test-cache",
@@ -156,8 +155,6 @@ func TestHappyPathPubSubTimeoutContext(t *testing.T) {
 		publishTopic(client, i, ctx)
 		time.Sleep(time.Second)
 	}
-
-	cancelFunc()
 
 	// at a rate of 1 per second, we should not get back more than timeoutUnits messages
 	if numMessagesReceived > int(timeoutUnits) {
