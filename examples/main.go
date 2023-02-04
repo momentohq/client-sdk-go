@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/google/uuid"
+	"log"
+
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -18,7 +20,7 @@ func main() {
 	}
 
 	const (
-		cacheName             = "cache"
+		cacheName             = "my-test-cache"
 		itemDefaultTTLSeconds = 60
 	)
 
@@ -31,9 +33,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logger := config.LatestLaptopConfig().GetLogger("builtin")
+
 	// Create Cache and check if CacheName exists
-	logger.Info("Creating cache")
 	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
@@ -46,53 +47,38 @@ func main() {
 		}
 	}
 
-	// List caches
-	token := ""
-	for {
-		listCacheResp, err := client.ListCaches(ctx, &momento.ListCachesRequest{NextToken: token})
-		if err != nil {
-			panic(err)
-		}
-		for _, cacheInfo := range listCacheResp.Caches() {
-			logger.Info(fmt.Sprintf("%s", cacheInfo.Name()))
-		}
-		token = listCacheResp.NextToken()
-		if token == "" {
-			break
-		}
-	}
-
 	// Sets key with default TTL and gets value with that key
-	key := []byte(uuid.NewString())
-	value := []byte(uuid.NewString())
-	logger.Info(fmt.Sprintf("Setting key: %s, value: %s", key, value))
+	key := uuid.NewString()
+	value := uuid.NewString()
+	log.Printf("Setting key: %s, value: %s\n", key, value)
 	err = client.Set(ctx, &momento.CacheSetRequest{
 		CacheName: cacheName,
-		Key:       key,
-		Value:     value,
+		Key:       &momento.StringBytes{Text: key},
+		Value:     &momento.StringBytes{Text: value},
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	logger.Info(fmt.Sprintf("Getting key: %s", key))
+	log.Printf("Getting key: %s\n", key)
 	resp, err := client.Get(ctx, &momento.CacheGetRequest{
 		CacheName: cacheName,
-		Key:       key,
+		Key:       &momento.StringBytes{Text: key},
 	})
 	if err != nil {
 		panic(err)
 	}
-	if resp.IsHit() {
-		logger.Info(fmt.Sprintf("Lookup resulted in cahce HIT. value=%s", resp.AsHit().ValueString()))
-	} else {
-		logger.Info(fmt.Sprintf("Look up did not find a value key=%s", key))
+
+	switch r := resp.(type) {
+	case *momento.CacheGetHit:
+		log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
+	case *momento.CacheGetMiss:
+		log.Printf("Look up did not find a value key=%s", key)
 	}
 
 	// Permanently delete the cache
-	err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName})
-	if err != nil {
+	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
 		panic(err)
 	}
-	logger.Info(fmt.Sprintf("Cache named %s is deleted", cacheName))
+	log.Printf("Cache named %s is deleted\n", cacheName)
 }

@@ -1,4 +1,4 @@
-module github.com/momentohq/go-example
+module github.com/momentohq/go-pubsub-example
 
 go 1.19
 

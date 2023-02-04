@@ -9,8 +9,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/utility"
-
 	"google.golang.org/grpc/metadata"
 )
 
@@ -55,22 +53,6 @@ func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRequest) momentoerrors.MomentoSvcErr {
-	// Validate input
-	if err := utility.IsKeyValid(request.Key); err != nil {
-		return err
-	}
-	if err := utility.IsCacheNameValid(request.CacheName); err != nil {
-		return err
-	}
-	byteKey, svcErr := utility.EncodeKey(request.Key)
-	if svcErr != nil {
-		return svcErr
-	}
-	byteValue, svcErr := utility.EncodeValue(request.Value)
-	if svcErr != nil {
-		return svcErr
-	}
-
 	itemTtlMils := client.defaultTtlSeconds * 1000
 	if request.TtlSeconds > 0 {
 		itemTtlMils = uint64(request.TtlSeconds * 1000)
@@ -81,8 +63,8 @@ func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRe
 	_, err := client.grpcClient.Set(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XSetRequest{
-			CacheKey:        byteKey,
-			CacheBody:       byteValue,
+			CacheKey:        request.Key,
+			CacheBody:       request.Value,
 			TtlMilliseconds: itemTtlMils,
 		},
 	)
@@ -92,26 +74,13 @@ func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRe
 	return nil
 }
 
-func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (*models.CacheGetResponse, momentoerrors.MomentoSvcErr) {
-
-	// Validate input
-	if err := utility.IsKeyValid(request.Key); err != nil {
-		return nil, err
-	}
-	if err := utility.IsCacheNameValid(request.CacheName); err != nil {
-		return nil, err
-	}
-	key, svcErr := utility.EncodeKey(request.Key)
-	if svcErr != nil {
-		return nil, svcErr
-	}
-
+func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (models.CacheGetResponse, momentoerrors.MomentoSvcErr) {
 	// Execute request
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	resp, err := client.grpcClient.Get(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.XGetRequest{CacheKey: key},
+		&pb.XGetRequest{CacheKey: request.Key},
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -119,14 +88,9 @@ func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRe
 
 	// Convert from grpc struct to internal struct
 	if resp.Result == pb.ECacheResult_Hit {
-		return &models.CacheGetResponse{
-			Value:  resp.CacheBody,
-			Result: models.HIT,
-		}, nil
+		return &models.CacheGetHit{Value: resp.CacheBody}, nil
 	} else if resp.Result == pb.ECacheResult_Miss {
-		return &models.CacheGetResponse{
-			Result: models.MISS,
-		}, nil
+		return &models.CacheGetMiss{}, nil
 	} else {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
@@ -140,19 +104,11 @@ func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRe
 }
 
 func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {
-	if err := utility.IsCacheNameValid(request.CacheName); err != nil {
-		return err
-	}
-	byteKey, svcErr := utility.EncodeKey(request.Key)
-	if svcErr != nil {
-		return svcErr
-	}
-
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	_, err := client.grpcClient.Delete(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.XDeleteRequest{CacheKey: byteKey},
+		&pb.XDeleteRequest{CacheKey: request.Key},
 	)
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err)

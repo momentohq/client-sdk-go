@@ -66,16 +66,35 @@ func (client *PubSubClient) Subscribe(ctx context.Context, request *models.Topic
 	return streamClient, err
 }
 func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPublishRequest) error {
-	_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
-		CacheName: request.CacheName,
-		Topic:     request.TopicName,
-		Value: &pb.XTopicValue{
-			Kind: &pb.XTopicValue_Text{
-				Text: request.Value,
+	switch value := request.Value.(type) {
+	case *models.TopicValueString:
+		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
+			CacheName: request.CacheName,
+			Topic:     request.TopicName,
+			Value: &pb.XTopicValue{
+				Kind: &pb.XTopicValue_Text{
+					Text: value.Text,
+				},
 			},
-		},
-	})
-	return err
+		})
+		return err
+	case *models.TopicValueBytes:
+		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
+			CacheName: request.CacheName,
+			Topic:     request.TopicName,
+			Value: &pb.XTopicValue{
+				Kind: &pb.XTopicValue_Binary{
+					Binary: value.Bytes,
+				},
+			},
+		})
+		return err
+	default:
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"error encoding topic value only support []byte or string currently", nil,
+		)
+	}
 }
 
 func (client *PubSubClient) Endpoint() string {

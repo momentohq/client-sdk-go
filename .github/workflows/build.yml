@@ -53,7 +53,7 @@ jobs:
         uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
         with:
           project_status: official
-          project_stability: experimental
+          project_stability: alpha
           project_type: sdk
           sdk_language: Go
           usage_example_path: ./examples/main.go
@@ -61,6 +61,6 @@ jobs:
       - name: Run test
         run: |
           go vet ./...
-          go test -v ./momento
+          go test -v ./momento ./incubating
 
 

@@ -28,58 +28,28 @@ func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
-type cacheGetResponseTypes string
-
-const (
-	hit  cacheGetResponseTypes = "HIT"
-	miss cacheGetResponseTypes = "MISS"
-)
-
-// CacheGetResponse Base type for possible responses a cache GET can return. Miss || Hit
-type CacheGetResponse struct {
-	responseType cacheGetResponseTypes
-	value        []byte
+type CacheGetResponse interface {
+	isCacheGetResponse()
 }
 
-// IsHit returns true if successfully fetched request item from cache otherwise returns false
-func (r *CacheGetResponse) IsHit() bool {
-	return r.responseType == hit
-}
+// CacheGetMiss Miss Response to a cache Get api request.
+type CacheGetMiss struct{}
 
-// AsHit returns CacheGetHitResponse pointer if successfully fetched request item otherwise returns nil
-func (r *CacheGetResponse) AsHit() *CacheGetHitResponse {
-	if r.IsHit() {
-		return &CacheGetHitResponse{
-			value: r.value,
-		}
-	}
-	return nil
-}
+func (_ CacheGetMiss) isCacheGetResponse() {}
 
-func (r *CacheGetResponse) IsMiss() bool {
-	return r.responseType == miss
-}
-func (r *CacheGetResponse) AsMiss() *CacheGetMissResponse {
-	if r.IsMiss() {
-		return &CacheGetMissResponse{}
-	}
-	return nil
-}
-
-// CacheGetMissResponse Miss Response to a cache Get api request.
-type CacheGetMissResponse struct{}
-
-// CacheGetHitResponse Hit Response to a cache Get api request.
-type CacheGetHitResponse struct {
+// CacheGetHit Hit Response to a cache Get api request.
+type CacheGetHit struct {
 	value []byte
 }
 
+func (_ CacheGetHit) isCacheGetResponse() {}
+
 // ValueString Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
-func (resp *CacheGetHitResponse) ValueString() string {
+func (resp CacheGetHit) ValueString() string {
 	return string(resp.value)
 }
 
 // ValueByte Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
-func (resp *CacheGetHitResponse) ValueByte() []byte {
+func (resp CacheGetHit) ValueByte() []byte {
 	return resp.value
 }

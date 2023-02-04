@@ -20,9 +20,60 @@ type LocalDataGrpcManagerRequest struct {
 type CacheGetRequest struct {
 	// CacheName Name of the cache to get the item from
 	CacheName string
-	// Key string or []byte key to be used to retrieve the item.
-	Key interface{}
+	// Key []byte key to be used to retrieve item from cache
+	Key []byte
 }
+
+type CacheSetRequest struct {
+	CacheName  string
+	Key        []byte
+	Value      []byte
+	TtlSeconds uint32
+}
+
+type CacheDeleteRequest struct {
+	CacheName string
+	Key       []byte
+}
+
+type CreateCacheRequest struct {
+	CacheName string
+}
+
+type DeleteCacheRequest struct {
+	CacheName string
+}
+
+type ListCachesRequest struct {
+	NextToken string
+}
+
+type TopicSubscribeRequest struct {
+	CacheName string
+	TopicName string
+}
+
+type TopicPublishRequest struct {
+	CacheName string
+	TopicName string
+	Value     TopicValue
+}
+
+type TopicValue interface {
+	isTopicValue()
+}
+
+type TopicValueBytes struct {
+	Bytes []byte
+}
+
+func (_ TopicValueBytes) isTopicValue() {}
+
+type TopicValueString struct {
+	Text string
+}
+
+func (_ TopicValueString) isTopicValue() {}
 
 type ControlClientRequest struct {
 	Configuration      config.Configuration
