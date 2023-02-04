@@ -92,7 +92,7 @@ func TestHappyPathPubSubCancelContext(t *testing.T) {
 	numMessagesReceived := 0
 	go func() {
 		// Just block and make sure we get stubbed messages for now for quick test
-		err := sub.Recv(cancelContext, func(ctx context.Context, m TopicValue) {
+		err := sub.Consume(cancelContext, func(ctx context.Context, m TopicValue) {
 			switch m.(type) {
 			case *TopicValueString:
 			case *TopicValueBytes:
@@ -139,7 +139,7 @@ func TestHappyPathPubSubTimeoutContext(t *testing.T) {
 	numMessagesReceived := 0
 	go func() {
 		// Just block and make sure we get stubbed messages for now for quick test
-		err := sub.Recv(timeoutContext, func(ctx context.Context, m TopicValue) {
+		err := sub.Consume(timeoutContext, func(ctx context.Context, m TopicValue) {
 			switch m.(type) {
 			case *TopicValueString:
 			case *TopicValueBytes:
@@ -188,7 +188,7 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	numMessagesReceived := 0
 	numMessagesToSend := 10
 	go func() {
-		err := sub.Recv(context.Background(), func(ctx context.Context, m TopicValue) {
+		err := sub.Consume(context.Background(), func(ctx context.Context, m TopicValue) {
 			numMessagesReceived++
 		})
 		if err != nil {

@@ -21,7 +21,7 @@ func main() {
 	// Initialization
 	client := getClient()
 	ctx := context.Background()
-	cancelContext, cancelFunction := context.WithCancel(ctx)
+	//cancelContext, cancelFunction := context.WithCancel(ctx)
 	// Or you can set a timeout after which the goroutine will be cancelled
 	//cancelContext, cancelFunction := context.WithTimeout(ctx, time.Second*10)
 	setupCache(client, ctx)
@@ -35,14 +35,22 @@ func main() {
 		panic(err)
 	}
 	// Receive and print messages in a goroutine
-	go func() { pollForMessages(sub, cancelContext) }()
+	//go func() { pollForMessages(sub, cancelContext) }()
+	go func() {
+		for i := 0; i < 10; i++ {
+			msg := popMessage(sub)
+			fmt.Println(msg)
+			time.Sleep(time.Second * 5)
+		}
+	}()
 
 	// Publish messages and then shut down the subscriber goroutine
 	publishMessages(client, ctx)
-	cancelFunction()
+	//cancelFunction()
 	// Prove that the goroutine is stopped by publishing more messages that
 	// won't be output to the console
 	publishMessages(client, ctx)
+	time.Sleep(time.Second * 60)
 }
 
 func getClient() incubating.ScsClient {
@@ -92,7 +100,7 @@ func publishMessages(client incubating.ScsClient, ctx context.Context) {
 }
 
 func pollForMessages(sub incubating.SubscriptionIFace, cancelContext context.Context) {
-	err := sub.Recv(cancelContext, func(ctx context.Context, m incubating.TopicValue) {
+	err := sub.Consume(cancelContext, func(ctx context.Context, m incubating.TopicValue) {
 		switch msg := m.(type) {
 		case *incubating.TopicValueString:
 			fmt.Printf("received message: '%s'\n", msg.Text)
@@ -103,4 +111,21 @@ func pollForMessages(sub incubating.SubscriptionIFace, cancelContext context.Con
 	if err != nil {
 		panic(err)
 	}
+}
+
+func popMessage(sub incubating.SubscriptionIFace) string {
+	ctx := context.Background()
+	var msgOut string
+	err := sub.Recv(ctx, func(ctx context.Context, m incubating.TopicValue) {
+		switch msg := m.(type) {
+		case *incubating.TopicValueString:
+			msgOut = msg.Text
+		case *incubating.TopicValueBytes:
+			msgOut = string(msg.Bytes)
+		}
+	})
+	if err != nil {
+		panic(err)
+	}
+	return msgOut
 }
