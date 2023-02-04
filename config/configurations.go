@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"github.com/momentohq/client-sdk-go/config/logger"
+	"time"
+)
 
 type Laptop struct {
 	Configuration
@@ -14,11 +17,7 @@ const defaultMaxIdle = 4 * time.Minute
 func LatestLaptopConfig() *Laptop {
 	return &Laptop{
 		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
-			LoggerOptions: LoggerOptions{
-				Level:  debug,
-				Format: json,
-				Name:   "default",
-			},
+			LoggerFactory: logger.NewBuitlinMomentoLoggerFactory(),
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 					deadline:           5 * time.Second,
@@ -37,11 +36,7 @@ type InRegion struct {
 func LatestInRegionConfig() *InRegion {
 	return &InRegion{
 		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
-			LoggerOptions: LoggerOptions{
-				Level:  debug,
-				Format: json,
-				Name:   "default",
-			},
+			LoggerFactory: logger.NewBuitlinMomentoLoggerFactory(),
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 					deadline:           1100 * time.Millisecond,

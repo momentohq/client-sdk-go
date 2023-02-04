@@ -1,24 +1,22 @@
 package config
 
 import (
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"time"
 )
 
 type ConfigurationProps struct {
-	LoggerOptions     LoggerOptions
+	LoggerFactory     logger.MomentoLoggerFactory
 	TransportStrategy TransportStrategy
 }
 
 type Configuration interface {
-	// GetLogger Returns the currently configured logger with the Momento service
-	GetLogger(loggerType loggerType) Logger
+	// GetLoggerFactory Returns the current configuration options for logging verbosity and format
+	GetLoggerFactory() logger.MomentoLoggerFactory
 
-	// GetLoggerOptions Returns the currently configured logger options with the Momento service
-	GetLoggerOptions() LoggerOptions
-
-	// WithCustomLoggerOptions Copy constructor for overriding LoggerOptions returns a new Configuration object
-	// with the specified logger options.
-	WithCustomLoggerOptions(loggerOptions LoggerOptions) Configuration
+	// WithLoggerFactory Copy constructor for overriding LoggerFactory returns a new Configuration object
+	// with the specified momento.LoggerFactory
+	WithLoggerFactory(loggerFactory logger.MomentoLoggerFactory) Configuration
 
 	// GetTransportStrategy Returns the current configuration options for wire interactions with the Momento service
 	GetTransportStrategy() TransportStrategy
@@ -36,12 +34,12 @@ type Configuration interface {
 }
 
 type SimpleCacheConfiguration struct {
-	loggerOptions     LoggerOptions
+	loggerFactory     logger.MomentoLoggerFactory
 	transportStrategy TransportStrategy
 }
 
-func (s *SimpleCacheConfiguration) GetLoggerOptions() LoggerOptions {
-	return s.loggerOptions
+func (s *SimpleCacheConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
+	return s.loggerFactory
 }
 
 func (s *SimpleCacheConfiguration) GetClientSideTimeout() time.Duration {
@@ -50,7 +48,7 @@ func (s *SimpleCacheConfiguration) GetClientSideTimeout() time.Duration {
 
 func NewSimpleCacheConfiguration(props *ConfigurationProps) Configuration {
 	return &SimpleCacheConfiguration{
-		loggerOptions:     props.LoggerOptions,
+		loggerFactory:     props.LoggerFactory,
 		transportStrategy: props.TransportStrategy,
 	}
 }
@@ -59,30 +57,23 @@ func (s *SimpleCacheConfiguration) GetTransportStrategy() TransportStrategy {
 	return s.transportStrategy
 }
 
-func (s *SimpleCacheConfiguration) WithCustomLoggerOptions(loggerOptions LoggerOptions) Configuration {
+func (s *SimpleCacheConfiguration) WithLoggerFactory(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return &SimpleCacheConfiguration{
-		loggerOptions:     loggerOptions,
+		loggerFactory:     loggerFactory,
 		transportStrategy: s.transportStrategy,
 	}
 }
 
 func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {
 	return &SimpleCacheConfiguration{
-		loggerOptions:     s.loggerOptions,
+		loggerFactory:     s.loggerFactory,
 		transportStrategy: transportStrategy,
 	}
 }
 
 func (s *SimpleCacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
 	return &SimpleCacheConfiguration{
-		loggerOptions:     s.loggerOptions,
+		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithClientTimeout(clientTimeout),
 	}
-}
-
-func (s *SimpleCacheConfiguration) GetLogger(loggerType loggerType) Logger {
-	if loggerType == builtin {
-		return NewBuiltInLogger(&s.loggerOptions)
-	}
-	return NewBuiltInLogger(&s.loggerOptions)
 }
