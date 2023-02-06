@@ -17,7 +17,7 @@ const defaultMaxIdle = 4 * time.Minute
 func LatestLaptopConfig() *Laptop {
 	return &Laptop{
 		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
-			LoggerFactory: logger.NewBuitlinMomentoLoggerFactory(),
+			LoggerFactory: logger.NewBuiltinMomentoLoggerFactory(),
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 					deadline:           5 * time.Second,
@@ -36,7 +36,7 @@ type InRegion struct {
 func LatestInRegionConfig() *InRegion {
 	return &InRegion{
 		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
-			LoggerFactory: logger.NewBuitlinMomentoLoggerFactory(),
+			LoggerFactory: logger.NewBuiltinMomentoLoggerFactory(),
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 					deadline:           1100 * time.Millisecond,
