@@ -26,6 +26,13 @@ func main() {
 	//cancelContext, cancelFunction := context.WithTimeout(ctx, time.Second*10)
 	setupCache(client, ctx)
 
+	fmt.Println("Using pubsub with Consume function")
+	useConsume(client, ctx)
+	fmt.Println("Using pubsub with Recv function")
+	useRecv(client, ctx)
+}
+
+func useRecv(client incubating.ScsClient, ctx context.Context) {
 	// Instantiate subscriber
 	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
 		CacheName: cacheName,
@@ -35,22 +42,43 @@ func main() {
 		panic(err)
 	}
 	// Receive and print messages in a goroutine
-	//go func() { pollForMessages(sub, cancelContext) }()
 	go func() {
 		for i := 0; i < 10; i++ {
 			msg := popMessage(sub)
 			fmt.Println(msg)
-			time.Sleep(time.Second * 5)
 		}
 	}()
+	time.Sleep(time.Second)
+
+	// Publish the number of messages the goroutine is prepared to receive
+	publishMessages(client, ctx)
+	// Prove that the goroutine is stopped by publishing more messages that
+	// won't be output to the console
+	fmt.Println("No more received messages should appear here")
+	publishMessages(client, ctx)
+}
+
+func useConsume(client incubating.ScsClient, ctx context.Context) {
+	cancelContext, cancelFunction := context.WithCancel(ctx)
+	// Instantiate subscriber
+	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
+		CacheName: cacheName,
+		TopicName: topicName,
+	})
+	if err != nil {
+		panic(err)
+	}
+	// Receive and print messages in a goroutine
+	go func() { pollForMessages(sub, cancelContext) }()
+	time.Sleep(time.Second)
 
 	// Publish messages and then shut down the subscriber goroutine
 	publishMessages(client, ctx)
-	//cancelFunction()
+	cancelFunction()
 	// Prove that the goroutine is stopped by publishing more messages that
 	// won't be output to the console
+	fmt.Println("No more received messages should appear here")
 	publishMessages(client, ctx)
-	time.Sleep(time.Second * 60)
 }
 
 func getClient() incubating.ScsClient {
@@ -114,18 +142,9 @@ func pollForMessages(sub incubating.SubscriptionIFace, cancelContext context.Con
 }
 
 func popMessage(sub incubating.SubscriptionIFace) string {
-	ctx := context.Background()
-	var msgOut string
-	err := sub.Recv(ctx, func(ctx context.Context, m incubating.TopicValue) {
-		switch msg := m.(type) {
-		case *incubating.TopicValueString:
-			msgOut = msg.Text
-		case *incubating.TopicValueBytes:
-			msgOut = string(msg.Bytes)
-		}
-	})
+	msg, err := sub.Recv()
 	if err != nil {
 		panic(err)
 	}
-	return msgOut
+	return msg
 }

@@ -11,40 +11,38 @@ import (
 
 type SubscriptionIFace interface {
 	Consume(ctx context.Context, f func(ctx context.Context, m TopicValue)) error
-	Recv(ctx context.Context, f func(ctx context.Context, m TopicValue)) error
+	Recv() (string, error)
 }
 
 type Subscription struct {
 	grpcClient grpc.ClientStream
 }
 
-func (s *Subscription) Recv(ctx context.Context, f func(ctx context.Context, m TopicValue)) error {
+func (s *Subscription) Recv() (string, error) {
 	rawMsg := new(pb.XSubscriptionItem)
 	if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 		if err == io.EOF {
 			// TODO think about retry and re-establish more
-			return nil
+			return "", nil
 		}
-		return err
+		return "", err
 	}
 
+	var msgToReturn string
 	switch typedMsg := rawMsg.Kind.(type) {
 	case *pb.XSubscriptionItem_Discontinuity:
 		// Don't pass discontinuity messages back to user for now
 		// TODO decide how want to notify client
+		return "", nil
 	case *pb.XSubscriptionItem_Item:
 		switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 		case *pb.XTopicValue_Text:
-			f(ctx, &TopicValueString{
-				Text: subscriptionItem.Text,
-			})
+			msgToReturn = subscriptionItem.Text
 		case *pb.XTopicValue_Binary:
-			f(ctx, &TopicValueBytes{
-				Bytes: subscriptionItem.Binary,
-			})
+			msgToReturn = string(subscriptionItem.Binary)
 		}
 	}
-	return nil
+	return msgToReturn, nil
 }
 
 func (s *Subscription) Consume(ctx context.Context, f func(ctx context.Context, m TopicValue)) error {
