@@ -35,6 +35,7 @@ This makes them more visible, and allows your IDE to be more helpful in ensuring
 
 The preferred way of interpreting the return values from `ScsClient` methods is using a `switch` statement to match and handle the specific response type. 
 Here's a quick example:
+
 ```go
 switch r := resp.(type) {
 case *momento.CacheGetHit:
@@ -50,6 +51,7 @@ Using this approach, you get a type-safe `CacheGetHit` object in the case of a c
 But if the cache read results in a Miss, you'll also get a type-safe object that you can use to get more info about what happened.
 
 In cases where you get an error response, it can be treated as `momentoErr` using `As` method and it always include an `momentoErr.Code` that you can use to check the error type:
+
 ```go
 err = client.CreateCache(ctx, &momento.CreateCacheRequest{
     CacheName: cacheName,
