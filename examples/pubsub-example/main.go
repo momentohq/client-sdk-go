@@ -33,28 +33,26 @@ func main() {
 	}
 
 	// Receive and print messages in a goroutine
-	go func() {
-		for i := 0; i < 10; i++ {
-			item, err := sub.Item()
-			if err != nil {
-				panic(err)
-			}
-			switch msg := item.(type) {
-			case *incubating.TopicValueString:
-				fmt.Printf("received message: '%s'\n", msg.Text)
-			case *incubating.TopicValueBytes:
-				fmt.Printf("received message: '%s'\n", msg.Bytes)
-			}
-		}
-	}()
+	go func() { pollForMessages(sub) }()
 	time.Sleep(time.Second)
 
-	// Publish the number of messages the goroutine is prepared to receive
+	// Publish messages for the subscriber
 	publishMessages(client, ctx)
-	// Prove that the goroutine is stopped by publishing more messages that
-	// won't be output to the console
-	fmt.Println("No more received messages should appear here")
-	publishMessages(client, ctx)
+}
+
+func pollForMessages(sub incubating.SubscriptionIFace) {
+	for {
+		item, err := sub.Item()
+		if err != nil {
+			panic(err)
+		}
+		switch msg := item.(type) {
+		case *incubating.TopicValueString:
+			fmt.Printf("received message: '%s'\n", msg.Text)
+		case *incubating.TopicValueBytes:
+			fmt.Printf("received message: '%s'\n", msg.Bytes)
+		}
+	}
 }
 
 func getClient() incubating.ScsClient {

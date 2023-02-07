@@ -77,6 +77,7 @@ func publishTopic(pubClient ScsClient, i int, ctx context.Context) {
 // Basic happy path test using a context which we cancel
 func TestHappyPathPubSub(t *testing.T) {
 	ctx := context.Background()
+	cancelContext, cancelFunction := context.WithCancel(ctx)
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
 		CacheName: "test-cache",
@@ -87,17 +88,18 @@ func TestHappyPathPubSub(t *testing.T) {
 	}
 
 	numMessagesToSend := 10
-	// TODO: use a channel instead of a counter variable
 	numMessagesReceived := 0
 	go func() {
 		for {
-			_, err := sub.Item()
-			if err != nil {
-				panic(err)
-			}
-			numMessagesReceived++
-			if numMessagesToSend == numMessagesReceived {
+			select {
+			case <-cancelContext.Done():
 				return
+			default:
+				_, err := sub.Item()
+				if err != nil {
+					panic(err)
+				}
+				numMessagesReceived++
 			}
 		}
 	}()
@@ -107,10 +109,10 @@ func TestHappyPathPubSub(t *testing.T) {
 		publishTopic(client, i, ctx)
 		time.Sleep(time.Second)
 	}
+	cancelFunction()
 
-	// if we have received more than numMessagesToSend, our cancel failed
 	if numMessagesReceived != numMessagesToSend {
-		t.Errorf("expected no more than %d messages but received %d", numMessagesToSend, numMessagesReceived)
+		t.Errorf("expected %d messages but received %d", numMessagesToSend, numMessagesReceived)
 	}
 }
 
