@@ -1,0 +1,73 @@
+package services
+
+import (
+	"context"
+	"github.com/momentohq/client-sdk-go/internal/models"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"google.golang.org/grpc/metadata"
+)
+
+func (client *ScsDataClient) ListFetch(ctx context.Context, request *models.ListFetchRequest) (models.ListFetchResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListFetch(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListFetchRequest{ListName: []byte(request.ListName)},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	// Convert from grpc struct to internal struct
+	if resp.GetFound() != nil {
+		return &models.ListFetchHit{Value: resp.GetFound().Values}, nil
+	} else if resp.GetMissing() != nil {
+		return &models.ListFetchMiss{}, nil
+	} else {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.ClientSdkError,
+			"Unknown response type for list fetch",
+			nil,
+		)
+	}
+}
+
+func (client *ScsDataClient) ListLength(ctx context.Context, request *models.ListLengthRequest) (models.ListLengthResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListLength(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListLengthRequest{ListName: []byte(request.ListName)},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+
+	if resp.GetFound() != nil {
+		return &models.ListLengthSuccess{Value: resp.GetFound().Length}, nil
+	} else if resp.GetMissing() != nil {
+		return &models.ListLengthSuccess{Value: 0}, nil
+	} else {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.ClientSdkError,
+			"Unknown response type for list length",
+			nil,
+		)
+	}
+}
+
+func (client *ScsDataClient) ListPushFront(ctx context.Context, request *models.ListPushFrontRequest, err momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListPushFront(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListPushFrontRequest{
+			ListName: []byte(request.ListName),
+			Value: request.Value,
+			TruncateBackToSize: request.TruncateBackToSize,
+			// TODO: Add CollectionTtl class to hold these values
+			RefreshTtl: true,
+			TtlMilliseconds: 1000,
+		}
+	)
+}

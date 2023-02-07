@@ -114,7 +114,6 @@ func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDe
 		return momentoerrors.ConvertSvcErr(err)
 	}
 	return nil
-
 }
 
 func createNewMetadata(cacheName string) metadata.MD {
