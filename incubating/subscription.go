@@ -1,82 +1,49 @@
 package incubating
 
 import (
-	"context"
 	"io"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-
 	"google.golang.org/grpc"
 )
 
 type SubscriptionIFace interface {
-	Consume(ctx context.Context, f func(ctx context.Context, m TopicValue)) error
-	Recv() ([]byte, error)
+	Item() (TopicValue, error)
 }
 
 type Subscription struct {
 	grpcClient grpc.ClientStream
 }
 
-func (s *Subscription) Recv() ([]byte, error) {
-	rawMsg := new(pb.XSubscriptionItem)
-	if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
-		if err == io.EOF {
-			// TODO think about retry and re-establish more
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	var msgBytes []byte
-	switch typedMsg := rawMsg.Kind.(type) {
-	case *pb.XSubscriptionItem_Discontinuity:
-		// Don't pass discontinuity messages back to user for now
-		// TODO decide how want to notify client
-		return nil, nil
-	case *pb.XSubscriptionItem_Item:
-		switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
-		case *pb.XTopicValue_Text:
-			msgBytes = []byte(subscriptionItem.Text)
-		case *pb.XTopicValue_Binary:
-			msgBytes = subscriptionItem.Binary
-		}
-	}
-	return msgBytes, nil
-}
-
-func (s *Subscription) Consume(ctx context.Context, f func(ctx context.Context, m TopicValue)) error {
+func (s *Subscription) Item() (TopicValue, error) {
+	retryCount := 0
+	maxRetries := 2
 	for {
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 			if err == io.EOF {
 				// TODO think about retry and re-establish more
-				return nil
+				return nil, nil
 			}
-			return err
+			return nil, err
 		}
-
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			// pass
-		}
-
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
-			// Don't pass discontinuity messages back to user for now
-			// TODO decide how want to notify client
+			retryCount++
+			if retryCount > maxRetries {
+				return nil, nil
+			}
+			continue
 		case *pb.XSubscriptionItem_Item:
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
-				f(ctx, &TopicValueString{
+				return &TopicValueString{
 					Text: subscriptionItem.Text,
-				})
+				}, nil
 			case *pb.XTopicValue_Binary:
-				f(ctx, &TopicValueBytes{
+				return &TopicValueBytes{
 					Bytes: subscriptionItem.Binary,
-				})
+				}, nil
 			}
 		}
 	}

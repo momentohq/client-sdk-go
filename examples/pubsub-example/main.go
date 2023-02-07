@@ -23,17 +23,6 @@ func main() {
 	ctx := context.Background()
 	setupCache(client, ctx)
 
-	fmt.Println("Using pubsub with Consume function")
-	useConsume(client, ctx)
-	fmt.Println("Using pubsub with Recv function")
-	useRecv(client, ctx)
-}
-
-func useConsume(client incubating.ScsClient, ctx context.Context) {
-	cancelContext, cancelFunction := context.WithCancel(ctx)
-	// Or you can set a timeout after which the goroutine will be cancelled
-	//cancelContext, cancelFunction := context.WithTimeout(ctx, time.Second*10)
-
 	// Instantiate subscriber
 	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
 		CacheName: cacheName,
@@ -42,50 +31,20 @@ func useConsume(client incubating.ScsClient, ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
-	// Receive and print messages in a goroutine
-	go func() { pollForMessages(sub, cancelContext) }()
-	time.Sleep(time.Second)
 
-	// Publish messages and then shut down the subscriber goroutine
-	publishMessages(client, ctx)
-	cancelFunction()
-	// Prove that the goroutine is stopped by publishing more messages that
-	// won't be output to the console
-	fmt.Println("No more received messages should appear here")
-	publishMessages(client, ctx)
-}
-
-func pollForMessages(sub incubating.SubscriptionIFace, cancelContext context.Context) {
-	err := sub.Consume(cancelContext, func(ctx context.Context, m incubating.TopicValue) {
-		switch msg := m.(type) {
-		case *incubating.TopicValueString:
-			fmt.Printf("received message: '%s'\n", msg.Text)
-		case *incubating.TopicValueBytes:
-			fmt.Printf("received message: '%s'\n", msg.Bytes)
-		}
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func useRecv(client incubating.ScsClient, ctx context.Context) {
-	// Instantiate subscriber
-	sub, err := client.SubscribeTopic(ctx, &incubating.TopicSubscribeRequest{
-		CacheName: cacheName,
-		TopicName: topicName,
-	})
-	if err != nil {
-		panic(err)
-	}
 	// Receive and print messages in a goroutine
 	go func() {
 		for i := 0; i < 10; i++ {
-			msg, err := sub.Recv()
+			item, err := sub.Item()
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("received message: '%s'\n", msg)
+			switch msg := item.(type) {
+			case *incubating.TopicValueString:
+				fmt.Printf("received message: '%s'\n", msg.Text)
+			case *incubating.TopicValueBytes:
+				fmt.Printf("received message: '%s'\n", msg.Bytes)
+			}
 		}
 	}()
 	time.Sleep(time.Second)

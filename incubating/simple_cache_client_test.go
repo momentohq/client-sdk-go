@@ -75,10 +75,8 @@ func publishTopic(pubClient ScsClient, i int, ctx context.Context) {
 }
 
 // Basic happy path test using a context which we cancel
-func TestHappyPathPubSubCancelContext(t *testing.T) {
+func TestHappyPathPubSub(t *testing.T) {
 	ctx := context.Background()
-	cancelContext, cancelFunction := context.WithCancel(ctx)
-	defer cancelFunction()
 
 	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
 		CacheName: "test-cache",
@@ -88,79 +86,32 @@ func TestHappyPathPubSubCancelContext(t *testing.T) {
 		panic(err)
 	}
 
+	numMessagesToSend := 10
 	// TODO: use a channel instead of a counter variable
 	numMessagesReceived := 0
 	go func() {
-		// Just block and make sure we get stubbed messages for now for quick test
-		err := sub.Consume(cancelContext, func(ctx context.Context, m TopicValue) {
-			switch m.(type) {
-			case *TopicValueString:
-			case *TopicValueBytes:
-				numMessagesReceived++
+		for {
+			_, err := sub.Item()
+			if err != nil {
+				panic(err)
 			}
-		})
-		if err != nil {
-			panic(err)
+			numMessagesReceived++
+			if numMessagesToSend == numMessagesReceived {
+				return
+			}
 		}
 	}()
+	time.Sleep(time.Second)
 
-	cancelAtNumber := 5
-	for i := 0; i < 10; i++ {
-		publishTopic(client, i, ctx)
-		// Call the cancel function here and make sure it stops the messages.
-		if i == cancelAtNumber {
-			cancelFunction()
-		}
-		time.Sleep(time.Second)
-	}
-
-	// if we have received more than cancelAtNumber, our cancel failed
-	if numMessagesReceived > cancelAtNumber {
-		t.Errorf("expected no more than %d messages but received %d", cancelAtNumber, numMessagesReceived)
-	}
-}
-
-// Basic happy path test using a context with a timeout
-func TestHappyPathPubSubTimeoutContext(t *testing.T) {
-	var timeoutUnits time.Duration = 5
-	ctx := context.Background()
-	timeoutContext, cancelFunc := context.WithTimeout(ctx, timeoutUnits*time.Second)
-	defer cancelFunc()
-
-	sub, err := client.SubscribeTopic(ctx, &TopicSubscribeRequest{
-		CacheName: "test-cache",
-		TopicName: "test-topic",
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	// TODO: use a channel instead of a counter variable
-	numMessagesReceived := 0
-	go func() {
-		// Just block and make sure we get stubbed messages for now for quick test
-		err := sub.Consume(timeoutContext, func(ctx context.Context, m TopicValue) {
-			switch m.(type) {
-			case *TopicValueString:
-			case *TopicValueBytes:
-				numMessagesReceived++
-			}
-		})
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	for i := 0; i < 10; i++ {
+	for i := 0; i < numMessagesToSend; i++ {
 		publishTopic(client, i, ctx)
 		time.Sleep(time.Second)
 	}
 
-	// at a rate of 1 per second, we should not get back more than timeoutUnits messages
-	if numMessagesReceived > int(timeoutUnits) {
-		t.Errorf("expected no more than %d messages but received %d", timeoutUnits, numMessagesReceived)
+	// if we have received more than numMessagesToSend, our cancel failed
+	if numMessagesReceived != numMessagesToSend {
+		t.Errorf("expected no more than %d messages but received %d", numMessagesToSend, numMessagesReceived)
 	}
-
 }
 
 // Basic happy path test using local test server
@@ -188,11 +139,15 @@ func TestBasicHappyPathLocalPubSub(t *testing.T) {
 	numMessagesReceived := 0
 	numMessagesToSend := 10
 	go func() {
-		err := sub.Consume(context.Background(), func(ctx context.Context, m TopicValue) {
+		for {
+			_, err := sub.Item()
+			if err != nil {
+				panic(err)
+			}
 			numMessagesReceived++
-		})
-		if err != nil {
-			panic(err)
+			if numMessagesToSend == numMessagesReceived {
+				return
+			}
 		}
 	}()
 
