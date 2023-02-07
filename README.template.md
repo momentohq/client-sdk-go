@@ -30,9 +30,6 @@ Here is a quickstart you can use in your own project:
 
 ### Error Handling
 
-Errors that occur in calls to `ScsClient` methods are surfaced to developers as part of the return values of the calls, as opposed to by throwing exceptions. 
-This makes them more visible, and allows your IDE to be more helpful in ensuring that you've handled the ones you care about. (For more on our philosophy about this, see our blog post on why [Exceptions are bugs](https://www.gomomento.com/blog/exceptions-are-bugs). And send us any feedback you have!)
-
 The preferred way of interpreting the return values from `ScsClient` methods is using a `switch` statement to match and handle the specific response type. 
 Here's a quick example:
 
@@ -53,14 +50,16 @@ But if the cache read results in a Miss, you'll also get a type-safe object that
 In cases where you get an error response, it can be treated as `momentoErr` using `As` method and it always include an `momentoErr.Code` that you can use to check the error type:
 
 ```go
-err = client.CreateCache(ctx, &momento.CreateCacheRequest{
+_, err := client.Get(ctx, &momento.CacheGetRequest{
     CacheName: cacheName,
+    Key:       &momento.StringBytes{Text: key},
 })
+
 if err != nil {
     var momentoErr momento.MomentoError
     if errors.As(err, &momentoErr) {
-        if momentoErr.Code() != momento.AlreadyExistsError {
-            // this would represent that a cache you tried to create already exists.
+        if momentoErr.Code() != momento.TimeoutError {
+            // this would represent a client-side timeout, and you could fall back to your original data source
         }
     }
 }
