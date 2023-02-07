@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -31,12 +32,14 @@ func PublisherLocal() {
 	createCacheIfNotExist(ctx, client, "default")
 
 	// Start publishing events to the topic
-	fmt.Println("Publishing topic: local-test-topic")
+	counter := 0
 	for {
+		counter++
+		fmt.Println(fmt.Sprintf(`Publishing to local-test-topic with value: %d`, counter))
 		err = client.PublishTopic(ctx, &incubating.TopicPublishRequest{
 			CacheName: "default",
 			TopicName: "local-test-topic",
-			Value:     "Hello!",
+			Value:     strconv.Itoa(counter),
 		})
 		if err != nil {
 			panic(err)

@@ -48,11 +48,11 @@ func Subscriber() {
 	// Start receiving events
 	err = sub.Recv(context.Background(), func(ctx context.Context, m *incubating.TopicMessageReceiveResponse) {
 		currentTime := int(time.Now().UnixMilli())
-		receivedTime, err := strconv.Atoi(m.StringValue())
+		publishedTime, err := strconv.Atoi(m.StringValue())
 		if err != nil {
 			fmt.Printf("Received non-time value: %s\n", m.StringValue())
 		}
-		latency := currentTime - receivedTime
+		latency := currentTime - publishedTime
 		// Send metrics to CloudWatch
 		sendLatencyToCw(latency)
 	})
