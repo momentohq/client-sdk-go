@@ -14,10 +14,6 @@ type Configuration interface {
 	// GetLoggerFactory Returns the current configuration options for logging verbosity and format
 	GetLoggerFactory() logger.MomentoLoggerFactory
 
-	// WithLoggerFactory Copy constructor for overriding LoggerFactory returns a new Configuration object
-	// with the specified momento.LoggerFactory
-	WithLoggerFactory(loggerFactory logger.MomentoLoggerFactory) Configuration
-
 	// GetTransportStrategy Returns the current configuration options for wire interactions with the Momento service
 	GetTransportStrategy() TransportStrategy
 
@@ -55,13 +51,6 @@ func NewSimpleCacheConfiguration(props *ConfigurationProps) Configuration {
 
 func (s *SimpleCacheConfiguration) GetTransportStrategy() TransportStrategy {
 	return s.transportStrategy
-}
-
-func (s *SimpleCacheConfiguration) WithLoggerFactory(loggerFactory logger.MomentoLoggerFactory) Configuration {
-	return &SimpleCacheConfiguration{
-		loggerFactory:     loggerFactory,
-		transportStrategy: s.transportStrategy,
-	}
 }
 
 func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {

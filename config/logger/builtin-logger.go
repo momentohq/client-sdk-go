@@ -2,26 +2,28 @@ package logger
 
 import (
 	"log"
+	"strings"
+	"time"
+)
+
+type loggerLevel string
+
+const (
+	INFO  loggerLevel = "INFO"
+	DEBUG loggerLevel = "DEBUG"
 )
 
 type BuiltinMomentoLogger struct {
 	loggerName string
+	level      loggerLevel
 }
 
-func (l *BuiltinMomentoLogger) Info(message string, args ...any) {
-	if args == nil {
-		log.Printf(`{"level": "INFO", "message": "%s", "name": "%s"}`, message, l.loggerName)
-	} else {
-		log.Printf(`{"level": "INFO", "message": "%s", "name": "%s", "%v"}`, message, l.loggerName, args)
-	}
+func (l *BuiltinMomentoLogger) Info(message string, args ...string) {
+	log.Printf("[%s] %s (%s): %s\n", time.RFC3339, l.level, l.loggerName, strings.Join(args, ", "))
 }
 
-func (l *BuiltinMomentoLogger) Debug(message string, args ...any) {
-	if args == nil {
-		log.Printf(`{"level": "DEBUG", "message": "%s", "name": "%s"}`, message, l.loggerName)
-	} else {
-		log.Printf(`{"level": "DEBUG", "message": "%s", "name": "%s", "%v"}`, message, l.loggerName, args)
-	}
+func (l *BuiltinMomentoLogger) Debug(message string, args ...string) {
+	log.Printf("[%s] %s (%s): %s\n", time.RFC3339, l.level, l.loggerName, strings.Join(args, ", "))
 }
 
 type BuiltinMomentoLoggerFactory struct {
@@ -33,5 +35,5 @@ func NewBuiltinMomentoLoggerFactory() MomentoLoggerFactory {
 
 func (*BuiltinMomentoLoggerFactory) GetLogger(loggerName string) MomentoLogger {
 	log.SetFlags(0)
-	return &BuiltinMomentoLogger{loggerName}
+	return &BuiltinMomentoLogger{loggerName: loggerName, level: INFO}
 }

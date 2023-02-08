@@ -1,8 +1,8 @@
 package logger
 
 type MomentoLogger interface {
-	Info(message string, args ...any)
-	Debug(message string, args ...any)
+	Info(message string, args ...string)
+	Debug(message string, args ...string)
 }
 
 type MomentoLoggerFactory interface {
