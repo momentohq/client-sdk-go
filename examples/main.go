@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -81,5 +80,5 @@ func main() {
 	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
 		panic(err)
 	}
-	mLogger.Info(fmt.Sprintf("Cache named %s is deleted\n", cacheName))
+	mLogger.Info("Cache successfully deleted", "name", cacheName)
 }
