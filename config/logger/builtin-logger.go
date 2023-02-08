@@ -19,11 +19,19 @@ type BuiltinMomentoLogger struct {
 }
 
 func (l *BuiltinMomentoLogger) Info(message string, args ...string) {
-	log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, l.level, l.loggerName, message, strings.Join(args, ", "))
+	if len(args) != 0 {
+		log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, l.level, l.loggerName, message, strings.Join(args, ", "))
+	} else {
+		log.Printf("[%s] %s (%s): %s\n", time.RFC3339, l.level, l.loggerName, message)
+	}
 }
 
 func (l *BuiltinMomentoLogger) Debug(message string, args ...string) {
-	log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, l.level, l.loggerName, message, strings.Join(args, ", "))
+	if len(args) != 0 {
+		log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, l.level, l.loggerName, message, strings.Join(args, ", "))
+	} else {
+		log.Printf("[%s] %s (%s): %s\n", time.RFC3339, l.level, l.loggerName, message)
+	}
 }
 
 type BuiltinMomentoLoggerFactory struct {
