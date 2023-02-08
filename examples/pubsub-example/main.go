@@ -21,9 +21,6 @@ func main() {
 	// Initialization
 	client := getClient()
 	ctx := context.Background()
-	cancelContext, cancelFunction := context.WithCancel(ctx)
-	// Or you can set a timeout after which the goroutine will be cancelled
-	//cancelContext, cancelFunction := context.WithTimeout(ctx, time.Second*10)
 	setupCache(client, ctx)
 
 	// Instantiate subscriber
@@ -34,15 +31,28 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Receive and print messages in a goroutine
-	go func() { pollForMessages(sub, cancelContext) }()
 
-	// Publish messages and then shut down the subscriber goroutine
+	// Receive and print messages in a goroutine
+	go func() { pollForMessages(sub) }()
+	time.Sleep(time.Second)
+
+	// Publish messages for the subscriber
 	publishMessages(client, ctx)
-	cancelFunction()
-	// Prove that the goroutine is stopped by publishing more messages that
-	// won't be output to the console
-	publishMessages(client, ctx)
+}
+
+func pollForMessages(sub incubating.SubscriptionIFace) {
+	for {
+		item, err := sub.Item()
+		if err != nil {
+			panic(err)
+		}
+		switch msg := item.(type) {
+		case *incubating.TopicValueString:
+			fmt.Printf("received message: '%s'\n", msg.Text)
+		case *incubating.TopicValueBytes:
+			fmt.Printf("received message: '%s'\n", msg.Bytes)
+		}
+	}
 }
 
 func getClient() incubating.ScsClient {
@@ -88,19 +98,5 @@ func publishMessages(client incubating.ScsClient, ctx context.Context) {
 			panic(err)
 		}
 		time.Sleep(time.Second)
-	}
-}
-
-func pollForMessages(sub incubating.SubscriptionIFace, cancelContext context.Context) {
-	err := sub.Recv(cancelContext, func(ctx context.Context, m incubating.TopicValue) {
-		switch msg := m.(type) {
-		case *incubating.TopicValueString:
-			fmt.Printf("received message: '%s'\n", msg.Text)
-		case *incubating.TopicValueBytes:
-			fmt.Printf("received message: '%s'\n", msg.Bytes)
-		}
-	})
-	if err != nil {
-		panic(err)
 	}
 }
