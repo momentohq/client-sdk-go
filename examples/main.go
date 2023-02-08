@@ -51,7 +51,7 @@ func main() {
 	// Sets key with default TTL and gets value with that key
 	key := uuid.NewString()
 	value := uuid.NewString()
-	mLogger.Info("Setting key/value", []string{"key", key, "value", value}...)
+	mLogger.Info("Setting key/value", "key", key, "value", value)
 	err = client.Set(ctx, &momento.CacheSetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
@@ -61,7 +61,7 @@ func main() {
 		panic(err)
 	}
 
-	mLogger.Info("Getting key", []string{"key", key}...)
+	mLogger.Info("Getting key", "key", key)
 	resp, err := client.Get(ctx, &momento.CacheGetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
@@ -72,9 +72,9 @@ func main() {
 
 	switch r := resp.(type) {
 	case *momento.CacheGetHit:
-		mLogger.Info("Lookup resulted in cahce HIT", []string{"key", key, "value", r.ValueString()}...)
+		mLogger.Info("Lookup resulted in cache HIT", "key", key, "value", r.ValueString())
 	case *momento.CacheGetMiss:
-		mLogger.Info("Look up did not find a value", []string{"key", key}...)
+		mLogger.Info("Look up did not find a value", "key", key)
 	}
 
 	// Permanently delete the cache
