@@ -23,3 +23,13 @@ type ListLengthSuccess struct {
 }
 
 func (_ ListLengthSuccess) isListLengthResponse() {}
+
+type ListPushFrontResponse interface {
+	isListPushFrontResponse()
+}
+
+type ListPushFrontSuccess struct {
+	Value uint32
+}
+
+func (_ ListPushFrontSuccess) isListPushFrontResponse() {}

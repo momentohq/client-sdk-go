@@ -15,11 +15,11 @@ import (
 const defaultRequestTimeout = 5 * time.Second
 
 type ScsDataClient struct {
-	grpcManager       *grpcmanagers.DataGrpcManager
-	grpcClient        pb.ScsClient
-	defaultTtlSeconds uint64
-	requestTimeout    time.Duration
-	endpoint          string
+	grpcManager    *grpcmanagers.DataGrpcManager
+	grpcClient     pb.ScsClient
+	defaultTtl     time.Duration
+	requestTimeout time.Duration
+	endpoint       string
 }
 
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
@@ -36,11 +36,11 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 		timeout = request.Configuration.GetClientSideTimeout()
 	}
 	return &ScsDataClient{
-		grpcManager:       dataManager,
-		grpcClient:        pb.NewScsClient(dataManager.Conn),
-		defaultTtlSeconds: uint64(request.DefaultTtlSeconds),
-		requestTimeout:    timeout,
-		endpoint:          request.CredentialProvider.GetCacheEndpoint(),
+		grpcManager:    dataManager,
+		grpcClient:     pb.NewScsClient(dataManager.Conn),
+		defaultTtl:     request.DefaultTtl,
+		requestTimeout: timeout,
+		endpoint:       request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
 
@@ -53,11 +53,7 @@ func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRequest) momentoerrors.MomentoSvcErr {
-	itemTtlMils := client.defaultTtlSeconds * 1000
-	if request.TtlSeconds > 0 {
-		itemTtlMils = uint64(request.TtlSeconds * 1000)
-	}
-
+	itemTtlMillis := ttlOrDefaultMilliseconds(request.Ttl, client.defaultTtl)
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	_, err := client.grpcClient.Set(
@@ -65,7 +61,7 @@ func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRe
 		&pb.XSetRequest{
 			CacheKey:        request.Key,
 			CacheBody:       request.Value,
-			TtlMilliseconds: itemTtlMils,
+			TtlMilliseconds: itemTtlMillis,
 		},
 	)
 	if err != nil {

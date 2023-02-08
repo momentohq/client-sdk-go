@@ -5,7 +5,9 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	incubating "github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc/metadata"
+	"time"
 )
 
 func (client *ScsDataClient) ListFetch(ctx context.Context, request *models.ListFetchRequest) (models.ListFetchResponse, momentoerrors.MomentoSvcErr) {
@@ -56,18 +58,34 @@ func (client *ScsDataClient) ListLength(ctx context.Context, request *models.Lis
 	}
 }
 
-func (client *ScsDataClient) ListPushFront(ctx context.Context, request *models.ListPushFrontRequest, err momentoerrors.MomentoSvcErr) {
+func (client *ScsDataClient) ListPushFront(ctx context.Context, request *models.ListPushFrontRequest) (models.ListPushFrontResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	resp, err := client.grpcClient.ListPushFront(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
 		&pb.XListPushFrontRequest{
-			ListName: []byte(request.ListName),
-			Value: request.Value,
+			ListName:           []byte(request.ListName),
+			Value:              request.Value,
 			TruncateBackToSize: request.TruncateBackToSize,
 			// TODO: Add CollectionTtl class to hold these values
-			RefreshTtl: true,
-			TtlMilliseconds: 1000,
-		}
+			RefreshTtl:      request.CollectionTtl.RefreshTtl,
+			TtlMilliseconds: collectionTtlOrDefaultMilliseconds(request.CollectionTtl, client.defaultTtl),
+		},
 	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &models.ListPushFrontSuccess{Value: resp.ListLength}, nil
+}
+
+func collectionTtlOrDefaultMilliseconds(collectionTtl incubating.CollectionTtl, defaultTtl time.Duration) uint64 {
+	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
+}
+
+func ttlOrDefaultMilliseconds(ttl time.Duration, defaultTtl time.Duration) uint64 {
+	theTtl := defaultTtl
+	if ttl != 0 {
+		theTtl = ttl
+	}
+	return uint64(theTtl.Milliseconds())
 }

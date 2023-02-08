@@ -4,6 +4,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"time"
 )
 
 type ControlGrpcManagerRequest struct {
@@ -25,10 +26,10 @@ type CacheGetRequest struct {
 }
 
 type CacheSetRequest struct {
-	CacheName  string
-	Key        []byte
-	Value      []byte
-	TtlSeconds uint32
+	CacheName string
+	Key       []byte
+	Value     []byte
+	Ttl       time.Duration
 }
 
 type CacheDeleteRequest struct {
@@ -83,7 +84,7 @@ type ControlClientRequest struct {
 type DataClientRequest struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
-	DefaultTtlSeconds  uint32
+	DefaultTtl         time.Duration
 }
 
 type PubSubClientRequest struct {

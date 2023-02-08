@@ -24,14 +24,31 @@ func main() {
 	ctx := context.Background()
 	setupCache(client, ctx)
 
-	resp, err := client.ListFetch(ctx, &incubating.ListFetchRequest{
+	for i := 1; i < 11; i++ {
+		value := []byte(fmt.Sprintf("hello world numero %d!", i))
+		pushFrontResp, err := client.ListPushFront(ctx, &incubating.ListPushFrontRequest{
+			CacheName: cacheName,
+			ListName:  listName,
+			Value:     value,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		switch r := pushFrontResp.(type) {
+		case *incubating.ListPushFrontSuccess:
+			fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
+		}
+	}
+
+	fetchResp, err := client.ListFetch(ctx, &incubating.ListFetchRequest{
 		CacheName: cacheName,
 		ListName:  listName,
 	})
 	if err != nil {
 		panic(err)
 	}
-	switch r := resp.(type) {
+	switch r := fetchResp.(type) {
 	case *incubating.ListFetchHit:
 		fmt.Println(strings.Join(r.ValueListString(), ", "))
 	case *incubating.ListFetchMiss:

@@ -45,3 +45,17 @@ func (_ ListLengthSuccess) isListLengthResponse() {}
 func (resp ListLengthSuccess) Length() uint32 {
 	return resp.value
 }
+
+type ListPushFrontResponse interface {
+	isListPushFrontResponse()
+}
+
+type ListPushFrontSuccess struct {
+	value uint32
+}
+
+func (_ ListPushFrontSuccess) isListPushFrontResponse() {}
+
+func (resp ListPushFrontSuccess) ListLength() uint32 {
+	return resp.value
+}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -38,14 +39,16 @@ type DefaultScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *services.ScsDataClient
-	defaultTTLSeconds  uint32
+	defaultTTL         time.Duration
 }
 
 type SimpleCacheClientProps struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
-	DefaultTTLSeconds  uint32
+	DefaultTTL         time.Duration
 }
+
+const defaultTtl = time.Duration(time.Second * 60)
 
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
@@ -64,10 +67,13 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
+	if props.DefaultTTL == 0 {
+		props.DefaultTTL = defaultTtl
+	}
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
-		DefaultTtlSeconds:  props.DefaultTTLSeconds,
+		DefaultTtl:         props.DefaultTTL,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
@@ -122,9 +128,9 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) er
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
-	ttlToUse := c.defaultTTLSeconds
-	if request.TTLSeconds._ttl != nil {
-		ttlToUse = *request.TTLSeconds._ttl
+	ttlToUse := c.defaultTTL
+	if request.Ttl != time.Duration(0) {
+		ttlToUse = request.Ttl
 	}
 
 	key, err := isKeyValid(request.Key.asBytes())
@@ -137,10 +143,10 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) er
 	}
 
 	err = c.dataClient.Set(ctx, &models.CacheSetRequest{
-		CacheName:  request.CacheName,
-		Key:        key,
-		Value:      value,
-		TtlSeconds: ttlToUse,
+		CacheName: request.CacheName,
+		Key:       key,
+		Value:     value,
+		Ttl:       ttlToUse,
 	})
 	return convertMomentoSvcErrorToCustomerError(err)
 }

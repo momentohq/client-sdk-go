@@ -1,5 +1,7 @@
 package momento
 
+import "time"
+
 // Bytes generic interface to help users deal with passing us bytes
 type Bytes interface{ asBytes() []byte }
 
@@ -45,20 +47,7 @@ type CacheSetRequest struct {
 	Value Bytes
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
-	TTLSeconds TimeToLive
-}
-
-// TTL Helper function that returns an initialized TimeToLive containing a pointer to ttl.
-func TTL(ttl uint32) TimeToLive {
-	pInt := &ttl
-	return TimeToLive{
-		_ttl: pInt,
-	}
-}
-
-// TimeToLive provies a structure to hold a uint32 pointer of ttl.
-type TimeToLive struct {
-	_ttl *uint32
+	Ttl time.Duration
 }
 
 type CacheGetRequest struct {
