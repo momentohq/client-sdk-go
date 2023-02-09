@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type ConfigurationProps struct {
