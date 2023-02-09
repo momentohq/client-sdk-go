@@ -1,0 +1,31 @@
+name: On pull request or push to main
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
+
+      - name: Verify README generation
+        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
+        with:
+          project_status: official
+          project_stability: alpha
+          project_type: sdk
+          sdk_language: Go
+          usage_example_path: ./examples/main.go
+
+  test: [readme]
+    uses: ./.github/workflows/test.yml
+    secrets:
+      auth-token: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+      secrets: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
+    with:
+      live: true
