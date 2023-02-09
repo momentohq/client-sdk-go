@@ -2,7 +2,7 @@ package incubating
 
 import (
 	"github.com/momentohq/client-sdk-go/momento"
-	incubating "github.com/momentohq/client-sdk-go/utils"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 type SortedSetOrder int
@@ -23,9 +23,9 @@ type SortedSetRemoveRequestElement struct {
 
 type SortedSetPutRequest struct {
 	CacheName     string
-	SetName       momento.Bytes
+	SetName       string
 	Elements      []*SortedSetScoreRequestElement
-	CollectionTTL incubating.CollectionTTL
+	CollectionTTL utils.CollectionTTL
 }
 
 type SortedSetFetchNumResults interface {
@@ -44,20 +44,20 @@ func (FetchLimitedItems) isSortedSetFetchNumResults() {}
 
 type SortedSetFetchRequest struct {
 	CacheName       string
-	SetName         momento.Bytes
+	SetName         string
 	Order           SortedSetOrder
 	NumberOfResults SortedSetFetchNumResults
 }
 
 type SortedSetGetScoreRequest struct {
 	CacheName    string
-	SetName      momento.Bytes
+	SetName      string
 	ElementNames []momento.Bytes
 }
 
 type SortedSetRemoveRequest struct {
 	CacheName        string
-	SetName          momento.Bytes
+	SetName          string
 	ElementsToRemove SortedSetRemoveNumItems
 }
 
@@ -77,14 +77,14 @@ func (RemoveSomeItems) isSortedSetRemoveNumItem() {}
 
 type SortedSetGetRankRequest struct {
 	CacheName   string
-	SetName     momento.Bytes
+	SetName     string
 	ElementName momento.Bytes
 }
 
 type SortedSetIncrementRequest struct {
 	CacheName     string
-	SetName       momento.Bytes
+	SetName       string
 	ElementName   momento.Bytes
 	Amount        uint64
-	CollectionTTL incubating.CollectionTTL
+	CollectionTTL utils.CollectionTTL
 }

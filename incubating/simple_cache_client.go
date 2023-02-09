@@ -215,7 +215,7 @@ func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBa
 }
 
 func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error {
-	setName, err := isSetNameValid(request.SetName.AsBytes())
+	setName, err := isSetNameValid([]byte(request.SetName))
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -233,7 +233,7 @@ func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetP
 }
 
 func (c *DefaultScsClient) SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
-	setName, err := isSetNameValid(request.SetName.AsBytes())
+	setName, err := isSetNameValid([]byte(request.SetName))
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -264,7 +264,7 @@ func (c *DefaultScsClient) SortedSetFetch(ctx context.Context, request *SortedSe
 }
 
 func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
-	setName, err := isSetNameValid(request.SetName.AsBytes())
+	setName, err := isSetNameValid([]byte(request.SetName))
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -278,9 +278,9 @@ func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *Sorte
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	switch r := rsp.(type) {
-	case *models.SortedSetGetScoreMissing:
+	case *models.SortedSetGetScoreMiss:
 		return &SortedSetGetScoreMiss{}, nil
-	case *models.SortedSetGetScoreFound:
+	case *models.SortedSetGetScoreHit:
 		return &SortedSetGetScoreHit{
 			Elements: convertSortedSetScoreElement(r.Elements),
 		}, nil
@@ -294,7 +294,7 @@ func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *Sorte
 
 }
 func (c *DefaultScsClient) SortedSetRemove(ctx context.Context, request *SortedSetRemoveRequest) error {
-	setName, err := isSetNameValid(request.SetName.AsBytes())
+	setName, err := isSetNameValid([]byte(request.SetName))
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -311,7 +311,7 @@ func (c *DefaultScsClient) SortedSetRemove(ctx context.Context, request *SortedS
 }
 
 func (c *DefaultScsClient) SortedSetGetRank(ctx context.Context, request *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
-	setName, err := isSetNameValid(request.SetName.AsBytes())
+	setName, err := isSetNameValid([]byte(request.SetName))
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -326,9 +326,9 @@ func (c *DefaultScsClient) SortedSetGetRank(ctx context.Context, request *Sorted
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	switch r := rsp.(type) {
-	case *models.SortedSetGetRankMissing:
+	case *models.SortedSetGetRankMiss:
 		return &SortedSetGetRankMiss{}, nil
-	case *models.SortedSetGetRankFound:
+	case *models.SortedSetGetRankHit:
 		if r.Status == models.Hit {
 			return &SortedSetGetRankHit{
 				Element: &SortedSetRankHit{

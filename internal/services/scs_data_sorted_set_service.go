@@ -86,11 +86,11 @@ func (client *ScsDataClient) SortedSetGetScore(ctx context.Context, request *mod
 	// Convert from grpc struct to internal struct
 	switch r := resp.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
-		return &models.SortedSetGetScoreFound{
+		return &models.SortedSetGetScoreHit{
 			Elements: sortedSetGrpcScoreToModel(r.Found.GetElements()),
 		}, nil
 	case *pb.XSortedSetGetScoreResponse_Missing:
-		return &models.SortedSetGetScoreMissing{}, nil
+		return &models.SortedSetGetScoreMiss{}, nil
 	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.ClientSdkError,
@@ -116,12 +116,12 @@ func (client *ScsDataClient) SortedSetGetRank(ctx context.Context, request *mode
 	// Convert from grpc struct to internal struct
 	switch r := resp.Rank.(type) {
 	case *pb.XSortedSetGetRankResponse_ElementRank:
-		return &models.SortedSetGetRankFound{
+		return &models.SortedSetGetRankHit{
 			Rank:   r.ElementRank.Rank,
 			Status: models.CacheResult(r.ElementRank.Result),
 		}, nil
 	case *pb.XSortedSetGetRankResponse_Missing:
-		return &models.SortedSetGetRankMissing{}, nil
+		return &models.SortedSetGetRankMiss{}, nil
 	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.ClientSdkError,
