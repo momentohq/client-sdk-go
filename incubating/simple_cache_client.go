@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -43,8 +42,6 @@ type DefaultScsClient struct {
 	internalClient momento.ScsClient
 }
 
-const defaultTTL = time.Second * 60
-
 // NewScsClient returns a new ScsClient with provided authToken, defaultTTL,, and opts arguments.
 func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 
@@ -57,8 +54,13 @@ func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 	}
 
 	if props.DefaultTTL == 0 {
-		props.DefaultTTL = defaultTTL
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"Must Define a non zero Default TTL", nil),
+		)
 	}
+
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,

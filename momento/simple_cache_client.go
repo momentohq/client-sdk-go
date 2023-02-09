@@ -49,8 +49,6 @@ type SimpleCacheClientProps struct {
 	DefaultTTL         time.Duration
 }
 
-const defaultTTL = time.Second * 60
-
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
@@ -69,8 +67,13 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	}
 
 	if props.DefaultTTL == 0 {
-		props.DefaultTTL = defaultTTL
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"Must Define a non zero Default TTL", nil),
+		)
 	}
+
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
