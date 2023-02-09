@@ -31,7 +31,9 @@ jobs:
     with:
       live: true
 
-  publish_golang: [test]
+  publish_golang:
+    needs: [test, release]
+    runs-on: ubuntu-latest
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
