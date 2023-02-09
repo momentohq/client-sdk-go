@@ -25,7 +25,7 @@ type SortedSetPutRequest struct {
 	CacheName     string
 	SetName       momento.Bytes
 	Elements      []*SortedSetScoreRequestElement
-	CollectionTTL incubating.CollectionTtl
+	CollectionTTL incubating.CollectionTTL
 }
 
 type SortedSetFetchNumResults interface {
@@ -34,13 +34,13 @@ type SortedSetFetchNumResults interface {
 
 type FetchAllItems struct{}
 
-func (_ FetchAllItems) isSortedSetFetchNumResults() {}
+func (FetchAllItems) isSortedSetFetchNumResults() {}
 
 type FetchLimitedItems struct {
 	Limit uint32
 }
 
-func (_ FetchLimitedItems) isSortedSetFetchNumResults() {}
+func (FetchLimitedItems) isSortedSetFetchNumResults() {}
 
 type SortedSetFetchRequest struct {
 	CacheName       string
@@ -67,13 +67,13 @@ type SortedSetRemoveNumItems interface {
 
 type RemoveAllItems struct{}
 
-func (_ RemoveAllItems) isSortedSetRemoveNumItem() {}
+func (RemoveAllItems) isSortedSetRemoveNumItem() {}
 
 type RemoveSomeItems struct {
 	elementsToRemove []momento.Bytes
 }
 
-func (_ RemoveSomeItems) isSortedSetRemoveNumItem() {}
+func (RemoveSomeItems) isSortedSetRemoveNumItem() {}
 
 type SortedSetGetRankRequest struct {
 	CacheName   string
@@ -86,5 +86,5 @@ type SortedSetIncrementRequest struct {
 	SetName       momento.Bytes
 	ElementName   momento.Bytes
 	Amount        uint64
-	CollectionTTL incubating.CollectionTtl
+	CollectionTTL incubating.CollectionTTL
 }

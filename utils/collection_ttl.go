@@ -2,35 +2,35 @@ package utils
 
 import "time"
 
-type CollectionTtl struct {
+type CollectionTTL struct {
 	Ttl        time.Duration
 	RefreshTtl bool
 }
 
-func FromCacheTtl() CollectionTtl {
-	return CollectionTtl{RefreshTtl: true}
+func FromCacheTtl() CollectionTTL {
+	return CollectionTTL{RefreshTtl: true}
 }
 
-func Of(ttl time.Duration) CollectionTtl {
-	return CollectionTtl{Ttl: ttl}
+func Of(ttl time.Duration) CollectionTTL {
+	return CollectionTTL{Ttl: ttl}
 }
 
-func RefreshTtlIfProvided(ttl ...time.Duration) CollectionTtl {
+func RefreshTtlIfProvided(ttl ...time.Duration) CollectionTTL {
 	if len(ttl) > 0 {
-		return CollectionTtl{Ttl: ttl[0], RefreshTtl: true}
+		return CollectionTTL{Ttl: ttl[0], RefreshTtl: true}
 	}
-	return CollectionTtl{RefreshTtl: false}
+	return CollectionTTL{RefreshTtl: false}
 }
 
-func WithRefreshTtlOnUpdates(currentCollectionTtl CollectionTtl) CollectionTtl {
-	return CollectionTtl{
+func WithRefreshTtlOnUpdates(currentCollectionTtl CollectionTTL) CollectionTTL {
+	return CollectionTTL{
 		Ttl:        currentCollectionTtl.Ttl,
 		RefreshTtl: true,
 	}
 }
 
-func WithNoRefreshTtlOnUpdates(currentCollectionTtl CollectionTtl) CollectionTtl {
-	return CollectionTtl{
+func WithNoRefreshTtlOnUpdates(currentCollectionTtl CollectionTTL) CollectionTTL {
+	return CollectionTTL{
 		Ttl:        currentCollectionTtl.Ttl,
 		RefreshTtl: false,
 	}

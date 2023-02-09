@@ -54,7 +54,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		CacheName: randomCacheName,
 		Key:       StringBytes{Text: uuid.NewString()},
 		Value:     RawBytes{Bytes: value},
-		Ttl:       time.Duration(time.Second * 60),
+		TTL:       time.Second * 60,
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
@@ -473,7 +473,7 @@ func TestSetGet(t *testing.T) {
 					CacheName: testCacheName,
 					Key:       &StringBytes{Text: tt.key},
 					Value:     &StringBytes{Text: tt.value},
-					Ttl:       tt.ttl,
+					TTL:       tt.ttl,
 				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)

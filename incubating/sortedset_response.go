@@ -11,14 +11,14 @@ type SortedSetFetchResponse interface {
 // SortedSetFetchMissing Miss Response to a cache SortedSetFetch api request.
 type SortedSetFetchMissing struct{}
 
-func (_ SortedSetFetchMissing) isSortedSetFetchResponse() {}
+func (SortedSetFetchMissing) isSortedSetFetchResponse() {}
 
 // SortedSetFetchFound Hit Response to a cache SortedSetFetch api request.
 type SortedSetFetchFound struct {
 	Elements []*SortedSetElement
 }
 
-func (_ SortedSetFetchFound) isSortedSetFetchResponse() {}
+func (SortedSetFetchFound) isSortedSetFetchResponse() {}
 
 type SortedSetGetScoreResponse interface {
 	isSortedSetGetScoreResponse()
@@ -27,14 +27,14 @@ type SortedSetGetScoreResponse interface {
 // SortedSetGetScoreMissing Miss Response to a cache SortedSetScore api request.
 type SortedSetGetScoreMissing struct{}
 
-func (_ SortedSetGetScoreMissing) isSortedSetGetScoreResponse() {}
+func (SortedSetGetScoreMissing) isSortedSetGetScoreResponse() {}
 
 // SortedSetGetScoreFound Hit Response to a cache SortedSetScore api request.
 type SortedSetGetScoreFound struct {
 	Elements []SortedSetScoreElement
 }
 
-func (_ SortedSetGetScoreFound) isSortedSetGetScoreResponse() {}
+func (SortedSetGetScoreFound) isSortedSetGetScoreResponse() {}
 
 type SortedSetScoreElement interface {
 	isSortedSetScoreElement()
@@ -44,15 +44,15 @@ type SortedSetScoreHit struct {
 	Score float64
 }
 
-func (_ SortedSetScoreHit) isSortedSetScoreElement() {}
+func (SortedSetScoreHit) isSortedSetScoreElement() {}
 
 type SortedSetScoreMiss struct{}
 
-func (_ SortedSetScoreMiss) isSortedSetScoreElement() {}
+func (SortedSetScoreMiss) isSortedSetScoreElement() {}
 
 type SortedSetScoreInvalid struct{}
 
-func (_ SortedSetScoreInvalid) isSortedSetScoreElement() {}
+func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
 
 type SortedSetGetRankResponse interface {
 	isSortedSetGetRankResponse()
@@ -61,14 +61,14 @@ type SortedSetGetRankResponse interface {
 // SortedSetGetRankMissing Miss Response to a cache SortedSetGetRank api request.
 type SortedSetGetRankMissing struct{}
 
-func (_ SortedSetGetRankMissing) isSortedSetGetRankResponse() {}
+func (SortedSetGetRankMissing) isSortedSetGetRankResponse() {}
 
 // SortedSetGetRankFound Hit Response to a cache SortedSetGetRank api request.
 type SortedSetGetRankFound struct {
 	Element SortedSetRankElement
 }
 
-func (_ SortedSetGetRankFound) isSortedSetGetRankResponse() {}
+func (SortedSetGetRankFound) isSortedSetGetRankResponse() {}
 
 type SortedSetRankElement interface {
 	isSortedSetRankElement()
@@ -78,8 +78,8 @@ type SortedSetRankHit struct {
 	Rank uint64
 }
 
-func (_ SortedSetRankHit) isSortedSetRankElement() {}
+func (SortedSetRankHit) isSortedSetRankElement() {}
 
 type SortedSetRankMiss struct{}
 
-func (_ SortedSetRankMiss) isSortedSetRankElement() {}
+func (SortedSetRankMiss) isSortedSetRankElement() {}

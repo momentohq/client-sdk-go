@@ -43,9 +43,9 @@ type DefaultScsClient struct {
 	internalClient momento.ScsClient
 }
 
-const defaultTtl = time.Duration(time.Second * 60)
+const defaultTTL = time.Second * 60
 
-// NewScsClient returns a new ScsClient with provided authToken, defaultTtl,, and opts arguments.
+// NewScsClient returns a new ScsClient with provided authToken, defaultTTL,, and opts arguments.
 func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
@@ -57,7 +57,7 @@ func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 	}
 
 	if props.DefaultTTL == 0 {
-		props.DefaultTTL = defaultTtl
+		props.DefaultTTL = defaultTTL
 	}
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
@@ -188,7 +188,7 @@ func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushF
 		ListName:           request.ListName,
 		Value:              request.Value,
 		TruncateBackToSize: request.TruncateBackToSize,
-		CollectionTtl:      request.CollectionTtl,
+		CollectionTtl:      request.CollectionTTL,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
@@ -206,7 +206,7 @@ func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBa
 		ListName:            request.ListName,
 		Value:               request.Value,
 		TruncateFrontToSize: request.TruncateFrontToSize,
-		CollectionTtl:       request.CollectionTtl,
+		CollectionTtl:       request.CollectionTTL,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)

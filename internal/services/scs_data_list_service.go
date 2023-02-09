@@ -99,7 +99,7 @@ func (client *ScsDataClient) ListPushBack(ctx context.Context, request *models.L
 	return &models.ListPushBackSuccess{Value: resp.ListLength}, nil
 }
 
-func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTtl, defaultTtl time.Duration) uint64 {
+func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTTL, defaultTtl time.Duration) uint64 {
 	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
 }
 

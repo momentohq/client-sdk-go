@@ -55,7 +55,7 @@ func teardown() {
 	client.Close()
 }
 
-func publishTopic(pubClient ScsClient, i int, ctx context.Context) {
+func publishTopic(ctx context.Context, pubClient ScsClient, i int) {
 	var topicVal TopicValue
 
 	if i%2 == 0 {
@@ -106,7 +106,7 @@ func TestHappyPathPubSub(t *testing.T) {
 	time.Sleep(time.Second)
 
 	for i := 0; i < numMessagesToSend; i++ {
-		publishTopic(client, i, ctx)
+		publishTopic(ctx, client, i)
 		time.Sleep(time.Second)
 	}
 	cancelFunction()

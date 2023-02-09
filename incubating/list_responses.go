@@ -6,14 +6,14 @@ type ListFetchResponse interface {
 
 type ListFetchMiss struct{}
 
-func (_ ListFetchMiss) isListFetchResponse() {}
+func (ListFetchMiss) isListFetchResponse() {}
 
 type ListFetchHit struct {
 	value       [][]byte
 	stringValue []string
 }
 
-func (_ ListFetchHit) isListFetchResponse() {}
+func (ListFetchHit) isListFetchResponse() {}
 
 func (resp ListFetchHit) ValueListString() []string {
 	if resp.stringValue == nil {
@@ -40,7 +40,7 @@ type ListLengthSuccess struct {
 	value uint32
 }
 
-func (_ ListLengthSuccess) isListLengthResponse() {}
+func (ListLengthSuccess) isListLengthResponse() {}
 
 func (resp ListLengthSuccess) Length() uint32 {
 	return resp.value
@@ -54,7 +54,7 @@ type ListPushFrontSuccess struct {
 	value uint32
 }
 
-func (_ ListPushFrontSuccess) isListPushFrontResponse() {}
+func (ListPushFrontSuccess) isListPushFrontResponse() {}
 
 func (resp ListPushFrontSuccess) ListLength() uint32 {
 	return resp.value
@@ -68,7 +68,7 @@ type ListPushBackSuccess struct {
 	value uint32
 }
 
-func (_ ListPushBackSuccess) isListPushBackResponse() {}
+func (ListPushBackSuccess) isListPushBackResponse() {}
 
 func (resp ListPushBackSuccess) ListLength() uint32 {
 	return resp.value

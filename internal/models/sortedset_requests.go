@@ -20,7 +20,7 @@ type SortedSetPutRequest struct {
 	CacheName     string
 	SetName       []byte
 	Elements      []*SortedSetElement
-	CollectionTTL incubating.CollectionTtl
+	CollectionTTL incubating.CollectionTTL
 }
 
 type SortedSetFetchNumResults interface {
@@ -80,5 +80,5 @@ type SortedSetIncrementRequest struct {
 	SetName       []byte
 	ElementName   []byte
 	Amount        uint64
-	CollectionTTL incubating.CollectionTtl
+	CollectionTTL incubating.CollectionTTL
 }

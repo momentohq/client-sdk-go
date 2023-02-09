@@ -47,7 +47,7 @@ type CacheSetRequest struct {
 	Value Bytes
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
-	Ttl time.Duration
+	TTL time.Duration
 }
 
 type CacheGetRequest struct {
