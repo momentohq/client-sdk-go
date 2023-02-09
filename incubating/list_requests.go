@@ -1,7 +1,7 @@
 package incubating
 
 import (
-	incubating "github.com/momentohq/client-sdk-go/utils"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 type ListFetchRequest struct {
@@ -19,7 +19,7 @@ type ListPushFrontRequest struct {
 	ListName           string
 	Value              []byte
 	TruncateBackToSize uint32
-	CollectionTtl      incubating.CollectionTtl
+	CollectionTtl      utils.CollectionTtl
 }
 
 type ListPushBackRequest struct {
@@ -27,5 +27,5 @@ type ListPushBackRequest struct {
 	ListName            string
 	Value               []byte
 	TruncateFrontToSize uint32
-	CollectionTtl       incubating.CollectionTtl
+	CollectionTtl       utils.CollectionTtl
 }

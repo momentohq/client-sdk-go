@@ -2,12 +2,14 @@ package services
 
 import (
 	"context"
+
+	"time"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	incubating "github.com/momentohq/client-sdk-go/utils"
+	"github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc/metadata"
-	"time"
 )
 
 func (client *ScsDataClient) ListFetch(ctx context.Context, request *models.ListFetchRequest) (models.ListFetchResponse, momentoerrors.MomentoSvcErr) {
@@ -39,19 +41,18 @@ func (client *ScsDataClient) ListLength(ctx context.Context, request *models.Lis
 	defer cancel()
 	resp, err := client.grpcClient.ListLength(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.XListLengthRequest{
-			ListName: []byte(request.ListName),
-		},
+		&pb.XListLengthRequest{ListName: []byte(request.ListName)},
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	if resp.GetFound() != nil {
-		return &models.ListLengthSuccess{Value: resp.GetFound().Length}, nil
-	} else if resp.GetMissing() != nil {
+	switch r := resp.List.(type) {
+	case *pb.XListLengthResponse_Found:
+		return &models.ListLengthSuccess{Value: r.Found.Length}, nil
+	case *pb.XListLengthResponse_Missing:
 		return &models.ListLengthSuccess{Value: 0}, nil
-	} else {
+	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.ClientSdkError,
 			"Unknown response type for list length",
@@ -98,7 +99,7 @@ func (client *ScsDataClient) ListPushBack(ctx context.Context, request *models.L
 	return &models.ListPushBackSuccess{Value: resp.ListLength}, nil
 }
 
-func collectionTtlOrDefaultMilliseconds(collectionTtl incubating.CollectionTtl, defaultTtl time.Duration) uint64 {
+func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTtl, defaultTtl time.Duration) uint64 {
 	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
 }
 
