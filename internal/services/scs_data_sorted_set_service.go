@@ -159,7 +159,7 @@ func (client *ScsDataClient) SortedSetRemove(ctx context.Context, request *model
 
 func sortedSetGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []*models.SortedSetElement {
 	var returnList []*models.SortedSetElement
-	for i, _ := range grpcSetElements {
+	for i := range grpcSetElements {
 		returnList = append(returnList, &models.SortedSetElement{
 			Name:  grpcSetElements[i].Name,
 			Score: grpcSetElements[i].Score,
@@ -170,7 +170,7 @@ func sortedSetGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []*mod
 
 func sortedSetGrpcScoreToModel(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []*models.SortedSetScore {
 	var returnList []*models.SortedSetScore
-	for i, _ := range grpcSetElements {
+	for i := range grpcSetElements {
 		returnList = append(returnList, &models.SortedSetScore{
 			Result: models.CacheResult(grpcSetElements[i].Result),
 			Score:  grpcSetElements[i].Score,
