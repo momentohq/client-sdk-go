@@ -32,14 +32,14 @@ type CacheGetResponse interface {
 // CacheGetMiss Miss Response to a cache Get api request.
 type CacheGetMiss struct{}
 
-func (_ CacheGetMiss) isCacheGetResponse() {}
+func (CacheGetMiss) isCacheGetResponse() {}
 
 // CacheGetHit Hit Response to a cache Get api request.
 type CacheGetHit struct {
 	Value []byte
 }
 
-func (_ CacheGetHit) isCacheGetResponse() {}
+func (CacheGetHit) isCacheGetResponse() {}
 
 type TopicSubscribeResponse struct{}
 

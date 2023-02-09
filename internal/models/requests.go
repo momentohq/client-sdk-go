@@ -69,13 +69,13 @@ type TopicValueBytes struct {
 	Bytes []byte
 }
 
-func (_ TopicValueBytes) isTopicValue() {}
+func (TopicValueBytes) isTopicValue() {}
 
 type TopicValueString struct {
 	Text string
 }
 
-func (_ TopicValueString) isTopicValue() {}
+func (TopicValueString) isTopicValue() {}
 
 type ControlClientRequest struct {
 	Configuration      config.Configuration

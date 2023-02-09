@@ -26,7 +26,7 @@ type Configuration interface {
 
 	// WithClientTimeout Copy constructor for overriding TransportStrategy client side timeout. Returns a new
 	//Configuration object with the specified momento.TransportStrategy using passed client side timeout.
-	WithClientTimeout(clientTimeoutMillis time.Duration) Configuration
+	WithClientTimeout(clientTimeout time.Duration) Configuration
 }
 
 type SimpleCacheConfiguration struct {
