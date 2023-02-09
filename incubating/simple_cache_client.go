@@ -152,9 +152,7 @@ func (c *DefaultScsClient) ListFetch(ctx context.Context, request *ListFetchRequ
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	// TODO: Um, yeah
-	rsp2, _ := convertListFetchResponse(rsp)
-	return rsp2, nil
+	return convertListFetchResponse(rsp)
 }
 
 func (c *DefaultScsClient) ListLength(ctx context.Context, request *ListLengthRequest) (ListLengthResponse, error) {
@@ -169,8 +167,7 @@ func (c *DefaultScsClient) ListLength(ctx context.Context, request *ListLengthRe
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp2, _ := convertListLengthResponse(rsp)
-	return rsp2, nil
+	return convertListLengthResponse(rsp)
 }
 
 func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushFrontRequest) (ListPushFrontResponse, error) {
@@ -188,8 +185,7 @@ func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushF
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp2, _ := convertListPushFrontResponse(rsp)
-	return rsp2, nil
+	return convertListPushFrontResponse(rsp)
 }
 
 func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error) {
@@ -207,8 +203,7 @@ func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBa
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	rsp2, _ := convertListPushBackResponse(rsp)
-	return rsp2, nil
+	return convertListPushBackResponse(rsp)
 }
 
 // Close shutdown the client.
