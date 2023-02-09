@@ -249,9 +249,9 @@ func (c *DefaultScsClient) SortedSetFetch(ctx context.Context, request *SortedSe
 	}
 	switch r := rsp.(type) {
 	case *models.SortedSetFetchMissing:
-		return SortedSetFetchMissing{}, nil
+		return SortedSetFetchMiss{}, nil
 	case *models.SortedSetFetchFound:
-		return &SortedSetFetchFound{
+		return &SortedSetFetchHit{
 			Elements: convertInternalSortedSetElement(r.Elements),
 		}, nil
 	default:
@@ -279,9 +279,9 @@ func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *Sorte
 	}
 	switch r := rsp.(type) {
 	case *models.SortedSetGetScoreMissing:
-		return &SortedSetGetScoreMissing{}, nil
+		return &SortedSetGetScoreMiss{}, nil
 	case *models.SortedSetGetScoreFound:
-		return &SortedSetGetScoreFound{
+		return &SortedSetGetScoreHit{
 			Elements: convertSortedSetScoreElement(r.Elements),
 		}, nil
 	default:
@@ -327,16 +327,16 @@ func (c *DefaultScsClient) SortedSetGetRank(ctx context.Context, request *Sorted
 	}
 	switch r := rsp.(type) {
 	case *models.SortedSetGetRankMissing:
-		return &SortedSetGetRankMissing{}, nil
+		return &SortedSetGetRankMiss{}, nil
 	case *models.SortedSetGetRankFound:
 		if r.Status == models.Hit {
-			return &SortedSetGetRankFound{
+			return &SortedSetGetRankHit{
 				Element: &SortedSetRankHit{
 					Rank: r.Rank,
 				},
 			}, nil
 		} else if r.Status == models.Miss {
-			return &SortedSetGetRankFound{
+			return &SortedSetGetRankHit{
 				Element: &SortedSetRankMiss{},
 			}, nil
 		} else {
