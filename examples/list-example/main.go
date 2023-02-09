@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	cacheName = "default"
+	cacheName = "cache"
 	listName  = "my-list"
 )
 
