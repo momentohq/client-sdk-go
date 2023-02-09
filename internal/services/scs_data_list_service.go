@@ -67,15 +67,33 @@ func (client *ScsDataClient) ListPushFront(ctx context.Context, request *models.
 			ListName:           []byte(request.ListName),
 			Value:              request.Value,
 			TruncateBackToSize: request.TruncateBackToSize,
-			// TODO: Add CollectionTtl class to hold these values
-			RefreshTtl:      request.CollectionTtl.RefreshTtl,
-			TtlMilliseconds: collectionTtlOrDefaultMilliseconds(request.CollectionTtl, client.defaultTtl),
+			RefreshTtl:         request.CollectionTtl.RefreshTtl,
+			TtlMilliseconds:    collectionTtlOrDefaultMilliseconds(request.CollectionTtl, client.defaultTtl),
 		},
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return &models.ListPushFrontSuccess{Value: resp.ListLength}, nil
+}
+
+func (client *ScsDataClient) ListPushBack(ctx context.Context, request *models.ListPushBackRequest) (models.ListPushBackResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListPushBack(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListPushBackRequest{
+			ListName:            []byte(request.ListName),
+			Value:               request.Value,
+			TruncateFrontToSize: request.TruncateFrontToSize,
+			RefreshTtl:          request.CollectionTtl.RefreshTtl,
+			TtlMilliseconds:     collectionTtlOrDefaultMilliseconds(request.CollectionTtl, client.defaultTtl),
+		},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &models.ListPushBackSuccess{Value: resp.ListLength}, nil
 }
 
 func collectionTtlOrDefaultMilliseconds(collectionTtl incubating.CollectionTtl, defaultTtl time.Duration) uint64 {

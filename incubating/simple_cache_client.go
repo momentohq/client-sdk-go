@@ -22,6 +22,7 @@ type ScsClient interface {
 	ListFetch(ctx context.Context, request *ListFetchRequest) (ListFetchResponse, error)
 	ListLength(ctx context.Context, request *ListLengthRequest) (ListLengthResponse, error)
 	ListPushFront(ctx context.Context, request *ListPushFrontRequest) (ListPushFrontResponse, error)
+	ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error)
 
 	Close()
 }
@@ -191,6 +192,25 @@ func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushF
 	return rsp2, nil
 }
 
+func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListPushBack(ctx, &models.ListPushBackRequest{
+		CacheName:           request.CacheName,
+		ListName:            request.ListName,
+		Value:               request.Value,
+		TruncateFrontToSize: request.TruncateFrontToSize,
+		CollectionTtl:       request.CollectionTtl,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	rsp2, _ := convertListPushBackResponse(rsp)
+	return rsp2, nil
+}
+
 // Close shutdown the client.
 func (c *DefaultScsClient) Close() {
 	defer c.internalClient.Close()
@@ -261,7 +281,20 @@ func convertListPushFrontResponse(r models.ListPushFrontResponse) (ListPushFront
 	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momento.ClientSdkError,
-			fmt.Sprintf("unexpected list fetch status returned %+v", response),
+			fmt.Sprintf("unexpected list push front status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertListPushBackResponse(r models.ListPushBackResponse) (ListPushBackResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListPushBackSuccess:
+		return &ListPushBackSuccess{value: response.Value}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list push back status returned %+v", response),
 			nil,
 		)
 	}

@@ -33,3 +33,13 @@ type ListPushFrontSuccess struct {
 }
 
 func (_ ListPushFrontSuccess) isListPushFrontResponse() {}
+
+type ListPushBackResponse interface {
+	isListPushBackResponse()
+}
+
+type ListPushBackSuccess struct {
+	Value uint32
+}
+
+func (_ ListPushBackSuccess) isListPushBackResponse() {}

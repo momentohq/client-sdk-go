@@ -21,3 +21,11 @@ type ListPushFrontRequest struct {
 	TruncateBackToSize uint32
 	CollectionTtl      incubating.CollectionTtl
 }
+
+type ListPushBackRequest struct {
+	CacheName           string
+	ListName            string
+	Value               []byte
+	TruncateFrontToSize uint32
+	CollectionTtl       incubating.CollectionTtl
+}

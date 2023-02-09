@@ -59,3 +59,17 @@ func (_ ListPushFrontSuccess) isListPushFrontResponse() {}
 func (resp ListPushFrontSuccess) ListLength() uint32 {
 	return resp.value
 }
+
+type ListPushBackResponse interface {
+	isListPushBackResponse()
+}
+
+type ListPushBackSuccess struct {
+	value uint32
+}
+
+func (_ ListPushBackSuccess) isListPushBackResponse() {}
+
+func (resp ListPushBackSuccess) ListLength() uint32 {
+	return resp.value
+}
