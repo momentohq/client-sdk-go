@@ -45,6 +45,29 @@ type ScsClient interface {
 	ListLength(ctx context.Context, in *XListLengthRequest, opts ...grpc.CallOption) (*XListLengthResponse, error)
 	ListConcatenateFront(ctx context.Context, in *XListConcatenateFrontRequest, opts ...grpc.CallOption) (*XListConcatenateFrontResponse, error)
 	ListConcatenateBack(ctx context.Context, in *XListConcatenateBackRequest, opts ...grpc.CallOption) (*XListConcatenateBackResponse, error)
+	// Add or Updates new element with its score to the Sorted Set.
+	// If sorted set doesn't exist, a new one is created with the specified
+	// element and its associated score.
+	// If an element exists, then its associate score gets overridden with the one
+	// provided in this operation.
+	SortedSetPut(ctx context.Context, in *XSortedSetPutRequest, opts ...grpc.CallOption) (*XSortedSetPutResponse, error)
+	// Fetches all the elements in the sorted set.
+	SortedSetFetch(ctx context.Context, in *XSortedSetFetchRequest, opts ...grpc.CallOption) (*XSortedSetFetchResponse, error)
+	// Gets the specified element and its associated score if it exists in the
+	// sorted set.
+	SortedSetGetScore(ctx context.Context, in *XSortedSetGetScoreRequest, opts ...grpc.CallOption) (*XSortedSetGetScoreResponse, error)
+	// Removes specified elements and their associated scores
+	SortedSetRemove(ctx context.Context, in *XSortedSetRemoveRequest, opts ...grpc.CallOption) (*XSortedSetRemoveResponse, error)
+	// Changes the score associated with the element by specified amount.
+	// If the provided amount is negative, then the score associated with the
+	// element is decremented.
+	// If the element that needs to be incremented isn't present in the sorted
+	// set, it is added with specified number as the score.
+	// If the set itself doesn't exist then a new one with specified element and
+	// score is created.
+	SortedSetIncrement(ctx context.Context, in *XSortedSetIncrementRequest, opts ...grpc.CallOption) (*XSortedSetIncrementResponse, error)
+	// Gives the rank of an element.
+	SortedSetGetRank(ctx context.Context, in *XSortedSetGetRankRequest, opts ...grpc.CallOption) (*XSortedSetGetRankResponse, error)
 }
 
 type scsClient struct {
@@ -262,6 +285,60 @@ func (c *scsClient) ListConcatenateBack(ctx context.Context, in *XListConcatenat
 	return out, nil
 }
 
+func (c *scsClient) SortedSetPut(ctx context.Context, in *XSortedSetPutRequest, opts ...grpc.CallOption) (*XSortedSetPutResponse, error) {
+	out := new(XSortedSetPutResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetPut", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) SortedSetFetch(ctx context.Context, in *XSortedSetFetchRequest, opts ...grpc.CallOption) (*XSortedSetFetchResponse, error) {
+	out := new(XSortedSetFetchResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetFetch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) SortedSetGetScore(ctx context.Context, in *XSortedSetGetScoreRequest, opts ...grpc.CallOption) (*XSortedSetGetScoreResponse, error) {
+	out := new(XSortedSetGetScoreResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetGetScore", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) SortedSetRemove(ctx context.Context, in *XSortedSetRemoveRequest, opts ...grpc.CallOption) (*XSortedSetRemoveResponse, error) {
+	out := new(XSortedSetRemoveResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetRemove", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) SortedSetIncrement(ctx context.Context, in *XSortedSetIncrementRequest, opts ...grpc.CallOption) (*XSortedSetIncrementResponse, error) {
+	out := new(XSortedSetIncrementResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetIncrement", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) SortedSetGetRank(ctx context.Context, in *XSortedSetGetRankRequest, opts ...grpc.CallOption) (*XSortedSetGetRankResponse, error) {
+	out := new(XSortedSetGetRankResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetGetRank", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScsServer is the server API for Scs service.
 // All implementations must embed UnimplementedScsServer
 // for forward compatibility
@@ -289,6 +366,29 @@ type ScsServer interface {
 	ListLength(context.Context, *XListLengthRequest) (*XListLengthResponse, error)
 	ListConcatenateFront(context.Context, *XListConcatenateFrontRequest) (*XListConcatenateFrontResponse, error)
 	ListConcatenateBack(context.Context, *XListConcatenateBackRequest) (*XListConcatenateBackResponse, error)
+	// Add or Updates new element with its score to the Sorted Set.
+	// If sorted set doesn't exist, a new one is created with the specified
+	// element and its associated score.
+	// If an element exists, then its associate score gets overridden with the one
+	// provided in this operation.
+	SortedSetPut(context.Context, *XSortedSetPutRequest) (*XSortedSetPutResponse, error)
+	// Fetches all the elements in the sorted set.
+	SortedSetFetch(context.Context, *XSortedSetFetchRequest) (*XSortedSetFetchResponse, error)
+	// Gets the specified element and its associated score if it exists in the
+	// sorted set.
+	SortedSetGetScore(context.Context, *XSortedSetGetScoreRequest) (*XSortedSetGetScoreResponse, error)
+	// Removes specified elements and their associated scores
+	SortedSetRemove(context.Context, *XSortedSetRemoveRequest) (*XSortedSetRemoveResponse, error)
+	// Changes the score associated with the element by specified amount.
+	// If the provided amount is negative, then the score associated with the
+	// element is decremented.
+	// If the element that needs to be incremented isn't present in the sorted
+	// set, it is added with specified number as the score.
+	// If the set itself doesn't exist then a new one with specified element and
+	// score is created.
+	SortedSetIncrement(context.Context, *XSortedSetIncrementRequest) (*XSortedSetIncrementResponse, error)
+	// Gives the rank of an element.
+	SortedSetGetRank(context.Context, *XSortedSetGetRankRequest) (*XSortedSetGetRankResponse, error)
 	mustEmbedUnimplementedScsServer()
 }
 
@@ -364,6 +464,24 @@ func (UnimplementedScsServer) ListConcatenateFront(context.Context, *XListConcat
 }
 func (UnimplementedScsServer) ListConcatenateBack(context.Context, *XListConcatenateBackRequest) (*XListConcatenateBackResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListConcatenateBack not implemented")
+}
+func (UnimplementedScsServer) SortedSetPut(context.Context, *XSortedSetPutRequest) (*XSortedSetPutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetPut not implemented")
+}
+func (UnimplementedScsServer) SortedSetFetch(context.Context, *XSortedSetFetchRequest) (*XSortedSetFetchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetFetch not implemented")
+}
+func (UnimplementedScsServer) SortedSetGetScore(context.Context, *XSortedSetGetScoreRequest) (*XSortedSetGetScoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetGetScore not implemented")
+}
+func (UnimplementedScsServer) SortedSetRemove(context.Context, *XSortedSetRemoveRequest) (*XSortedSetRemoveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetRemove not implemented")
+}
+func (UnimplementedScsServer) SortedSetIncrement(context.Context, *XSortedSetIncrementRequest) (*XSortedSetIncrementResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetIncrement not implemented")
+}
+func (UnimplementedScsServer) SortedSetGetRank(context.Context, *XSortedSetGetRankRequest) (*XSortedSetGetRankResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetGetRank not implemented")
 }
 func (UnimplementedScsServer) mustEmbedUnimplementedScsServer() {}
 
@@ -792,6 +910,114 @@ func _Scs_ListConcatenateBack_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Scs_SortedSetPut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetPutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetPut(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SortedSetPut",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetPut(ctx, req.(*XSortedSetPutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_SortedSetFetch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetFetchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetFetch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SortedSetFetch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetFetch(ctx, req.(*XSortedSetFetchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_SortedSetGetScore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetGetScoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetGetScore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SortedSetGetScore",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetGetScore(ctx, req.(*XSortedSetGetScoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_SortedSetRemove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetRemoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetRemove(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SortedSetRemove",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetRemove(ctx, req.(*XSortedSetRemoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_SortedSetIncrement_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetIncrementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetIncrement(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SortedSetIncrement",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetIncrement(ctx, req.(*XSortedSetIncrementRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_SortedSetGetRank_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetGetRankRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetGetRank(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SortedSetGetRank",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetGetRank(ctx, req.(*XSortedSetGetRankRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Scs_ServiceDesc is the grpc.ServiceDesc for Scs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -890,6 +1116,30 @@ var Scs_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListConcatenateBack",
 			Handler:    _Scs_ListConcatenateBack_Handler,
+		},
+		{
+			MethodName: "SortedSetPut",
+			Handler:    _Scs_SortedSetPut_Handler,
+		},
+		{
+			MethodName: "SortedSetFetch",
+			Handler:    _Scs_SortedSetFetch_Handler,
+		},
+		{
+			MethodName: "SortedSetGetScore",
+			Handler:    _Scs_SortedSetGetScore_Handler,
+		},
+		{
+			MethodName: "SortedSetRemove",
+			Handler:    _Scs_SortedSetRemove_Handler,
+		},
+		{
+			MethodName: "SortedSetIncrement",
+			Handler:    _Scs_SortedSetIncrement_Handler,
+		},
+		{
+			MethodName: "SortedSetGetRank",
+			Handler:    _Scs_SortedSetGetRank_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

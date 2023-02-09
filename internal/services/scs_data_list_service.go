@@ -39,7 +39,9 @@ func (client *ScsDataClient) ListLength(ctx context.Context, request *models.Lis
 	defer cancel()
 	resp, err := client.grpcClient.ListLength(
 		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.XListLengthRequest{ListName: []byte(request.ListName)},
+		&pb.XListLengthRequest{
+			ListName: []byte(request.ListName),
+		},
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

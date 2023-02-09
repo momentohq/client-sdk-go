@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	cacheName = "cache"
+	cacheName = "default"
 	listName  = "my-list"
 )
 
@@ -103,7 +103,7 @@ func main() {
 }
 
 func getClient() incubating.ScsClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}

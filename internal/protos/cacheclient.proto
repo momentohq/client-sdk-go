@@ -43,6 +43,34 @@ service Scs {
   rpc ListLength(_ListLengthRequest) returns (_ListLengthResponse) {}
   rpc ListConcatenateFront(_ListConcatenateFrontRequest) returns (_ListConcatenateFrontResponse) {}
   rpc ListConcatenateBack(_ListConcatenateBackRequest) returns (_ListConcatenateBackResponse) {}
+
+  // Sorted Set Operations
+  // A sorted set is a collection of elements ordered by their score.
+  // The elements with same score are ordered lexicographically.
+
+  // Add or Updates new element with its score to the Sorted Set.
+  // If sorted set doesn't exist, a new one is created with the specified
+  // element and its associated score.
+  // If an element exists, then its associate score gets overridden with the one
+  // provided in this operation.
+  rpc SortedSetPut(_SortedSetPutRequest) returns (_SortedSetPutResponse) {}
+  // Fetches all the elements in the sorted set.
+  rpc SortedSetFetch(_SortedSetFetchRequest) returns (_SortedSetFetchResponse) {}
+  // Gets the specified element and its associated score if it exists in the
+  // sorted set.
+  rpc SortedSetGetScore(_SortedSetGetScoreRequest) returns (_SortedSetGetScoreResponse) {}
+  // Removes specified elements and their associated scores
+  rpc SortedSetRemove(_SortedSetRemoveRequest) returns (_SortedSetRemoveResponse) {}
+  // Changes the score associated with the element by specified amount.
+  // If the provided amount is negative, then the score associated with the
+  // element is decremented.
+  // If the element that needs to be incremented isn't present in the sorted
+  // set, it is added with specified number as the score.
+  // If the set itself doesn't exist then a new one with specified element and
+  // score is created.
+  rpc SortedSetIncrement(_SortedSetIncrementRequest) returns (_SortedSetIncrementResponse) {}
+  // Gives the rank of an element.
+  rpc SortedSetGetRank(_SortedSetGetRankRequest) returns (_SortedSetGetRankResponse) {}
 }
 
 message _GetRequest {
@@ -91,7 +119,7 @@ message _IncrementRequest {
   bytes cache_key = 1;
   // Amount to add to the stored value.
   // If this key doesn't currently exist, it's created with this value (encoded as a base 10 string)
-  int64 increment_by = 2;
+  int64 amount = 2;
   uint64 ttl_milliseconds = 3;
 }
 
@@ -404,5 +432,123 @@ message _ListLengthResponse {
   oneof list {
     _Found found = 1;
     _Missing missing = 2;
+  }
+}
+
+message _SortedSetElement {
+  bytes name = 1;
+  double score = 2;
+}
+
+message _SortedSetPutRequest {
+  bytes set_name = 1;
+  repeated _SortedSetElement elements = 2;
+  uint64 ttl_milliseconds = 3;
+  bool refresh_ttl = 4;
+}
+
+message _SortedSetPutResponse {}
+
+message _SortedSetFetchRequest {
+  enum Order {
+    ASCENDING = 0;
+    DESCENDING = 1;
+  }
+
+  message _All {}
+
+  message _Limit {
+    uint32 limit = 1;
+  }
+
+  bytes set_name = 1;
+  Order order = 2;
+  oneof num_results {
+    _All all = 3;
+    _Limit limit = 4;
+  }
+}
+
+message _SortedSetFetchResponse {
+  message _Found {
+    repeated _SortedSetElement elements = 1;
+  }
+
+  message _Missing {
+  }
+
+  oneof sorted_set {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _SortedSetGetScoreRequest {
+  bytes set_name = 1;
+  repeated bytes element_name = 2;
+}
+
+message _SortedSetGetScoreResponse {
+  message _SortedSetGetScoreResponsePart {
+    ECacheResult result = 1;
+    double score = 2;
+  }
+
+  message _SortedSetFound {
+    repeated _SortedSetGetScoreResponsePart elements = 1;
+  }
+
+  message _SortedSetMissing {
+  }
+
+  oneof sorted_set {
+    _SortedSetFound found = 1;
+    _SortedSetMissing missing = 2;
+  }
+}
+
+message _SortedSetRemoveRequest {
+  bytes set_name = 1;
+  message _All {}
+  message _Some {
+    repeated bytes element_name = 1;
+  }
+  oneof remove_elements {
+    _All all = 2;
+    _Some some = 3;
+  }
+}
+
+message _SortedSetRemoveResponse {}
+
+message _SortedSetIncrementRequest {
+  bytes set_name = 1;
+  bytes element_name = 2;
+  double amount = 3;
+  uint64 ttl_milliseconds = 4;
+  bool refresh_ttl = 5;
+}
+
+message _SortedSetIncrementResponse {
+  // The value stored after the increment operation.
+  double value = 1;
+}
+
+message _SortedSetGetRankRequest {
+  bytes set_name = 1;
+  bytes element_name = 2;
+}
+
+message _SortedSetGetRankResponse {
+  message _RankResponsePart {
+    ECacheResult result = 1;
+    uint64 rank = 2;
+  }
+
+  message _SortedSetMissing {}
+
+  oneof rank {
+    _RankResponsePart element_rank = 1;
+    _SortedSetMissing missing = 2;
   }
 }
