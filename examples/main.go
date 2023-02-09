@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -20,15 +21,15 @@ func main() {
 	}
 
 	const (
-		cacheName             = "my-test-cache"
-		itemDefaultTTLSeconds = 60
+		cacheName      = "my-test-cache"
+		itemDefaultTTL = time.Duration(time.Second * 60)
 	)
 
 	// Initializes Momento
 	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTTLSeconds:  itemDefaultTTLSeconds,
+		DefaultTTL:         itemDefaultTTL,
 	})
 	if err != nil {
 		panic(err)
