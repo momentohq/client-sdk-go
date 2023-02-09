@@ -99,7 +99,36 @@ func (client *ScsDataClient) ListPushBack(ctx context.Context, request *models.L
 	return &models.ListPushBackSuccess{Value: resp.ListLength}, nil
 }
 
-func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTTL, defaultTtl time.Duration) uint64 {
+func (client *ScsDataClient) ListPopFront(ctx context.Context, request *models.ListPopFrontRequest) (models.ListPopFrontResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListPopFront(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListPopFrontRequest{
+			ListName: []byte(request.ListName),
+		},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &models.ListPopFrontSuccess{Value: resp.ListLength}, nil
+}
+
+func (client *ScsDataClient) ListPopBack(ctx context.Context, request *models.ListPopBackRequest) (models.ListPopBackResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListPopBack(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListPopBackRequest{
+			ListName: []byte(request.ListName),
+		},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &models.ListPopBackSuccess{Value: resp.ListLength}, nil
+}
+func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTtl, defaultTtl time.Duration) uint64 {
 	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
 }
 

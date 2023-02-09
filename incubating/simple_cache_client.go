@@ -22,6 +22,8 @@ type ScsClient interface {
 	ListLength(ctx context.Context, request *ListLengthRequest) (ListLengthResponse, error)
 	ListPushFront(ctx context.Context, request *ListPushFrontRequest) (ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error)
+	ListPopFront(ctx context.Context, request *ListPopFrontRequest) (ListPopFrontResponse, error)
+	ListPopBack(ctx context.Context, request *ListPopBackRequest) (ListPopBackResponse, error)
 
 	SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error
 	SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error)

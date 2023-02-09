@@ -73,3 +73,13 @@ func (ListPushBackSuccess) isListPushBackResponse() {}
 func (resp ListPushBackSuccess) ListLength() uint32 {
 	return resp.value
 }
+
+type ListPopFrontResponse interface {
+	isListPopFrontResponse()
+}
+
+type ListPopFrontSuccess struct {
+	value []byte
+}
+
+func (_ ListPopFrontSuccess) isListPopFrontResponse() {}
