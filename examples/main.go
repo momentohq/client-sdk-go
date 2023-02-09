@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"log"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/momento"
+
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -20,22 +20,20 @@ func main() {
 	}
 
 	const (
-		cacheName      = "my-test-cache"
-		itemDefaultTTL = time.Duration(time.Second * 60)
+		cacheName             = "my-test-cache"
+		itemDefaultTTLSeconds = 60
 	)
 
 	// Initializes Momento
-	configuration := config.LatestLaptopConfig(&logger.BuiltinMomentoLoggerFactory{})
 	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
-		Configuration:      configuration,
+		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTTL:         itemDefaultTTL,
+		DefaultTTLSeconds:  itemDefaultTTLSeconds,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	mLogger := configuration.GetLoggerFactory().GetLogger("examples-main")
 	// Create Cache and check if CacheName exists
 	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
@@ -52,7 +50,7 @@ func main() {
 	// Sets key with default TTL and gets value with that key
 	key := uuid.NewString()
 	value := uuid.NewString()
-	mLogger.Info("Setting key/value", "key", key, "value", value)
+	log.Printf("Setting key: %s, value: %s\n", key, value)
 	err = client.Set(ctx, &momento.CacheSetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
@@ -62,7 +60,7 @@ func main() {
 		panic(err)
 	}
 
-	mLogger.Info("Getting key", "key", key)
+	log.Printf("Getting key: %s\n", key)
 	resp, err := client.Get(ctx, &momento.CacheGetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
@@ -73,14 +71,14 @@ func main() {
 
 	switch r := resp.(type) {
 	case *momento.CacheGetHit:
-		mLogger.Info("Lookup resulted in cache HIT", "key", key, "value", r.ValueString())
+		log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
 	case *momento.CacheGetMiss:
-		mLogger.Info("Look up did not find a value", "key", key)
+		log.Printf("Look up did not find a value key=%s", key)
 	}
 
 	// Permanently delete the cache
 	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
 		panic(err)
 	}
-	mLogger.Info("Cache successfully deleted", "name", cacheName)
+	log.Printf("Cache named %s is deleted\n", cacheName)
 }
