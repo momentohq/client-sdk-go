@@ -2,12 +2,13 @@ package services
 
 import (
 	"context"
+	"time"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc/metadata"
-	"time"
 )
 
 func (client *ScsDataClient) ListFetch(ctx context.Context, request *models.ListFetchRequest) (models.ListFetchResponse, momentoerrors.MomentoSvcErr) {
