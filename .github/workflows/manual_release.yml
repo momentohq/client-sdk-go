@@ -32,21 +32,22 @@ jobs:
       live: true
 
   publish_golang: [test]
-    - name: Setup repo
-      uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.github-token }}
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.github-token }}
 
-    - name: Publish package
-      run: |
-        set -e
-        set -x
-        export MOMENTO_SDK_VERSION="${{needs.release.outputs.version}}"
-        if [ -z "$MOMENTO_SDK_VERSION"]
-        then
-          echo "Unable to determine SDK version!  Exiting!"
-          exit 1
-        fi
-        echo "MOMENTO_SDK_VERSION=${MOMENTO_SDK_VERSION}"
-        GOPROXY=proxy.golang.org go list -m github.com/momentohq/client-sdk-go@v${MOMENTO_SDK_VERSION}
-      shell: bash
+      - name: Publish package
+        run: |
+          set -e
+          set -x
+          export MOMENTO_SDK_VERSION="${{needs.release.outputs.version}}"
+          if [ -z "$MOMENTO_SDK_VERSION"]
+          then
+            echo "Unable to determine SDK version!  Exiting!"
+            exit 1
+          fi
+          echo "MOMENTO_SDK_VERSION=${MOMENTO_SDK_VERSION}"
+          GOPROXY=proxy.golang.org go list -m github.com/momentohq/client-sdk-go@v${MOMENTO_SDK_VERSION}
+        shell: bash
