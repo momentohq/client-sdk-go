@@ -4,6 +4,8 @@ package incubating
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -17,15 +19,23 @@ type ScsClient interface {
 	SubscribeTopic(ctx context.Context, request *TopicSubscribeRequest) (SubscriptionIFace, error)
 	PublishTopic(ctx context.Context, request *TopicPublishRequest) error
 
+	ListFetch(ctx context.Context, request *ListFetchRequest) (ListFetchResponse, error)
+	ListLength(ctx context.Context, request *ListLengthRequest) (ListLengthResponse, error)
+	ListPushFront(ctx context.Context, request *ListPushFrontRequest) (ListPushFrontResponse, error)
+	ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error)
+
 	Close()
 }
 
 // DefaultScsClient default implementation of the Momento incubating ScsClient interface
 type DefaultScsClient struct {
 	controlClient  *services.ScsControlClient
+	dataClient     *services.ScsDataClient
 	pubSubClient   *services.PubSubClient
 	internalClient momento.ScsClient
 }
+
+const defaultTtl = time.Duration(time.Second * 60)
 
 // NewScsClient returns a new ScsClient with provided authToken, defaultTtl,, and opts arguments.
 func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
@@ -33,6 +43,18 @@ func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
+	if props.DefaultTTL == 0 {
+		props.DefaultTTL = defaultTtl
+	}
+	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
+		DefaultTtl:         props.DefaultTTL,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
@@ -51,6 +73,7 @@ func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 	}
 	client := &DefaultScsClient{
 		controlClient:  controlClient,
+		dataClient:     dataClient,
 		pubSubClient:   pubSubClient,
 		internalClient: internalClient,
 	}
@@ -117,6 +140,72 @@ func (c *DefaultScsClient) PublishTopic(ctx context.Context, request *TopicPubli
 	}
 }
 
+func (c *DefaultScsClient) ListFetch(ctx context.Context, request *ListFetchRequest) (ListFetchResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListFetch(ctx, &models.ListFetchRequest{
+		CacheName: request.CacheName,
+		ListName:  request.ListName,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertListFetchResponse(rsp)
+}
+
+func (c *DefaultScsClient) ListLength(ctx context.Context, request *ListLengthRequest) (ListLengthResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListLength(ctx, &models.ListLengthRequest{
+		CacheName: request.CacheName,
+		ListName:  request.ListName,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertListLengthResponse(rsp)
+}
+
+func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushFrontRequest) (ListPushFrontResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListPushFront(ctx, &models.ListPushFrontRequest{
+		CacheName:          request.CacheName,
+		ListName:           request.ListName,
+		Value:              request.Value,
+		TruncateBackToSize: request.TruncateBackToSize,
+		CollectionTtl:      request.CollectionTtl,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertListPushFrontResponse(rsp)
+}
+
+func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListPushBack(ctx, &models.ListPushBackRequest{
+		CacheName:           request.CacheName,
+		ListName:            request.ListName,
+		Value:               request.Value,
+		TruncateFrontToSize: request.TruncateFrontToSize,
+		CollectionTtl:       request.CollectionTtl,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertListPushBackResponse(rsp)
+}
+
 // Close shutdown the client.
 func (c *DefaultScsClient) Close() {
 	defer c.internalClient.Close()
@@ -148,4 +237,68 @@ func (c *DefaultScsClient) Get(ctx context.Context, request *momento.CacheGetReq
 }
 func (c *DefaultScsClient) Delete(ctx context.Context, request *momento.CacheDeleteRequest) error {
 	return c.internalClient.Delete(ctx, request)
+}
+
+func convertListFetchResponse(r models.ListFetchResponse) (ListFetchResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListFetchMiss:
+		return &ListFetchMiss{}, nil
+	case *models.ListFetchHit:
+		return &ListFetchHit{
+			value: response.Value,
+		}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list fetch status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertListLengthResponse(r models.ListLengthResponse) (ListLengthResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListLengthSuccess:
+		return &ListLengthSuccess{value: response.Value}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list fetch status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertListPushFrontResponse(r models.ListPushFrontResponse) (ListPushFrontResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListPushFrontSuccess:
+		return &ListPushFrontSuccess{value: response.Value}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list push front status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertListPushBackResponse(r models.ListPushBackResponse) (ListPushBackResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListPushBackSuccess:
+		return &ListPushBackSuccess{value: response.Value}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list push back status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+// TODO: refactor these for sharing with momento module
+func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
+	if len(strings.TrimSpace(cacheName)) < 1 {
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
+	}
+	return nil
 }

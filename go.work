@@ -4,4 +4,5 @@ use (
 	.
 	./examples
 	examples/pubsub-example
+	examples/list-example
 )

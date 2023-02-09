@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	defaultTTLSeconds = 3
+	defaultTTL = time.Duration(time.Second * 3)
 )
 
 // Basic happy path test - create a cache, operate set/get, and delete the cache
@@ -51,10 +51,10 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	}
 
 	err = client.Set(ctx, &CacheSetRequest{
-		CacheName:  randomCacheName,
-		Key:        StringBytes{Text: uuid.NewString()},
-		Value:      RawBytes{Bytes: value},
-		TTLSeconds: TTL(1),
+		CacheName: randomCacheName,
+		Key:       StringBytes{Text: uuid.NewString()},
+		Value:     RawBytes{Bytes: value},
+		Ttl:       time.Duration(time.Second * 60),
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
@@ -205,21 +205,21 @@ func TestClientInitialization(t *testing.T) {
 	testRequestTimeout := 100 * time.Second
 	badRequestTimeout := 0 * time.Second
 	tests := map[string]struct {
-		expectedErr       string
-		defaultTTLSeconds uint32
-		requestTimeout    *time.Duration
+		expectedErr    string
+		defaultTTL     time.Duration
+		requestTimeout *time.Duration
 	}{
 		"happy path": {
-			defaultTTLSeconds: defaultTTLSeconds,
+			defaultTTL: defaultTTL,
 		},
 		"happy path custom timeout": {
-			defaultTTLSeconds: defaultTTLSeconds,
-			requestTimeout:    &testRequestTimeout,
+			defaultTTL:     defaultTTL,
+			requestTimeout: &testRequestTimeout,
 		},
 		"test invalid request timeout": {
-			expectedErr:       InvalidArgumentError,
-			defaultTTLSeconds: defaultTTLSeconds,
-			requestTimeout:    &badRequestTimeout,
+			expectedErr:    InvalidArgumentError,
+			defaultTTL:     defaultTTL,
+			requestTimeout: &badRequestTimeout,
 		},
 	}
 	for name, tt := range tests {
@@ -228,13 +228,13 @@ func TestClientInitialization(t *testing.T) {
 			c, err := NewSimpleCacheClient(&SimpleCacheClientProps{
 				Configuration:      config.LatestLaptopConfig(),
 				CredentialProvider: testCredentialProvider,
-				DefaultTTLSeconds:  tt.defaultTTLSeconds,
+				DefaultTTL:         tt.defaultTTL,
 			})
 			if tt.requestTimeout != nil {
 				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
 					Configuration:      config.LatestLaptopConfig().WithClientTimeout(*tt.requestTimeout),
 					CredentialProvider: testCredentialProvider,
-					DefaultTTLSeconds:  tt.defaultTTLSeconds,
+					DefaultTTL:         tt.defaultTTL,
 				})
 			}
 			if tt.expectedErr != "" && err == nil {
@@ -425,7 +425,7 @@ func TestSetGet(t *testing.T) {
 		key               string
 		value             string
 		expectedGetResult string
-		ttl               uint32
+		ttl               time.Duration
 	}{
 		"happy path with HIT": {
 			key:               uuid.NewString(),
@@ -441,13 +441,13 @@ func TestSetGet(t *testing.T) {
 			key:               uuid.NewString(),
 			value:             uuid.NewString(),
 			expectedGetResult: "HIT",
-			ttl:               2,
+			ttl:               time.Duration(time.Second * 2),
 		},
 		"test set with different ttl and MISS": {
 			key:               uuid.NewString(),
 			value:             uuid.NewString(),
 			expectedGetResult: "MISS",
-			ttl:               2,
+			ttl:               time.Duration(time.Second * 2),
 		},
 	}
 	for name, tt := range tests {
@@ -470,10 +470,10 @@ func TestSetGet(t *testing.T) {
 			} else {
 				// set string key/value with different ttl
 				err := client.Set(ctx, &CacheSetRequest{
-					CacheName:  testCacheName,
-					Key:        &StringBytes{Text: tt.key},
-					Value:      &StringBytes{Text: tt.value},
-					TTLSeconds: TTL(tt.ttl),
+					CacheName: testCacheName,
+					Key:       &StringBytes{Text: tt.key},
+					Value:     &StringBytes{Text: tt.value},
+					Ttl:       tt.ttl,
 				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
@@ -716,7 +716,7 @@ func newTestClient(credentialProvider auth.CredentialProvider) (ScsClient, error
 	client, err := NewSimpleCacheClient(&SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTTLSeconds:  defaultTTLSeconds,
+		DefaultTTL:         defaultTTL,
 	})
 	if err != nil {
 		return nil, err
