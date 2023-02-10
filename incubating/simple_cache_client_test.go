@@ -39,7 +39,9 @@ func getClient() ScsClient {
 func setup() {
 	ctx := context.Background()
 	client = getClient()
-	err := client.CreateCache(ctx, &momento.CreateCacheRequest{})
+	err := client.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: "test-cache",
+	})
 	if err != nil {
 		var momentoErr momento.MomentoError
 		if errors.As(err, &momentoErr) {
