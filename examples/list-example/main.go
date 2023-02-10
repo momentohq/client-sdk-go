@@ -15,12 +15,33 @@ import (
 )
 
 const (
-	cacheName     = "cache"
-	listName      = "my-list"
-	itemBatchSize = 3
+	cacheName = "cache"
+	listName  = "my-list"
 )
 
-func printList(client incubating.ScsClient, ctx context.Context) {
+func main() {
+	// Initialization
+	client := getClient()
+	ctx := context.Background()
+	setupCache(client, ctx)
+
+	for i := 1; i < 11; i++ {
+		value := []byte(fmt.Sprintf("push front numero %d!", i))
+		pushFrontResp, err := client.ListPushFront(ctx, &incubating.ListPushFrontRequest{
+			CacheName: cacheName,
+			ListName:  listName,
+			Value:     value,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		switch r := pushFrontResp.(type) {
+		case *incubating.ListPushFrontSuccess:
+			fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
+		}
+	}
+
 	fetchResp, err := client.ListFetch(ctx, &incubating.ListFetchRequest{
 		CacheName: cacheName,
 		ListName:  listName,
@@ -32,12 +53,27 @@ func printList(client incubating.ScsClient, ctx context.Context) {
 	case *incubating.ListFetchHit:
 		fmt.Println(strings.Join(r.ValueListString(), ", "))
 	case *incubating.ListFetchMiss:
-		fmt.Printf("no such list: %s\n", listName)
+		fmt.Println("we regret to inform you there is no such list")
 		os.Exit(1)
 	}
-}
 
-func printListLength(client incubating.ScsClient, ctx context.Context) {
+	for i := 1; i < 11; i++ {
+		value := []byte(fmt.Sprintf("push back numero %d!", i))
+		pushBackResp, err := client.ListPushBack(ctx, &incubating.ListPushBackRequest{
+			CacheName: cacheName,
+			ListName:  listName,
+			Value:     value,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		switch r := pushBackResp.(type) {
+		case *incubating.ListPushBackSuccess:
+			fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
+		}
+	}
+
 	lenResp, err := client.ListLength(ctx, &incubating.ListLengthRequest{
 		CacheName: cacheName,
 		ListName:  listName,
@@ -49,103 +85,22 @@ func printListLength(client incubating.ScsClient, ctx context.Context) {
 	case *incubating.ListLengthSuccess:
 		fmt.Printf("list %s is length %d\n", listName, int(r.Length()))
 	}
-}
 
-func pushFront(client incubating.ScsClient, ctx context.Context, value []byte) {
-	pushFrontResp, err := client.ListPushFront(ctx, &incubating.ListPushFrontRequest{
+	fetchResp, err = client.ListFetch(ctx, &incubating.ListFetchRequest{
 		CacheName: cacheName,
 		ListName:  listName,
-		Value:     value,
 	})
 	if err != nil {
 		panic(err)
 	}
-
-	switch r := pushFrontResp.(type) {
-	case *incubating.ListPushFrontSuccess:
-		fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
-	}
-}
-
-func pushBack(client incubating.ScsClient, ctx context.Context, value []byte) {
-	pushBackResp, err := client.ListPushBack(ctx, &incubating.ListPushBackRequest{
-		CacheName: cacheName,
-		ListName:  listName,
-		Value:     value,
-	})
-	if err != nil {
-		panic(err)
+	switch r := fetchResp.(type) {
+	case *incubating.ListFetchHit:
+		fmt.Println(strings.Join(r.ValueListString(), ", "))
+	case *incubating.ListFetchMiss:
+		fmt.Println("we regret to inform you there is no such list")
+		os.Exit(1)
 	}
 
-	switch r := pushBackResp.(type) {
-	case *incubating.ListPushBackSuccess:
-		fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
-	}
-}
-
-func popFront(client incubating.ScsClient, ctx context.Context) {
-	popFrontResp, err := client.ListPopFront(ctx, &incubating.ListPopFrontRequest{
-		ListName:  listName,
-		CacheName: cacheName,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	switch r := popFrontResp.(type) {
-	case *incubating.ListPopFrontHit:
-		fmt.Printf("popped value from front of list: %s\n", r.ValueString())
-	case *incubating.ListPopFrontMiss:
-		fmt.Println("got a miss response in response to attempt to pop value from front")
-	}
-}
-
-func popBack(client incubating.ScsClient, ctx context.Context) {
-	popBackResp, err := client.ListPopBack(ctx, &incubating.ListPopBackRequest{
-		ListName:  listName,
-		CacheName: cacheName,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	switch r := popBackResp.(type) {
-	case *incubating.ListPopBackHit:
-		fmt.Printf("popped value from front of list: %s\n", r.ValueString())
-	case *incubating.ListPopBackMiss:
-		fmt.Println("got a miss response in response to attempt to pop value from front")
-	}
-}
-
-func main() {
-	// Initialization
-	client := getClient()
-	ctx := context.Background()
-	setupCache(client, ctx)
-
-	for i := 0; i < itemBatchSize; i++ {
-		value := []byte(fmt.Sprintf("push front numero %d!", i+1))
-		pushFront(client, ctx, value)
-	}
-
-	printList(client, ctx)
-	printListLength(client, ctx)
-
-	for i := 0; i < itemBatchSize; i++ {
-		value := []byte(fmt.Sprintf("push back numero %d!", i+1))
-		pushBack(client, ctx, value)
-	}
-
-	printList(client, ctx)
-	printListLength(client, ctx)
-
-	for i := 0; i < itemBatchSize; i++ {
-		popFront(client, ctx)
-		printListLength(client, ctx)
-		popBack(client, ctx)
-		printListLength(client, ctx)
-		printList(client, ctx)
-	}
 }
 
 func getClient() incubating.ScsClient {
