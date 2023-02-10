@@ -7,9 +7,10 @@ jobs:
   commitlint:
     runs-on: ubuntu-latest
     steps:
-      - uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
+      - name: Commitlint and Other Shared Build Steps
+        uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
         env:
-          GITHUB_TOKEN: ${{ secrets.github-token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   readme:
     runs-on: ubuntu-latest
