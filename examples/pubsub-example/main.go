@@ -63,6 +63,7 @@ func getClient() incubating.ScsClient {
 	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
+		DefaultTTL:         60 * time.Second,
 	})
 	if err != nil {
 		panic(err)

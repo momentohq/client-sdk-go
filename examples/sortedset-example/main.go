@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -26,7 +27,7 @@ func main() {
 	for i := 1; i < 11; i++ {
 		err := client.SortedSetPut(ctx, &incubating.SortedSetPutRequest{
 			CacheName: cacheName,
-			SetName:   momento.StringBytes{Text: setName},
+			SetName:   setName,
 			Elements: []*incubating.SortedSetScoreRequestElement{{
 				Name:  momento.StringBytes{Text: fmt.Sprintf("key:%d", i)},
 				Score: float64(i),
@@ -41,42 +42,43 @@ func main() {
 	// Fetch All
 	fetchResp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
 		CacheName: cacheName,
-		SetName:   momento.StringBytes{Text: setName},
+		SetName:   setName,
 	})
 	if err != nil {
 		panic(err)
 	}
 
 	switch r := fetchResp.(type) {
-	case *incubating.SortedSetFetchFound:
-		fmt.Println(fmt.Sprintf("%+v", r.Elements))
+	case *incubating.SortedSetFetchHit:
+		fmt.Println("--------------")
 		fmt.Println("Found sorted set with following elements:")
 		for _, e := range r.Elements {
 			fmt.Println(fmt.Sprintf("set: %s elementName: %s score: %f", setName, e.Name, e.Score))
 		}
-	case *incubating.SortedSetFetchMissing:
+	case *incubating.SortedSetFetchMiss:
 		fmt.Println("we regret to inform you there is no such set")
 		os.Exit(1)
 	}
 
 	// Fetch Top 5 items
+	fmt.Println("--------------")
+	fmt.Println("\n\nFetching Top5 values from sorted set:")
 	top5Rsp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
 		CacheName:       cacheName,
-		SetName:         momento.StringBytes{Text: setName},
+		SetName:         setName,
 		NumberOfResults: incubating.FetchLimitedItems{Limit: 5},
-		//Order:           incubating.DESCENDING,
+		Order:           incubating.DESCENDING,
 	})
 	if err != nil {
 		panic(err)
 	}
 
 	switch r := top5Rsp.(type) {
-	case *incubating.SortedSetFetchFound:
-		fmt.Println(fmt.Sprintf("%+v", r.Elements))
+	case *incubating.SortedSetFetchHit:
 		for _, e := range r.Elements {
 			fmt.Println(fmt.Sprintf("set: %s elementName: %s score: %f", setName, e.Name, e.Score))
 		}
-	case *incubating.SortedSetFetchMissing:
+	case *incubating.SortedSetFetchMiss:
 		fmt.Println("we regret to inform you there is no such set")
 		os.Exit(1)
 	}
@@ -91,6 +93,7 @@ func getClient() incubating.ScsClient {
 	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
+		DefaultTTL:         60 * time.Second,
 	})
 	if err != nil {
 		panic(err)
