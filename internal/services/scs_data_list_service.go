@@ -99,6 +99,92 @@ func (client *ScsDataClient) ListPushBack(ctx context.Context, request *models.L
 	return &models.ListPushBackSuccess{Value: resp.ListLength}, nil
 }
 
+func (client *ScsDataClient) ListPopFront(ctx context.Context, request *models.ListPopFrontRequest) (models.ListPopFrontResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListPopFront(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListPopFrontRequest{
+			ListName: []byte(request.ListName),
+		},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	switch r := resp.List.(type) {
+	case *pb.XListPopFrontResponse_Found:
+		return &models.ListPopFrontHit{Value: r.Found.Front}, nil
+	case *pb.XListPopFrontResponse_Missing:
+		return &models.ListPopFrontMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.ClientSdkError,
+			"Unknown response type for list pop front",
+			nil,
+		)
+	}
+}
+
+func (client *ScsDataClient) ListPopBack(ctx context.Context, request *models.ListPopBackRequest) (models.ListPopBackResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListPopBack(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListPopBackRequest{
+			ListName: []byte(request.ListName),
+		},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	switch r := resp.List.(type) {
+	case *pb.XListPopBackResponse_Found:
+		return &models.ListPopBackHit{Value: r.Found.Back}, nil
+	case *pb.XListPopBackResponse_Missing:
+		return &models.ListPopBackMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.ClientSdkError,
+			"Unknown response type for list pop back",
+			nil,
+		)
+	}
+}
+
+func (client *ScsDataClient) ListRemoveValue(ctx context.Context, request *models.ListRemoveValueRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	_, err := client.grpcClient.ListRemove(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListRemoveRequest{
+			ListName: []byte(request.ListName),
+			Remove: &pb.XListRemoveRequest_AllElementsWithValue{
+				AllElementsWithValue: request.Value,
+			},
+		},
+	)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
+func (client *ScsDataClient) ListDelete(ctx context.Context, request *models.ListDeleteRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	_, err := client.grpcClient.ListErase(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListEraseRequest{
+			ListName: []byte(request.ListName),
+			Erase:    &pb.XListEraseRequest_All{},
+		},
+	)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
 func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTTL, defaultTtl time.Duration) uint64 {
 	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
 }

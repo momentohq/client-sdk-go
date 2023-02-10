@@ -29,3 +29,24 @@ type ListPushBackRequest struct {
 	TruncateFrontToSize uint32
 	CollectionTTL       utils.CollectionTTL
 }
+
+type ListPopFrontRequest struct {
+	CacheName string
+	ListName  string
+}
+
+type ListPopBackRequest struct {
+	CacheName string
+	ListName  string
+}
+
+type ListRemoveValueRequest struct {
+	CacheName string
+	ListName  string
+	Value     []byte
+}
+
+type ListDeleteRequest struct {
+	CacheName string
+	ListName  string
+}
