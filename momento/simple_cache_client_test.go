@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	defaultTTL = time.Duration(time.Second * 3)
+	defaultTTL = time.Second * 3
 )
 
 // Basic happy path test - create a cache, operate set/get, and delete the cache

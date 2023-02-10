@@ -28,6 +28,7 @@ func getClient() ScsClient {
 	client, err := NewScsClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
+		DefaultTTL:         60 * time.Second,
 	})
 	if err != nil {
 		panic(err)
@@ -38,9 +39,7 @@ func getClient() ScsClient {
 func setup() {
 	ctx := context.Background()
 	client = getClient()
-	err := client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "test-cache",
-	})
+	err := client.CreateCache(ctx, &momento.CreateCacheRequest{})
 	if err != nil {
 		var momentoErr momento.MomentoError
 		if errors.As(err, &momentoErr) {
