@@ -22,7 +22,8 @@ jobs:
           sdk_language: Go
           usage_example_path: ./examples/main.go
 
-  test: [readme]
+  test:
+    needs: [readme]
     uses: ./.github/workflows/test.yml
     secrets:
       auth-token: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
