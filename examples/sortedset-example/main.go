@@ -50,7 +50,7 @@ func main() {
 
 	switch r := fetchResp.(type) {
 	case *incubating.SortedSetFetchHit:
-		fmt.Println(fmt.Sprintf("%+v", r.Elements))
+		fmt.Println("--------------")
 		fmt.Println("Found sorted set with following elements:")
 		for _, e := range r.Elements {
 			fmt.Println(fmt.Sprintf("set: %s elementName: %s score: %f", setName, e.Name, e.Score))
@@ -61,11 +61,13 @@ func main() {
 	}
 
 	// Fetch Top 5 items
+	fmt.Println("--------------")
+	fmt.Println("\n\nFetching Top5 values from sorted set:")
 	top5Rsp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
 		CacheName:       cacheName,
 		SetName:         setName,
 		NumberOfResults: incubating.FetchLimitedItems{Limit: 5},
-		//Order:           incubating.DESCENDING,
+		Order:           incubating.DESCENDING,
 	})
 	if err != nil {
 		panic(err)
@@ -73,7 +75,6 @@ func main() {
 
 	switch r := top5Rsp.(type) {
 	case *incubating.SortedSetFetchHit:
-		fmt.Println(fmt.Sprintf("%+v", r.Elements))
 		for _, e := range r.Elements {
 			fmt.Println(fmt.Sprintf("set: %s elementName: %s score: %f", setName, e.Name, e.Score))
 		}
