@@ -7,7 +7,7 @@ install-devtools:
 format:
 	gofmt -s -w .
 
-.PHONY: lint
+.PHONY: imports
 imports:
 	goimports -l -w .
 
