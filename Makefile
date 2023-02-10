@@ -31,7 +31,7 @@ precommit: lint test
 
 .PHONY: test
 test:
-	go test -v ./momento ./incubating
+	go test -v ./momento
 
 .PHONY: vendor
 vendor:
