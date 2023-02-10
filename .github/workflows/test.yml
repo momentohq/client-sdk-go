@@ -19,7 +19,7 @@ jobs:
       pull-requests: read
     env:
       TEST_AUTH_TOKEN: ${{ secrets.auth-token }}
-      TEST_CACHE_NAME: client-sdk-go-test-${{github.ref}}
+      TEST_CACHE_NAME: client-sdk-go-test-${{github.sha}}
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
