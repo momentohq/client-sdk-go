@@ -1,7 +1,7 @@
 package models
 
 import (
-	incubating "github.com/momentohq/client-sdk-go/utils"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 type SortedSetOrder int
@@ -20,7 +20,7 @@ type SortedSetPutRequest struct {
 	CacheName     string
 	SetName       []byte
 	Elements      []*SortedSetElement
-	CollectionTTL incubating.CollectionTTL
+	CollectionTTL utils.CollectionTTL
 }
 
 type SortedSetFetchNumResults interface {
@@ -80,5 +80,5 @@ type SortedSetIncrementRequest struct {
 	SetName       []byte
 	ElementName   []byte
 	Amount        uint64
-	CollectionTTL incubating.CollectionTTL
+	CollectionTTL utils.CollectionTTL
 }
