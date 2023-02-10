@@ -24,6 +24,8 @@ type ScsClient interface {
 	ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error)
 	ListPopFront(ctx context.Context, request *ListPopFrontRequest) (ListPopFrontResponse, error)
 	ListPopBack(ctx context.Context, request *ListPopBackRequest) (ListPopBackResponse, error)
+	ListRemoveValue(ctx context.Context, request *ListRemoveValueRequest) error
+	ListDelete(ctx context.Context, request *ListDeleteRequest) error
 
 	SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error
 	SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error)
@@ -156,7 +158,9 @@ func (c *DefaultScsClient) ListFetch(ctx context.Context, request *ListFetchRequ
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	// TODO: validate list name
+	if err := isListNameValid(request.ListName); err != nil {
+		return nil, err
+	}
 	rsp, err := c.dataClient.ListFetch(ctx, &models.ListFetchRequest{
 		CacheName: request.CacheName,
 		ListName:  request.ListName,
@@ -171,7 +175,9 @@ func (c *DefaultScsClient) ListLength(ctx context.Context, request *ListLengthRe
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	// TODO: validate list name
+	if err := isListNameValid(request.ListName); err != nil {
+		return nil, err
+	}
 	rsp, err := c.dataClient.ListLength(ctx, &models.ListLengthRequest{
 		CacheName: request.CacheName,
 		ListName:  request.ListName,
@@ -186,7 +192,9 @@ func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushF
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	// TODO: validate list name
+	if err := isListNameValid(request.ListName); err != nil {
+		return nil, err
+	}
 	rsp, err := c.dataClient.ListPushFront(ctx, &models.ListPushFrontRequest{
 		CacheName:          request.CacheName,
 		ListName:           request.ListName,
@@ -204,7 +212,9 @@ func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBa
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	// TODO: validate list name
+	if err := isListNameValid(request.ListName); err != nil {
+		return nil, err
+	}
 	rsp, err := c.dataClient.ListPushBack(ctx, &models.ListPushBackRequest{
 		CacheName:           request.CacheName,
 		ListName:            request.ListName,
@@ -222,7 +232,9 @@ func (c *DefaultScsClient) ListPopFront(ctx context.Context, request *ListPopFro
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	// TODO: validate list name
+	if err := isListNameValid(request.ListName); err != nil {
+		return nil, err
+	}
 	rsp, err := c.dataClient.ListPopFront(ctx, &models.ListPopFrontRequest{
 		CacheName: request.CacheName,
 		ListName:  request.ListName,
@@ -237,7 +249,9 @@ func (c *DefaultScsClient) ListPopBack(ctx context.Context, request *ListPopBack
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	// TODO: validate list name
+	if err := isListNameValid(request.ListName); err != nil {
+		return nil, err
+	}
 	rsp, err := c.dataClient.ListPopBack(ctx, &models.ListPopBackRequest{
 		CacheName: request.CacheName,
 		ListName:  request.ListName,
@@ -246,6 +260,41 @@ func (c *DefaultScsClient) ListPopBack(ctx context.Context, request *ListPopBack
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return convertListPopBackResponse(rsp)
+}
+
+func (c *DefaultScsClient) ListRemoveValue(ctx context.Context, request *ListRemoveValueRequest) error {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
+	if err := isListNameValid(request.ListName); err != nil {
+		return err
+	}
+	err := c.dataClient.ListRemoveValue(ctx, &models.ListRemoveValueRequest{
+		CacheName: request.CacheName,
+		ListName:  request.ListName,
+		Value:     request.Value,
+	})
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+	return nil
+}
+
+func (c *DefaultScsClient) ListDelete(ctx context.Context, request *ListDeleteRequest) error {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
+	if err := isListNameValid(request.ListName); err != nil {
+		return err
+	}
+	err := c.dataClient.ListDelete(ctx, &models.ListDeleteRequest{
+		CacheName: request.CacheName,
+		ListName:  request.ListName,
+	})
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+	return nil
 }
 
 func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error {
@@ -509,11 +558,23 @@ func convertListPopBackResponse(r models.ListPopBackResponse) (ListPopBackRespon
 }
 
 // TODO: refactor these for sharing with momento module
-func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
-	if len(strings.TrimSpace(cacheName)) < 1 {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
+func isNameValid(name string, label string) momentoerrors.MomentoSvcErr {
+	if len(strings.TrimSpace(name)) < 1 {
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			fmt.Sprintf("%s name cannot be empty", label),
+			nil,
+		)
 	}
 	return nil
+}
+
+func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
+	return isNameValid(cacheName, "Cache")
+}
+
+func isListNameValid(listName string) momentoerrors.MomentoSvcErr {
+	return isNameValid(listName, "List")
 }
 
 func convertSortedSetFetchNumResultsRequest(results SortedSetFetchNumResults) models.SortedSetFetchNumResults {

@@ -149,8 +149,42 @@ func (client *ScsDataClient) ListPopBack(ctx context.Context, request *models.Li
 			nil,
 		)
 	}
-
 }
+
+func (client *ScsDataClient) ListRemoveValue(ctx context.Context, request *models.ListRemoveValueRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	_, err := client.grpcClient.ListRemove(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListRemoveRequest{
+			ListName: []byte(request.ListName),
+			Remove: &pb.XListRemoveRequest_AllElementsWithValue{
+				AllElementsWithValue: request.Value,
+			},
+		},
+	)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
+func (client *ScsDataClient) ListDelete(ctx context.Context, request *models.ListDeleteRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	_, err := client.grpcClient.ListErase(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XListEraseRequest{
+			ListName: []byte(request.ListName),
+			Erase:    &pb.XListEraseRequest_All{},
+		},
+	)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
 func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTTL, defaultTtl time.Duration) uint64 {
 	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
 }
