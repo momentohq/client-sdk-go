@@ -28,5 +28,3 @@ jobs:
     secrets:
       auth-token: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
       secrets: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
-    with:
-      live: true
