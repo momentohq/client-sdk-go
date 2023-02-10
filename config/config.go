@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type ConfigurationProps struct {
@@ -26,7 +27,7 @@ type Configuration interface {
 
 	// WithClientTimeout Copy constructor for overriding TransportStrategy client side timeout. Returns a new
 	//Configuration object with the specified momento.TransportStrategy using passed client side timeout.
-	WithClientTimeout(clientTimeoutMillis time.Duration) Configuration
+	WithClientTimeout(clientTimeout time.Duration) Configuration
 }
 
 type SimpleCacheConfiguration struct {

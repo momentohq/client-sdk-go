@@ -29,13 +29,13 @@ type SortedSetFetchNumResults interface {
 
 type FetchAllItems struct{}
 
-func (_ FetchAllItems) isSortedSetFetchNumResults() {}
+func (FetchAllItems) isSortedSetFetchNumResults() {}
 
 type FetchLimitedItems struct {
 	Limit uint32
 }
 
-func (_ FetchLimitedItems) isSortedSetFetchNumResults() {}
+func (FetchLimitedItems) isSortedSetFetchNumResults() {}
 
 type SortedSetFetchRequest struct {
 	CacheName       string
@@ -61,13 +61,13 @@ type SortedSetRemoveNumItems interface {
 
 type RemoveAllItems struct{}
 
-func (_ RemoveAllItems) isSortedSetRemoveNumItem() {}
+func (RemoveAllItems) isSortedSetRemoveNumItem() {}
 
 type RemoveSomeItems struct {
 	ElementsToRemove [][]byte
 }
 
-func (_ RemoveSomeItems) isSortedSetRemoveNumItem() {}
+func (RemoveSomeItems) isSortedSetRemoveNumItem() {}
 
 type SortedSetGetRankRequest struct {
 	CacheName   string
