@@ -26,7 +26,7 @@ func main() {
 	for i := 1; i < 11; i++ {
 		err := client.SortedSetPut(ctx, &incubating.SortedSetPutRequest{
 			CacheName: cacheName,
-			SetName:   momento.StringBytes{Text: setName},
+			SetName:   setName,
 			Elements: []*incubating.SortedSetScoreRequestElement{{
 				Name:  momento.StringBytes{Text: fmt.Sprintf("key:%d", i)},
 				Score: float64(i),
@@ -41,20 +41,20 @@ func main() {
 	// Fetch All
 	fetchResp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
 		CacheName: cacheName,
-		SetName:   momento.StringBytes{Text: setName},
+		SetName:   setName,
 	})
 	if err != nil {
 		panic(err)
 	}
 
 	switch r := fetchResp.(type) {
-	case *incubating.SortedSetFetchFound:
+	case *incubating.SortedSetFetchHit:
 		fmt.Println(fmt.Sprintf("%+v", r.Elements))
 		fmt.Println("Found sorted set with following elements:")
 		for _, e := range r.Elements {
 			fmt.Println(fmt.Sprintf("set: %s elementName: %s score: %f", setName, e.Name, e.Score))
 		}
-	case *incubating.SortedSetFetchMissing:
+	case *incubating.SortedSetFetchMiss:
 		fmt.Println("we regret to inform you there is no such set")
 		os.Exit(1)
 	}
@@ -62,7 +62,7 @@ func main() {
 	// Fetch Top 5 items
 	top5Rsp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
 		CacheName:       cacheName,
-		SetName:         momento.StringBytes{Text: setName},
+		SetName:         setName,
 		NumberOfResults: incubating.FetchLimitedItems{Limit: 5},
 		//Order:           incubating.DESCENDING,
 	})
@@ -71,12 +71,12 @@ func main() {
 	}
 
 	switch r := top5Rsp.(type) {
-	case *incubating.SortedSetFetchFound:
+	case *incubating.SortedSetFetchHit:
 		fmt.Println(fmt.Sprintf("%+v", r.Elements))
 		for _, e := range r.Elements {
 			fmt.Println(fmt.Sprintf("set: %s elementName: %s score: %f", setName, e.Name, e.Score))
 		}
-	case *incubating.SortedSetFetchMissing:
+	case *incubating.SortedSetFetchMiss:
 		fmt.Println("we regret to inform you there is no such set")
 		os.Exit(1)
 	}
