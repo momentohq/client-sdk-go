@@ -218,6 +218,36 @@ func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBa
 	return convertListPushBackResponse(rsp)
 }
 
+func (c *DefaultScsClient) ListPopFront(ctx context.Context, request *ListPopFrontRequest) (ListPopFrontResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListPopFront(ctx, &models.ListPopFrontRequest{
+		CacheName: request.CacheName,
+		ListName:  request.ListName,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertListPopFrontResponse(rsp)
+}
+
+func (c *DefaultScsClient) ListPopBack(ctx context.Context, request *ListPopBackRequest) (ListPopBackResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	// TODO: validate list name
+	rsp, err := c.dataClient.ListPopBack(ctx, &models.ListPopBackRequest{
+		CacheName: request.CacheName,
+		ListName:  request.ListName,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertListPopBackResponse(rsp)
+}
+
 func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error {
 	setName, err := isSetNameValid([]byte(request.SetName))
 	if err != nil {
@@ -439,6 +469,36 @@ func convertListPushBackResponse(r models.ListPushBackResponse) (ListPushBackRes
 	switch response := r.(type) {
 	case *models.ListPushBackSuccess:
 		return &ListPushBackSuccess{value: response.Value}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list push back status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertListPopFrontResponse(r models.ListPopFrontResponse) (ListPopFrontResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListPopFrontHit:
+		return &ListPopFrontHit{value: response.Value}, nil
+	case *models.ListPopFrontMiss:
+		return &ListPopFrontMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected list push back status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertListPopBackResponse(r models.ListPopBackResponse) (ListPopBackResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.ListPopBackHit:
+		return &ListPopBackHit{value: response.Value}, nil
+	case *models.ListPopBackMiss:
+		return &ListPopBackMiss{}, nil
 	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momento.ClientSdkError,

@@ -111,7 +111,18 @@ func (client *ScsDataClient) ListPopFront(ctx context.Context, request *models.L
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return &models.ListPopFrontSuccess{Value: resp.ListLength}, nil
+	switch r := resp.List.(type) {
+	case *pb.XListPopFrontResponse_Found:
+		return &models.ListPopFrontHit{Value: r.Found.Front}, nil
+	case *pb.XListPopFrontResponse_Missing:
+		return &models.ListPopFrontMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.ClientSdkError,
+			"Unknown response type for list pop front",
+			nil,
+		)
+	}
 }
 
 func (client *ScsDataClient) ListPopBack(ctx context.Context, request *models.ListPopBackRequest) (models.ListPopBackResponse, momentoerrors.MomentoSvcErr) {
@@ -126,9 +137,21 @@ func (client *ScsDataClient) ListPopBack(ctx context.Context, request *models.Li
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return &models.ListPopBackSuccess{Value: resp.ListLength}, nil
+	switch r := resp.List.(type) {
+	case *pb.XListPopBackResponse_Found:
+		return &models.ListPopBackHit{Value: r.Found.Back}, nil
+	case *pb.XListPopBackResponse_Missing:
+		return &models.ListPopBackMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.ClientSdkError,
+			"Unknown response type for list pop back",
+			nil,
+		)
+	}
+
 }
-func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTtl, defaultTtl time.Duration) uint64 {
+func collectionTtlOrDefaultMilliseconds(collectionTtl utils.CollectionTTL, defaultTtl time.Duration) uint64 {
 	return ttlOrDefaultMilliseconds(collectionTtl.Ttl, defaultTtl)
 }
 
