@@ -5,6 +5,7 @@ on:
 
 jobs:
   commitlint:
+    runs-on: ubuntu-latest
     steps:
       - uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
         env:
