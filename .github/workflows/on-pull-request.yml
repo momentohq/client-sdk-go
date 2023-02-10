@@ -1,11 +1,17 @@
-name: On pull request or push to main
+name: On pull request
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
 
 jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Commitlint and Other Shared Build Steps
+        uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   readme:
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +29,6 @@ jobs:
           usage_example_path: ./examples/main.go
 
   test:
-    needs: [readme]
     uses: ./.github/workflows/test.yml
     secrets:
       auth-token: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}

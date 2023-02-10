@@ -26,12 +26,6 @@ jobs:
         with:
           token: ${{ secrets.github-token }}
 
-
-      - name: Commitlint and Other Shared Build Steps
-        uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.github-token }}
-
       - name: Install Go
         uses: actions/setup-go@v3
         with:
