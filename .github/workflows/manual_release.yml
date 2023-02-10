@@ -6,6 +6,7 @@ on:
 
 jobs:
   release:
+    needs: [test]
     runs-on: ubuntu-20.04
     outputs:
       version: ${{ steps.release.outputs.release }}
