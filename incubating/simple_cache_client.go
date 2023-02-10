@@ -298,14 +298,16 @@ func (c *DefaultScsClient) ListDelete(ctx context.Context, request *ListDeleteRe
 }
 
 func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error {
-	setName, err := isSetNameValid([]byte(request.SetName))
-	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
+	if err := isSetNameValid(request.SetName); err != nil {
+		return err
 	}
 
-	err = c.dataClient.SortedSetPut(ctx, &models.SortedSetPutRequest{
+	err := c.dataClient.SortedSetPut(ctx, &models.SortedSetPutRequest{
 		CacheName:     request.CacheName,
-		SetName:       setName,
+		SetName:       []byte(request.SetName),
 		Elements:      convertSortedSetScoreRequestElement(request.Elements),
 		CollectionTTL: request.CollectionTTL,
 	})
@@ -316,14 +318,16 @@ func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetP
 }
 
 func (c *DefaultScsClient) SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
-	setName, err := isSetNameValid([]byte(request.SetName))
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	if err := isSetNameValid(request.SetName); err != nil {
+		return nil, err
 	}
 
 	rsp, err := c.dataClient.SortedSetFetch(ctx, &models.SortedSetFetchRequest{
 		CacheName:       request.CacheName,
-		SetName:         setName,
+		SetName:         []byte(request.SetName),
 		Order:           models.SortedSetOrder(request.Order),
 		NumberOfResults: convertSortedSetFetchNumResultsRequest(request.NumberOfResults),
 	})
@@ -347,14 +351,16 @@ func (c *DefaultScsClient) SortedSetFetch(ctx context.Context, request *SortedSe
 }
 
 func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
-	setName, err := isSetNameValid([]byte(request.SetName))
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	if err := isSetNameValid(request.SetName); err != nil {
+		return nil, err
 	}
 
 	rsp, err := c.dataClient.SortedSetGetScore(ctx, &models.SortedSetGetScoreRequest{
 		CacheName:    request.CacheName,
-		SetName:      setName,
+		SetName:      []byte(request.SetName),
 		ElementNames: momentoBytesListToPrimitiveByteList(request.ElementNames),
 	})
 	if err != nil {
@@ -377,14 +383,16 @@ func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *Sorte
 
 }
 func (c *DefaultScsClient) SortedSetRemove(ctx context.Context, request *SortedSetRemoveRequest) error {
-	setName, err := isSetNameValid([]byte(request.SetName))
-	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return err
+	}
+	if err := isSetNameValid(request.SetName); err != nil {
+		return err
 	}
 
-	err = c.dataClient.SortedSetRemove(ctx, &models.SortedSetRemoveRequest{
+	err := c.dataClient.SortedSetRemove(ctx, &models.SortedSetRemoveRequest{
 		CacheName:        request.CacheName,
-		SetName:          setName,
+		SetName:          []byte(request.SetName),
 		ElementsToRemove: convertSortedSetRemoveNumItemsRequest(request.ElementsToRemove),
 	})
 	if err != nil {
@@ -394,15 +402,17 @@ func (c *DefaultScsClient) SortedSetRemove(ctx context.Context, request *SortedS
 }
 
 func (c *DefaultScsClient) SortedSetGetRank(ctx context.Context, request *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
-	setName, err := isSetNameValid([]byte(request.SetName))
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	if err := isSetNameValid(request.SetName); err != nil {
+		return nil, err
 	}
 	// TODO validate element name
 
 	rsp, err := c.dataClient.SortedSetGetRank(ctx, &models.SortedSetGetRankRequest{
 		CacheName:   request.CacheName,
-		SetName:     setName,
+		SetName:     []byte(request.SetName),
 		ElementName: request.ElementName.AsBytes(),
 	})
 	if err != nil {
@@ -557,26 +567,6 @@ func convertListPopBackResponse(r models.ListPopBackResponse) (ListPopBackRespon
 	}
 }
 
-// TODO: refactor these for sharing with momento module
-func isNameValid(name string, label string) momentoerrors.MomentoSvcErr {
-	if len(strings.TrimSpace(name)) < 1 {
-		return momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			fmt.Sprintf("%s name cannot be empty", label),
-			nil,
-		)
-	}
-	return nil
-}
-
-func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
-	return isNameValid(cacheName, "Cache")
-}
-
-func isListNameValid(listName string) momentoerrors.MomentoSvcErr {
-	return isNameValid(listName, "List")
-}
-
 func convertSortedSetFetchNumResultsRequest(results SortedSetFetchNumResults) models.SortedSetFetchNumResults {
 	switch r := results.(type) {
 	case FetchLimitedItems:
@@ -584,12 +574,6 @@ func convertSortedSetFetchNumResultsRequest(results SortedSetFetchNumResults) mo
 	default:
 		return &models.FetchAllItems{}
 	}
-}
-func isSetNameValid(key []byte) ([]byte, momentoerrors.MomentoSvcErr) {
-	if len(key) == 0 {
-		return key, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
-	}
-	return key, nil
 }
 
 func convertInternalSortedSetElement(e []*models.SortedSetElement) []*SortedSetElement {
@@ -647,4 +631,28 @@ func momentoBytesListToPrimitiveByteList(i []momento.Bytes) [][]byte {
 		rList = append(rList, mb.AsBytes())
 	}
 	return rList
+}
+
+// TODO: refactor these for sharing with momento module
+func isNameValid(name string, label string) momentoerrors.MomentoSvcErr {
+	if len(strings.TrimSpace(name)) < 1 {
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			fmt.Sprintf("%s name cannot be empty", label),
+			nil,
+		)
+	}
+	return nil
+}
+
+func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
+	return isNameValid(cacheName, "Cache")
+}
+
+func isListNameValid(listName string) momentoerrors.MomentoSvcErr {
+	return isNameValid(listName, "List")
+}
+
+func isSetNameValid(setName string) momentoerrors.MomentoSvcErr {
+	return isNameValid(setName, "Set")
 }
