@@ -5,8 +5,8 @@ on:
 
 jobs:
   commitlint:
-    - uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
-    - env:
+    uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
+    env:
       GITHUB_TOKEN: ${{ secrets.github-token }}
 
   readme:
