@@ -56,7 +56,7 @@ func pollForMessages(sub incubating.SubscriptionIFace) {
 }
 
 func getClient() incubating.ScsClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}

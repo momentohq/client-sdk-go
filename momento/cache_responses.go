@@ -35,14 +35,14 @@ type CacheGetResponse interface {
 // CacheGetMiss Miss Response to a cache Get api request.
 type CacheGetMiss struct{}
 
-func (_ CacheGetMiss) isCacheGetResponse() {}
+func (CacheGetMiss) isCacheGetResponse() {}
 
 // CacheGetHit Hit Response to a cache Get api request.
 type CacheGetHit struct {
 	value []byte
 }
 
-func (_ CacheGetHit) isCacheGetResponse() {}
+func (CacheGetHit) isCacheGetResponse() {}
 
 // ValueString Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
 func (resp CacheGetHit) ValueString() string {

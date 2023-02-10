@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -24,6 +23,14 @@ type ScsClient interface {
 	ListPushFront(ctx context.Context, request *ListPushFrontRequest) (ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, request *ListPushBackRequest) (ListPushBackResponse, error)
 
+	SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error
+	SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error)
+	SortedSetGetScore(ctx context.Context, request *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error)
+	SortedSetRemove(ctx context.Context, request *SortedSetRemoveRequest) error
+	SortedSetGetRank(ctx context.Context, request *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
+	// TODO need to impl sortedset increment still
+	//SortedSetIncrement(ctx context.Context, request *SortedSetIncrementRequest)
+
 	Close()
 }
 
@@ -35,9 +42,7 @@ type DefaultScsClient struct {
 	internalClient momento.ScsClient
 }
 
-const defaultTtl = time.Duration(time.Second * 60)
-
-// NewScsClient returns a new ScsClient with provided authToken, defaultTtl,, and opts arguments.
+// NewScsClient returns a new ScsClient with provided authToken, defaultTTL,, and opts arguments.
 func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
@@ -49,8 +54,13 @@ func NewScsClient(props *momento.SimpleCacheClientProps) (ScsClient, error) {
 	}
 
 	if props.DefaultTTL == 0 {
-		props.DefaultTTL = defaultTtl
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"Must Define a non zero Default TTL", nil),
+		)
 	}
+
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
@@ -180,7 +190,7 @@ func (c *DefaultScsClient) ListPushFront(ctx context.Context, request *ListPushF
 		ListName:           request.ListName,
 		Value:              request.Value,
 		TruncateBackToSize: request.TruncateBackToSize,
-		CollectionTtl:      request.CollectionTtl,
+		CollectionTtl:      request.CollectionTTL,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
@@ -198,12 +208,153 @@ func (c *DefaultScsClient) ListPushBack(ctx context.Context, request *ListPushBa
 		ListName:            request.ListName,
 		Value:               request.Value,
 		TruncateFrontToSize: request.TruncateFrontToSize,
-		CollectionTtl:       request.CollectionTtl,
+		CollectionTtl:       request.CollectionTTL,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return convertListPushBackResponse(rsp)
+}
+
+func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error {
+	setName, err := isSetNameValid([]byte(request.SetName))
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+
+	err = c.dataClient.SortedSetPut(ctx, &models.SortedSetPutRequest{
+		CacheName:     request.CacheName,
+		SetName:       setName,
+		Elements:      convertSortedSetScoreRequestElement(request.Elements),
+		CollectionTTL: request.CollectionTTL,
+	})
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+	return nil
+}
+
+func (c *DefaultScsClient) SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
+	setName, err := isSetNameValid([]byte(request.SetName))
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+
+	rsp, err := c.dataClient.SortedSetFetch(ctx, &models.SortedSetFetchRequest{
+		CacheName:       request.CacheName,
+		SetName:         setName,
+		Order:           models.SortedSetOrder(request.Order),
+		NumberOfResults: convertSortedSetFetchNumResultsRequest(request.NumberOfResults),
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	switch r := rsp.(type) {
+	case *models.SortedSetFetchMissing:
+		return SortedSetFetchMiss{}, nil
+	case *models.SortedSetFetchFound:
+		return &SortedSetFetchHit{
+			Elements: convertInternalSortedSetElement(r.Elements),
+		}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected sortedset fetch status returned %+v", r),
+			nil,
+		)
+	}
+}
+
+func (c *DefaultScsClient) SortedSetGetScore(ctx context.Context, request *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
+	setName, err := isSetNameValid([]byte(request.SetName))
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+
+	rsp, err := c.dataClient.SortedSetGetScore(ctx, &models.SortedSetGetScoreRequest{
+		CacheName:    request.CacheName,
+		SetName:      setName,
+		ElementNames: momentoBytesListToPrimitiveByteList(request.ElementNames),
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	switch r := rsp.(type) {
+	case *models.SortedSetGetScoreMiss:
+		return &SortedSetGetScoreMiss{}, nil
+	case *models.SortedSetGetScoreHit:
+		return &SortedSetGetScoreHit{
+			Elements: convertSortedSetScoreElement(r.Elements),
+		}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected sortedset getscore status returned %+v", r),
+			nil,
+		)
+	}
+
+}
+func (c *DefaultScsClient) SortedSetRemove(ctx context.Context, request *SortedSetRemoveRequest) error {
+	setName, err := isSetNameValid([]byte(request.SetName))
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+
+	err = c.dataClient.SortedSetRemove(ctx, &models.SortedSetRemoveRequest{
+		CacheName:        request.CacheName,
+		SetName:          setName,
+		ElementsToRemove: convertSortedSetRemoveNumItemsRequest(request.ElementsToRemove),
+	})
+	if err != nil {
+		return convertMomentoSvcErrorToCustomerError(err)
+	}
+	return nil
+}
+
+func (c *DefaultScsClient) SortedSetGetRank(ctx context.Context, request *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
+	setName, err := isSetNameValid([]byte(request.SetName))
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	// TODO validate element name
+
+	rsp, err := c.dataClient.SortedSetGetRank(ctx, &models.SortedSetGetRankRequest{
+		CacheName:   request.CacheName,
+		SetName:     setName,
+		ElementName: request.ElementName.AsBytes(),
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	switch r := rsp.(type) {
+	case *models.SortedSetGetRankMiss:
+		return &SortedSetGetRankMiss{}, nil
+	case *models.SortedSetGetRankHit:
+		if r.Status == models.Hit {
+			return &SortedSetGetRankHit{
+				Element: &SortedSetRankHit{
+					Rank: r.Rank,
+				},
+			}, nil
+		} else if r.Status == models.Miss {
+			return &SortedSetGetRankHit{
+				Element: &SortedSetRankMiss{},
+			}, nil
+		} else {
+			return nil, momentoerrors.NewMomentoSvcErr(
+				momento.ClientSdkError,
+				fmt.Sprintf("unexpected sortedset getRank status returned %+v", r.Status),
+				nil,
+			)
+		}
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected sortedset getscore status returned %+v", r),
+			nil,
+		)
+	}
 }
 
 // Close shutdown the client.
@@ -274,11 +425,11 @@ func convertListPushFrontResponse(r models.ListPushFrontResponse) (ListPushFront
 	case *models.ListPushFrontSuccess:
 		return &ListPushFrontSuccess{value: response.Value}, nil
 	default:
-		return nil, momentoerrors.NewMomentoSvcErr(
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.NewMomentoSvcErr(
 			momento.ClientSdkError,
 			fmt.Sprintf("unexpected list push front status returned %+v", response),
 			nil,
-		)
+		))
 	}
 }
 
@@ -301,4 +452,76 @@ func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
 	return nil
+}
+
+func convertSortedSetFetchNumResultsRequest(results SortedSetFetchNumResults) models.SortedSetFetchNumResults {
+	switch r := results.(type) {
+	case FetchLimitedItems:
+		return &models.FetchLimitedItems{Limit: r.Limit}
+	default:
+		return &models.FetchAllItems{}
+	}
+}
+func isSetNameValid(key []byte) ([]byte, momentoerrors.MomentoSvcErr) {
+	if len(key) == 0 {
+		return key, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
+	}
+	return key, nil
+}
+
+func convertInternalSortedSetElement(e []*models.SortedSetElement) []*SortedSetElement {
+	var rList []*SortedSetElement
+	for _, el := range e {
+		rList = append(rList, &SortedSetElement{
+			Name:  el.Name,
+			Score: el.Score,
+		})
+	}
+	return rList
+}
+
+func convertSortedSetScoreRequestElement(e []*SortedSetScoreRequestElement) []*models.SortedSetElement {
+	var rList []*models.SortedSetElement
+	for _, el := range e {
+		rList = append(rList, &models.SortedSetElement{
+			Name:  el.Name.AsBytes(),
+			Score: el.Score,
+		})
+	}
+	return rList
+}
+
+func convertSortedSetScoreElement(e []*models.SortedSetScore) []SortedSetScoreElement {
+	var rList []SortedSetScoreElement
+	for _, el := range e {
+		if el.Result == models.Hit {
+			rList = append(rList, &SortedSetScoreHit{
+				Score: el.Score,
+			})
+		} else if el.Result == models.Miss {
+			rList = append(rList, &SortedSetScoreMiss{})
+		} else {
+			rList = append(rList, &SortedSetScoreInvalid{})
+		}
+	}
+	return rList
+}
+
+func convertSortedSetRemoveNumItemsRequest(results SortedSetRemoveNumItems) models.SortedSetRemoveNumItems {
+	switch r := results.(type) {
+	case RemoveSomeItems:
+		return &models.RemoveSomeItems{
+			ElementsToRemove: momentoBytesListToPrimitiveByteList(r.elementsToRemove),
+		}
+	default:
+		return &models.RemoveAllItems{}
+	}
+}
+
+func momentoBytesListToPrimitiveByteList(i []momento.Bytes) [][]byte {
+	var rList [][]byte
+	for _, mb := range i {
+		rList = append(rList, mb.AsBytes())
+	}
+	return rList
 }

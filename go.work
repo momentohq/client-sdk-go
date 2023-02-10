@@ -3,6 +3,4 @@ go 1.19
 use (
 	.
 	./examples
-	examples/pubsub-example
-	examples/list-example
 )

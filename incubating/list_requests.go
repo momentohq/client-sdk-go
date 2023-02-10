@@ -19,7 +19,7 @@ type ListPushFrontRequest struct {
 	ListName           string
 	Value              []byte
 	TruncateBackToSize uint32
-	CollectionTtl      utils.CollectionTtl
+	CollectionTTL      utils.CollectionTTL
 }
 
 type ListPushBackRequest struct {
@@ -27,5 +27,5 @@ type ListPushBackRequest struct {
 	ListName            string
 	Value               []byte
 	TruncateFrontToSize uint32
-	CollectionTtl       utils.CollectionTtl
+	CollectionTTL       utils.CollectionTTL
 }

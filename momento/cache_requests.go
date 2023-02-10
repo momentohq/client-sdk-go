@@ -3,14 +3,14 @@ package momento
 import "time"
 
 // Bytes generic interface to help users deal with passing us bytes
-type Bytes interface{ asBytes() []byte }
+type Bytes interface{ AsBytes() []byte }
 
 // RawBytes plain old []byte
 type RawBytes struct {
 	Bytes []byte
 }
 
-func (r RawBytes) asBytes() []byte {
+func (r RawBytes) AsBytes() []byte {
 	return r.Bytes
 }
 
@@ -19,7 +19,7 @@ type StringBytes struct {
 	Text string
 }
 
-func (r StringBytes) asBytes() []byte {
+func (r StringBytes) AsBytes() []byte {
 	return []byte(r.Text)
 }
 
@@ -47,7 +47,7 @@ type CacheSetRequest struct {
 	Value Bytes
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
-	Ttl time.Duration
+	TTL time.Duration
 }
 
 type CacheGetRequest struct {

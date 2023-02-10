@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/auth"
-	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
+
+	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
 )
 
 // ScsClient wraps lower level cache control and data operations.
@@ -48,8 +49,6 @@ type SimpleCacheClientProps struct {
 	DefaultTTL         time.Duration
 }
 
-const defaultTtl = time.Duration(time.Second * 60)
-
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
@@ -68,8 +67,13 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	}
 
 	if props.DefaultTTL == 0 {
-		props.DefaultTTL = defaultTtl
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"Must Define a non zero Default TTL", nil),
+		)
 	}
+
 	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
@@ -129,15 +133,15 @@ func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) er
 		return err
 	}
 	ttlToUse := c.defaultTTL
-	if request.Ttl != time.Duration(0) {
-		ttlToUse = request.Ttl
+	if request.TTL != time.Duration(0) {
+		ttlToUse = request.TTL
 	}
 
-	key, err := isKeyValid(request.Key.asBytes())
+	key, err := isKeyValid(request.Key.AsBytes())
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
-	value, err := isValueValid(request.Value.asBytes())
+	value, err := isValueValid(request.Value.AsBytes())
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -155,7 +159,7 @@ func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (C
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
-	key, err := isKeyValid(request.Key.asBytes())
+	key, err := isKeyValid(request.Key.AsBytes())
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
@@ -173,7 +177,7 @@ func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteReque
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
-	key, err := isKeyValid(request.Key.asBytes())
+	key, err := isKeyValid(request.Key.AsBytes())
 	if err != nil {
 		return convertMomentoSvcErrorToCustomerError(err)
 	}

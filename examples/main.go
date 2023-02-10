@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -28,7 +29,7 @@ func main() {
 	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
-		DefaultTTLSeconds:  itemDefaultTTLSeconds,
+		DefaultTTL:         itemDefaultTTLSeconds * time.Second,
 	})
 	if err != nil {
 		panic(err)
