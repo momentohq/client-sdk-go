@@ -5,9 +5,10 @@ on:
 
 jobs:
   commitlint:
-    uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
-    env:
-      GITHUB_TOKEN: ${{ secrets.github-token }}
+    steps:
+      - uses: momentohq/standards-and-practices/github-actions/shared-build@gh-actions-v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
 
   readme:
     runs-on: ubuntu-latest
