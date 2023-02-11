@@ -41,7 +41,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
 
-	err = client.Set(ctx, &CacheSetRequest{
+	_, err = client.Set(ctx, &SetRequest{
 		CacheName: randomCacheName,
 		Key:       RawBytes{Bytes: key},
 		Value:     RawBytes{Bytes: value},
@@ -50,7 +50,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Errorf("error occurred setting key err=%+v", err)
 	}
 
-	err = client.Set(ctx, &CacheSetRequest{
+	_, err = client.Set(ctx, &SetRequest{
 		CacheName: randomCacheName,
 		Key:       StringBytes{Text: uuid.NewString()},
 		Value:     RawBytes{Bytes: value},
@@ -122,7 +122,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred creating cache err=%+v", err))
 	}
 
-	err = client.Set(ctx, &CacheSetRequest{
+	_, err = client.Set(ctx, &SetRequest{
 		CacheName: cacheName,
 		Key:       RawBytes{Bytes: key},
 		Value:     RawBytes{Bytes: value},
@@ -459,7 +459,7 @@ func TestSetGet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if tt.ttl == 0 {
 				// set string key/value with default ttl
-				err := client.Set(ctx, &CacheSetRequest{
+				_, err := client.Set(ctx, &SetRequest{
 					CacheName: testCacheName,
 					Key:       &StringBytes{Text: tt.key},
 					Value:     &StringBytes{Text: tt.value},
@@ -469,7 +469,7 @@ func TestSetGet(t *testing.T) {
 				}
 			} else {
 				// set string key/value with different ttl
-				err := client.Set(ctx, &CacheSetRequest{
+				_, err := client.Set(ctx, &SetRequest{
 					CacheName: testCacheName,
 					Key:       &StringBytes{Text: tt.key},
 					Value:     &StringBytes{Text: tt.value},
@@ -563,7 +563,7 @@ func TestSet(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			err := client.Set(ctx, &CacheSetRequest{
+			_, err := client.Set(ctx, &SetRequest{
 				CacheName: tt.cacheName,
 				Key:       &StringBytes{Text: tt.key},
 				Value:     &StringBytes{Text: tt.value},

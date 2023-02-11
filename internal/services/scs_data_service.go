@@ -22,6 +22,9 @@ type ScsDataClient struct {
 	endpoint       string
 }
 
+func (c ScsDataClient) RequestTimeout() time.Duration { return c.requestTimeout }
+func (c ScsDataClient) GrpcClient() pb.ScsClient      { return c.grpcClient }
+
 func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
@@ -52,30 +55,12 @@ func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
-func (client *ScsDataClient) Set(ctx context.Context, request *models.CacheSetRequest) momentoerrors.MomentoSvcErr {
-	itemTtlMillis := ttlOrDefaultMilliseconds(request.Ttl, client.defaultTtl)
-	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
-	_, err := client.grpcClient.Set(
-		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
-		&pb.XSetRequest{
-			CacheKey:        request.Key,
-			CacheBody:       request.Value,
-			TtlMilliseconds: itemTtlMillis,
-		},
-	)
-	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
-	}
-	return nil
-}
-
 func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (models.CacheGetResponse, momentoerrors.MomentoSvcErr) {
 	// Execute request
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	resp, err := client.grpcClient.Get(
-		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(request.CacheName)),
 		&pb.XGetRequest{CacheKey: request.Key},
 	)
 	if err != nil {
@@ -103,7 +88,7 @@ func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDe
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	_, err := client.grpcClient.Delete(
-		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(request.CacheName)),
 		&pb.XDeleteRequest{CacheKey: request.Key},
 	)
 	if err != nil {
@@ -112,6 +97,6 @@ func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDe
 	return nil
 }
 
-func createNewMetadata(cacheName string) metadata.MD {
+func (ScsDataClient) CreateNewMetadata(cacheName string) metadata.MD {
 	return metadata.Pairs("cache", cacheName)
 }

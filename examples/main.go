@@ -52,7 +52,7 @@ func main() {
 	key := uuid.NewString()
 	value := uuid.NewString()
 	log.Printf("Setting key: %s, value: %s\n", key, value)
-	err = client.Set(ctx, &momento.CacheSetRequest{
+	_, err = client.Set(ctx, &momento.SetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
 		Value:     &momento.StringBytes{Text: value},
