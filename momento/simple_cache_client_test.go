@@ -152,7 +152,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, GetHit{})
 	}
 
-	err = client.Delete(ctx, &CacheDeleteRequest{
+	_, err = client.Delete(ctx, &DeleteRequest{
 		CacheName: cacheName,
 		Key:       RawBytes{Bytes: key},
 	})
@@ -674,7 +674,7 @@ func TestDelete(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			err = client.Delete(ctx, &CacheDeleteRequest{
+			_, err = client.Delete(ctx, &DeleteRequest{
 				CacheName: tt.cacheName,
 				Key:       StringBytes{Text: tt.key},
 			})

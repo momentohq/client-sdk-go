@@ -28,7 +28,7 @@ type ScsClient interface {
 	// Get Retrieve an item from the cache.
 	Get(ctx context.Context, request *GetRequest) (GetResponse, error)
 	// Delete an item from the cache.
-	Delete(ctx context.Context, request *CacheDeleteRequest) error
+	Delete(ctx context.Context, request *DeleteRequest) (DeleteResponse, error)
 
 	// Close Closes the client.
 	Close()
@@ -135,19 +135,8 @@ func (c DefaultScsClient) Get(ctx context.Context, request *GetRequest) (GetResp
 	return request.makeRequest(ctx, c)
 }
 
-func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return err
-	}
-	key, err := isKeyValid(request.Key.AsBytes())
-	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
-	}
-	err = c.dataClient.Delete(ctx, &models.CacheDeleteRequest{
-		CacheName: request.CacheName,
-		Key:       key,
-	})
-	return convertMomentoSvcErrorToCustomerError(err)
+func (c DefaultScsClient) Delete(ctx context.Context, request *DeleteRequest) (DeleteResponse, error) {
+	return request.makeRequest(ctx, c)
 }
 
 func (c *DefaultScsClient) Close() {
@@ -170,13 +159,6 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 		})
 	}
 	return convertedList
-}
-
-func isKeyValid(key []byte) ([]byte, momentoerrors.MomentoSvcErr) {
-	if len(key) == 0 {
-		return key, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
-	}
-	return key, nil
 }
 
 func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {

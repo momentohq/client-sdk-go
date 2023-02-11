@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -52,19 +51,6 @@ func (client *ScsDataClient) Endpoint() string {
 
 func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
-}
-
-func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {
-	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
-	_, err := client.grpcClient.Delete(
-		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(request.CacheName)),
-		&pb.XDeleteRequest{CacheKey: request.Key},
-	)
-	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
-	}
-	return nil
 }
 
 func (ScsDataClient) CreateNewMetadata(cacheName string) metadata.MD {
