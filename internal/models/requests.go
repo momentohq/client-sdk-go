@@ -19,17 +19,6 @@ type DataGrpcManagerRequest struct {
 type LocalDataGrpcManagerRequest struct {
 	Endpoint string
 }
-type GetRequest struct {
-	// CacheName Name of the cache to get the item from
-	CacheName string
-	// Key []byte key to be used to retrieve item from cache
-	Key []byte
-}
-
-type CacheDeleteRequest struct {
-	CacheName string
-	Key       []byte
-}
 
 type CreateCacheRequest struct {
 	CacheName string
