@@ -24,11 +24,11 @@ type ScsClient interface {
 	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
 
 	// Set Stores an item in cache.
-	Set(ctx context.Context, request *SetRequest) (SetResponse, error)
+	Set(ctx context.Context, request SetRequest) (SetResponse, error)
 	// Get Retrieve an item from the cache.
-	Get(ctx context.Context, request *GetRequest) (GetResponse, error)
+	Get(ctx context.Context, request GetRequest) (GetResponse, error)
 	// Delete an item from the cache.
-	Delete(ctx context.Context, request *DeleteRequest) (DeleteResponse, error)
+	Delete(ctx context.Context, request DeleteRequest) (DeleteResponse, error)
 
 	// Close Closes the client.
 	Close()
@@ -126,16 +126,25 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 	}, nil
 }
 
-func (c DefaultScsClient) Set(ctx context.Context, request *SetRequest) (SetResponse, error) {
-	return request.makeRequest(ctx, *c.dataClient)
+func (c DefaultScsClient) Set(ctx context.Context, r SetRequest) (SetResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, &r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
-func (c DefaultScsClient) Get(ctx context.Context, request *GetRequest) (GetResponse, error) {
-	return request.makeRequest(ctx, *c.dataClient)
+func (c DefaultScsClient) Get(ctx context.Context, r GetRequest) (GetResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, &r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
-func (c DefaultScsClient) Delete(ctx context.Context, request *DeleteRequest) (DeleteResponse, error) {
-	return request.makeRequest(ctx, *c.dataClient)
+func (c DefaultScsClient) Delete(ctx context.Context, r DeleteRequest) (DeleteResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, &r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
 func (c *DefaultScsClient) Close() {

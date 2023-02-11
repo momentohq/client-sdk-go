@@ -4,10 +4,20 @@ import (
 	"context"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"google.golang.org/grpc/metadata"
+	client_sdk_go "github.com/momentohq/client-sdk-go/internal/protos"
 )
+
+//////////// SetResponse /////////////
+
+type SetResponse interface {
+	isSetResponse()
+}
+
+type SetSuccess struct{}
+
+func (SetSuccess) isSetResponse() {}
+
+///////////// SetRequest /////////////
 
 type SetRequest struct {
 	// Name of the cache to store the item in.
@@ -19,6 +29,10 @@ type SetRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	TTL time.Duration
+
+	grpcRequest  *client_sdk_go.XSetRequest
+	grpcResponse *client_sdk_go.XSetResponse
+	response     SetResponse
 }
 
 func (r SetRequest) cacheName() string { return r.CacheName }
@@ -29,54 +43,45 @@ func (r SetRequest) value() Bytes { return r.Value }
 
 func (r SetRequest) ttl() time.Duration { return r.TTL }
 
-type SetResponse interface {
-	isSetResponse()
-}
+func (r SetRequest) requestName() string { return "Set" }
 
-type SetSuccess struct{}
-
-func (SetSuccess) isSetResponse() {}
-
-func (r SetRequest) makeRequest(
-	ctx context.Context,
-	client scsDataClient,
-) (SetResponse, error) {
+func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
-
-	var cache string
-	if cache, err = prepareCacheName(r); err != nil {
-		return nil, err
-	}
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return nil, err
+		return err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return nil, err
+		return err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTTL(r, client.defaultTtl); err != nil {
+		return err
+	}
+
+	r.grpcRequest = &client_sdk_go.XSetRequest{
+		CacheKey:        key,
+		CacheBody:       value,
+		TtlMilliseconds: ttl,
+	}
+
+	return nil
+}
+
+func (r *SetRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+	resp, err := client.grpcClient.Set(metadata, r.grpcRequest)
+	if err != nil {
 		return nil, err
 	}
+	r.grpcResponse = resp
+	return resp, nil
+}
 
-	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
-
-	_, err = client.grpcClient.Set(
-		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(cache)),
-		&pb.XSetRequest{
-			CacheKey:        key,
-			CacheBody:       value,
-			TtlMilliseconds: ttl,
-		},
-	)
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
-	}
-
-	return SetSuccess{}, nil
+func (r *SetRequest) interpretGrpcResponse() error {
+	r.response = SetSuccess{}
+	return nil
 }
