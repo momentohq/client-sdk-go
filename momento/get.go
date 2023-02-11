@@ -2,23 +2,11 @@ package momento
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	client_sdk_go "github.com/momentohq/client-sdk-go/internal/protos"
-	"google.golang.org/grpc/metadata"
 )
 
-type GetRequest struct {
-	// Name of the cache to get the item from
-	CacheName string
-	// string or byte key to be used to store item
-	Key Bytes
-}
-
-func (r GetRequest) cacheName() string { return r.CacheName }
-
-func (r GetRequest) key() Bytes { return r.Key }
+///// GetResponse ///////
 
 type GetResponse interface {
 	isGetResponse()
@@ -46,44 +34,61 @@ func (resp GetHit) ValueByte() []byte {
 	return resp.value
 }
 
-func (r GetRequest) makeRequest(ctx context.Context, client scsDataClient) (GetResponse, error) {
-	var err error
+///// GetRequest ///////
 
-	var cache string
-	if cache, err = prepareCacheName(r); err != nil {
-		return nil, err
-	}
+type GetRequest struct {
+	// Name of the cache to get the item from
+	CacheName string
+	// string or byte key to be used to store item
+	Key Bytes
+
+	grpcRequest  *client_sdk_go.XGetRequest
+	grpcResponse *client_sdk_go.XGetResponse
+	response     GetResponse
+}
+
+func (r GetRequest) cacheName() string { return r.CacheName }
+
+func (r GetRequest) key() Bytes { return r.Key }
+
+func (r GetRequest) requestName() string { return "Get" }
+
+func (r *GetRequest) initGrpcRequest(scsDataClient) error {
+	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
+		return err
+	}
+
+	r.grpcRequest = &client_sdk_go.XGetRequest{
+		CacheKey: key,
+	}
+
+	return nil
+}
+
+func (r *GetRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+	resp, err := client.grpcClient.Get(metadata, r.grpcRequest)
+	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
+	r.grpcResponse = resp
 
-	resp, err := client.grpcClient.Get(
-		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(cache)),
-		&client_sdk_go.XGetRequest{
-			CacheKey: key,
-		},
-	)
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
-	}
+	return resp, nil
+}
+
+func (r *GetRequest) interpretGrpcResponse() error {
+	resp := r.grpcResponse
 
 	if resp.Result == client_sdk_go.ECacheResult_Hit {
-		return &GetHit{value: resp.CacheBody}, nil
+		r.response = GetHit{value: resp.CacheBody}
+		return nil
 	} else if resp.Result == client_sdk_go.ECacheResult_Miss {
-		return &GetMiss{}, nil
+		r.response = GetMiss{}
+		return nil
 	} else {
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InternalServerError,
-			fmt.Sprintf(
-				"CacheService returned an unexpected result: %v for operation: %s with message: %s",
-				resp.Result, "GET", resp.Message,
-			),
-			nil,
-		)
+		return errUnexpectedGrpcResponse
 	}
 }

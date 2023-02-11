@@ -1,11 +1,28 @@
 package momento
 
 import (
+	"context"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
+
+var errUnexpectedGrpcResponse = errors.New("unexpected gRPC response")
+
+type requester interface {
+	hasCacheName
+	initGrpcRequest(client scsDataClient) error
+	makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error)
+	interpretGrpcResponse() error
+	requestName() string
+}
+
+type grpcResponse interface {
+	Reset()
+	String() string
+}
 
 type hasCacheName interface {
 	cacheName() string

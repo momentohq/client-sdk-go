@@ -1,6 +1,8 @@
 package momento
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -48,4 +50,39 @@ func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 
 func (scsDataClient) CreateNewMetadata(cacheName string) metadata.MD {
 	return metadata.Pairs("cache", cacheName)
+}
+
+func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
+	if _, err := prepareCacheName(r); err != nil {
+		return err
+	}
+
+	if err := r.initGrpcRequest(client); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+
+	metadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(r.cacheName()),
+	)
+
+	grpcResp, err := r.makeGrpcRequest(client, metadata)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+
+	if err := r.interpretGrpcResponse(); err != nil {
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InternalServerError,
+			fmt.Sprintf(
+				"%s request: %v. Request returned '%s'",
+				r.requestName(), err, grpcResp,
+			),
+			nil,
+		)
+	}
+
+	return nil
 }
