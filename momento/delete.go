@@ -29,7 +29,7 @@ func (DeleteSuccess) isDeleteResponse() {}
 
 func (r DeleteRequest) makeRequest(
 	ctx context.Context,
-	client DefaultScsClient,
+	client scsDataClient,
 ) (DeleteResponse, error) {
 	var err error
 
@@ -43,13 +43,11 @@ func (r DeleteRequest) makeRequest(
 		return nil, err
 	}
 
-	dataClient := client.dataClient
-
-	ctx, cancel := context.WithTimeout(ctx, dataClient.RequestTimeout())
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	_, err = dataClient.GrpcClient().Delete(
-		metadata.NewOutgoingContext(ctx, dataClient.CreateNewMetadata(cache)),
+	_, err = client.grpcClient.Delete(
+		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(cache)),
 		&client_sdk_go.XDeleteRequest{CacheKey: key},
 	)
 	if err != nil {

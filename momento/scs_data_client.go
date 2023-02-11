@@ -1,4 +1,4 @@
-package services
+package momento
 
 import (
 	"time"
@@ -12,7 +12,7 @@ import (
 
 const defaultRequestTimeout = 5 * time.Second
 
-type ScsDataClient struct {
+type scsDataClient struct {
 	grpcManager    *grpcmanagers.DataGrpcManager
 	grpcClient     pb.ScsClient
 	defaultTtl     time.Duration
@@ -20,10 +20,7 @@ type ScsDataClient struct {
 	endpoint       string
 }
 
-func (c ScsDataClient) RequestTimeout() time.Duration { return c.requestTimeout }
-func (c ScsDataClient) GrpcClient() pb.ScsClient      { return c.grpcClient }
-
-func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, momentoerrors.MomentoSvcErr) {
+func newScsDataClient(request *models.DataClientRequest) (*scsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 	})
@@ -36,7 +33,7 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	} else {
 		timeout = request.Configuration.GetClientSideTimeout()
 	}
-	return &ScsDataClient{
+	return &scsDataClient{
 		grpcManager:    dataManager,
 		grpcClient:     pb.NewScsClient(dataManager.Conn),
 		defaultTtl:     request.DefaultTtl,
@@ -45,14 +42,10 @@ func NewScsDataClient(request *models.DataClientRequest) (*ScsDataClient, moment
 	}, nil
 }
 
-func (client *ScsDataClient) Endpoint() string {
-	return client.endpoint
-}
-
-func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
+func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
-func (ScsDataClient) CreateNewMetadata(cacheName string) metadata.MD {
+func (scsDataClient) CreateNewMetadata(cacheName string) metadata.MD {
 	return metadata.Pairs("cache", cacheName)
 }

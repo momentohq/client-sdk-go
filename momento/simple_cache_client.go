@@ -38,8 +38,7 @@ type ScsClient interface {
 type DefaultScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
-	dataClient         *services.ScsDataClient
-	defaultTTL         time.Duration
+	dataClient         *scsDataClient
 }
 
 type SimpleCacheClientProps struct {
@@ -73,7 +72,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 		)
 	}
 
-	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
+	dataClient, err := newScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
 		DefaultTtl:         props.DefaultTTL,
@@ -128,15 +127,15 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 }
 
 func (c DefaultScsClient) Set(ctx context.Context, request *SetRequest) (SetResponse, error) {
-	return request.makeRequest(ctx, c)
+	return request.makeRequest(ctx, *c.dataClient)
 }
 
 func (c DefaultScsClient) Get(ctx context.Context, request *GetRequest) (GetResponse, error) {
-	return request.makeRequest(ctx, c)
+	return request.makeRequest(ctx, *c.dataClient)
 }
 
 func (c DefaultScsClient) Delete(ctx context.Context, request *DeleteRequest) (DeleteResponse, error) {
-	return request.makeRequest(ctx, c)
+	return request.makeRequest(ctx, *c.dataClient)
 }
 
 func (c *DefaultScsClient) Close() {
