@@ -27,6 +27,9 @@ type ScsClient interface {
 	ListRemoveValue(ctx context.Context, request *ListRemoveValueRequest) error
 	ListDelete(ctx context.Context, request *ListDeleteRequest) error
 
+	DictionaryFetch(ctx context.Context, request *DictionaryFetchRequest) (DictionaryFetchResponse, error)
+	DictionaryGetField(ctx context.Context, request *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error)
+
 	SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error
 	SortedSetFetch(ctx context.Context, request *SortedSetFetchRequest) (SortedSetFetchResponse, error)
 	SortedSetGetScore(ctx context.Context, request *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error)
@@ -295,6 +298,41 @@ func (c *DefaultScsClient) ListDelete(ctx context.Context, request *ListDeleteRe
 		return convertMomentoSvcErrorToCustomerError(err)
 	}
 	return nil
+}
+
+func (c *DefaultScsClient) DictionaryFetch(ctx context.Context, request *DictionaryFetchRequest) (DictionaryFetchResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	if err := isDictionaryNameValid(request.DictionaryName); err != nil {
+		return nil, err
+	}
+	resp, err := c.dataClient.DictionaryFetch(ctx, &models.DictionaryFetchRequest{
+		CacheName:      request.CacheName,
+		DictionaryName: request.DictionaryName,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertDictionaryFetchResponse(resp)
+}
+
+func (c *DefaultScsClient) DictionaryGetField(ctx context.Context, request *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+	if err := isDictionaryNameValid(request.DictionaryName); err != nil {
+		return nil, err
+	}
+	resp, err := c.dataClient.DictionaryGetField(ctx, &models.DictionaryGetFieldRequest{
+		CacheName:      request.CacheName,
+		DictionaryName: request.DictionaryName,
+		Field:          request.Field,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return convertDictionaryGetFieldResponse(resp)
 }
 
 func (c *DefaultScsClient) SortedSetPut(ctx context.Context, request *SortedSetPutRequest) error {
@@ -567,6 +605,36 @@ func convertListPopBackResponse(r models.ListPopBackResponse) (ListPopBackRespon
 	}
 }
 
+func convertDictionaryFetchResponse(r models.DictionaryFetchResponse) (DictionaryFetchResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.DictionaryFetchHit:
+		return &DictionaryFetchHit{items: response.Items}, nil
+	case *models.DictionaryFetchMiss:
+		return &DictionaryFetchMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected dictionary fetch status returned %+v", response),
+			nil,
+		)
+	}
+}
+
+func convertDictionaryGetFieldResponse(r models.DictionaryGetFieldResponse) (DictionaryGetFieldResponse, momento.MomentoError) {
+	switch response := r.(type) {
+	case *models.DictionaryGetFieldHit:
+		return &DictionaryGetFieldHit{value: response.Value}, nil
+	case *models.DictionaryGetFieldMiss:
+		return &DictionaryGetFieldMiss{}, nil
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momento.ClientSdkError,
+			fmt.Sprintf("unexpected dictionary get field status returned %+v", response),
+			nil,
+		)
+	}
+}
+
 func convertSortedSetFetchNumResultsRequest(results SortedSetFetchNumResults) models.SortedSetFetchNumResults {
 	switch r := results.(type) {
 	case FetchLimitedItems:
@@ -651,6 +719,10 @@ func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
 
 func isListNameValid(listName string) momentoerrors.MomentoSvcErr {
 	return isNameValid(listName, "List")
+}
+
+func isDictionaryNameValid(dictionaryName string) momentoerrors.MomentoSvcErr {
+	return isNameValid(dictionaryName, "Dictionary")
 }
 
 func isSetNameValid(setName string) momentoerrors.MomentoSvcErr {

@@ -22,12 +22,11 @@ func (client *ScsDataClient) ListFetch(ctx context.Context, request *models.List
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	// Convert from grpc struct to internal struct
-	if resp.GetFound() != nil {
-		return &models.ListFetchHit{Value: resp.GetFound().Values}, nil
-	} else if resp.GetMissing() != nil {
-		return &models.ListFetchMiss{}, nil
-	} else {
+
+	switch r := resp.List.(type) {
+	case *pb.XListFetchResponse_Found:
+		return &models.ListFetchHit{Value: r.Found.Values}, nil
+	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.ClientSdkError,
 			"Unknown response type for list fetch",
