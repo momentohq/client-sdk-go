@@ -26,13 +26,6 @@ type CacheGetRequest struct {
 	Key []byte
 }
 
-type CacheSetRequest struct {
-	CacheName string
-	Key       []byte
-	Value     []byte
-	Ttl       time.Duration
-}
-
 type CacheDeleteRequest struct {
 	CacheName string
 	Key       []byte
