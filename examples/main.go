@@ -62,7 +62,7 @@ func main() {
 	}
 
 	log.Printf("Getting key: %s\n", key)
-	resp, err := client.Get(ctx, &momento.CacheGetRequest{
+	resp, err := client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
 	})
@@ -71,9 +71,9 @@ func main() {
 	}
 
 	switch r := resp.(type) {
-	case *momento.CacheGetHit:
+	case *momento.GetHit:
 		log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
-	case *momento.CacheGetMiss:
+	case *momento.GetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
 
