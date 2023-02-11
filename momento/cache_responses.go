@@ -27,29 +27,3 @@ type CacheInfo struct {
 func (ci CacheInfo) Name() string {
 	return ci.name
 }
-
-type CacheGetResponse interface {
-	isCacheGetResponse()
-}
-
-// CacheGetMiss Miss Response to a cache Get api request.
-type CacheGetMiss struct{}
-
-func (CacheGetMiss) isCacheGetResponse() {}
-
-// CacheGetHit Hit Response to a cache Get api request.
-type CacheGetHit struct {
-	value []byte
-}
-
-func (CacheGetHit) isCacheGetResponse() {}
-
-// ValueString Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
-func (resp CacheGetHit) ValueString() string {
-	return string(resp.value)
-}
-
-// ValueByte Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
-func (resp CacheGetHit) ValueByte() []byte {
-	return resp.value
-}

@@ -3,7 +3,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -27,7 +26,7 @@ type ScsClient interface {
 	// Set Stores an item in cache.
 	Set(ctx context.Context, request *SetRequest) (SetResponse, error)
 	// Get Retrieve an item from the cache.
-	Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error)
+	Get(ctx context.Context, request *GetRequest) (GetResponse, error)
 	// Delete an item from the cache.
 	Delete(ctx context.Context, request *CacheDeleteRequest) error
 
@@ -132,22 +131,8 @@ func (c DefaultScsClient) Set(ctx context.Context, request *SetRequest) (SetResp
 	return request.makeRequest(ctx, c)
 }
 
-func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error) {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return nil, err
-	}
-	key, err := isKeyValid(request.Key.AsBytes())
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	rsp, err := c.dataClient.Get(ctx, &models.CacheGetRequest{
-		CacheName: request.CacheName,
-		Key:       key,
-	})
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	return convertCacheGetResponse(rsp)
+func (c DefaultScsClient) Get(ctx context.Context, request *GetRequest) (GetResponse, error) {
+	return request.makeRequest(ctx, c)
 }
 
 func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
@@ -168,23 +153,6 @@ func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteReque
 func (c *DefaultScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
-}
-
-func convertCacheGetResponse(r models.CacheGetResponse) (CacheGetResponse, MomentoError) {
-	switch response := r.(type) {
-	case *models.CacheGetMiss:
-		return &CacheGetMiss{}, nil
-	case *models.CacheGetHit:
-		return &CacheGetHit{
-			value: response.Value,
-		}, nil
-	default:
-		return nil, momentoerrors.NewMomentoSvcErr(
-			ClientSdkError,
-			fmt.Sprintf("unexpected cache get status returned %+v", response),
-			nil,
-		)
-	}
 }
 
 func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {

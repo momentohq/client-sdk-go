@@ -60,7 +60,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Errorf("error occurred setting key with custom ttl err=%+v", err)
 	}
 
-	getResp, err := client.Get(ctx, &CacheGetRequest{
+	getResp, err := client.Get(ctx, &GetRequest{
 		CacheName: randomCacheName,
 		Key:       RawBytes{Bytes: key},
 	})
@@ -70,7 +70,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	}
 
 	switch result := getResp.(type) {
-	case *CacheGetHit:
+	case *GetHit:
 		if !bytes.Equal(result.ValueByte(), value) {
 			t.Errorf(
 				"set byte value and returned byte value are not equal "+
@@ -78,10 +78,10 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 			)
 		}
 	default:
-		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHit{})
+		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, GetHit{})
 	}
 
-	existingCacheResp, err := client.Get(ctx, &CacheGetRequest{
+	existingCacheResp, err := client.Get(ctx, &GetRequest{
 		CacheName: testCacheName,
 		Key:       RawBytes{Bytes: key},
 	})
@@ -89,7 +89,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	if r, ok := existingCacheResp.(*CacheGetHit); ok {
+	if r, ok := existingCacheResp.(*GetHit); ok {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's got deleted. got=%s",
 			string(key), testCacheName, r.ValueString(),
@@ -131,7 +131,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Errorf("error occurred setting key err=%+v", err)
 	}
 
-	getResp, err := client.Get(ctx, &CacheGetRequest{
+	getResp, err := client.Get(ctx, &GetRequest{
 		CacheName: cacheName,
 		Key:       RawBytes{Bytes: key},
 	})
@@ -141,7 +141,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	}
 
 	switch result := getResp.(type) {
-	case *CacheGetHit:
+	case *GetHit:
 		if !bytes.Equal(result.ValueByte(), value) {
 			t.Errorf(
 				"set byte value and returned byte value are not equal "+
@@ -149,7 +149,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 			)
 		}
 	default:
-		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, CacheGetHit{})
+		t.Errorf("unexpected responseType when getting test key got=%+v expected=%+v", getResp, GetHit{})
 	}
 
 	err = client.Delete(ctx, &CacheDeleteRequest{
@@ -159,7 +159,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	if err != nil {
 		t.Errorf("error occurred deleting key err=%+v", err)
 	}
-	existingCacheResp, err := client.Get(ctx, &CacheGetRequest{
+	existingCacheResp, err := client.Get(ctx, &GetRequest{
 		CacheName: testCacheName,
 		Key:       RawBytes{Bytes: key},
 	})
@@ -167,7 +167,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	if r, ok := existingCacheResp.(*CacheGetHit); ok {
+	if r, ok := existingCacheResp.(*GetHit); ok {
 		t.Errorf(
 			"key: %s shouldn't exist in %s since it's got deleted. got=%s",
 			string(key), testCacheName, r.ValueString(),
@@ -481,7 +481,7 @@ func TestSetGet(t *testing.T) {
 			}
 
 			if tt.expectedGetResult == "HIT" {
-				resp, err := client.Get(ctx, &CacheGetRequest{
+				resp, err := client.Get(ctx, &GetRequest{
 					CacheName: testCacheName,
 					Key:       &StringBytes{Text: tt.key},
 				})
@@ -489,7 +489,7 @@ func TestSetGet(t *testing.T) {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
 				switch result := resp.(type) {
-				case *CacheGetHit:
+				case *GetHit:
 					if tt.value != result.ValueString() {
 						t.Errorf(
 							"set string value=%s is not the same as returned string value=%s",
@@ -503,7 +503,7 @@ func TestSetGet(t *testing.T) {
 			} else {
 				// make sure responseType it cache miss after ttl is expired
 				time.Sleep(5 * time.Second)
-				resp, err := client.Get(ctx, &CacheGetRequest{
+				resp, err := client.Get(ctx, &GetRequest{
 					CacheName: testCacheName,
 					Key:       &StringBytes{Text: tt.key},
 				})
@@ -511,7 +511,7 @@ func TestSetGet(t *testing.T) {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
 				switch result := resp.(type) {
-				case *CacheGetMiss:
+				case *GetMiss:
 					// We expect miss
 				default:
 					t.Errorf("expected miss but got responseType=%+v", result)
@@ -619,7 +619,7 @@ func TestGet(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			_, err := client.Get(ctx, &CacheGetRequest{
+			_, err := client.Get(ctx, &GetRequest{
 				CacheName: tt.cacheName,
 				Key:       &StringBytes{Text: tt.key},
 			})

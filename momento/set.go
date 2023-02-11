@@ -67,6 +67,7 @@ func (r SetRequest) makeRequest(
 
 	ctx, cancel := context.WithTimeout(ctx, dataClient.RequestTimeout())
 	defer cancel()
+
 	_, err = dataClient.GrpcClient().Set(
 		metadata.NewOutgoingContext(ctx, dataClient.CreateNewMetadata(cache)),
 		&pb.XSetRequest{
@@ -78,5 +79,6 @@ func (r SetRequest) makeRequest(
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
+
 	return SetSuccess{}, nil
 }

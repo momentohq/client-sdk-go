@@ -25,22 +25,6 @@ func NewCacheInfo(cache *pb.XCache) CacheInfo {
 	return CacheInfo{Name: cache.CacheName}
 }
 
-type CacheGetResponse interface {
-	isCacheGetResponse()
-}
-
-// CacheGetMiss Miss Response to a cache Get api request.
-type CacheGetMiss struct{}
-
-func (CacheGetMiss) isCacheGetResponse() {}
-
-// CacheGetHit Hit Response to a cache Get api request.
-type CacheGetHit struct {
-	Value []byte
-}
-
-func (CacheGetHit) isCacheGetResponse() {}
-
 type TopicSubscribeResponse struct{}
 
 type TopicPublishResponse struct{}

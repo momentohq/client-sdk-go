@@ -35,22 +35,22 @@ Here's a quick example:
 
 ```go
 switch r := resp.(type) {
-case *momento.CacheGetHit:
+case *momento.GetHit:
     log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
 default: 
     // you can handle other cases via pattern matching in other `switch case`, or a default case
     // via the `default` block.  For each return value your IDE should be able to give you code 
-    // completion indicating the other possible "case"; in this case, `*momento.CacheGetMiss`.
+    // completion indicating the other possible "case"; in this case, `*momento.GetMiss`.
 }
 ```
 
-Using this approach, you get a type-safe `CacheGetHit` object in the case of a cache hit. 
+Using this approach, you get a type-safe `GetHit` object in the case of a cache hit. 
 But if the cache read results in a Miss, you'll also get a type-safe object that you can use to get more info about what happened.
 
 In cases where you get an error response, it can be treated as `momentoErr` using `As` method and it always include an `momentoErr.Code` that you can use to check the error type:
 
 ```go
-_, err := client.Get(ctx, &momento.CacheGetRequest{
+_, err := client.Get(ctx, &momento.GetRequest{
     CacheName: cacheName,
     Key:       &momento.StringBytes{Text: key},
 })

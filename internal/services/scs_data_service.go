@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -53,35 +52,6 @@ func (client *ScsDataClient) Endpoint() string {
 
 func (client *ScsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
-}
-
-func (client *ScsDataClient) Get(ctx context.Context, request *models.CacheGetRequest) (models.CacheGetResponse, momentoerrors.MomentoSvcErr) {
-	// Execute request
-	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
-	defer cancel()
-	resp, err := client.grpcClient.Get(
-		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(request.CacheName)),
-		&pb.XGetRequest{CacheKey: request.Key},
-	)
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
-	}
-
-	// Convert from grpc struct to internal struct
-	if resp.Result == pb.ECacheResult_Hit {
-		return &models.CacheGetHit{Value: resp.CacheBody}, nil
-	} else if resp.Result == pb.ECacheResult_Miss {
-		return &models.CacheGetMiss{}, nil
-	} else {
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InternalServerError,
-			fmt.Sprintf(
-				"CacheService returned an unexpected result: %v for operation: %s with message: %s",
-				resp.Result, "GET", resp.Message,
-			),
-			nil,
-		)
-	}
 }
 
 func (client *ScsDataClient) Delete(ctx context.Context, request *models.CacheDeleteRequest) momentoerrors.MomentoSvcErr {

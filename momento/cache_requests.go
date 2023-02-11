@@ -15,13 +15,6 @@ type ListCachesRequest struct {
 	NextToken string
 }
 
-type CacheGetRequest struct {
-	// Name of the cache to get the item from
-	CacheName string
-	// string or byte key to be used to store item
-	Key Bytes
-}
-
 type CacheDeleteRequest struct {
 	// Name of the cache to get the item from to be deleted
 	CacheName string
