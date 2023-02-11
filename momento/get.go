@@ -46,7 +46,7 @@ func (resp GetHit) ValueByte() []byte {
 	return resp.value
 }
 
-func (r GetRequest) makeRequest(ctx context.Context, client DefaultScsClient) (GetResponse, error) {
+func (r GetRequest) makeRequest(ctx context.Context, client scsDataClient) (GetResponse, error) {
 	var err error
 
 	var cache string
@@ -59,13 +59,11 @@ func (r GetRequest) makeRequest(ctx context.Context, client DefaultScsClient) (G
 		return nil, err
 	}
 
-	dataClient := client.dataClient
-
-	ctx, cancel := context.WithTimeout(ctx, dataClient.RequestTimeout())
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	resp, err := dataClient.GrpcClient().Get(
-		metadata.NewOutgoingContext(ctx, dataClient.CreateNewMetadata(cache)),
+	resp, err := client.grpcClient.Get(
+		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(cache)),
 		&client_sdk_go.XGetRequest{
 			CacheKey: key,
 		},

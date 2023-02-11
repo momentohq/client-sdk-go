@@ -39,7 +39,7 @@ func (SetSuccess) isSetResponse() {}
 
 func (r SetRequest) makeRequest(
 	ctx context.Context,
-	client DefaultScsClient,
+	client scsDataClient,
 ) (SetResponse, error) {
 	var err error
 
@@ -59,17 +59,15 @@ func (r SetRequest) makeRequest(
 	}
 
 	var ttl uint64
-	if ttl, err = prepareTTL(r, client.defaultTTL); err != nil {
+	if ttl, err = prepareTTL(r, client.defaultTtl); err != nil {
 		return nil, err
 	}
 
-	dataClient := client.dataClient
-
-	ctx, cancel := context.WithTimeout(ctx, dataClient.RequestTimeout())
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	_, err = dataClient.GrpcClient().Set(
-		metadata.NewOutgoingContext(ctx, dataClient.CreateNewMetadata(cache)),
+	_, err = client.grpcClient.Set(
+		metadata.NewOutgoingContext(ctx, client.CreateNewMetadata(cache)),
 		&pb.XSetRequest{
 			CacheKey:        key,
 			CacheBody:       value,
