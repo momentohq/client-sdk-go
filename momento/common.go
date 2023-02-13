@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 var errUnexpectedGrpcResponse = errors.New("unexpected gRPC response")
@@ -78,4 +79,13 @@ func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
 		ttl = r.ttl()
 	}
 	return uint64(ttl.Milliseconds()), nil
+}
+
+func prepareCollectionTtl(ttl utils.CollectionTTL, defaultTtl time.Duration) (uint64, bool) {
+	ttlDuration := defaultTtl
+	if ttlDuration != 0 {
+		ttlDuration = ttl.Ttl
+	}
+
+	return uint64(ttlDuration.Milliseconds()), ttl.RefreshTtl
 }
