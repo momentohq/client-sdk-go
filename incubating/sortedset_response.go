@@ -91,4 +91,4 @@ type SortedSetIncrementResponseSuccess struct {
 	Value float64
 }
 
-func (_ SortedSetIncrementResponseSuccess) isSortedSetIncrementResponse() {}
+func (SortedSetIncrementResponseSuccess) isSortedSetIncrementResponse() {}
