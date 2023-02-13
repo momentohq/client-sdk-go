@@ -60,3 +60,7 @@ type SortedSetGetRankHit struct {
 }
 
 func (SortedSetGetRankHit) isSortedSetGetRankResponse() {}
+
+type SortedSetIncrementResponse struct {
+	Value float64
+}
