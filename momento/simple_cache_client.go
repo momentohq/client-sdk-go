@@ -14,28 +14,8 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 )
 
-// ScsClient wraps lower level cache control and data operations.
-type ScsClient interface {
-	// CreateCache Create a new cache in your Momento account.
-	CreateCache(ctx context.Context, request *CreateCacheRequest) error
-	// DeleteCache Deletes a cache and all the items within your Momento account.
-	DeleteCache(ctx context.Context, request *DeleteCacheRequest) error
-	// ListCaches Lists all caches in your Momento account.
-	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
-
-	// Set Stores an item in cache.
-	Set(ctx context.Context, request SetRequest) (SetResponse, error)
-	// Get Retrieve an item from the cache.
-	Get(ctx context.Context, request GetRequest) (GetResponse, error)
-	// Delete an item from the cache.
-	Delete(ctx context.Context, request DeleteRequest) (DeleteResponse, error)
-
-	// Close Closes the client.
-	Close()
-}
-
-// DefaultScsClient represents all information needed for momento client to enable cache control and data operations.
-type DefaultScsClient struct {
+// ScsClient represents all information needed for momento client to enable cache control and data operations.
+type ScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
@@ -48,11 +28,11 @@ type SimpleCacheClientProps struct {
 }
 
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
+func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
-	client := &DefaultScsClient{
+	client := &ScsClient{
 		credentialProvider: props.CredentialProvider,
 	}
 
@@ -87,7 +67,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 	return client, nil
 }
 
-func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+func (c *ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -100,7 +80,7 @@ func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCache
 	return nil
 }
 
-func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+func (c *ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -113,7 +93,7 @@ func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCache
 	return nil
 }
 
-func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+func (c *ScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
@@ -126,28 +106,28 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 	}, nil
 }
 
-func (c DefaultScsClient) Set(ctx context.Context, r SetRequest) (SetResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, &r); err != nil {
+func (c ScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c DefaultScsClient) Get(ctx context.Context, r GetRequest) (GetResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, &r); err != nil {
+func (c ScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c DefaultScsClient) Delete(ctx context.Context, r DeleteRequest) (DeleteResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, &r); err != nil {
+func (c ScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c *DefaultScsClient) Close() {
+func (c *ScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
 }
