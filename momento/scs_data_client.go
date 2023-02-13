@@ -74,6 +74,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	if err := r.interpretGrpcResponse(); err != nil {
+		// xxx only do this if it's a momentoGrpcResponse
 		return momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
 			fmt.Sprintf(
