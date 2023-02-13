@@ -74,15 +74,18 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	if err := r.interpretGrpcResponse(); err != nil {
-		// xxx only do this if it's a momentoGrpcResponse
-		return momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InternalServerError,
-			fmt.Sprintf(
-				"%s request: %v. Request returned '%s'",
-				r.requestName(), err, grpcResp,
-			),
-			nil,
-		)
+		if err == errUnexpectedGrpcResponse {
+			return momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InternalServerError,
+				fmt.Sprintf(
+					"%s request: %v. Request returned '%s'",
+					r.requestName(), err, grpcResp,
+				),
+				nil,
+			)
+		} else {
+			return err
+		}
 	}
 
 	return nil
