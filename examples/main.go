@@ -52,7 +52,7 @@ func main() {
 	key := uuid.NewString()
 	value := uuid.NewString()
 	log.Printf("Setting key: %s, value: %s\n", key, value)
-	_, err = client.Set(ctx, momento.SetRequest{
+	_, err = client.Set(ctx, &momento.SetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
 		Value:     &momento.StringBytes{Text: value},
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	log.Printf("Getting key: %s\n", key)
-	resp, err := client.Get(ctx, momento.GetRequest{
+	resp, err := client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
 		Key:       &momento.StringBytes{Text: key},
 	})
