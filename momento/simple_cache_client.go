@@ -19,6 +19,7 @@ type ScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
+	pubSubClient       *pubSubClient
 }
 
 type SimpleCacheClientProps struct {
@@ -37,6 +38,14 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
 	}
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
+	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
 	})
@@ -63,6 +72,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
 
 	client.dataClient = dataClient
 	client.controlClient = controlClient
+	client.pubSubClient = pubSubClient
 
 	return client, nil
 }
@@ -125,6 +135,31 @@ func (c ScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c ScsClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
+	clientStream, err := c.pubSubClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+		CacheName: request.CacheName,
+		TopicName: request.TopicName,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return topicSubscription{grpcClient: clientStream}, err
+}
+
+func (c ScsClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
+	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
+		CacheName: request.CacheName,
+		TopicName: request.TopicName,
+		Value:     request.Value,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return TopicPublishSuccess{}, err
 }
 
 func (c *ScsClient) Close() {
