@@ -83,3 +83,12 @@ func (SortedSetRankHit) isSortedSetRankElement() {}
 type SortedSetRankMiss struct{}
 
 func (SortedSetRankMiss) isSortedSetRankElement() {}
+
+type SortedSetIncrementResponse interface {
+	isSortedSetIncrementResponse()
+}
+type SortedSetIncrementResponseSuccess struct {
+	Value float64
+}
+
+func (_ SortedSetIncrementResponseSuccess) isSortedSetIncrementResponse() {}

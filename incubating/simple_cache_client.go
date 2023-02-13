@@ -32,8 +32,7 @@ type ScsClient interface {
 	SortedSetGetScore(ctx context.Context, request *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error)
 	SortedSetRemove(ctx context.Context, request *SortedSetRemoveRequest) error
 	SortedSetGetRank(ctx context.Context, request *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
-	// TODO need to impl sortedset increment still
-	//SortedSetIncrement(ctx context.Context, request *SortedSetIncrementRequest)
+	SortedSetIncrement(ctx context.Context, request *SortedSetIncrementRequest) (SortedSetIncrementResponse, error)
 
 	Close()
 }
@@ -446,6 +445,20 @@ func (c *DefaultScsClient) SortedSetGetRank(ctx context.Context, request *Sorted
 			nil,
 		)
 	}
+}
+
+func (c *DefaultScsClient) SortedSetIncrement(ctx context.Context, request *SortedSetIncrementRequest) (SortedSetIncrementResponse, error) {
+	rsp, err := c.dataClient.SortedSetIncrement(ctx, &models.SortedSetIncrementRequest{
+		CacheName:     request.CacheName,
+		SetName:       []byte(request.SetName),
+		ElementName:   request.ElementName.AsBytes(),
+		Amount:        request.Amount,
+		CollectionTTL: request.CollectionTTL,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return &SortedSetIncrementResponseSuccess{Value: rsp.Value}, nil
 }
 
 // Close shutdown the client.

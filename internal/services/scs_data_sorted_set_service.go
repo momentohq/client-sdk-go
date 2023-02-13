@@ -131,6 +131,27 @@ func (client *ScsDataClient) SortedSetGetRank(ctx context.Context, request *mode
 	}
 }
 
+func (client *ScsDataClient) SortedSetIncrement(ctx context.Context, request *models.SortedSetIncrementRequest) (*models.SortedSetIncrementResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.SortedSetIncrement(
+		metadata.NewOutgoingContext(ctx, createNewMetadata(request.CacheName)),
+		&pb.XSortedSetIncrementRequest{
+			SetName:         request.SetName,
+			ElementName:     request.ElementName,
+			Amount:          request.Amount,
+			TtlMilliseconds: uint64(request.CollectionTTL.Ttl.Milliseconds()),
+			RefreshTtl:      request.CollectionTTL.RefreshTtl,
+		},
+	)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return &models.SortedSetIncrementResponse{
+		Value: resp.Value,
+	}, nil
+}
+
 func (client *ScsDataClient) SortedSetRemove(ctx context.Context, request *models.SortedSetRemoveRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()

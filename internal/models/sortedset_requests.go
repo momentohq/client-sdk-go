@@ -79,6 +79,6 @@ type SortedSetIncrementRequest struct {
 	CacheName     string
 	SetName       []byte
 	ElementName   []byte
-	Amount        uint64
+	Amount        float64
 	CollectionTTL incubating.CollectionTTL
 }

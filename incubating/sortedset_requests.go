@@ -85,6 +85,6 @@ type SortedSetIncrementRequest struct {
 	CacheName     string
 	SetName       string
 	ElementName   momento.Bytes
-	Amount        uint64
+	Amount        float64
 	CollectionTTL utils.CollectionTTL
 }
