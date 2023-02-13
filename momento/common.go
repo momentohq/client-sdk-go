@@ -3,6 +3,7 @@ package momento
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -40,14 +41,16 @@ type hasScalarTTL interface {
 	ttl() time.Duration
 }
 
-func prepareCacheName(r hasCacheName) (string, error) {
-	name := r.cacheName()
-
+func prepareName(name string, label string) (string, error) {
 	if len(strings.TrimSpace(name)) < 1 {
-		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
-		return "", err
+		errStr := fmt.Sprintf("%v cannot be empty", label)
+		return "", momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, errStr, nil)
 	}
 	return name, nil
+}
+
+func prepareCacheName(r hasCacheName) (string, error) {
+	return prepareName(r.cacheName(), "Cache name")
 }
 
 func prepareKey(r hasKey) ([]byte, error) {
