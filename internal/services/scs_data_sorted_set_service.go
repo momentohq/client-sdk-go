@@ -38,9 +38,9 @@ func (client *ScsDataClient) SortedSetFetch(ctx context.Context, request *models
 		Order:   pb.XSortedSetFetchRequest_Order(request.Order),
 	}
 	switch r := request.NumberOfResults.(type) {
-	case *models.FetchAllItems:
+	case *models.FetchAllElements:
 		requestToMake.NumResults = &pb.XSortedSetFetchRequest_All{}
-	case *models.FetchLimitedItems:
+	case *models.FetchLimitedElements:
 		requestToMake.NumResults = &pb.XSortedSetFetchRequest_Limit{
 			Limit: &pb.XSortedSetFetchRequest_XLimit{
 				Limit: r.Limit,
@@ -138,9 +138,9 @@ func (client *ScsDataClient) SortedSetRemove(ctx context.Context, request *model
 		SetName: request.SetName,
 	}
 	switch r := request.ElementsToRemove.(type) {
-	case *models.RemoveAllItems:
+	case *models.RemoveAllElements:
 		requestToMake.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
-	case *models.RemoveSomeItems:
+	case *models.RemoveSomeElements:
 		requestToMake.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
 				ElementName: r.ElementsToRemove,

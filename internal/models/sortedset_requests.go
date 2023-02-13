@@ -27,15 +27,15 @@ type SortedSetFetchNumResults interface {
 	isSortedSetFetchNumResults()
 }
 
-type FetchAllItems struct{}
+type FetchAllElements struct{}
 
-func (FetchAllItems) isSortedSetFetchNumResults() {}
+func (FetchAllElements) isSortedSetFetchNumResults() {}
 
-type FetchLimitedItems struct {
+type FetchLimitedElements struct {
 	Limit uint32
 }
 
-func (FetchLimitedItems) isSortedSetFetchNumResults() {}
+func (FetchLimitedElements) isSortedSetFetchNumResults() {}
 
 type SortedSetFetchRequest struct {
 	CacheName       string
@@ -53,21 +53,21 @@ type SortedSetGetScoreRequest struct {
 type SortedSetRemoveRequest struct {
 	CacheName        string
 	SetName          []byte
-	ElementsToRemove SortedSetRemoveNumItems
+	ElementsToRemove SortedSetRemoveNumElements
 }
-type SortedSetRemoveNumItems interface {
-	isSortedSetRemoveNumItem()
+type SortedSetRemoveNumElements interface {
+	isSortedSetRemoveNumElement()
 }
 
-type RemoveAllItems struct{}
+type RemoveAllElements struct{}
 
-func (RemoveAllItems) isSortedSetRemoveNumItem() {}
+func (RemoveAllElements) isSortedSetRemoveNumElement() {}
 
-type RemoveSomeItems struct {
+type RemoveSomeElements struct {
 	ElementsToRemove [][]byte
 }
 
-func (RemoveSomeItems) isSortedSetRemoveNumItem() {}
+func (RemoveSomeElements) isSortedSetRemoveNumElement() {}
 
 type SortedSetGetRankRequest struct {
 	CacheName   string

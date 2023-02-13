@@ -569,10 +569,10 @@ func convertListPopBackResponse(r models.ListPopBackResponse) (ListPopBackRespon
 
 func convertSortedSetFetchNumResultsRequest(results SortedSetFetchNumResults) models.SortedSetFetchNumResults {
 	switch r := results.(type) {
-	case FetchLimitedItems:
-		return &models.FetchLimitedItems{Limit: r.Limit}
+	case FetchLimitedElements:
+		return &models.FetchLimitedElements{Limit: r.Limit}
 	default:
-		return &models.FetchAllItems{}
+		return &models.FetchAllElements{}
 	}
 }
 
@@ -614,14 +614,14 @@ func convertSortedSetScoreElement(e []*models.SortedSetScore) []SortedSetScoreEl
 	return rList
 }
 
-func convertSortedSetRemoveNumItemsRequest(results SortedSetRemoveNumItems) models.SortedSetRemoveNumItems {
+func convertSortedSetRemoveNumItemsRequest(results SortedSetRemoveNumElements) models.SortedSetRemoveNumElements {
 	switch r := results.(type) {
-	case RemoveSomeItems:
-		return &models.RemoveSomeItems{
+	case RemoveSomeElements:
+		return &models.RemoveSomeElements{
 			ElementsToRemove: momentoBytesListToPrimitiveByteList(r.elementsToRemove),
 		}
 	default:
-		return &models.RemoveAllItems{}
+		return &models.RemoveAllElements{}
 	}
 }
 
