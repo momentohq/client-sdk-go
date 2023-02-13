@@ -70,7 +70,7 @@ func main() {
 	top5Rsp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
 		CacheName:       cacheName,
 		SetName:         setName,
-		NumberOfResults: incubating.FetchLimitedItems{Limit: 5},
+		NumberOfResults: incubating.FetchLimitedElements{Limit: 5},
 		Order:           incubating.DESCENDING,
 	})
 	if err != nil {
