@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
@@ -61,15 +62,17 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 		SetName: []byte(r.SetName),
 	}
 
-	switch r := r.ElementsToRemove.(type) {
+	switch to_remove := r.ElementsToRemove.(type) {
 	case *RemoveAllElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
 	case *RemoveSomeElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoBytesListToPrimitiveByteList(r.elementsToRemove),
+				ElementName: momentoBytesListToPrimitiveByteList(to_remove.elementsToRemove),
 			},
 		}
+	default:
+		return fmt.Errorf("%T is an unrecognized type for ElementsToRemove", r.ElementsToRemove)
 	}
 
 	r.grpcRequest = grpcReq
