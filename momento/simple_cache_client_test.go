@@ -31,6 +31,8 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 	client, err := newTestClient(testCredentialProvider)
+	defer teardown(client, cacheName, randomCacheName)
+
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
@@ -102,8 +104,6 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", randomCacheName, err))
 	}
-
-	teardown(client, cacheName, randomCacheName)
 }
 
 func TestBasicHappyPathDelete(t *testing.T) {
@@ -112,6 +112,8 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 	client, err := newTestClient(testCredentialProvider)
+	defer teardown(client, testCacheName, cacheName)
+
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
@@ -180,8 +182,6 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
 	}
-
-	teardown(client, testCacheName, cacheName)
 }
 
 func TestCredentialProvider(t *testing.T) {
@@ -225,18 +225,18 @@ func TestClientInitialization(t *testing.T) {
 	for name, tt := range tests {
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			c, err := NewSimpleCacheClient(&SimpleCacheClientProps{
-				Configuration:      config.LatestLaptopConfig(),
+			clientProps := &SimpleCacheClientProps{
 				CredentialProvider: testCredentialProvider,
 				DefaultTTL:         tt.defaultTTL,
-			})
-			if tt.requestTimeout != nil {
-				c, err = NewSimpleCacheClient(&SimpleCacheClientProps{
-					Configuration:      config.LatestLaptopConfig().WithClientTimeout(*tt.requestTimeout),
-					CredentialProvider: testCredentialProvider,
-					DefaultTTL:         tt.defaultTTL,
-				})
 			}
+			if tt.requestTimeout != nil {
+				clientProps.Configuration = config.LatestLaptopConfig().WithClientTimeout(*tt.requestTimeout)
+			} else {
+				clientProps.Configuration = config.LatestLaptopConfig()
+			}
+			c, err := NewSimpleCacheClient(clientProps)
+			defer teardown(c)
+
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
@@ -258,7 +258,6 @@ func TestClientInitialization(t *testing.T) {
 			if tt.expectedErr == "" && err != nil {
 				t.Errorf("unexpected error occurred on init expected=%+v got=%+v", tt.expectedErr, err)
 			}
-			teardown(c)
 		})
 	}
 }
@@ -284,6 +283,8 @@ func TestCreateCache(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -318,7 +319,6 @@ func TestCreateCache(t *testing.T) {
 					t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", tt.cacheName, err))
 				}
 			}
-			teardown(client)
 		})
 	}
 }
@@ -344,6 +344,8 @@ func TestDeleteCache(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -370,7 +372,6 @@ func TestDeleteCache(t *testing.T) {
 			if tt.expectedErr == "" && err != nil {
 				t.Errorf("unexpected error occurred on deleteing cache expected=%+v got=%+v", tt.expectedErr, err)
 			}
-			teardown(client)
 		})
 	}
 }
@@ -389,6 +390,8 @@ func TestListCache(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -414,7 +417,6 @@ func TestListCache(t *testing.T) {
 			if unknownCacheInList == true {
 				t.Errorf("unexpected cache=%s was found in cache list", unknownCache)
 			}
-			teardown(client)
 		})
 	}
 }
@@ -452,6 +454,8 @@ func TestSetGet(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client, testCacheName)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -518,7 +522,6 @@ func TestSetGet(t *testing.T) {
 				}
 
 			}
-			teardown(client, testCacheName)
 		})
 	}
 }
@@ -558,6 +561,8 @@ func TestSet(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -584,7 +589,6 @@ func TestSet(t *testing.T) {
 					err, tt.expectedErr,
 				)
 			}
-			teardown(client)
 		})
 	}
 }
@@ -614,6 +618,8 @@ func TestGet(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -639,7 +645,6 @@ func TestGet(t *testing.T) {
 					err, tt.expectedErr,
 				)
 			}
-			teardown(client)
 		})
 	}
 }
@@ -669,6 +674,8 @@ func TestDelete(t *testing.T) {
 	}
 	for name, tt := range tests {
 		client, err := newTestClient(testCredentialProvider)
+		defer teardown(client)
+
 		if err != nil {
 			t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 		}
@@ -694,7 +701,6 @@ func TestDelete(t *testing.T) {
 					err, tt.expectedErr,
 				)
 			}
-			teardown(client)
 		})
 	}
 }
@@ -743,5 +749,8 @@ func teardown(client *ScsClient, cacheNames ...string) {
 			CacheName: cacheName,
 		})
 	}
-	client.Close()
+
+	if client != nil {
+		client.Close()
+	}
 }
