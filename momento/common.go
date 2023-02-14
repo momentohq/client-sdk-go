@@ -38,6 +38,10 @@ type hasValue interface {
 	value() Bytes
 }
 
+type hasValues interface {
+	values() []Bytes
+}
+
 type hasScalarTTL interface {
 	ttl() time.Duration
 }
@@ -71,6 +75,20 @@ func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return value, nil
+}
+
+func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
+	values := momentoBytesListToPrimitiveByteList(r.values())
+	for i := range values {
+		if len(values[i]) == 0 {
+			return nil, momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"value in list cannot be empty",
+				nil,
+			)
+		}
+	}
+	return values, nil
 }
 
 func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
