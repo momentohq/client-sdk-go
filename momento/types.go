@@ -20,3 +20,10 @@ type StringBytes struct {
 func (r StringBytes) AsBytes() []byte {
 	return []byte(r.Text)
 }
+
+type CacheResult int32
+
+const (
+	Hit  CacheResult = 2
+	Miss CacheResult = 3
+)

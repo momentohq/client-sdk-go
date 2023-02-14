@@ -83,9 +83,17 @@ func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
 
 func prepareCollectionTtl(ttl utils.CollectionTTL, defaultTtl time.Duration) (uint64, bool) {
 	ttlDuration := defaultTtl
-	if ttlDuration != 0 {
+	if ttl.Ttl != time.Duration(0) {
 		ttlDuration = ttl.Ttl
 	}
 
 	return uint64(ttlDuration.Milliseconds()), ttl.RefreshTtl
+}
+
+func momentoBytesListToPrimitiveByteList(i []Bytes) [][]byte {
+	var rList [][]byte
+	for _, mb := range i {
+		rList = append(rList, mb.AsBytes())
+	}
+	return rList
 }
