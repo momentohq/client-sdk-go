@@ -5,7 +5,6 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
-	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
 type ControlGrpcManagerRequest struct {
@@ -32,33 +31,6 @@ type ListCachesRequest struct {
 	NextToken string
 }
 
-type TopicSubscribeRequest struct {
-	CacheName string
-	TopicName string
-}
-
-type TopicPublishRequest struct {
-	CacheName string
-	TopicName string
-	Value     TopicValue
-}
-
-type TopicValue interface {
-	isTopicValue()
-}
-
-type TopicValueBytes struct {
-	Bytes []byte
-}
-
-func (TopicValueBytes) isTopicValue() {}
-
-type TopicValueString struct {
-	Text string
-}
-
-func (TopicValueString) isTopicValue() {}
-
 type ControlClientRequest struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
@@ -73,14 +45,4 @@ type DataClientRequest struct {
 type PubSubClientRequest struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
-}
-
-type NewLocalPubSubClientRequest struct {
-	Port int
-}
-
-type ConvertEcacheResultRequest struct {
-	ECacheResult pb.ECacheResult
-	Message      string
-	OpName       string
 }
