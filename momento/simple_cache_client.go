@@ -77,7 +77,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
 	return client, nil
 }
 
-func (c *ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+func (c ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (c *ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest
 	return nil
 }
 
-func (c *ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+func (c ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (c *ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest
 	return nil
 }
 
-func (c *ScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+func (c ScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
