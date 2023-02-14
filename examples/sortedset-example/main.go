@@ -11,6 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/incubating"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 const (
@@ -89,6 +90,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	rsp, err := client.SortedSetIncrement(ctx, &incubating.SortedSetIncrementRequest{
+		CacheName:     cacheName,
+		SetName:       setName,
+		ElementName:   momento.StringBytes{Text: fmt.Sprintf("key:%d", 10)},
+		Amount:        10,
+		CollectionTTL: utils.CollectionTTL{RefreshTtl: true, Ttl: 60 * time.Second},
+	})
+	switch r := rsp.(type) {
+	case *incubating.SortedSetIncrementResponseSuccess:
+		fmt.Println(fmt.Sprintf("new value %f", r.Value))
+	}
 }
 
 func getClient() incubating.ScsClient {
