@@ -3,6 +3,7 @@ package momento
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 )
 
 var client ScsClient
+var cacheName = os.Getenv("TEST_CACHE_NAME")
 
 func TestMain(m *testing.M) {
 	setup()
@@ -38,7 +40,7 @@ func setup() {
 	ctx := context.Background()
 	client = getClient()
 	err := client.CreateCache(ctx, &CreateCacheRequest{
-		CacheName: "test-cache",
+		CacheName: cacheName,
 	})
 	if err != nil {
 		var momentoErr MomentoError
@@ -64,7 +66,7 @@ func publishTopic(ctx context.Context, pubClient ScsClient, i int) {
 	}
 
 	_, err := pubClient.TopicPublish(ctx, &TopicPublishRequest{
-		CacheName: "test-cache",
+		CacheName: cacheName,
 		TopicName: "test-topic",
 		Value:     topicVal,
 	})
@@ -79,7 +81,7 @@ func TestHappyPathPubSub(t *testing.T) {
 	cancelContext, cancelFunction := context.WithCancel(ctx)
 
 	sub, err := client.TopicSubscribe(ctx, &TopicSubscribeRequest{
-		CacheName: "test-cache",
+		CacheName: cacheName,
 		TopicName: "test-topic",
 	})
 	if err != nil {
