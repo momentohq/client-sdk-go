@@ -4,123 +4,165 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 const (
-	cacheName = "cache"
-	listName  = "my-list"
+	cacheName             = "my-test-cache"
+	listName              = "my-test-list"
+	itemDefaultTTLSeconds = 60
 )
 
+var (
+	ctx    context.Context
+	client *momento.ScsClient
+)
+
+func pushFrontToList(value string) {
+	fmt.Printf("\npushing '%s' to front of list\n", value)
+	resp, err := client.ListPushFront(ctx, &momento.ListPushFrontRequest{
+		CacheName:          cacheName,
+		ListName:           listName,
+		Value:              &momento.StringBytes{Text: value},
+		TruncateBackToSize: 0,
+		CollectionTTL: utils.CollectionTTL{
+			Ttl:        5 * time.Second,
+			RefreshTtl: true,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	switch r := resp.(type) {
+	case momento.ListPushFrontSuccess:
+		fmt.Printf("pushed with 5 sec TTL to front of list whose length is now %d\n", r.ListLength())
+	}
+}
+
+func pushBackToList(value string) {
+	fmt.Printf("\npushing '%s' to back of list\n", value)
+	resp, err := client.ListPushBack(ctx, &momento.ListPushBackRequest{
+		CacheName:           cacheName,
+		ListName:            listName,
+		Value:               &momento.StringBytes{Text: value},
+		TruncateFrontToSize: 0,
+		CollectionTTL: utils.CollectionTTL{
+			Ttl:        5 * time.Second,
+			RefreshTtl: true,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	switch r := resp.(type) {
+	case momento.ListPushBackSuccess:
+		fmt.Printf("pushed with 5 sec TTL to back of list whose length is now %d\n", r.ListLength())
+	}
+}
+
+func printList() {
+	resp, err := client.ListFetch(ctx, &momento.ListFetchRequest{
+		CacheName: cacheName,
+		ListName:  listName,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	switch r := resp.(type) {
+	case momento.ListFetchHit:
+		fmt.Printf("\nlist fetch returned:\n\n\t%s\n", strings.Join(r.ValueListString(), "\n\t"))
+	case momento.ListFetchMiss:
+		fmt.Println("\nlist fetch returned a MISS")
+	}
+}
+
+func printListLength() {
+	resp, err := client.ListLength(ctx, &momento.ListLengthRequest{
+		CacheName: cacheName,
+		ListName:  listName,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case momento.ListLengthMiss:
+		fmt.Println("\nlist length returned a MISS")
+	case momento.ListLengthHit:
+		fmt.Printf("\ngot list length: %d", r.Length())
+	}
+}
+
+func concatFront(values []momento.Bytes) {
+	resp, err := client.ListConcatenateFront(ctx, &momento.ListConcatenateFrontRequest{
+		CacheName: cacheName,
+		ListName:  listName,
+		Values:    values,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case momento.ListConcatenateFrontSuccess:
+		fmt.Printf("\nconcatenated values to front. list is now length %d\n", r.ListLength())
+	}
+}
+
+func concatBack(values []momento.Bytes) {
+	resp, err := client.ListConcatenateBack(ctx, &momento.ListConcatenateBackRequest{
+		CacheName: cacheName,
+		ListName:  listName,
+		Values:    values,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case momento.ListConcatenateBackSuccess:
+		fmt.Printf("\nconcatenated values to back. list is now length %d\n", r.ListLength())
+	}
+}
+
+func removeValue(value momento.Bytes) {
+	_, err := client.ListRemoveValue(ctx, &momento.ListRemoveValueRequest{
+		CacheName: cacheName,
+		ListName:  listName,
+		Value:     value,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("\nremoved '%s' from list\n", string(value.AsBytes()))
+}
+
 func main() {
-	// Initialization
-	client := getClient()
-	ctx := context.Background()
-	setupCache(client, ctx)
-
-	for i := 1; i < 11; i++ {
-		value := []byte(fmt.Sprintf("push front numero %d!", i))
-		pushFrontResp, err := client.ListPushFront(ctx, &momento.ListPushFrontRequest{
-			CacheName: cacheName,
-			ListName:  listName,
-			Value:     value,
-		})
-		if err != nil {
-			panic(err)
-		}
-
-		switch r := pushFrontResp.(type) {
-		case momento.ListPushFrontSuccess:
-			fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
-		}
-	}
-
-	fetchResp, err := client.ListFetch(ctx, &momento.ListFetchRequest{
-		CacheName: cacheName,
-		ListName:  listName,
-	})
+	ctx = context.Background()
+	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
-	switch r := fetchResp.(type) {
-	case momento.ListFetchHit:
-		fmt.Println(strings.Join(r.ValueListString(), ", "))
-	case momento.ListFetchMiss:
-		fmt.Println("we regret to inform you there is no such list")
-		os.Exit(1)
-	}
 
-	for i := 1; i < 11; i++ {
-		value := []byte(fmt.Sprintf("push back numero %d!", i))
-		pushBackResp, err := client.ListPushBack(ctx, &momento.ListPushBackRequest{
-			CacheName: cacheName,
-			ListName:  listName,
-			Value:     value,
-		})
-		if err != nil {
-			panic(err)
-		}
-
-		switch r := pushBackResp.(type) {
-		case momento.ListPushBackSuccess:
-			fmt.Printf("pushed value %s to list with length %d\n", value, r.ListLength())
-		}
-	}
-
-	lenResp, err := client.ListLength(ctx, &momento.ListLengthRequest{
-		CacheName: cacheName,
-		ListName:  listName,
-	})
-	if err != nil {
-		panic(err)
-	}
-	switch r := lenResp.(type) {
-	case momento.ListLengthSuccess:
-		fmt.Printf("list %s is length %d\n", listName, int(r.Length()))
-	}
-
-	fetchResp, err = client.ListFetch(ctx, &momento.ListFetchRequest{
-		CacheName: cacheName,
-		ListName:  listName,
-	})
-	if err != nil {
-		panic(err)
-	}
-	switch r := fetchResp.(type) {
-	case momento.ListFetchHit:
-		fmt.Println(strings.Join(r.ValueListString(), ", "))
-	case momento.ListFetchMiss:
-		fmt.Println("we regret to inform you there is no such list")
-		os.Exit(1)
-	}
-
-}
-
-func getClient() momento.ScsClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
-	if err != nil {
-		panic(err)
-	}
-	client, err := momento.NewScsClient(&momento.SimpleCacheClientProps{
+	// Initializes Momento
+	client, err = momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
-		CredentialProvider: credProvider,
-		DefaultTTL:         60 * time.Second,
+		CredentialProvider: credentialProvider,
+		DefaultTTL:         itemDefaultTTLSeconds * time.Second,
 	})
 	if err != nil {
 		panic(err)
 	}
-	return client
-}
 
-func setupCache(client momento.ScsClient, ctx context.Context) {
-	err := client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "test-cache",
+	// Create Cache and check if CacheName exists
+	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: cacheName,
 	})
 	if err != nil {
 		var momentoErr momento.MomentoError
@@ -130,4 +172,88 @@ func setupCache(client momento.ScsClient, ctx context.Context) {
 			}
 		}
 	}
+
+	printListLength()
+
+	for i := 0; i < 5; i++ {
+		pushFrontToList(fmt.Sprintf("hello #%d", i+1))
+	}
+
+	printListLength()
+	printList()
+
+	time.Sleep(time.Second * 5)
+
+	for i := 0; i < 5; i++ {
+		pushBackToList(fmt.Sprintf("hello #%d", i+1))
+	}
+
+	printListLength()
+	printList()
+
+	time.Sleep(time.Second * 5)
+
+	printListLength()
+	printList()
+
+	for i := 0; i < 5; i++ {
+		pushFrontToList(fmt.Sprintf("hello #%d", i+1))
+	}
+	for i := 0; i < 5; i++ {
+		resp, err := client.ListPopFront(ctx, &momento.ListPopFrontRequest{
+			CacheName: cacheName,
+			ListName:  listName,
+		})
+		if err != nil {
+			panic(err)
+		}
+		switch r := resp.(type) {
+		case momento.ListPopFrontHit:
+			fmt.Printf("\npopped value '%s'\n", r.ValueString())
+		case momento.ListPopFrontMiss:
+			fmt.Println("\npop from front returned MISS")
+		}
+	}
+	printListLength()
+
+	pushFrontToList("list seed")
+
+	var values []momento.Bytes
+	for i := 0; i < 5; i++ {
+		values = append(values, momento.StringBytes{Text: fmt.Sprintf("concat front %d", i)})
+	}
+	concatFront(values)
+	printList()
+
+	values = nil
+	for i := 0; i < 5; i++ {
+		values = append(values, momento.StringBytes{Text: fmt.Sprintf("concat back %d", i)})
+	}
+	concatBack(values)
+	printList()
+
+	_, err = client.Delete(ctx, &momento.DeleteRequest{
+		CacheName: cacheName,
+		Key:       momento.StringBytes{Text: listName},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 1; i < 11; i++ {
+		if i%2 != 0 {
+			pushBackToList("odd")
+		} else {
+			pushBackToList("even")
+		}
+	}
+	printList()
+	removeValue(momento.StringBytes{Text: "even"})
+	printList()
+
+	// Delete the cache
+	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
+		panic(err)
+	}
+	fmt.Printf("\ndeleted cache\n")
 }
