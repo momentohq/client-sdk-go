@@ -41,4 +41,4 @@ provide it, you can get this from your `~/.momento/credentials` file. The env `T
 
 Then run `make test`.
 
-{{ossFooter}}
+{{ ossFooter }}
