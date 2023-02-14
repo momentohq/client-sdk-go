@@ -28,6 +28,15 @@ jobs:
           sdk_language: Go
           usage_example_path: ./examples/main.go
 
+      - name: Verify CONTRIBUTING generation
+        uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
+        with:
+          project_status: official
+          project_stability: alpha
+          project_type: other
+          sdk_language: Go
+          template_file: CONTRIBUTING.template.md
+
   test:
     uses: ./.github/workflows/test.yml
     secrets:
