@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	client_sdk_go "github.com/momentohq/client-sdk-go/internal/protos"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
 //////////// SetResponse /////////////
@@ -30,8 +30,8 @@ type SetRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	TTL time.Duration
 
-	grpcRequest  *client_sdk_go.XSetRequest
-	grpcResponse *client_sdk_go.XSetResponse
+	grpcRequest  *pb.XSetRequest
+	grpcResponse *pb.XSetResponse
 	response     SetResponse
 }
 
@@ -63,7 +63,7 @@ func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	r.grpcRequest = &client_sdk_go.XSetRequest{
+	r.grpcRequest = &pb.XSetRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,

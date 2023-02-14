@@ -3,7 +3,7 @@ package momento
 import (
 	"context"
 
-	client_sdk_go "github.com/momentohq/client-sdk-go/internal/protos"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
 ////// DeleteResponse //////
@@ -24,8 +24,8 @@ type DeleteRequest struct {
 	// string or byte key to be used to delete the item.
 	Key Bytes
 
-	grpcRequest  *client_sdk_go.XDeleteRequest
-	grpcResponse *client_sdk_go.XDeleteResponse
+	grpcRequest  *pb.XDeleteRequest
+	grpcResponse *pb.XDeleteResponse
 	response     DeleteResponse
 }
 
@@ -43,7 +43,7 @@ func (r *DeleteRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	r.grpcRequest = &client_sdk_go.XDeleteRequest{CacheKey: key}
+	r.grpcRequest = &pb.XDeleteRequest{CacheKey: key}
 
 	return nil
 }

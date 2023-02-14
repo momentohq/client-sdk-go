@@ -3,7 +3,7 @@ package momento
 import (
 	"context"
 
-	client_sdk_go "github.com/momentohq/client-sdk-go/internal/protos"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
 ///// GetResponse ///////
@@ -42,8 +42,8 @@ type GetRequest struct {
 	// string or byte key to be used to store item
 	Key Bytes
 
-	grpcRequest  *client_sdk_go.XGetRequest
-	grpcResponse *client_sdk_go.XGetResponse
+	grpcRequest  *pb.XGetRequest
+	grpcResponse *pb.XGetResponse
 	response     GetResponse
 }
 
@@ -61,7 +61,7 @@ func (r *GetRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	r.grpcRequest = &client_sdk_go.XGetRequest{
+	r.grpcRequest = &pb.XGetRequest{
 		CacheKey: key,
 	}
 
@@ -82,10 +82,10 @@ func (r *GetRequest) makeGrpcRequest(client scsDataClient, metadata context.Cont
 func (r *GetRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
 
-	if resp.Result == client_sdk_go.ECacheResult_Hit {
+	if resp.Result == pb.ECacheResult_Hit {
 		r.response = GetHit{value: resp.CacheBody}
 		return nil
-	} else if resp.Result == client_sdk_go.ECacheResult_Miss {
+	} else if resp.Result == pb.ECacheResult_Miss {
 		r.response = GetMiss{}
 		return nil
 	} else {

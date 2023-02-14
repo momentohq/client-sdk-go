@@ -17,7 +17,7 @@ import (
 	"context"
 	"time"
 
-	client_sdk_go "github.com/momentohq/client-sdk-go/internal/protos"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
 //////////// Response /////////////
@@ -40,8 +40,8 @@ type TemplateRequest struct {
 
 	// Add your request keys here.
 
-	grpcRequest  *client_sdk_go.XTemplateRequest
-	grpcResponse *client_sdk_go.XTemplateResponse
+	grpcRequest  *pb.XTemplateRequest
+	grpcResponse *pb.XTemplateResponse
 	response     TemplateResponse
 }
 
@@ -58,7 +58,7 @@ func (r *TemplateRequest) initGrpcRequest(client scsDataClient) error {
 	// verify your arguments here.
 	// cache name is already verified.
 
-	r.grpcRequest = &client_sdk_go.XTemplateRequest{
+	r.grpcRequest = &pb.XTemplateRequest{
 		// fill in your GRPC request arguments
 	}
 
