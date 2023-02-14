@@ -29,6 +29,7 @@ jobs:
           project_type: other
           sdk_language: Go
           template_file: CONTRIBUTING.template.md
+          output_file: CONTRIBUTING.md
 
   test:
     needs: [readme]
