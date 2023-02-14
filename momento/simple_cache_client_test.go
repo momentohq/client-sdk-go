@@ -103,7 +103,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", randomCacheName, err))
 	}
 
-	cleanUpClient(client)
+	teardown(client, cacheName, randomCacheName)
 }
 
 func TestBasicHappyPathDelete(t *testing.T) {
@@ -181,7 +181,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", cacheName, err))
 	}
 
-	cleanUpClient(client)
+	teardown(client, testCacheName, cacheName)
 }
 
 func TestCredentialProvider(t *testing.T) {
@@ -258,7 +258,7 @@ func TestClientInitialization(t *testing.T) {
 			if tt.expectedErr == "" && err != nil {
 				t.Errorf("unexpected error occurred on init expected=%+v got=%+v", tt.expectedErr, err)
 			}
-			cleanUpClient(c)
+			teardown(c)
 		})
 	}
 }
@@ -318,7 +318,7 @@ func TestCreateCache(t *testing.T) {
 					t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", tt.cacheName, err))
 				}
 			}
-			cleanUpClient(client)
+			teardown(client)
 		})
 	}
 }
@@ -370,7 +370,7 @@ func TestDeleteCache(t *testing.T) {
 			if tt.expectedErr == "" && err != nil {
 				t.Errorf("unexpected error occurred on deleteing cache expected=%+v got=%+v", tt.expectedErr, err)
 			}
-			cleanUpClient(client)
+			teardown(client)
 		})
 	}
 }
@@ -414,7 +414,7 @@ func TestListCache(t *testing.T) {
 			if unknownCacheInList == true {
 				t.Errorf("unexpected cache=%s was found in cache list", unknownCache)
 			}
-			cleanUpClient(client)
+			teardown(client)
 		})
 	}
 }
@@ -518,7 +518,7 @@ func TestSetGet(t *testing.T) {
 				}
 
 			}
-			cleanUpClient(client)
+			teardown(client, testCacheName)
 		})
 	}
 }
@@ -584,7 +584,7 @@ func TestSet(t *testing.T) {
 					err, tt.expectedErr,
 				)
 			}
-			cleanUpClient(client)
+			teardown(client)
 		})
 	}
 }
@@ -639,7 +639,7 @@ func TestGet(t *testing.T) {
 					err, tt.expectedErr,
 				)
 			}
-			cleanUpClient(client)
+			teardown(client)
 		})
 	}
 }
@@ -694,7 +694,7 @@ func TestDelete(t *testing.T) {
 					err, tt.expectedErr,
 				)
 			}
-			cleanUpClient(client)
+			teardown(client)
 		})
 	}
 }
@@ -735,6 +735,13 @@ func newTestClient(credentialProvider auth.CredentialProvider) (*ScsClient, erro
 	return client, nil
 }
 
-func cleanUpClient(client *ScsClient) {
+func teardown(client *ScsClient, cacheNames ...string) {
+	ctx := context.Background()
+
+	for _, cacheName := range cacheNames {
+		client.DeleteCache(ctx, &DeleteCacheRequest{
+			CacheName: cacheName,
+		})
+	}
 	client.Close()
 }
