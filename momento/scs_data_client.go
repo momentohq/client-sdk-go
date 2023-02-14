@@ -64,11 +64,11 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	metadata := metadata.NewOutgoingContext(
+	request_metadata := metadata.NewOutgoingContext(
 		ctx, client.CreateNewMetadata(r.cacheName()),
 	)
 
-	grpcResp, err := r.makeGrpcRequest(client, metadata)
+	grpcResp, err := r.makeGrpcRequest(client, request_metadata)
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err)
 	}
