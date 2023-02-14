@@ -26,7 +26,7 @@ jobs:
         with:
           project_status: official
           project_stability: alpha
-          project_type: sdk
+          project_type: other
           sdk_language: Go
           usage_example_path: ./examples/main.go
           template_file: CONTRIBUTING.template.md
