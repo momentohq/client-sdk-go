@@ -60,7 +60,7 @@ type SortedSetFetchRequest struct {
 
 	grpcRequest  *pb.XSortedSetFetchRequest
 	grpcResponse *pb.XSortedSetFetchResponse
-	response     SortedSetFetchResponse
+	response     *SortedSetFetchResponse
 }
 
 func (r SortedSetFetchRequest) cacheName() string { return r.CacheName }
@@ -125,7 +125,7 @@ func (r *SortedSetFetchRequest) interpretGrpcResponse() error {
 		return errUnexpectedGrpcResponse
 	}
 
-	r.response = resp
+	r.response = &resp
 
 	return nil
 }

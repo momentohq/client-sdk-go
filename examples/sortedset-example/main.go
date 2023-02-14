@@ -100,8 +100,8 @@ func setupCache(client momento.ScsClient, ctx context.Context) {
 	}
 }
 
-func displayElements(setName string, resp momento.SortedSetFetchResponse) {
-	switch r := resp.(type) {
+func displayElements(setName string, resp *momento.SortedSetFetchResponse) {
+	switch r := (*resp).(type) {
 	case momento.SortedSetFetchHit:
 		for _, e := range r.Elements {
 			fmt.Printf("setName: %s, elementName: %s, score: %f\n", setName, e.Name, e.Score)

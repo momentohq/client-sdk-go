@@ -162,7 +162,7 @@ func (c ScsClient) TopicPublish(ctx context.Context, request *TopicPublishReques
 	return TopicPublishSuccess{}, err
 }
 
-func (c ScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
+func (c ScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (*SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
