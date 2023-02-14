@@ -28,6 +28,7 @@ jobs:
           project_stability: alpha
           project_type: sdk
           sdk_language: Go
+          usage_example_path: ./examples/main.go
           template_file: CONTRIBUTING.template.md
 
   test:
