@@ -1,0 +1,84 @@
+// This is a template for making a new requester.
+// Each SimpleCacheClient method should have a corresponding requester.
+// The requester is used in scsDataClient.makeRequest().
+//
+// For this example we'll be assuming you'r writing
+// SimpleCacheClient.DictionaryIterate()
+//
+// 1. Copy this file and give it the appropriate name. (momento/dictionary-iterate.go)
+// 2. Search and replace "Template" with the name of your method. (DictionaryIterate)
+// 3. Add any necessary responses (and remove Success if necessary).
+// 4. Verify the grpcRequest and grpcResponse types are correct.
+// 5. Fill out initGrpcRequest(), makeGrpcRequest(), and interpretGrpcResponse().
+
+package momento
+
+import (
+	"context"
+	"time"
+
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+)
+
+//////////// Response /////////////
+
+// Each response needs to implement this interface.
+
+type TemplateResponse interface {
+	isTemplateResponse()
+}
+
+type TemplateSuccess struct{}
+
+func (TemplateSuccess) isTemplateResponse() {}
+
+///////////// Request /////////////
+
+type TemplateRequest struct {
+	// Name of the cache to store the item in.
+	CacheName string
+
+	// Add your request keys here.
+
+	grpcRequest  *pb.XTemplateRequest
+	grpcResponse *pb.XTemplateResponse
+	response     TemplateResponse
+}
+
+func (r TemplateRequest) cacheName() string { return r.CacheName }
+
+func (r TemplateRequest) requestName() string { return "Template" }
+
+// Validates and converts request arguments and initializes the GRPC request.
+//
+// The initialized GRPC request is assigned to r.grpcRequest for use in makeGrpcRequest().
+func (r *TemplateRequest) initGrpcRequest(client scsDataClient) error {
+	var err error
+
+	// verify your arguments here.
+	// cache name is already verified.
+
+	r.grpcRequest = &pb.XTemplateRequest{
+		// fill in your GRPC request arguments
+	}
+
+	return nil
+}
+
+// Call the appropriate method on the GRPC client. Pass it your GRPC request from initGrpcRequest().
+// and the metadata. Store the response in r.grpcResponse use in interpretGrpcResponse().
+func (r *TemplateRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+	resp, err := client.grpcClient.Template(metadata, r.grpcRequest)
+	if err != nil {
+		return nil, err
+	}
+	r.grpcResponse = resp
+	return resp, nil
+}
+
+// Translate the GRPC response in r.grpcResponse into a Momento response.
+// Store the result in r.repsonse. This response will be returned from SimpleCacheClient.
+func (r *TemplateRequest) interpretGrpcResponse() error {
+	r.response = TemplateSuccess{}
+	return nil
+}

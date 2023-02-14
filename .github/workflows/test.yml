@@ -54,6 +54,6 @@ jobs:
       - name: Run test
         run: |
           go vet ./...
-          go test -v ./momento ./incubating
+          go test -v ./momento
 
 

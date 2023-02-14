@@ -3,7 +3,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -15,32 +14,12 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 )
 
-// ScsClient wraps lower level cache control and data operations.
-type ScsClient interface {
-	// CreateCache Create a new cache in your Momento account.
-	CreateCache(ctx context.Context, request *CreateCacheRequest) error
-	// DeleteCache Deletes a cache and all the items within your Momento account.
-	DeleteCache(ctx context.Context, request *DeleteCacheRequest) error
-	// ListCaches Lists all caches in your Momento account.
-	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
-
-	// Set Stores an item in cache.
-	Set(ctx context.Context, request *CacheSetRequest) error
-	// Get Retrieve an item from the cache.
-	Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error)
-	// Delete an item from the cache.
-	Delete(ctx context.Context, request *CacheDeleteRequest) error
-
-	// Close Closes the client.
-	Close()
-}
-
-// DefaultScsClient represents all information needed for momento client to enable cache control and data operations.
-type DefaultScsClient struct {
+// ScsClient represents all information needed for momento client to enable cache control and data operations.
+type ScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
-	dataClient         *services.ScsDataClient
-	defaultTTL         time.Duration
+	dataClient         *scsDataClient
+	pubSubClient       *pubSubClient
 }
 
 type SimpleCacheClientProps struct {
@@ -50,15 +29,23 @@ type SimpleCacheClientProps struct {
 }
 
 // NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
+func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
-	client := &DefaultScsClient{
+	client := &ScsClient{
 		credentialProvider: props.CredentialProvider,
 	}
 
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
+		CredentialProvider: props.CredentialProvider,
+		Configuration:      props.Configuration,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
+	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
 	})
@@ -74,7 +61,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 		)
 	}
 
-	dataClient, err := services.NewScsDataClient(&models.DataClientRequest{
+	dataClient, err := newScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
 		DefaultTtl:         props.DefaultTTL,
@@ -85,11 +72,12 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (ScsClient, error) {
 
 	client.dataClient = dataClient
 	client.controlClient = controlClient
+	client.pubSubClient = pubSubClient
 
 	return client, nil
 }
 
-func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+func (c ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -102,7 +90,7 @@ func (c *DefaultScsClient) CreateCache(ctx context.Context, request *CreateCache
 	return nil
 }
 
-func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+func (c ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -115,7 +103,7 @@ func (c *DefaultScsClient) DeleteCache(ctx context.Context, request *DeleteCache
 	return nil
 }
 
-func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+func (c ScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
@@ -128,86 +116,97 @@ func (c *DefaultScsClient) ListCaches(ctx context.Context, request *ListCachesRe
 	}, nil
 }
 
-func (c *DefaultScsClient) Set(ctx context.Context, request *CacheSetRequest) error {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return err
-	}
-	ttlToUse := c.defaultTTL
-	if request.TTL != time.Duration(0) {
-		ttlToUse = request.TTL
-	}
-
-	key, err := isKeyValid(request.Key.AsBytes())
-	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
-	}
-	value, err := isValueValid(request.Value.AsBytes())
-	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
-	}
-
-	err = c.dataClient.Set(ctx, &models.CacheSetRequest{
-		CacheName: request.CacheName,
-		Key:       key,
-		Value:     value,
-		Ttl:       ttlToUse,
-	})
-	return convertMomentoSvcErrorToCustomerError(err)
-}
-
-func (c *DefaultScsClient) Get(ctx context.Context, request *CacheGetRequest) (CacheGetResponse, error) {
-	if err := isCacheNameValid(request.CacheName); err != nil {
+func (c ScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
-	key, err := isKeyValid(request.Key.AsBytes())
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	rsp, err := c.dataClient.Get(ctx, &models.CacheGetRequest{
-		CacheName: request.CacheName,
-		Key:       key,
-	})
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	return convertCacheGetResponse(rsp)
+	return r.response, nil
 }
 
-func (c *DefaultScsClient) Delete(ctx context.Context, request *CacheDeleteRequest) error {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return err
+func (c ScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
 	}
-	key, err := isKeyValid(request.Key.AsBytes())
-	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
-	}
-	err = c.dataClient.Delete(ctx, &models.CacheDeleteRequest{
-		CacheName: request.CacheName,
-		Key:       key,
-	})
-	return convertMomentoSvcErrorToCustomerError(err)
+	return r.response, nil
 }
 
-func (c *DefaultScsClient) Close() {
+func (c ScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c ScsClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
+	clientStream, err := c.pubSubClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+		CacheName: request.CacheName,
+		TopicName: request.TopicName,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return topicSubscription{grpcClient: clientStream}, err
+}
+
+func (c ScsClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
+	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
+		CacheName: request.CacheName,
+		TopicName: request.TopicName,
+		Value:     request.Value,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return TopicPublishSuccess{}, err
+}
+
+func (c ScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c ScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c ScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c ScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c ScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c ScsClient) SortedSetIncrement(ctx context.Context, r *SortedSetIncrementRequest) (SortedSetIncrementResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c *ScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
-}
-
-func convertCacheGetResponse(r models.CacheGetResponse) (CacheGetResponse, MomentoError) {
-	switch response := r.(type) {
-	case *models.CacheGetMiss:
-		return &CacheGetMiss{}, nil
-	case *models.CacheGetHit:
-		return &CacheGetHit{
-			value: response.Value,
-		}, nil
-	default:
-		return nil, momentoerrors.NewMomentoSvcErr(
-			ClientSdkError,
-			fmt.Sprintf("unexpected cache get status returned %+v", response),
-			nil,
-		)
-	}
 }
 
 func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) MomentoError {
@@ -225,20 +224,6 @@ func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
 		})
 	}
 	return convertedList
-}
-
-func isValueValid(value []byte) ([]byte, momentoerrors.MomentoSvcErr) {
-	if len(value) == 0 {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "value cannot be empty", nil)
-	}
-	return value, nil
-}
-
-func isKeyValid(key []byte) ([]byte, momentoerrors.MomentoSvcErr) {
-	if len(key) == 0 {
-		return key, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
-	}
-	return key, nil
 }
 
 func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {

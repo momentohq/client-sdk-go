@@ -1,8 +1,7 @@
-package services
+package momento
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -12,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type PubSubClient struct {
+type pubSubClient struct {
 	streamDataManager *grpcmanagers.DataGrpcManager
 	unaryDataManager  *grpcmanagers.DataGrpcManager
 	streamGrpcClient  pb.PubsubClient
@@ -20,7 +19,7 @@ type PubSubClient struct {
 	endpoint          string
 }
 
-func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, momentoerrors.MomentoSvcErr) {
+func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	streamDataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 	})
@@ -33,7 +32,7 @@ func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, moment
 	if err != nil {
 		return nil, err
 	}
-	return &PubSubClient{
+	return &pubSubClient{
 		streamDataManager: streamDataManager,
 		unaryDataManager:  unaryDataManager,
 		streamGrpcClient:  pb.NewPubsubClient(streamDataManager.Conn),
@@ -42,22 +41,7 @@ func NewPubSubClient(request *models.PubSubClientRequest) (*PubSubClient, moment
 	}, nil
 }
 
-func NewLocalPubSubClient(port int) (*PubSubClient, momentoerrors.MomentoSvcErr) {
-	dataManager, err := grpcmanagers.NewLocalDataGrpcManager(&models.LocalDataGrpcManagerRequest{
-		Endpoint: fmt.Sprintf("localhost:%d", port),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return &PubSubClient{
-		unaryGrpcClient:  pb.NewPubsubClient(dataManager.Conn),
-		streamGrpcClient: pb.NewPubsubClient(dataManager.Conn),
-		endpoint:         "localhost",
-	}, nil
-}
-
-func (client *PubSubClient) Subscribe(ctx context.Context, request *models.TopicSubscribeRequest) (grpc.ClientStream, error) {
+func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (grpc.ClientStream, error) {
 	streamClient, err := client.streamGrpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName: request.CacheName,
 		Topic:     request.TopicName,
@@ -65,9 +49,9 @@ func (client *PubSubClient) Subscribe(ctx context.Context, request *models.Topic
 	})
 	return streamClient, err
 }
-func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPublishRequest) error {
+func (client *pubSubClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) error {
 	switch value := request.Value.(type) {
-	case *models.TopicValueString:
+	case *TopicValueString:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -78,7 +62,7 @@ func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPu
 			},
 		})
 		return err
-	case *models.TopicValueBytes:
+	case *TopicValueBytes:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -97,11 +81,11 @@ func (client *PubSubClient) Publish(ctx context.Context, request *models.TopicPu
 	}
 }
 
-func (client *PubSubClient) Endpoint() string {
+func (client *pubSubClient) Endpoint() string {
 	return client.endpoint
 }
 
-func (client *PubSubClient) Close() {
+func (client *pubSubClient) Close() {
 	defer client.streamDataManager.Close()
 	defer client.unaryDataManager.Close()
 }

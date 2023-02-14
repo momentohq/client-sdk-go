@@ -1,4 +1,4 @@
-package incubating
+package momento
 
 import (
 	"io"
@@ -7,15 +7,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-type SubscriptionIFace interface {
+type TopicSubscription interface {
 	Item() (TopicValue, error)
 }
 
-type Subscription struct {
+type topicSubscription struct {
 	grpcClient grpc.ClientStream
 }
 
-func (s *Subscription) Item() (TopicValue, error) {
+func (s topicSubscription) Item() (TopicValue, error) {
 	retryCount := 0
 	maxRetries := 2
 	for {

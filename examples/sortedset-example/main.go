@@ -9,9 +9,7 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
-	"github.com/momentohq/client-sdk-go/incubating"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/momentohq/client-sdk-go/utils"
 )
 
 const (
@@ -30,10 +28,10 @@ func main() {
 	// Put score for each element to set
 	// Using counter, element N has score N
 	for i := 1; i < 11; i++ {
-		err := client.SortedSetPut(ctx, &incubating.SortedSetPutRequest{
+		_, err := client.SortedSetPut(ctx, &momento.SortedSetPutRequest{
 			CacheName: cacheName,
 			SetName:   setName,
-			Elements: []*incubating.SortedSetScoreRequestElement{{
+			Elements: []*momento.SortedSetScoreRequestElement{{
 				Name:  momento.StringBytes{Text: fmt.Sprintf("element-%d", i)},
 				Score: float64(i),
 			}},
@@ -44,7 +42,9 @@ func main() {
 	}
 
 	// Fetch sorted set
-	fetchResp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
+	fmt.Println("\n\nFetching all elements from sorted set:")
+	fmt.Println("--------------")
+	fetchResp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
 		CacheName: cacheName,
 		SetName:   setName,
 	})
@@ -52,63 +52,30 @@ func main() {
 		panic(err)
 	}
 
-	// Display all elements in sorted set
-	switch r := fetchResp.(type) {
-	case *incubating.SortedSetFetchHit:
-		fmt.Println("--------------")
-		fmt.Println("Found sorted set with following elements:")
-		for _, e := range r.Elements {
-			fmt.Println(fmt.Sprintf("setName: %s elementName: %s score: %f", setName, e.Name, e.Score))
-		}
-	case *incubating.SortedSetFetchMiss:
-		fmt.Println("we regret to inform you there is no such set")
-		os.Exit(1)
-	}
+	displayElements(setName, fetchResp)
 
 	// Fetch top 5 elements in descending order (high -> low)
-	fmt.Println("--------------")
 	fmt.Println("\n\nFetching Top 5 elements from sorted set:")
-	top5Rsp, err := client.SortedSetFetch(ctx, &incubating.SortedSetFetchRequest{
+	fmt.Println("--------------")
+	top5Rsp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
 		CacheName:       cacheName,
 		SetName:         setName,
-		NumberOfResults: incubating.FetchLimitedElements{Limit: 5},
-		Order:           incubating.DESCENDING,
+		NumberOfResults: momento.FetchLimitedElements{Limit: 5},
+		Order:           momento.DESCENDING,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	// Display top 5 elements using the result from SortedSetFetch in descending order
-	switch r := top5Rsp.(type) {
-	case *incubating.SortedSetFetchHit:
-		for _, e := range r.Elements {
-			fmt.Println(fmt.Sprintf("setName: %s elementName: %s score: %f", setName, e.Name, e.Score))
-		}
-		fmt.Println("\n")
-	case *incubating.SortedSetFetchMiss:
-		fmt.Println("we regret to inform you there is no such set")
-		os.Exit(1)
-	}
-
-	rsp, err := client.SortedSetIncrement(ctx, &incubating.SortedSetIncrementRequest{
-		CacheName:     cacheName,
-		SetName:       setName,
-		ElementName:   momento.StringBytes{Text: fmt.Sprintf("key:%d", 10)},
-		Amount:        10,
-		CollectionTTL: utils.CollectionTTL{RefreshTtl: true, Ttl: 60 * time.Second},
-	})
-	switch r := rsp.(type) {
-	case *incubating.SortedSetIncrementResponseSuccess:
-		fmt.Println(fmt.Sprintf("new value %f", r.Value))
-	}
+	displayElements(setName, top5Rsp)
 }
 
-func getClient() incubating.ScsClient {
+func getClient() momento.ScsClient {
 	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
-	client, err := incubating.NewScsClient(&momento.SimpleCacheClientProps{
+	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
 		DefaultTTL:         60 * time.Second,
@@ -116,7 +83,7 @@ func getClient() incubating.ScsClient {
 	if err != nil {
 		panic(err)
 	}
-	return client
+	return *client
 }
 
 func setupCache(client momento.ScsClient, ctx context.Context) {
@@ -130,5 +97,18 @@ func setupCache(client momento.ScsClient, ctx context.Context) {
 				panic(err)
 			}
 		}
+	}
+}
+
+func displayElements(setName string, resp momento.SortedSetFetchResponse) {
+	switch r := resp.(type) {
+	case momento.SortedSetFetchHit:
+		for _, e := range r.Elements {
+			fmt.Printf("setName: %s, elementName: %s, score: %f\n", setName, e.Name, e.Score)
+		}
+		fmt.Println("")
+	case momento.SortedSetFetchMiss:
+		fmt.Println("we regret to inform you there is no such set")
+		os.Exit(1)
 	}
 }
