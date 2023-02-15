@@ -17,7 +17,7 @@ import (
 type SimpleCacheClient interface {
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
-	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
+	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
 
 	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
@@ -135,14 +135,14 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	return &DeleteCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &ListCachesResponse{
+	return &ListCachesSuccess{
 		nextToken: rsp.NextToken,
 		caches:    convertCacheInfo(rsp.Caches),
 	}, nil

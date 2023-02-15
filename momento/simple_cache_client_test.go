@@ -403,12 +403,15 @@ func TestListCache(t *testing.T) {
 			}
 			var cacheNameInList = false
 			var unknownCacheInList = false
-			for _, cache := range resp.Caches() {
-				if cache.Name() == tt.cacheName {
-					cacheNameInList = true
-				}
-				if cache.Name() == unknownCache {
-					unknownCacheInList = true
+			switch result := resp.(type) {
+			case *ListCachesSuccess:
+				for _, cache := range result.Caches() {
+					if cache.Name() == tt.cacheName {
+						cacheNameInList = true
+					}
+					if cache.Name() == unknownCache {
+						unknownCacheInList = true
+					}
 				}
 			}
 			if cacheNameInList == false {
