@@ -80,9 +80,18 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	switch numResults := r.NumberOfResults.(type) {
+	case *FetchAllElements:
+		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
 	case FetchAllElements:
+		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
 	case nil:
 		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
+	case *FetchLimitedElements:
+		grpcReq.NumResults = &pb.XSortedSetFetchRequest_Limit{
+			Limit: &pb.XSortedSetFetchRequest_XLimit{
+				Limit: numResults.Limit,
+			},
+		}
 	case FetchLimitedElements:
 		grpcReq.NumResults = &pb.XSortedSetFetchRequest_Limit{
 			Limit: &pb.XSortedSetFetchRequest_XLimit{
