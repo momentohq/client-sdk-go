@@ -77,7 +77,7 @@ func main() {
 	}
 
 	// Create Cache and check if CacheName exists
-	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
+	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	// Permanently delete the cache
-	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
+	if _, err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
 		panic(err)
 	}
 	log.Printf("Cache named %s is deleted\n", cacheName)
