@@ -71,7 +71,7 @@ func getClient() momento.SimpleCacheClient {
 }
 
 func setupCache(client momento.SimpleCacheClient, ctx context.Context) {
-	err := client.CreateCache(ctx, &momento.CreateCacheRequest{
+	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: "test-cache",
 	})
 	if err != nil {
