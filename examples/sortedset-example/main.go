@@ -32,7 +32,7 @@ func main() {
 			CacheName: cacheName,
 			SetName:   setName,
 			Elements: []*momento.SortedSetScoreRequestElement{{
-				Value: momento.StringBytes{Text: fmt.Sprintf("element-%d", i)},
+				Value: momento.String{Text: fmt.Sprintf("element-%d", i)},
 				Score: float64(i),
 			}},
 		})

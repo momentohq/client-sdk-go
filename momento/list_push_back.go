@@ -30,7 +30,7 @@ func (resp ListPushBackSuccess) ListLength() uint32 {
 type ListPushBackRequest struct {
 	CacheName           string
 	ListName            string
-	Value               Bytes
+	Value               Value
 	TruncateFrontToSize uint32
 	CollectionTTL       utils.CollectionTTL
 
@@ -41,7 +41,7 @@ type ListPushBackRequest struct {
 
 func (r *ListPushBackRequest) cacheName() string { return r.CacheName }
 
-func (r *ListPushBackRequest) value() Bytes { return r.Value }
+func (r *ListPushBackRequest) value() Value { return r.Value }
 
 func (r *ListPushBackRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 

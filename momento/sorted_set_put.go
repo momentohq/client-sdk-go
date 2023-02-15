@@ -20,7 +20,7 @@ func (SortedSetPutSuccess) isSortedSetPutResponse() {}
 ///////// Request
 
 type SortedSetScoreRequestElement struct {
-	Value Bytes
+	Value Value
 	Score float64
 }
 

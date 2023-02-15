@@ -36,15 +36,15 @@ type hasCacheName interface {
 }
 
 type hasKey interface {
-	key() Bytes
+	key() Value
 }
 
 type hasValue interface {
-	value() Bytes
+	value() Value
 }
 
 type hasValues interface {
-	values() []Bytes
+	values() []Value
 }
 
 type hasScalarTTL interface {
@@ -113,7 +113,7 @@ func prepareCollectionTtl(ttl utils.CollectionTTL, defaultTtl time.Duration) (ui
 	return uint64(ttlDuration.Milliseconds()), ttl.RefreshTtl
 }
 
-func momentoBytesListToPrimitiveByteList(i []Bytes) [][]byte {
+func momentoBytesListToPrimitiveByteList(i []Value) [][]byte {
 	var rList [][]byte
 	for _, mb := range i {
 		rList = append(rList, mb.asBytes())

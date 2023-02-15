@@ -29,7 +29,7 @@ func (SortedSetGetRankHit) isSortedSetGetRankResponse() {}
 type SortedSetGetRankRequest struct {
 	CacheName   string
 	SetName     string
-	ElementName Bytes
+	ElementName Value
 
 	grpcRequest  *pb.XSortedSetGetRankRequest
 	grpcResponse *pb.XSortedSetGetRankResponse

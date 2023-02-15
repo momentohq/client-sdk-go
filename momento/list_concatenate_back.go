@@ -29,7 +29,7 @@ func (resp ListConcatenateBackSuccess) ListLength() uint32 {
 type ListConcatenateBackRequest struct {
 	CacheName           string
 	ListName            string
-	Values              []Bytes
+	Values              []Value
 	TruncateFrontToSize uint32
 	CollectionTTL       utils.CollectionTTL
 
@@ -40,7 +40,7 @@ type ListConcatenateBackRequest struct {
 
 func (r *ListConcatenateBackRequest) cacheName() string { return r.CacheName }
 
-func (r *ListConcatenateBackRequest) values() []Bytes { return r.Values }
+func (r *ListConcatenateBackRequest) values() []Value { return r.Values }
 
 func (r *ListConcatenateBackRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 

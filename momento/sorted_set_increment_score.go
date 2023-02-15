@@ -23,7 +23,7 @@ func (SortedSetIncrementScoreSuccess) isSortedSetIncrementResponse() {}
 type SortedSetIncrementScoreRequest struct {
 	CacheName     string
 	SetName       string
-	ElementName   Bytes
+	ElementName   Value
 	Amount        float64
 	CollectionTTL utils.CollectionTTL
 

@@ -13,7 +13,7 @@ type ListPopFrontResponse interface {
 }
 
 type ListPopFrontHit struct {
-	value Bytes
+	value Value
 }
 
 func (ListPopFrontHit) isListPopFrontResponse() {}
@@ -67,7 +67,7 @@ func (r *ListPopFrontRequest) makeGrpcRequest(metadata context.Context, client s
 func (r *ListPopFrontRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListPopFrontResponse_Found:
-		r.response = &ListPopFrontHit{value: RawBytes{rtype.Found.Front}}
+		r.response = &ListPopFrontHit{value: Bytes{rtype.Found.Front}}
 	case *pb.XListPopFrontResponse_Missing:
 		r.response = &ListPopFrontMiss{}
 	default:

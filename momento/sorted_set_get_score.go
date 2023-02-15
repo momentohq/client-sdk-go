@@ -47,7 +47,7 @@ func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
 type SortedSetGetScoreRequest struct {
 	CacheName    string
 	SetName      string
-	ElementNames []Bytes
+	ElementNames []Value
 
 	grpcRequest  *pb.XSortedSetGetScoreRequest
 	grpcResponse *pb.XSortedSetGetScoreResponse
