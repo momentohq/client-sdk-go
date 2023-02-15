@@ -113,7 +113,7 @@ func main() {
 
 	switch r := resp.(type) {
 	case *momento.GetHit:
-		log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
+		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
 	case *momento.GetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
@@ -129,7 +129,7 @@ func main() {
 
 ### Error Handling
 
-The preferred way of interpreting the return values from `ScsClient` methods is using a `switch` statement to match and handle the specific response type. 
+The preferred way of interpreting the return values from `SimpleCacheClient` methods is using a `switch` statement to match and handle the specific response type. 
 Here's a quick example:
 
 ```go
