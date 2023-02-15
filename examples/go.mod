@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/momentohq/client-sdk-go v0.7.2
+	github.com/momentohq/client-sdk-go v0.8.0
 )
 
 require (
@@ -17,4 +17,3 @@ require (
 	google.golang.org/grpc v1.52.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
-

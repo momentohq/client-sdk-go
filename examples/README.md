@@ -1,16 +1,20 @@
-## Running the Example
+# Running the Example
 
-- [Go version 1.18.\*](https://go.dev/dl/) is required
-- A Momento Auth Token is required, you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli)
+## Requirements.
 
-```bash
-go mod vendor
-MOMENTO_AUTH_TOKEN=<YOUR_TOKEN> go run main.go
+- [Go version 1.19](https://go.dev/dl/) or newer.
+- A Momento Auth Token; you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli).
+- Run `go mod vendor` to install dependencies.
+
+## Running an example.
+
+Each example is a main.go file in its own directory.
+
+To run an example, provide your Momento Auth Token as the MOMENTO_AUTH_TOKEN environment variable and `go run` the example's main.go. For example, to run the get/set/delete example...
+
 ```
-
-Code example can be found [here](main.go)!
-
-<br />
+MOMENTO_AUTH_TOKEN=<YOUR_TOKEN> go run scalar-example/main.go
+```
 
 ## Using SDK in your project
 

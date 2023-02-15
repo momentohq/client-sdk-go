@@ -26,7 +26,7 @@ jobs:
           project_stability: alpha
           project_type: sdk
           sdk_language: Go
-          usage_example_path: ./examples/main.go
+          usage_example_path: ./examples/scalar-example/main.go
 
       - name: Verify CONTRIBUTING generation
         uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v1
