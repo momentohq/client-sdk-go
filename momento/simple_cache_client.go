@@ -15,9 +15,9 @@ import (
 )
 
 type SimpleCacheClient interface {
-	CreateCache(ctx context.Context, request *CreateCacheRequest) error
-	DeleteCache(ctx context.Context, request *DeleteCacheRequest) error
-	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
+	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
+	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
+	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
 
 	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
@@ -109,40 +109,40 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (SimpleCacheClient, err
 	return client, nil
 }
 
-func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
-		return err
+		return nil, err
 	}
 	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return nil
+	return &CreateCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
-		return err
+		return nil, err
 	}
 	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return nil
+	return &DeleteCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &ListCachesResponse{
+	return &ListCachesSuccess{
 		nextToken: rsp.NextToken,
 		caches:    convertCacheInfo(rsp.Caches),
 	}, nil

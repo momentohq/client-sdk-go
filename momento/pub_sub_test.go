@@ -39,7 +39,7 @@ func getClient() SimpleCacheClient {
 func setup() {
 	ctx := context.Background()
 	client = getClient()
-	err := client.CreateCache(ctx, &CreateCacheRequest{
+	_, err := client.CreateCache(ctx, &CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
