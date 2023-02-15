@@ -6,19 +6,13 @@ package momento
 type Value interface{ asBytes() []byte }
 
 // Bytes plain old []byte
-type Bytes struct {
-	Bytes []byte
-}
+type Bytes []byte
 
-func (r Bytes) asBytes() []byte {
-	return r.Bytes
-}
+func (r Bytes) asBytes() []byte { return r }
 
 // String string type that will be converted to []byte
-type String struct {
-	Text string
-}
+type String string
 
 func (r String) asBytes() []byte {
-	return []byte(r.Text)
+	return []byte(r)
 }

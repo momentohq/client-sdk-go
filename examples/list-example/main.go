@@ -29,7 +29,7 @@ func pushFrontToList(value string) {
 	resp, err := client.ListPushFront(ctx, &momento.ListPushFrontRequest{
 		CacheName:          cacheName,
 		ListName:           listName,
-		Value:              &momento.String{Text: value},
+		Value:              momento.String(value),
 		TruncateBackToSize: 0,
 		CollectionTTL: utils.CollectionTTL{
 			Ttl:        5 * time.Second,
@@ -51,7 +51,7 @@ func pushBackToList(value string) {
 	resp, err := client.ListPushBack(ctx, &momento.ListPushBackRequest{
 		CacheName:           cacheName,
 		ListName:            listName,
-		Value:               &momento.String{Text: value},
+		Value:               momento.String(value),
 		TruncateFrontToSize: 0,
 		CollectionTTL: utils.CollectionTTL{
 			Ttl:        5 * time.Second,
@@ -219,21 +219,21 @@ func main() {
 
 	var values []momento.Value
 	for i := 0; i < 5; i++ {
-		values = append(values, momento.String{Text: fmt.Sprintf("concat front %d", i)})
+		values = append(values, momento.String(fmt.Sprintf("concat front %d", i)))
 	}
 	concatFront(values)
 	printList()
 
 	values = nil
 	for i := 0; i < 5; i++ {
-		values = append(values, momento.String{Text: fmt.Sprintf("concat back %d", i)})
+		values = append(values, momento.String(fmt.Sprintf("concat back %d", i)))
 	}
 	concatBack(values)
 	printList()
 
 	_, err = client.Delete(ctx, &momento.DeleteRequest{
 		CacheName: cacheName,
-		Key:       momento.String{Text: listName},
+		Key:       momento.String(listName),
 	})
 	if err != nil {
 		panic(err)
@@ -248,7 +248,7 @@ func main() {
 	}
 	printList()
 	value := "even"
-	removeValue(momento.String{Text: value})
+	removeValue(momento.String(value))
 	fmt.Printf("\nremoved '%s' from list\n", value)
 	printList()
 
