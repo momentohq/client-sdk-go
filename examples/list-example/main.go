@@ -21,7 +21,7 @@ const (
 
 var (
 	ctx    context.Context
-	client *momento.ScsClient
+	client *momento.SimpleCacheClient
 )
 
 func pushFrontToList(value string) {
