@@ -42,7 +42,7 @@ type RemoveAllElements struct{}
 func (RemoveAllElements) isSortedSetRemoveNumElement() {}
 
 type RemoveSomeElements struct {
-	ElementsToRemove []Bytes
+	Elements []Bytes
 }
 
 func (RemoveSomeElements) isSortedSetRemoveNumElement() {}
@@ -70,17 +70,17 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	case RemoveSomeElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoBytesListToPrimitiveByteList(toRemove.ElementsToRemove),
+				ElementName: momentoBytesListToPrimitiveByteList(toRemove.Elements),
 			},
 		}
 	case *RemoveSomeElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoBytesListToPrimitiveByteList(toRemove.ElementsToRemove),
+				ElementName: momentoBytesListToPrimitiveByteList(toRemove.Elements),
 			},
 		}
 	default:
-		return fmt.Errorf("%T is an unrecognized type for ElementsToRemove", r.ElementsToRemove)
+		return fmt.Errorf("%T is an unrecognized type for Elements", r.ElementsToRemove)
 	}
 
 	r.grpcRequest = grpcReq
