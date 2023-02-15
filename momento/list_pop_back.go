@@ -55,8 +55,8 @@ func (r *ListPopBackRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *ListPopBackRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListPopBack(ctx, r.grpcRequest)
+func (r *ListPopBackRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListPopBack(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}

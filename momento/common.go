@@ -16,7 +16,7 @@ var errUnexpectedGrpcResponse = errors.New("unexpected gRPC response")
 type requester interface {
 	hasCacheName
 	initGrpcRequest(client scsDataClient) error
-	makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error)
+	makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error)
 	interpretGrpcResponse() error
 	requestName() string
 }

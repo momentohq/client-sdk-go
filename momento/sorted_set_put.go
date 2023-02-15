@@ -59,7 +59,7 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetPutRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *SortedSetPutRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetPut(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err

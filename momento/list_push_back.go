@@ -70,8 +70,8 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *ListPushBackRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListPushBack(ctx, r.grpcRequest)
+func (r *ListPushBackRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListPushBack(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}

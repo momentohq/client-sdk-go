@@ -48,7 +48,7 @@ func (r *DeleteRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *DeleteRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *DeleteRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.Delete(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
