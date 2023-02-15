@@ -71,7 +71,7 @@ func (r *ListPopBackRequest) interpretGrpcResponse() error {
 	case *pb.XListPopBackResponse_Missing:
 		r.response = &ListPopBackMiss{}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }

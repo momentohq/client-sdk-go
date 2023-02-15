@@ -7,7 +7,6 @@ package momento
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -16,7 +15,16 @@ import (
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
-var errUnexpectedGrpcResponse = errors.New("unexpected gRPC response")
+func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors.MomentoSvcErr {
+	return momentoerrors.NewMomentoSvcErr(
+		momentoerrors.InternalServerError,
+		fmt.Sprintf(
+			"%s request got an unexpected response %T '%s'",
+			r.requestName(), grpcResp, grpcResp,
+		),
+		nil,
+	)
+}
 
 type requester interface {
 	hasCacheName

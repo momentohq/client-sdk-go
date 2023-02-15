@@ -89,6 +89,6 @@ func (r *GetRequest) interpretGrpcResponse() error {
 		r.response = &GetMiss{}
 		return nil
 	} else {
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 }

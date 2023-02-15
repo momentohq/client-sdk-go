@@ -80,7 +80,7 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
 	case *pb.XSortedSetGetRankResponse_Missing:
 		resp = &SortedSetGetRankMiss{}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 
 	r.response = resp
