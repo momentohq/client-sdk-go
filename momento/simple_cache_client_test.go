@@ -745,9 +745,19 @@ func teardown(client *ScsClient, cacheNames ...string) {
 	ctx := context.Background()
 
 	for _, cacheName := range cacheNames {
-		client.DeleteCache(ctx, &DeleteCacheRequest{
+		err := client.DeleteCache(ctx, &DeleteCacheRequest{
 			CacheName: cacheName,
 		})
+
+		// It's ok if the cache doesn't exist by the time
+		// we're tearing it down. Makes tearing down safer
+		// to just throw all possible caches at it.
+		var momentoErr MomentoError
+		if errors.As(err, &momentoErr) {
+			if momentoErr.Code() != NotFoundError {
+				panic(err)
+			}
+		}
 	}
 
 	if client != nil {
