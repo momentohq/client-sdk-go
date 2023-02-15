@@ -20,7 +20,7 @@ func (SortedSetPutSuccess) isSortedSetPutResponse() {}
 ///////// Request
 
 type SortedSetScoreRequestElement struct {
-	Name  Bytes
+	Value Bytes
 	Score float64
 }
 
@@ -77,7 +77,7 @@ func convertSortedSetElementToGrpc(modelSetElements []*SortedSetScoreRequestElem
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
 		returnList = append(returnList, &pb.XSortedSetElement{
-			Name:  el.Name.AsBytes(),
+			Name:  el.Value.AsBytes(),
 			Score: el.Score,
 		})
 	}
