@@ -112,9 +112,9 @@ func main() {
 	}
 
 	switch r := resp.(type) {
-	case momento.GetHit:
+	case *momento.GetHit:
 		log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
-	case momento.GetMiss:
+	case *momento.GetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
 
@@ -134,7 +134,7 @@ Here's a quick example:
 
 ```go
 switch r := resp.(type) {
-case momento.GetHit:
+case *momento.GetHit:
     log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
 default: 
     // you can handle other cases via pattern matching in other `switch case`, or a default case
