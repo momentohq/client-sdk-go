@@ -74,8 +74,8 @@ func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) error
 	return nil
 }
 
-func (r *ListConcatenateBackRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListConcatenateBack(ctx, r.grpcRequest)
+func (r *ListConcatenateBackRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListConcatenateBack(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}
