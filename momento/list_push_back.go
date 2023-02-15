@@ -61,7 +61,7 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 
 	r.grpcRequest = &pb.XListPushBackRequest{
 		ListName:            []byte(r.ListName),
-		Value:               r.Value.AsBytes(),
+		Value:               r.Value.asBytes(),
 		TtlMilliseconds:     ttl,
 		RefreshTtl:          r.CollectionTTL.RefreshTtl,
 		TruncateFrontToSize: r.TruncateFrontToSize,

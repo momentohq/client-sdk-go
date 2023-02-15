@@ -19,11 +19,11 @@ type ListPopFrontHit struct {
 func (ListPopFrontHit) isListPopFrontResponse() {}
 
 func (resp ListPopFrontHit) ValueByte() []byte {
-	return resp.value.AsBytes()
+	return resp.value.asBytes()
 }
 
 func (resp ListPopFrontHit) ValueString() string {
-	return string(resp.value.AsBytes())
+	return string(resp.value.asBytes())
 }
 
 type ListPopFrontMiss struct{}

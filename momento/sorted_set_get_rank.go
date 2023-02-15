@@ -49,7 +49,7 @@ func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 
 	resp := &pb.XSortedSetGetRankRequest{
 		SetName:     []byte(r.SetName),
-		ElementName: r.ElementName.AsBytes(),
+		ElementName: r.ElementName.asBytes(),
 	}
 
 	r.grpcRequest = resp

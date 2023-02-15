@@ -19,11 +19,11 @@ type ListPopBackHit struct {
 func (ListPopBackHit) isListPopBackResponse() {}
 
 func (resp ListPopBackHit) ValueByte() []byte {
-	return resp.value.AsBytes()
+	return resp.value.asBytes()
 }
 
 func (resp ListPopBackHit) ValueString() string {
-	return string(resp.value.AsBytes())
+	return string(resp.value.asBytes())
 }
 
 type ListPopBackMiss struct{}

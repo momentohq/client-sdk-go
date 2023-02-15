@@ -64,7 +64,7 @@ func prepareCacheName(r hasCacheName) (string, error) {
 }
 
 func prepareKey(r hasKey) ([]byte, error) {
-	key := r.key().AsBytes()
+	key := r.key().asBytes()
 
 	if len(key) == 0 {
 		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "key cannot be empty", nil)
@@ -74,7 +74,7 @@ func prepareKey(r hasKey) ([]byte, error) {
 }
 
 func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
-	value := r.value().AsBytes()
+	value := r.value().asBytes()
 	if len(value) == 0 {
 		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "value cannot be empty", nil)
 		return nil, convertMomentoSvcErrorToCustomerError(err)
@@ -116,7 +116,7 @@ func prepareCollectionTtl(ttl utils.CollectionTTL, defaultTtl time.Duration) (ui
 func momentoBytesListToPrimitiveByteList(i []Bytes) [][]byte {
 	var rList [][]byte
 	for _, mb := range i {
-		rList = append(rList, mb.AsBytes())
+		rList = append(rList, mb.asBytes())
 	}
 	return rList
 }

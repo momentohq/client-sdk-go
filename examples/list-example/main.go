@@ -140,7 +140,6 @@ func removeValue(value momento.Bytes) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("\nremoved '%s' from list\n", string(value.AsBytes()))
 }
 
 func main() {
@@ -248,7 +247,9 @@ func main() {
 		}
 	}
 	printList()
-	removeValue(momento.StringBytes{Text: "even"})
+	value := "even"
+	removeValue(momento.StringBytes{Text: value})
+	fmt.Printf("\nremoved '%s' from list\n", value)
 	printList()
 
 	// Delete the cache
