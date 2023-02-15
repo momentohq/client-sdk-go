@@ -1,4 +1,4 @@
-// Package momento represents API defaultScsClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
+// Package momento represents API SimpleCacheClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
 package momento
 
 import (
