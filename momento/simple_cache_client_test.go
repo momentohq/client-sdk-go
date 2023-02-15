@@ -36,7 +36,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
-	err = client.CreateCache(ctx, &CreateCacheRequest{
+	_, err = client.CreateCache(ctx, &CreateCacheRequest{
 		CacheName: randomCacheName,
 	})
 	if err != nil {
@@ -117,7 +117,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
 	}
-	err = client.CreateCache(ctx, &CreateCacheRequest{
+	_, err = client.CreateCache(ctx, &CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
@@ -290,7 +290,7 @@ func TestCreateCache(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			err = client.CreateCache(ctx, &CreateCacheRequest{CacheName: tt.cacheName})
+			_, err = client.CreateCache(ctx, &CreateCacheRequest{CacheName: tt.cacheName})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
@@ -729,7 +729,7 @@ func newTestClient(credentialProvider auth.CredentialProvider) (SimpleCacheClien
 	}
 
 	// Check if testCacheName exists
-	err = client.CreateCache(ctx, &CreateCacheRequest{
+	_, err = client.CreateCache(ctx, &CreateCacheRequest{
 		CacheName: testCacheName,
 	})
 	var momentoErr MomentoError

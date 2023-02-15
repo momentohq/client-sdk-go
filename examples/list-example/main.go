@@ -161,7 +161,7 @@ func main() {
 	}
 
 	// Create Cache and check if CacheName exists
-	err = client.CreateCache(ctx, &momento.CreateCacheRequest{
+	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {

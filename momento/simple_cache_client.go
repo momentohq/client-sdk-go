@@ -15,7 +15,7 @@ import (
 )
 
 type SimpleCacheClient interface {
-	CreateCache(ctx context.Context, request *CreateCacheRequest) error
+	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) error
 	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
 
@@ -109,17 +109,17 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (SimpleCacheClient, err
 	return client, nil
 }
 
-func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
-		return err
+		return nil, err
 	}
 	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
-		return convertMomentoSvcErrorToCustomerError(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return nil
+	return &CreateCacheSuccess{}, nil
 }
 
 func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {

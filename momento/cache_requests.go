@@ -1,10 +1,5 @@
 package momento
 
-type CreateCacheRequest struct {
-	// string used to create a cache.
-	CacheName string
-}
-
 type DeleteCacheRequest struct {
 	// string cache name to delete.
 	CacheName string
