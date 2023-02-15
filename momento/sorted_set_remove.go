@@ -92,6 +92,6 @@ func (r *SortedSetRemoveRequest) makeGrpcRequest(metadata context.Context, clien
 }
 
 func (r *SortedSetRemoveRequest) interpretGrpcResponse() error {
-	r.response = SortedSetRemoveSuccess{}
+	r.response = &SortedSetRemoveSuccess{}
 	return nil
 }

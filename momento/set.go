@@ -82,6 +82,6 @@ func (r *SetRequest) makeGrpcRequest(metadata context.Context, client scsDataCli
 }
 
 func (r *SetRequest) interpretGrpcResponse() error {
-	r.response = SetSuccess{}
+	r.response = &SetSuccess{}
 	return nil
 }
