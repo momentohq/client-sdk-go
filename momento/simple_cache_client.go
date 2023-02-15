@@ -60,7 +60,7 @@ type SimpleCacheClientProps struct {
 	DefaultTTL         time.Duration
 }
 
-// NewSimpleCacheClient returns a new defaultScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
+// NewSimpleCacheClient returns a new SimpleCacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
 func NewSimpleCacheClient(props *SimpleCacheClientProps) (SimpleCacheClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
