@@ -35,9 +35,9 @@ type SortedSetPutRequest struct {
 	response     SortedSetPutResponse
 }
 
-func (r SortedSetPutRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
 
-func (r SortedSetPutRequest) requestName() string { return "Sorted set put" }
+func (r *SortedSetPutRequest) requestName() string { return "Sorted set put" }
 
 func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
