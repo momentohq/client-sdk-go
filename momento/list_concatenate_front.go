@@ -38,13 +38,13 @@ type ListConcatenateFrontRequest struct {
 	response     ListConcatenateFrontResponse
 }
 
-func (r ListConcatenateFrontRequest) cacheName() string { return r.CacheName }
+func (r *ListConcatenateFrontRequest) cacheName() string { return r.CacheName }
 
-func (r ListConcatenateFrontRequest) values() []Bytes { return r.Values }
+func (r *ListConcatenateFrontRequest) values() []Bytes { return r.Values }
 
-func (r ListConcatenateFrontRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *ListConcatenateFrontRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 
-func (r ListConcatenateFrontRequest) requestName() string { return "ListConcatenateFront" }
+func (r *ListConcatenateFrontRequest) requestName() string { return "ListConcatenateFront" }
 
 func (r *ListConcatenateFrontRequest) initGrpcRequest(client scsDataClient) error {
 	var err error

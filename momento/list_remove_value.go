@@ -28,13 +28,13 @@ type ListRemoveValueRequest struct {
 	response     ListRemoveValueResponse
 }
 
-func (r ListRemoveValueRequest) cacheName() string { return r.CacheName }
+func (r *ListRemoveValueRequest) cacheName() string { return r.CacheName }
 
-func (r ListRemoveValueRequest) value() Bytes { return r.Value }
+func (r *ListRemoveValueRequest) value() Bytes { return r.Value }
 
-func (r ListRemoveValueRequest) requestName() string { return "ListRemoveValue" }
+func (r *ListRemoveValueRequest) requestName() string { return "ListRemoveValue" }
 
-func (r *ListRemoveValueRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListRemoveValueRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {

@@ -54,9 +54,9 @@ type SortedSetGetScoreRequest struct {
 	response     SortedSetGetScoreResponse
 }
 
-func (r SortedSetGetScoreRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetGetScoreRequest) cacheName() string { return r.CacheName }
 
-func (r SortedSetGetScoreRequest) requestName() string { return "Sorted set get score" }
+func (r *SortedSetGetScoreRequest) requestName() string { return "Sorted set get score" }
 
 func (r *SortedSetGetScoreRequest) initGrpcRequest(scsDataClient) error {
 	var err error

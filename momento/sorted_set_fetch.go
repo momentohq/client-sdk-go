@@ -63,9 +63,9 @@ type SortedSetFetchRequest struct {
 	response     SortedSetFetchResponse
 }
 
-func (r SortedSetFetchRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetFetchRequest) cacheName() string { return r.CacheName }
 
-func (r SortedSetFetchRequest) requestName() string { return "Sorted set fetch" }
+func (r *SortedSetFetchRequest) requestName() string { return "Sorted set fetch" }
 
 func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 	var err error
@@ -76,17 +76,17 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 
 	grpcReq := &pb.XSortedSetFetchRequest{
 		SetName: []byte(r.SetName),
-		Order:   pb.XSortedSetFetchRequest_Order(SortedSetOrder(r.Order)),
+		Order:   pb.XSortedSetFetchRequest_Order(r.Order),
 	}
 
-	switch num_results := r.NumberOfResults.(type) {
+	switch numResults := r.NumberOfResults.(type) {
 	case FetchAllElements:
 	case nil:
 		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
 	case FetchLimitedElements:
 		grpcReq.NumResults = &pb.XSortedSetFetchRequest_Limit{
 			Limit: &pb.XSortedSetFetchRequest_XLimit{
-				Limit: num_results.Limit,
+				Limit: numResults.Limit,
 			},
 		}
 	default:

@@ -39,13 +39,13 @@ type ListPushFrontRequest struct {
 	response     ListPushFrontResponse
 }
 
-func (r ListPushFrontRequest) cacheName() string { return r.CacheName }
+func (r *ListPushFrontRequest) cacheName() string { return r.CacheName }
 
-func (r ListPushFrontRequest) value() Bytes { return r.Value }
+func (r *ListPushFrontRequest) value() Bytes { return r.Value }
 
-func (r ListPushFrontRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *ListPushFrontRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 
-func (r ListPushFrontRequest) requestName() string { return "ListPushFront" }
+func (r *ListPushFrontRequest) requestName() string { return "ListPushFront" }
 
 func (r *ListPushFrontRequest) initGrpcRequest(client scsDataClient) error {
 	var err error

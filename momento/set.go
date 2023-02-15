@@ -35,15 +35,15 @@ type SetRequest struct {
 	response     SetResponse
 }
 
-func (r SetRequest) cacheName() string { return r.CacheName }
+func (r *SetRequest) cacheName() string { return r.CacheName }
 
-func (r SetRequest) key() Bytes { return r.Key }
+func (r *SetRequest) key() Bytes { return r.Key }
 
-func (r SetRequest) value() Bytes { return r.Value }
+func (r *SetRequest) value() Bytes { return r.Value }
 
-func (r SetRequest) ttl() time.Duration { return r.TTL }
+func (r *SetRequest) ttl() time.Duration { return r.TTL }
 
-func (r SetRequest) requestName() string { return "Set" }
+func (r *SetRequest) requestName() string { return "Set" }
 
 func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 	var err error

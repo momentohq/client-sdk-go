@@ -32,9 +32,9 @@ type SortedSetIncrementRequest struct {
 	response     SortedSetIncrementResponse
 }
 
-func (r SortedSetIncrementRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetIncrementRequest) cacheName() string { return r.CacheName }
 
-func (r SortedSetIncrementRequest) requestName() string { return "Sorted set increment" }
+func (r *SortedSetIncrementRequest) requestName() string { return "Sorted set increment" }
 
 func (r *SortedSetIncrementRequest) initGrpcRequest(client scsDataClient) error {
 	var err error

@@ -12,12 +12,12 @@ type GetResponse interface {
 	isGetResponse()
 }
 
-// Miss response to a cache Get api request.
+// GetMiss Miss response to a cache Get api request.
 type GetMiss struct{}
 
 func (GetMiss) isGetResponse() {}
 
-// Hit response to a cache Get api request.
+// GetHit Hit response to a cache Get api request.
 type GetHit struct {
 	value []byte
 }
@@ -47,11 +47,11 @@ type GetRequest struct {
 	response     GetResponse
 }
 
-func (r GetRequest) cacheName() string { return r.CacheName }
+func (r *GetRequest) cacheName() string { return r.CacheName }
 
-func (r GetRequest) key() Bytes { return r.Key }
+func (r *GetRequest) key() Bytes { return r.Key }
 
-func (r GetRequest) requestName() string { return "Get" }
+func (r *GetRequest) requestName() string { return "Get" }
 
 func (r *GetRequest) initGrpcRequest(scsDataClient) error {
 	var err error

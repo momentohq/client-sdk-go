@@ -41,11 +41,11 @@ type ListPopFrontRequest struct {
 	response     ListPopFrontResponse
 }
 
-func (r ListPopFrontRequest) cacheName() string { return r.CacheName }
+func (r *ListPopFrontRequest) cacheName() string { return r.CacheName }
 
-func (r ListPopFrontRequest) requestName() string { return "ListPopFront" }
+func (r *ListPopFrontRequest) requestName() string { return "ListPopFront" }
 
-func (r *ListPopFrontRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListPopFrontRequest) initGrpcRequest(scsDataClient) error {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
 		return err
 	}

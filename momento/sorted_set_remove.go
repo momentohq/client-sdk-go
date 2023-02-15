@@ -47,9 +47,9 @@ type RemoveSomeElements struct {
 
 func (RemoveSomeElements) isSortedSetRemoveNumElement() {}
 
-func (r SortedSetRemoveRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetRemoveRequest) cacheName() string { return r.CacheName }
 
-func (r SortedSetRemoveRequest) requestName() string { return "Sorted set remove" }
+func (r *SortedSetRemoveRequest) requestName() string { return "Sorted set remove" }
 
 func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	var err error
@@ -62,13 +62,13 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 		SetName: []byte(r.SetName),
 	}
 
-	switch to_remove := r.ElementsToRemove.(type) {
+	switch toRemove := r.ElementsToRemove.(type) {
 	case *RemoveAllElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
 	case *RemoveSomeElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoBytesListToPrimitiveByteList(to_remove.elementsToRemove),
+				ElementName: momentoBytesListToPrimitiveByteList(toRemove.elementsToRemove),
 			},
 		}
 	default:
