@@ -78,7 +78,7 @@ func main() {
 	}
 
 	// Permanently delete the cache
-	if err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
+	if _, err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
 		panic(err)
 	}
 	log.Printf("Cache named %s is deleted\n", cacheName)

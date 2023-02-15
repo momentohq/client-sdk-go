@@ -98,7 +98,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 		)
 	}
 
-	err = client.DeleteCache(ctx, &DeleteCacheRequest{
+	_, err = client.DeleteCache(ctx, &DeleteCacheRequest{
 		CacheName: randomCacheName,
 	})
 	if err != nil {
@@ -176,7 +176,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 		)
 	}
 
-	err = client.DeleteCache(ctx, &DeleteCacheRequest{
+	_, err = client.DeleteCache(ctx, &DeleteCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
@@ -314,7 +314,7 @@ func TestCreateCache(t *testing.T) {
 
 			// delete happy path cache for TestCreateCache
 			if tt.cacheName == correctCacheName {
-				err = client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: tt.cacheName})
+				_, err = client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: tt.cacheName})
 				if err != nil {
 					t.Error(fmt.Errorf("error occurred deleting cache=%s err=%+v", tt.cacheName, err))
 				}
@@ -351,7 +351,7 @@ func TestDeleteCache(t *testing.T) {
 		}
 		tt := tt // for t.Parallel()
 		t.Run(name, func(t *testing.T) {
-			err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: tt.cacheName})
+			_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: tt.cacheName})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
 			}
@@ -745,7 +745,7 @@ func teardown(client SimpleCacheClient, cacheNames ...string) {
 	ctx := context.Background()
 
 	for _, cacheName := range cacheNames {
-		err := client.DeleteCache(ctx, &DeleteCacheRequest{
+		_, err := client.DeleteCache(ctx, &DeleteCacheRequest{
 			CacheName: cacheName,
 		})
 
