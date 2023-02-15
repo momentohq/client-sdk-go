@@ -51,11 +51,11 @@ type ListFetchRequest struct {
 	response     ListFetchResponse
 }
 
-func (r ListFetchRequest) cacheName() string { return r.CacheName }
+func (r *ListFetchRequest) cacheName() string { return r.CacheName }
 
-func (r ListFetchRequest) requestName() string { return "ListFetch" }
+func (r *ListFetchRequest) requestName() string { return "ListFetch" }
 
-func (r *ListFetchRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListFetchRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {

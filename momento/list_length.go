@@ -37,11 +37,11 @@ type ListLengthRequest struct {
 	response     ListLengthResponse
 }
 
-func (r ListLengthRequest) cacheName() string { return r.CacheName }
+func (r *ListLengthRequest) cacheName() string { return r.CacheName }
 
-func (r ListLengthRequest) requestName() string { return "ListLength" }
+func (r *ListLengthRequest) requestName() string { return "ListLength" }
 
-func (r *ListLengthRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListLengthRequest) initGrpcRequest(scsDataClient) error {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
 		return err
 	}

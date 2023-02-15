@@ -39,13 +39,13 @@ type ListPushBackRequest struct {
 	response     ListPushBackResponse
 }
 
-func (r ListPushBackRequest) cacheName() string { return r.CacheName }
+func (r *ListPushBackRequest) cacheName() string { return r.CacheName }
 
-func (r ListPushBackRequest) value() Bytes { return r.Value }
+func (r *ListPushBackRequest) value() Bytes { return r.Value }
 
-func (r ListPushBackRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *ListPushBackRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 
-func (r ListPushBackRequest) requestName() string { return "ListPushBack" }
+func (r *ListPushBackRequest) requestName() string { return "ListPushBack" }
 
 func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 	var err error

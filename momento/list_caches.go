@@ -6,7 +6,7 @@ type ListCachesResponse interface {
 	isListCachesResponse()
 }
 
-// ListCachesResponse Output of the List caches operation.
+// ListCachesSuccess Output of the List caches operation.
 type ListCachesSuccess struct {
 	nextToken string
 	caches    []CacheInfo

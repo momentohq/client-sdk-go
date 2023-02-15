@@ -29,11 +29,11 @@ type DeleteRequest struct {
 	response     DeleteResponse
 }
 
-func (r DeleteRequest) cacheName() string { return r.CacheName }
+func (r *DeleteRequest) cacheName() string { return r.CacheName }
 
-func (r DeleteRequest) key() Bytes { return r.Key }
+func (r *DeleteRequest) key() Bytes { return r.Key }
 
-func (r DeleteRequest) requestName() string { return "Delete" }
+func (r *DeleteRequest) requestName() string { return "Delete" }
 
 func (r *DeleteRequest) initGrpcRequest(scsDataClient) error {
 	var err error
