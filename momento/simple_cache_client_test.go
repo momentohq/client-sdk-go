@@ -707,7 +707,7 @@ func newCredentialProvider(envVarName string) (auth.CredentialProvider, error) {
 	return credentialProvider, nil
 }
 
-func newTestClient(credentialProvider auth.CredentialProvider) (*ScsClient, error) {
+func newTestClient(credentialProvider auth.CredentialProvider) (SimpleCacheClient, error) {
 	ctx := context.Background()
 	if testCacheName == "" {
 		return nil, errors.New("integration tests require TEST_CACHE_NAME env var")
@@ -735,6 +735,6 @@ func newTestClient(credentialProvider auth.CredentialProvider) (*ScsClient, erro
 	return client, nil
 }
 
-func cleanUpClient(client *ScsClient) {
+func cleanUpClient(client SimpleCacheClient) {
 	client.Close()
 }

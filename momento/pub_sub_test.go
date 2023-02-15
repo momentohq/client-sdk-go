@@ -11,7 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 )
 
-var client ScsClient
+var client defaultScsClient
 var cacheName = os.Getenv("TEST_CACHE_NAME")
 
 func TestMain(m *testing.M) {
@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	teardown()
 }
 
-func getClient() ScsClient {
+func getClient() defaultScsClient {
 	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
@@ -56,7 +56,7 @@ func teardown() {
 	client.Close()
 }
 
-func publishTopic(ctx context.Context, pubClient ScsClient, i int) {
+func publishTopic(ctx context.Context, pubClient defaultScsClient, i int) {
 	var topicVal TopicValue
 
 	if i%2 == 0 {

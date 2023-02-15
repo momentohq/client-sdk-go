@@ -20,7 +20,7 @@ func main() {
 	// Initialization
 	client := getClient()
 	ctx := context.Background()
-	setupCache(*client, ctx)
+	setupCache(client, ctx)
 
 	// Instantiate subscriber
 	sub, err := client.TopicSubscribe(ctx, &momento.TopicSubscribeRequest{
@@ -36,7 +36,7 @@ func main() {
 	time.Sleep(time.Second)
 
 	// Publish messages for the subscriber
-	publishMessages(*client, ctx)
+	publishMessages(client, ctx)
 }
 
 func pollForMessages(sub momento.TopicSubscription) {
@@ -54,7 +54,7 @@ func pollForMessages(sub momento.TopicSubscription) {
 	}
 }
 
-func getClient() *momento.ScsClient {
+func getClient() momento.SimpleCacheClient {
 	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
@@ -70,7 +70,7 @@ func getClient() *momento.ScsClient {
 	return client
 }
 
-func setupCache(client momento.ScsClient, ctx context.Context) {
+func setupCache(client momento.SimpleCacheClient, ctx context.Context) {
 	err := client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: "test-cache",
 	})
@@ -84,7 +84,7 @@ func setupCache(client momento.ScsClient, ctx context.Context) {
 	}
 }
 
-func publishMessages(client momento.ScsClient, ctx context.Context) {
+func publishMessages(client momento.SimpleCacheClient, ctx context.Context) {
 	for i := 0; i < 10; i++ {
 		fmt.Printf("publishing message %d\n", i)
 		_, err := client.TopicPublish(ctx, &momento.TopicPublishRequest{

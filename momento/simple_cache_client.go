@@ -1,4 +1,4 @@
-// Package momento represents API ScsClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
+// Package momento represents API defaultScsClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
 package momento
 
 import (
@@ -14,8 +14,40 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 )
 
-// ScsClient represents all information needed for momento client to enable cache control and data operations.
-type ScsClient struct {
+type SimpleCacheClient interface {
+	CreateCache(ctx context.Context, request *CreateCacheRequest) error
+	DeleteCache(ctx context.Context, request *DeleteCacheRequest) error
+	ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error)
+
+	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
+	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
+	Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error)
+
+	TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
+	TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error)
+
+	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error)
+	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error)
+	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error)
+	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error)
+	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
+	SortedSetIncrement(ctx context.Context, r *SortedSetIncrementRequest) (SortedSetIncrementResponse, error)
+
+	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error)
+	ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error)
+	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error)
+	ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error)
+	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error)
+	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error)
+	ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error)
+	ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error)
+	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error)
+
+	Close()
+}
+
+// defaultScsClient represents all information needed for momento client to enable cache control and data operations.
+type defaultScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
@@ -28,12 +60,12 @@ type SimpleCacheClientProps struct {
 	DefaultTTL         time.Duration
 }
 
-// NewSimpleCacheClient returns a new ScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
+// NewSimpleCacheClient returns a new defaultScsClient with provided authToken, DefaultTTLSeconds, and opts arguments.
+func NewSimpleCacheClient(props *SimpleCacheClientProps) (SimpleCacheClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
-	client := &ScsClient{
+	client := &defaultScsClient{
 		credentialProvider: props.CredentialProvider,
 	}
 
@@ -77,7 +109,7 @@ func NewSimpleCacheClient(props *SimpleCacheClientProps) (*ScsClient, error) {
 	return client, nil
 }
 
-func (c ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
+func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -90,7 +122,7 @@ func (c ScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest)
 	return nil
 }
 
-func (c ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
+func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) error {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return err
 	}
@@ -103,7 +135,7 @@ func (c ScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest)
 	return nil
 }
 
-func (c ScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
+func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (*ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
@@ -116,28 +148,28 @@ func (c ScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (
 	}, nil
 }
 
-func (c ScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
+func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, error) {
+func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error) {
+func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
+func (c defaultScsClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
 	clientStream, err := c.pubSubClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
@@ -148,7 +180,7 @@ func (c ScsClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRe
 	return topicSubscription{grpcClient: clientStream}, err
 }
 
-func (c ScsClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
+func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
 	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
@@ -162,112 +194,112 @@ func (c ScsClient) TopicPublish(ctx context.Context, request *TopicPublishReques
 	return TopicPublishSuccess{}, err
 }
 
-func (c ScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
+func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error) {
+func (c defaultScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
+func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error) {
+func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
+func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) SortedSetIncrement(ctx context.Context, r *SortedSetIncrementRequest) (SortedSetIncrementResponse, error) {
+func (c defaultScsClient) SortedSetIncrement(ctx context.Context, r *SortedSetIncrementRequest) (SortedSetIncrementResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error) {
+func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error) {
+func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error) {
+func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error) {
+func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error) {
+func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error) {
+func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error) {
+func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error) {
+func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error) {
+func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c ScsClient) Close() {
+func (c defaultScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
 }
