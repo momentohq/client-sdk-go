@@ -17,7 +17,7 @@ var cacheName = os.Getenv("TEST_CACHE_NAME")
 func TestMain(m *testing.M) {
 	setup()
 	m.Run()
-	teardown()
+	teardown(client)
 }
 
 func getClient() SimpleCacheClient {
@@ -50,10 +50,6 @@ func setup() {
 			}
 		}
 	}
-}
-
-func teardown() {
-	client.Close()
 }
 
 func publishTopic(ctx context.Context, pubClient SimpleCacheClient, i int) {
