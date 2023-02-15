@@ -42,7 +42,7 @@ type RemoveAllElements struct{}
 func (RemoveAllElements) isSortedSetRemoveNumElement() {}
 
 type RemoveSomeElements struct {
-	elementsToRemove []Bytes
+	Elements []Bytes
 }
 
 func (RemoveSomeElements) isSortedSetRemoveNumElement() {}
@@ -63,12 +63,20 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	switch toRemove := r.ElementsToRemove.(type) {
+	case RemoveAllElements:
+		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
 	case *RemoveAllElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
+	case RemoveSomeElements:
+		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
+			Some: &pb.XSortedSetRemoveRequest_XSome{
+				ElementName: momentoBytesListToPrimitiveByteList(toRemove.Elements),
+			},
+		}
 	case *RemoveSomeElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoBytesListToPrimitiveByteList(toRemove.elementsToRemove),
+				ElementName: momentoBytesListToPrimitiveByteList(toRemove.Elements),
 			},
 		}
 	default:
