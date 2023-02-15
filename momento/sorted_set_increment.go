@@ -55,7 +55,7 @@ func (r *SortedSetIncrementRequest) initGrpcRequest(client scsDataClient) error 
 	return nil
 }
 
-func (r *SortedSetIncrementRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *SortedSetIncrementRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetIncrement(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err

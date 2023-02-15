@@ -97,7 +97,7 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetFetchRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *SortedSetFetchRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetFetch(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err

@@ -80,7 +80,7 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetRemoveRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *SortedSetRemoveRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetRemove(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
