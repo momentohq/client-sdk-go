@@ -10,7 +10,7 @@ import (
 //////// Response
 
 type SortedSetElement struct {
-	Name  []byte
+	Value []byte
 	Score float64
 }
 type SortedSetFetchResponse interface {
@@ -129,7 +129,7 @@ func sortedSetGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []*Sor
 	var returnList []*SortedSetElement
 	for _, element := range grpcSetElements {
 		returnList = append(returnList, &SortedSetElement{
-			Name:  element.Name,
+			Value: element.Name,
 			Score: element.Score,
 		})
 	}

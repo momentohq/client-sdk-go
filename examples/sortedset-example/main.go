@@ -32,7 +32,7 @@ func main() {
 			CacheName: cacheName,
 			SetName:   setName,
 			Elements: []*momento.SortedSetScoreRequestElement{{
-				Name:  momento.StringBytes{Text: fmt.Sprintf("element-%d", i)},
+				Value: momento.StringBytes{Text: fmt.Sprintf("element-%d", i)},
 				Score: float64(i),
 			}},
 		})
@@ -104,7 +104,7 @@ func displayElements(setName string, resp momento.SortedSetFetchResponse) {
 	switch r := resp.(type) {
 	case *momento.SortedSetFetchHit:
 		for _, e := range r.Elements {
-			fmt.Printf("setName: %s, elementName: %s, score: %f\n", setName, e.Name, e.Score)
+			fmt.Printf("setName: %s, elementName: %s, score: %f\n", setName, e.Value, e.Score)
 		}
 		fmt.Println("")
 	case *momento.SortedSetFetchMiss:
