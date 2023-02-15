@@ -80,7 +80,7 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 			},
 		}
 	default:
-		return fmt.Errorf("%T is an unrecognized type for Elements", r.ElementsToRemove)
+		return fmt.Errorf("%T is an unrecognized type for ElementsToRemove", r.ElementsToRemove)
 	}
 
 	r.grpcRequest = grpcReq
