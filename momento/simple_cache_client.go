@@ -267,7 +267,7 @@ func (c ScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueReques
 	return r.response, nil
 }
 
-func (c *ScsClient) Close() {
+func (c ScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
 }

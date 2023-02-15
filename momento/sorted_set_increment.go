@@ -65,6 +65,6 @@ func (r *SortedSetIncrementRequest) makeGrpcRequest(metadata context.Context, cl
 }
 
 func (r *SortedSetIncrementRequest) interpretGrpcResponse() error {
-	r.response = SortedSetIncrementSuccess{}
+	r.response = &SortedSetIncrementSuccess{}
 	return nil
 }

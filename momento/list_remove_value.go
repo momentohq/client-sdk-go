@@ -64,6 +64,6 @@ func (r *ListRemoveValueRequest) makeGrpcRequest(metadata context.Context, clien
 }
 
 func (r *ListRemoveValueRequest) interpretGrpcResponse() error {
-	r.response = ListRemoveValueSuccess{}
+	r.response = &ListRemoveValueSuccess{}
 	return nil
 }

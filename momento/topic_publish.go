@@ -7,12 +7,12 @@ type TopicPublishRequest struct {
 }
 
 type TopicPublishResponse interface {
-	isTopicPublichResponse()
+	isTopicPublishResponse()
 }
 
 type TopicPublishSuccess struct{}
 
-func (TopicPublishSuccess) isTopicPublichResponse() {}
+func (TopicPublishSuccess) isTopicPublishResponse() {}
 
 type TopicValue interface {
 	isTopicValue()

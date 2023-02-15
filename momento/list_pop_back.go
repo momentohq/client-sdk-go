@@ -67,9 +67,9 @@ func (r *ListPopBackRequest) makeGrpcRequest(metadata context.Context, client sc
 func (r *ListPopBackRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListPopBackResponse_Found:
-		r.response = ListPopBackHit{value: RawBytes{rtype.Found.Back}}
+		r.response = &ListPopBackHit{value: RawBytes{rtype.Found.Back}}
 	case *pb.XListPopBackResponse_Missing:
-		r.response = ListPopBackMiss{}
+		r.response = &ListPopBackMiss{}
 	default:
 		return errUnexpectedGrpcResponse
 	}

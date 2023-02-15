@@ -60,6 +60,6 @@ func (r *DeleteRequest) makeGrpcRequest(metadata context.Context, client scsData
 }
 
 func (r *DeleteRequest) interpretGrpcResponse() error {
-	r.response = DeleteSuccess{}
+	r.response = &DeleteSuccess{}
 	return nil
 }

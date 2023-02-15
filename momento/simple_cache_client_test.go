@@ -72,7 +72,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	}
 
 	switch result := getResp.(type) {
-	case GetHit:
+	case *GetHit:
 		if !bytes.Equal(result.ValueByte(), value) {
 			t.Errorf(
 				"set byte value and returned byte value are not equal "+
@@ -143,7 +143,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 	}
 
 	switch result := getResp.(type) {
-	case GetHit:
+	case *GetHit:
 		if !bytes.Equal(result.ValueByte(), value) {
 			t.Errorf(
 				"set byte value and returned byte value are not equal "+
@@ -493,7 +493,7 @@ func TestSetGet(t *testing.T) {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
 				switch result := resp.(type) {
-				case GetHit:
+				case *GetHit:
 					if tt.value != result.ValueString() {
 						t.Errorf(
 							"set string value=%s is not the same as returned string value=%s",
@@ -515,7 +515,7 @@ func TestSetGet(t *testing.T) {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
 				}
 				switch result := resp.(type) {
-				case GetMiss:
+				case *GetMiss:
 					// We expect miss
 				default:
 					t.Errorf("expected miss but got responseType=%+v", result)

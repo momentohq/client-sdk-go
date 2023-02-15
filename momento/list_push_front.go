@@ -86,6 +86,6 @@ func (r *ListPushFrontRequest) makeGrpcRequest(metadata context.Context, client 
 
 func (r *ListPushFrontRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
-	r.response = ListPushFrontSuccess{value: resp.ListLength}
+	r.response = &ListPushFrontSuccess{value: resp.ListLength}
 	return nil
 }
