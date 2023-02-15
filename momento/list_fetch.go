@@ -69,8 +69,8 @@ func (r *ListFetchRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *ListFetchRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListFetch(ctx, r.grpcRequest)
+func (r *ListFetchRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListFetch(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}

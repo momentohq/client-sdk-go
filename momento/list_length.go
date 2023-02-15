@@ -53,8 +53,8 @@ func (r *ListLengthRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *ListLengthRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListLength(ctx, r.grpcRequest)
+func (r *ListLengthRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListLength(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}

@@ -72,7 +72,7 @@ func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *SetRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *SetRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.Set(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err

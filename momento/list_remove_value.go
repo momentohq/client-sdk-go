@@ -54,8 +54,8 @@ func (r *ListRemoveValueRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *ListRemoveValueRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListRemove(ctx, r.grpcRequest)
+func (r *ListRemoveValueRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListRemove(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}

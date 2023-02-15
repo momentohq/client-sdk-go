@@ -75,8 +75,8 @@ func (r *ListPushFrontRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *ListPushFrontRequest) makeGrpcRequest(client scsDataClient, ctx context.Context) (grpcResponse, error) {
-	resp, err := client.grpcClient.ListPushFront(ctx, r.grpcRequest)
+func (r *ListPushFrontRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.ListPushFront(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}

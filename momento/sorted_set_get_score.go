@@ -75,7 +75,7 @@ func (r *SortedSetGetScoreRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetGetScoreRequest) makeGrpcRequest(client scsDataClient, metadata context.Context) (grpcResponse, error) {
+func (r *SortedSetGetScoreRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetGetScore(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
