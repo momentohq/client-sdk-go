@@ -66,9 +66,9 @@ func (r *ListLengthRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
 	switch rtype := resp.List.(type) {
 	case *pb.XListLengthResponse_Found:
-		r.response = ListLengthHit{value: rtype.Found.Length}
+		r.response = &ListLengthHit{value: rtype.Found.Length}
 	case *pb.XListLengthResponse_Missing:
-		r.response = ListLengthMiss{}
+		r.response = &ListLengthMiss{}
 	default:
 		return errUnexpectedGrpcResponse
 	}

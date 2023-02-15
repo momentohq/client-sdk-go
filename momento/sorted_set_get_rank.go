@@ -78,7 +78,7 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
 			Rank: rank.ElementRank.Rank,
 		}
 	case *pb.XSortedSetGetRankResponse_Missing:
-		resp = SortedSetGetRankMiss{}
+		resp = &SortedSetGetRankMiss{}
 	default:
 		return errUnexpectedGrpcResponse
 	}

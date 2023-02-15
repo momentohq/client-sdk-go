@@ -83,9 +83,9 @@ func (r *ListFetchRequest) makeGrpcRequest(metadata context.Context, client scsD
 func (r *ListFetchRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListFetchResponse_Found:
-		r.response = ListFetchHit{value: rtype.Found.Values}
+		r.response = &ListFetchHit{value: rtype.Found.Values}
 	case *pb.XListFetchResponse_Missing:
-		r.response = ListFetchMiss{}
+		r.response = &ListFetchMiss{}
 	default:
 		return errUnexpectedGrpcResponse
 	}

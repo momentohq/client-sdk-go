@@ -69,7 +69,7 @@ func (r *SortedSetPutRequest) makeGrpcRequest(metadata context.Context, client s
 }
 
 func (r *SortedSetPutRequest) interpretGrpcResponse() error {
-	r.response = SortedSetPutSuccess{}
+	r.response = &SortedSetPutSuccess{}
 	return nil
 }
 

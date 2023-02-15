@@ -41,7 +41,7 @@ func pushFrontToList(value string) {
 	}
 
 	switch r := resp.(type) {
-	case momento.ListPushFrontSuccess:
+	case *momento.ListPushFrontSuccess:
 		fmt.Printf("pushed with 5 sec TTL to front of list whose length is now %d\n", r.ListLength())
 	}
 }
@@ -63,7 +63,7 @@ func pushBackToList(value string) {
 	}
 
 	switch r := resp.(type) {
-	case momento.ListPushBackSuccess:
+	case *momento.ListPushBackSuccess:
 		fmt.Printf("pushed with 5 sec TTL to back of list whose length is now %d\n", r.ListLength())
 	}
 }
@@ -78,9 +78,9 @@ func printList() {
 	}
 
 	switch r := resp.(type) {
-	case momento.ListFetchHit:
+	case *momento.ListFetchHit:
 		fmt.Printf("\nlist fetch returned:\n\n\t%s\n", strings.Join(r.ValueListString(), "\n\t"))
-	case momento.ListFetchMiss:
+	case *momento.ListFetchMiss:
 		fmt.Println("\nlist fetch returned a MISS")
 	}
 }
@@ -94,9 +94,9 @@ func printListLength() {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case momento.ListLengthMiss:
+	case *momento.ListLengthMiss:
 		fmt.Println("\nlist length returned a MISS")
-	case momento.ListLengthHit:
+	case *momento.ListLengthHit:
 		fmt.Printf("\ngot list length: %d", r.Length())
 	}
 }
@@ -111,7 +111,7 @@ func concatFront(values []momento.Bytes) {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case momento.ListConcatenateFrontSuccess:
+	case *momento.ListConcatenateFrontSuccess:
 		fmt.Printf("\nconcatenated values to front. list is now length %d\n", r.ListLength())
 	}
 }
@@ -126,7 +126,7 @@ func concatBack(values []momento.Bytes) {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case momento.ListConcatenateBackSuccess:
+	case *momento.ListConcatenateBackSuccess:
 		fmt.Printf("\nconcatenated values to back. list is now length %d\n", r.ListLength())
 	}
 }
@@ -208,9 +208,9 @@ func main() {
 			panic(err)
 		}
 		switch r := resp.(type) {
-		case momento.ListPopFrontHit:
+		case *momento.ListPopFrontHit:
 			fmt.Printf("\npopped value '%s'\n", r.ValueString())
-		case momento.ListPopFrontMiss:
+		case *momento.ListPopFrontMiss:
 			fmt.Println("\npop from front returned MISS")
 		}
 	}

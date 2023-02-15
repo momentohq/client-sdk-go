@@ -85,6 +85,6 @@ func (r *ListConcatenateBackRequest) makeGrpcRequest(metadata context.Context, c
 
 func (r *ListConcatenateBackRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
-	r.response = ListConcatenateBackSuccess{listLength: resp.ListLength}
+	r.response = &ListConcatenateBackSuccess{listLength: resp.ListLength}
 	return nil
 }

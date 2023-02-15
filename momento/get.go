@@ -83,10 +83,10 @@ func (r *GetRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
 
 	if resp.Result == pb.ECacheResult_Hit {
-		r.response = GetHit{value: resp.CacheBody}
+		r.response = &GetHit{value: resp.CacheBody}
 		return nil
 	} else if resp.Result == pb.ECacheResult_Miss {
-		r.response = GetMiss{}
+		r.response = &GetMiss{}
 		return nil
 	} else {
 		return errUnexpectedGrpcResponse

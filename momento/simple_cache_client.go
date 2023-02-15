@@ -162,7 +162,7 @@ func (c ScsClient) TopicPublish(ctx context.Context, request *TopicPublishReques
 	return TopicPublishSuccess{}, err
 }
 
-func (c ScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (*SortedSetFetchResponse, error) {
+func (c ScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (c ScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueReques
 	return r.response, nil
 }
 
-func (c *ScsClient) Close() {
+func (c ScsClient) Close() {
 	defer c.controlClient.Close()
 	defer c.dataClient.Close()
 }
