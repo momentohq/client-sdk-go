@@ -4,10 +4,3 @@ type ListCachesRequest struct {
 	// Token to continue paginating through the list. It's used to handle large paginated lists.
 	NextToken string
 }
-
-type CacheDeleteRequest struct {
-	// Name of the cache to get the item from to be deleted
-	CacheName string
-	// string or byte key to be used to delete the item.
-	Key Bytes
-}
