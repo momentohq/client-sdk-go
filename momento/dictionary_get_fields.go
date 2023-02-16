@@ -44,6 +44,10 @@ func (resp DictionaryGetFieldsHit) ValueMapStringBytes() map[string][]byte {
 	return ret
 }
 
+func (resp DictionaryGetFieldsHit) Responses() []DictionaryGetFieldResponse {
+	return resp.responses
+}
+
 type DictionaryGetFieldsMiss struct{}
 
 func (DictionaryGetFieldsMiss) isDictionaryGetFieldsResponse() {}
