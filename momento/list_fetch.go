@@ -87,7 +87,7 @@ func (r *ListFetchRequest) interpretGrpcResponse() error {
 	case *pb.XListFetchResponse_Missing:
 		r.response = &ListFetchMiss{}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }
