@@ -55,6 +55,18 @@ type hasValues interface {
 	values() []Value
 }
 
+type hasField interface {
+	field() Bytes
+}
+
+type hasFields interface {
+	fields() []Bytes
+}
+
+type hasItems interface {
+	items() map[Bytes]Bytes
+}
+
 type hasScalarTTL interface {
 	ttl() time.Duration
 }
@@ -81,6 +93,29 @@ func prepareKey(r hasKey) ([]byte, error) {
 	return key, nil
 }
 
+func prepareField(r hasField) ([]byte, error) {
+	field := r.field().AsBytes()
+
+	if len(field) == 0 {
+		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "field cannot be empty", nil)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
+	}
+	return field, nil
+}
+
+func prepareFields(r hasFields) ([][]byte, error) {
+	var fields [][]byte
+	for _, field := range r.fields() {
+		fieldBytes := field.AsBytes()
+		if len(fieldBytes) == 0 {
+			err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "field cannot be empty", nil)
+			return nil, convertMomentoSvcErrorToCustomerError(err)
+		}
+		fields = append(fields, fieldBytes)
+	}
+	return fields, nil
+}
+
 func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
 	value := r.value().asBytes()
 	if len(value) == 0 {
@@ -102,6 +137,14 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 		}
 	}
 	return values, nil
+}
+
+func prepareItems(r hasItems) (map[string][]byte, momentoerrors.MomentoSvcErr) {
+	retMap := make(map[string][]byte)
+	for k, v := range r.items() {
+		retMap[string(k.AsBytes())] = v.AsBytes()
+	}
+	return retMap, nil
 }
 
 func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
