@@ -18,6 +18,7 @@ var _ = Describe("Scalar methods", func() {
 	var credentialProvider auth.CredentialProvider
 	var configuration config.Configuration
 	var client SimpleCacheClient
+	var defaultTTL time.Duration
 	var testCacheName string
 	var ctx context.Context
 
@@ -25,11 +26,12 @@ var _ = Describe("Scalar methods", func() {
 		ctx = context.Background()
 		credentialProvider, _ = auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 		configuration = config.LatestLaptopConfig()
+		defaultTTL = 1 * time.Second
 
 		clientProps = SimpleCacheClientProps{
 			CredentialProvider: credentialProvider,
 			Configuration:      configuration,
-			DefaultTTL:         3 * time.Second,
+			DefaultTTL:         defaultTTL,
 		}
 
 		var err error
@@ -40,10 +42,9 @@ var _ = Describe("Scalar methods", func() {
 		DeferCleanup(func() { client.Close() })
 
 		testCacheName = uuid.NewString()
-		_, err = client.CreateCache(ctx, &CreateCacheRequest{CacheName: testCacheName})
-		if err != nil {
-			panic(err)
-		}
+		Expect(
+			client.CreateCache(ctx, &CreateCacheRequest{CacheName: testCacheName}),
+		).To(Succeed())
 		DeferCleanup(func() {
 			client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: testCacheName})
 		})
@@ -90,4 +91,78 @@ var _ = Describe("Scalar methods", func() {
 		Entry("when the key and value are strings", String("key"), String("value"), "value", []byte("value")),
 		Entry("when the key and value are bytes", Bytes([]byte{1, 2, 3}), Bytes([]byte("string")), "string", []byte("string")),
 	)
+
+	Describe(`Set`, func() {
+		It(`Uses the default TTL`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				client.Set(ctx, &SetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			time.Sleep(defaultTTL / 2)
+
+			Expect(
+				client.Get(ctx, &GetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+
+			time.Sleep(defaultTTL)
+
+			Expect(
+				client.Get(ctx, &GetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		})
+
+		It(`Overrides the default TTL`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				client.Set(ctx, &SetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+					Value:     value,
+					TTL:       defaultTTL * 2,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			time.Sleep(defaultTTL / 2)
+
+			Expect(
+				client.Get(ctx, &GetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+
+			time.Sleep(defaultTTL)
+
+			Expect(
+				client.Get(ctx, &GetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+
+			time.Sleep(defaultTTL)
+
+			Expect(
+				client.Get(ctx, &GetRequest{
+					CacheName: testCacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		})
+	})
 })
