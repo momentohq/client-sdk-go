@@ -31,7 +31,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 	key := []byte(uuid.NewString())
 	value := []byte(uuid.NewString())
 	client, err := newTestClient(testCredentialProvider)
-	defer teardown(client, cacheName, randomCacheName)
+	defer teardown(client, testCacheName, randomCacheName)
 
 	if err != nil {
 		t.Error(fmt.Errorf("error occurred setting up client err=%+v", err))
