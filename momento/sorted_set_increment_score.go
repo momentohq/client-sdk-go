@@ -9,18 +9,18 @@ import (
 
 //////// Response
 
-type SortedSetIncrementResponse interface {
+type SortedSetIncrementScoreResponse interface {
 	isSortedSetIncrementResponse()
 }
-type SortedSetIncrementSuccess struct {
+type SortedSetIncrementScoreSuccess struct {
 	Value float64
 }
 
-func (SortedSetIncrementSuccess) isSortedSetIncrementResponse() {}
+func (SortedSetIncrementScoreSuccess) isSortedSetIncrementResponse() {}
 
 ////// Request
 
-type SortedSetIncrementRequest struct {
+type SortedSetIncrementScoreRequest struct {
 	CacheName     string
 	SetName       string
 	ElementName   Bytes
@@ -29,14 +29,14 @@ type SortedSetIncrementRequest struct {
 
 	grpcRequest  *pb.XSortedSetIncrementRequest
 	grpcResponse *pb.XSortedSetIncrementResponse
-	response     SortedSetIncrementResponse
+	response     SortedSetIncrementScoreResponse
 }
 
-func (r *SortedSetIncrementRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetIncrementRequest) requestName() string { return "Sorted set increment" }
+func (r *SortedSetIncrementScoreRequest) requestName() string { return "Sorted set increment" }
 
-func (r *SortedSetIncrementRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
@@ -55,7 +55,7 @@ func (r *SortedSetIncrementRequest) initGrpcRequest(client scsDataClient) error 
 	return nil
 }
 
-func (r *SortedSetIncrementRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetIncrement(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (r *SortedSetIncrementRequest) makeGrpcRequest(metadata context.Context, cl
 	return resp, nil
 }
 
-func (r *SortedSetIncrementRequest) interpretGrpcResponse() error {
-	r.response = &SortedSetIncrementSuccess{
+func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
+	r.response = &SortedSetIncrementScoreSuccess{
 		Value: r.grpcResponse.Value,
 	}
 	return nil
