@@ -31,7 +31,7 @@ type SimpleCacheClient interface {
 	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error)
 	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error)
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
-	SortedSetIncrement(ctx context.Context, r *SortedSetIncrementRequest) (SortedSetIncrementResponse, error)
+	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error)
 
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error)
@@ -229,7 +229,7 @@ func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetR
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetIncrement(ctx context.Context, r *SortedSetIncrementRequest) (SortedSetIncrementResponse, error) {
+func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
