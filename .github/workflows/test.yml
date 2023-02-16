@@ -52,8 +52,6 @@ jobs:
           fi
 
       - name: Run test
-        run: |
-          go vet ./...
-          go test -v ./momento
+        run: make test
 
 

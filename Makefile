@@ -42,7 +42,7 @@ precommit: lint test
 
 .PHONY: test
 test:
-	go test -v ./momento
+	ginkgo momento/ auth/
 
 .PHONY: vendor
 vendor:
