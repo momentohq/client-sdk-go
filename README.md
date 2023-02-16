@@ -95,8 +95,8 @@ func main() {
 	log.Printf("Setting key: %s, value: %s\n", key, value)
 	_, err = client.Set(ctx, &momento.SetRequest{
 		CacheName: cacheName,
-		Key:       &momento.StringBytes{Text: key},
-		Value:     &momento.StringBytes{Text: value},
+		Key:       momento.String(key),
+		Value:     momento.String(value),
 	})
 	if err != nil {
 		panic(err)
@@ -105,7 +105,7 @@ func main() {
 	log.Printf("Getting key: %s\n", key)
 	resp, err := client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
-		Key:       &momento.StringBytes{Text: key},
+		Key:       momento.String(key),
 	})
 	if err != nil {
 		panic(err)
@@ -151,7 +151,7 @@ In cases where you get an error response, it can be treated as `momentoErr` usin
 ```go
 _, err := client.Get(ctx, &momento.GetRequest{
     CacheName: cacheName,
-    Key:       &momento.StringBytes{Text: key},
+    Key:       momento.String(key),
 })
 
 if err != nil {
