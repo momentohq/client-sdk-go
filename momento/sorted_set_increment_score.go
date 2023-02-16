@@ -3,9 +3,10 @@ package momento
 import (
 	"context"
 	"errors"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
