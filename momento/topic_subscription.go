@@ -1,7 +1,6 @@
 package momento
 
 import (
-	"fmt"
 	"io"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -50,7 +49,9 @@ func (s topicSubscription) Item() (TopicValue, error) {
 			// Doesn't count against our retries.
 			continue
 		default:
-			return nil, fmt.Errorf("unexpected gRPC response when polling a subscription: %T %v", typedMsg, typedMsg)
+			// Ignore unknown responses so we don't stop polling if we add a new message.
+			// For example, we wouldn't want to stop because of an unknown heartbeat response.
+			continue
 		}
 	}
 }
