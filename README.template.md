@@ -52,7 +52,7 @@ In cases where you get an error response, it can be treated as `momentoErr` usin
 ```go
 _, err := client.Get(ctx, &momento.GetRequest{
     CacheName: cacheName,
-    Key:       &momento.StringBytes{Text: key},
+    Key:       momento.String(key),
 })
 
 if err != nil {

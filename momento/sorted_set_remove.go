@@ -30,7 +30,7 @@ type SortedSetRemoveRequest struct {
 }
 
 type SortedSetRemoveRequestElement struct {
-	Name Bytes
+	Name Value
 }
 
 type SortedSetRemoveNumElements interface {
@@ -42,7 +42,7 @@ type RemoveAllElements struct{}
 func (RemoveAllElements) isSortedSetRemoveNumElement() {}
 
 type RemoveSomeElements struct {
-	Elements []Bytes
+	Elements []Value
 }
 
 func (RemoveSomeElements) isSortedSetRemoveNumElement() {}
