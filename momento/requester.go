@@ -36,7 +36,7 @@ type hasCacheName interface {
 }
 
 type hasKey interface {
-	key() Value
+	key() Key
 }
 
 type hasValue interface {

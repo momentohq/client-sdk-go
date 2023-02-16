@@ -23,7 +23,7 @@ type SetRequest struct {
 	// Name of the cache to store the item in.
 	CacheName string
 	// string or byte key to be used to store item.
-	Key Value
+	Key Key
 	// string ot byte value to be stored.
 	Value Value
 	// Optional Time to live in cache in seconds.
@@ -37,7 +37,7 @@ type SetRequest struct {
 
 func (r *SetRequest) cacheName() string { return r.CacheName }
 
-func (r *SetRequest) key() Value { return r.Key }
+func (r *SetRequest) key() Key { return r.Key }
 
 func (r *SetRequest) value() Value { return r.Value }
 

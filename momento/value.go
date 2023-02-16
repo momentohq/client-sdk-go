@@ -5,6 +5,9 @@ package momento
 // Value: momento.String("abc")
 type Value interface{ asBytes() []byte }
 
+// Type alias to future proof passing in keys.
+type Key = Value
+
 // Bytes plain old []byte
 type Bytes []byte
 
