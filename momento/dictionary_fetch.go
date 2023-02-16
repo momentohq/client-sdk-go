@@ -13,9 +13,8 @@ type DictionaryFetchResponse interface {
 }
 
 type DictionaryFetchHit struct {
-	items             map[Bytes]Bytes
+	items             map[string][]byte
 	itemsStringString map[string]string
-	itemsStringByte   map[string]Bytes
 }
 
 func (DictionaryFetchHit) isDictionaryFetchResponse() {}
@@ -28,23 +27,13 @@ func (resp DictionaryFetchHit) ValueMapStringString() map[string]string {
 	if resp.itemsStringString == nil {
 		resp.itemsStringString = make(map[string]string)
 		for k, v := range resp.items {
-			resp.itemsStringString[string(k.AsBytes())] = string(v.AsBytes())
+			resp.itemsStringString[k] = string(v)
 		}
 	}
 	return resp.itemsStringString
 }
 
-func (resp DictionaryFetchHit) ValueMapStringByte() map[string]Bytes {
-	if resp.itemsStringByte == nil {
-		resp.itemsStringByte = make(map[string]Bytes)
-		for k, v := range resp.items {
-			resp.itemsStringByte[string(k.AsBytes())] = v
-		}
-	}
-	return resp.itemsStringByte
-}
-
-func (resp DictionaryFetchHit) ValueMapByteByte() map[Bytes]Bytes {
+func (resp DictionaryFetchHit) ValueMapStringByte() map[string][]byte {
 	return resp.items
 }
 
@@ -67,7 +56,7 @@ func (r *DictionaryFetchRequest) cacheName() string { return r.CacheName }
 
 func (r *DictionaryFetchRequest) requestName() string { return "DictionaryFetch" }
 
-func (r *DictionaryFetchRequest) initGrpcRequest(client scsDataClient) error {
+func (r *DictionaryFetchRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
@@ -91,16 +80,15 @@ func (r *DictionaryFetchRequest) makeGrpcRequest(metadata context.Context, clien
 func (r *DictionaryFetchRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryFetchResponse_Found:
-		// TODO: refactor to utility func
-		itemsAsBytes := make(map[Bytes]Bytes)
+		items := make(map[string][]byte)
 		for _, i := range rtype.Found.Items {
-			itemsAsBytes[StringBytes{Text: string(i.Field)}] = RawBytes{i.Value}
+			items[(string(i.Field))] = i.Value
 		}
-		r.response = &DictionaryFetchHit{items: itemsAsBytes}
+		r.response = &DictionaryFetchHit{items: items}
 	case *pb.XDictionaryFetchResponse_Missing:
 		r.response = &DictionaryFetchMiss{}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }

@@ -21,7 +21,7 @@ func (DictionaryRemoveFieldSuccess) isDictionaryRemoveFieldResponse() {}
 type DictionaryRemoveFieldRequest struct {
 	CacheName      string
 	DictionaryName string
-	Field          Bytes
+	Field          Value
 
 	grpcRequest  *pb.XDictionaryDeleteRequest
 	grpcResponse *pb.XDictionaryDeleteResponse
@@ -30,7 +30,7 @@ type DictionaryRemoveFieldRequest struct {
 
 func (r *DictionaryRemoveFieldRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionaryRemoveFieldRequest) field() Bytes { return r.Field }
+func (r *DictionaryRemoveFieldRequest) field() Value { return r.Field }
 
 func (r *DictionaryRemoveFieldRequest) requestName() string { return "DictionaryRemoveField" }
 

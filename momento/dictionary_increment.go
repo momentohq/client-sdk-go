@@ -31,7 +31,7 @@ func (resp DictionaryIncrementSuccess) ValueUint32() int64 {
 type DictionaryIncrementRequest struct {
 	CacheName      string
 	DictionaryName string
-	Field          Bytes
+	Field          Value
 	Amount         int64
 	CollectionTTL  utils.CollectionTTL
 
@@ -42,7 +42,7 @@ type DictionaryIncrementRequest struct {
 
 func (r *DictionaryIncrementRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionaryIncrementRequest) field() Bytes { return r.Field }
+func (r *DictionaryIncrementRequest) field() Value { return r.Field }
 
 func (r *DictionaryIncrementRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 

@@ -24,8 +24,8 @@ func (DictionarySetFieldSuccess) isDictionarySetFieldResponse() {}
 type DictionarySetFieldRequest struct {
 	CacheName      string
 	DictionaryName string
-	Field          Bytes
-	Value          Bytes
+	Field          Value
+	Value          Value
 	CollectionTTL  utils.CollectionTTL
 
 	grpcRequest  *pb.XDictionarySetRequest
@@ -35,9 +35,9 @@ type DictionarySetFieldRequest struct {
 
 func (r *DictionarySetFieldRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionarySetFieldRequest) field() Bytes { return r.Field }
+func (r *DictionarySetFieldRequest) field() Value { return r.Field }
 
-func (r *DictionarySetFieldRequest) value() Bytes { return r.Value }
+func (r *DictionarySetFieldRequest) value() Value { return r.Value }
 
 func (r *DictionarySetFieldRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 

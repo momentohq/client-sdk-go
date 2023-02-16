@@ -56,15 +56,15 @@ type hasValues interface {
 }
 
 type hasField interface {
-	field() Bytes
+	field() Value
 }
 
 type hasFields interface {
-	fields() []Bytes
+	fields() []Value
 }
 
 type hasItems interface {
-	items() map[Bytes]Bytes
+	items() map[string]Value
 }
 
 type hasScalarTTL interface {
@@ -94,7 +94,7 @@ func prepareKey(r hasKey) ([]byte, error) {
 }
 
 func prepareField(r hasField) ([]byte, error) {
-	field := r.field().AsBytes()
+	field := r.field().asBytes()
 
 	if len(field) == 0 {
 		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "field cannot be empty", nil)
@@ -106,12 +106,11 @@ func prepareField(r hasField) ([]byte, error) {
 func prepareFields(r hasFields) ([][]byte, error) {
 	var fields [][]byte
 	for _, field := range r.fields() {
-		fieldBytes := field.AsBytes()
-		if len(fieldBytes) == 0 {
+		if len(field.asBytes()) == 0 {
 			err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "field cannot be empty", nil)
 			return nil, convertMomentoSvcErrorToCustomerError(err)
 		}
-		fields = append(fields, fieldBytes)
+		fields = append(fields, field.asBytes())
 	}
 	return fields, nil
 }
@@ -142,7 +141,7 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 func prepareItems(r hasItems) (map[string][]byte, momentoerrors.MomentoSvcErr) {
 	retMap := make(map[string][]byte)
 	for k, v := range r.items() {
-		retMap[string(k.AsBytes())] = v.AsBytes()
+		retMap[k] = v.asBytes()
 	}
 	return retMap, nil
 }

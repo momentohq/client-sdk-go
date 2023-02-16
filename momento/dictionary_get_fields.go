@@ -14,7 +14,7 @@ type DictionaryGetFieldsResponse interface {
 
 type DictionaryGetFieldsHit struct {
 	items     []*pb.XDictionaryGetResponse_XDictionaryGetResponsePart
-	fields    []Bytes
+	fields    [][]byte
 	responses []DictionaryGetFieldResponse
 }
 
@@ -28,7 +28,7 @@ func (resp DictionaryGetFieldsHit) ValueMapStringString() map[string]string {
 	ret := make(map[string]string)
 	for idx, item := range resp.items {
 		if item.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx].AsBytes())] = string(item.CacheBody)
+			ret[string(resp.fields[idx])] = string(item.CacheBody)
 		}
 	}
 	return ret
@@ -38,7 +38,7 @@ func (resp DictionaryGetFieldsHit) ValueMapStringBytes() map[string][]byte {
 	ret := make(map[string][]byte)
 	for idx, item := range resp.items {
 		if item.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx].AsBytes())] = item.CacheBody
+			ret[string(resp.fields[idx])] = item.CacheBody
 		}
 	}
 	return ret
@@ -53,7 +53,7 @@ func (DictionaryGetFieldsMiss) isDictionaryGetFieldsResponse() {}
 type DictionaryGetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
-	Fields         []Bytes
+	Fields         []Value
 
 	grpcRequest  *pb.XDictionaryGetRequest
 	grpcResponse *pb.XDictionaryGetResponse
@@ -62,7 +62,7 @@ type DictionaryGetFieldsRequest struct {
 
 func (r *DictionaryGetFieldsRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionaryGetFieldsRequest) fields() []Bytes { return r.Fields }
+func (r *DictionaryGetFieldsRequest) fields() []Value { return r.Fields }
 
 func (r *DictionaryGetFieldsRequest) requestName() string { return "DictionaryGetFields" }
 
@@ -101,18 +101,24 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 		r.response = &DictionaryGetFieldsMiss{}
 	case *pb.XDictionaryGetResponse_Found:
 		var responses []DictionaryGetFieldResponse
+		var fields [][]byte
 		for idx, val := range rtype.Found.Items {
+			var field []byte
 			if val.Result == pb.ECacheResult_Hit {
-				responses = append(responses, &DictionaryGetFieldHit{field: RawBytes{val.CacheBody}})
+				field = val.CacheBody
+				responses = append(responses, &DictionaryGetFieldHit{field: field})
 			} else if val.Result == pb.ECacheResult_Miss {
-				responses = append(responses, &DictionaryGetFieldMiss{field: r.Fields[idx]})
+				field = r.Fields[idx].asBytes()
+				responses = append(responses, &DictionaryGetFieldMiss{field: field})
 			} else {
+				field = r.Fields[idx].asBytes()
 				responses = append(responses, nil)
 			}
+			fields = append(fields, field)
 		}
-		r.response = &DictionaryGetFieldsHit{fields: r.Fields, items: rtype.Found.Items}
+		r.response = &DictionaryGetFieldsHit{fields: fields, items: rtype.Found.Items, responses: responses}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }

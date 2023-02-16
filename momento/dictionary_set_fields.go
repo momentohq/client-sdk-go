@@ -24,7 +24,7 @@ func (DictionarySetFieldsSuccess) isDictionarySetFieldsResponse() {}
 type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
-	Items          map[Bytes]Bytes
+	Items          map[string]Value
 	CollectionTTL  utils.CollectionTTL
 
 	grpcRequest  *pb.XDictionarySetRequest
@@ -34,7 +34,7 @@ type DictionarySetFieldsRequest struct {
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionarySetFieldsRequest) items() map[Bytes]Bytes { return r.Items }
+func (r *DictionarySetFieldsRequest) items() map[string]Value { return r.Items }
 
 func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 
@@ -52,7 +52,6 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		return err
 	}
 
-	// TODO: refactor into a func for use by this and DictionarySetField
 	var pbItems []*pb.XDictionaryFieldValuePair
 	for k, v := range items {
 		pbItems = append(pbItems, &pb.XDictionaryFieldValuePair{

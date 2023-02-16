@@ -21,7 +21,7 @@ func (DictionaryRemoveFieldsSuccess) isDictionaryRemoveFieldsResponse() {}
 type DictionaryRemoveFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
-	Fields         []Bytes
+	Fields         []Value
 
 	grpcRequest  *pb.XDictionaryDeleteRequest
 	grpcResponse *pb.XDictionaryDeleteResponse
@@ -30,7 +30,7 @@ type DictionaryRemoveFieldsRequest struct {
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionaryRemoveFieldsRequest) fields() []Bytes { return r.Fields }
+func (r *DictionaryRemoveFieldsRequest) fields() []Value { return r.Fields }
 
 func (r *DictionaryRemoveFieldsRequest) requestName() string { return "DictionaryRemoveFields" }
 
@@ -41,7 +41,7 @@ func (r *DictionaryRemoveFieldsRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	fields := momentoBytesListToPrimitiveByteList(r.Fields)
+	var fields [][]byte
 	if fields, err = prepareFields(r); err != nil {
 		return err
 	}

@@ -13,31 +13,31 @@ type DictionaryGetFieldResponse interface {
 }
 
 type DictionaryGetFieldHit struct {
-	field Bytes
+	field []byte
 }
 
 func (DictionaryGetFieldHit) isDictionaryGetFieldResponse() {}
 
 func (resp DictionaryGetFieldHit) FieldString() string {
-	return string(resp.field.AsBytes())
+	return string(resp.field)
 }
 
 func (resp DictionaryGetFieldHit) FieldByte() []byte {
-	return resp.field.AsBytes()
+	return resp.field
 }
 
 type DictionaryGetFieldMiss struct {
-	field Bytes
+	field []byte
 }
 
 func (DictionaryGetFieldMiss) isDictionaryGetFieldResponse() {}
 
 func (resp DictionaryGetFieldMiss) FieldString() string {
-	return string(resp.field.AsBytes())
+	return string(resp.field)
 }
 
 func (resp DictionaryGetFieldMiss) FieldByte() []byte {
-	return resp.field.AsBytes()
+	return resp.field
 }
 
 // DictionaryGetFieldRequest
@@ -45,7 +45,7 @@ func (resp DictionaryGetFieldMiss) FieldByte() []byte {
 type DictionaryGetFieldRequest struct {
 	CacheName      string
 	DictionaryName string
-	Field          Bytes
+	Field          Value
 
 	grpcRequest  *pb.XDictionaryGetRequest
 	grpcResponse *pb.XDictionaryGetResponse
@@ -54,7 +54,7 @@ type DictionaryGetFieldRequest struct {
 
 func (r *DictionaryGetFieldRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionaryGetFieldRequest) field() Bytes { return r.Field }
+func (r *DictionaryGetFieldRequest) field() Value { return r.Field }
 
 func (r *DictionaryGetFieldRequest) requestName() string { return "DictionaryGetField" }
 
@@ -93,15 +93,15 @@ func (r *DictionaryGetFieldRequest) makeGrpcRequest(metadata context.Context, cl
 func (r *DictionaryGetFieldRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryGetResponse_Missing:
-		r.response = &DictionaryGetFieldMiss{field: r.Field}
+		r.response = &DictionaryGetFieldMiss{field: r.Field.asBytes()}
 	case *pb.XDictionaryGetResponse_Found:
 		if rtype.Found.Items[0].Result == pb.ECacheResult_Miss {
-			r.response = &DictionaryGetFieldMiss{field: r.Field}
+			r.response = &DictionaryGetFieldMiss{field: r.Field.asBytes()}
 		} else {
-			r.response = &DictionaryGetFieldHit{field: RawBytes{Bytes: rtype.Found.Items[0].CacheBody}}
+			r.response = &DictionaryGetFieldHit{field: rtype.Found.Items[0].CacheBody}
 		}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }
