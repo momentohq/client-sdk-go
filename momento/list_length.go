@@ -70,7 +70,7 @@ func (r *ListLengthRequest) interpretGrpcResponse() error {
 	case *pb.XListLengthResponse_Missing:
 		r.response = &ListLengthMiss{}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }

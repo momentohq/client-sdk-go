@@ -118,18 +118,15 @@ func (r *SortedSetFetchRequest) makeGrpcRequest(metadata context.Context, client
 }
 
 func (r *SortedSetFetchRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-
-	// Convert from grpc struct to internal struct
-	switch rsp := grpcResp.SortedSet.(type) {
+	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetFetchResponse_Found:
 		r.response = &SortedSetFetchHit{
-			Elements: sortedSetGrpcElementToModel(rsp.Found.GetElements()),
+			Elements: sortedSetGrpcElementToModel(grpcResp.Found.GetElements()),
 		}
 	case *pb.XSortedSetFetchResponse_Missing:
 		r.response = &SortedSetFetchMiss{}
 	default:
-		return errUnexpectedGrpcResponse
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
 }
