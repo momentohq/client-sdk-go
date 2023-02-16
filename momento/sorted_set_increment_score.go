@@ -2,6 +2,8 @@ package momento
 
 import (
 	"context"
+	"errors"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
@@ -45,15 +47,18 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 
 	ttlMills, refreshTTL := prepareCollectionTtl(r.CollectionTTL, client.defaultTtl)
 
-	incrementScoreAmount := r.Amount
 	if r.Amount == 0 {
-		incrementScoreAmount = 1
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Increment score amount must be passed cannot have 0 increment amount",
+			errors.New("invalid argument"),
+		)
 	}
 
 	r.grpcRequest = &pb.XSortedSetIncrementRequest{
 		SetName:         []byte(r.SetName),
 		ElementName:     r.ElementName.asBytes(),
-		Amount:          incrementScoreAmount,
+		Amount:          r.Amount,
 		TtlMilliseconds: ttlMills,
 		RefreshTtl:      refreshTTL,
 	}
