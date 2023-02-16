@@ -45,10 +45,15 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 
 	ttlMills, refreshTTL := prepareCollectionTtl(r.CollectionTTL, client.defaultTtl)
 
+	incrementScoreAmount := r.Amount
+	if r.Amount == 0 {
+		incrementScoreAmount = 1
+	}
+
 	r.grpcRequest = &pb.XSortedSetIncrementRequest{
 		SetName:         []byte(r.SetName),
 		ElementName:     r.ElementName.asBytes(),
-		Amount:          r.Amount,
+		Amount:          incrementScoreAmount,
 		TtlMilliseconds: ttlMills,
 		RefreshTtl:      refreshTTL,
 	}
