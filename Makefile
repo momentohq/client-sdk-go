@@ -26,6 +26,17 @@ staticcheck:
 .PHONY: lint
 lint: format imports tidy vet staticcheck
 
+.PHONY: install-protos-devtools
+install-protos-devtools:
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+.PHONY: protos
+protos:
+	@echo "Run `make install-protos-devtools` if you're missing the Go grpc tools."
+	@echo "Did you copy momentohq/client_protos/protos/*.proto to internal/protos?"
+	protoc -I=internal --go_out=internal --go_opt=paths=source_relative --go-grpc_out=internal --go-grpc_opt=paths=source_relative internal/protos/*.proto
+
 .PHONY: precommit
 precommit: lint test
 

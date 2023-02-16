@@ -52,7 +52,7 @@ type ScsClient interface {
 	// If an element exists, then its associate score gets overridden with the one
 	// provided in this operation.
 	SortedSetPut(ctx context.Context, in *XSortedSetPutRequest, opts ...grpc.CallOption) (*XSortedSetPutResponse, error)
-	// Fetches all the elements in the sorted set.
+	// Fetches a subset of elements in the sorted set.
 	SortedSetFetch(ctx context.Context, in *XSortedSetFetchRequest, opts ...grpc.CallOption) (*XSortedSetFetchResponse, error)
 	// Gets the specified element and its associated score if it exists in the
 	// sorted set.
@@ -373,7 +373,7 @@ type ScsServer interface {
 	// If an element exists, then its associate score gets overridden with the one
 	// provided in this operation.
 	SortedSetPut(context.Context, *XSortedSetPutRequest) (*XSortedSetPutResponse, error)
-	// Fetches all the elements in the sorted set.
+	// Fetches a subset of elements in the sorted set.
 	SortedSetFetch(context.Context, *XSortedSetFetchRequest) (*XSortedSetFetchResponse, error)
 	// Gets the specified element and its associated score if it exists in the
 	// sorted set.
