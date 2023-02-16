@@ -13,17 +13,17 @@ type ListPopBackResponse interface {
 }
 
 type ListPopBackHit struct {
-	value Bytes
+	value Value
 }
 
 func (ListPopBackHit) isListPopBackResponse() {}
 
 func (resp ListPopBackHit) ValueByte() []byte {
-	return resp.value.AsBytes()
+	return resp.value.asBytes()
 }
 
 func (resp ListPopBackHit) ValueString() string {
-	return string(resp.value.AsBytes())
+	return string(resp.value.asBytes())
 }
 
 type ListPopBackMiss struct{}
@@ -67,7 +67,7 @@ func (r *ListPopBackRequest) makeGrpcRequest(metadata context.Context, client sc
 func (r *ListPopBackRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListPopBackResponse_Found:
-		r.response = &ListPopBackHit{value: RawBytes{rtype.Found.Back}}
+		r.response = &ListPopBackHit{value: Bytes(rtype.Found.Back)}
 	case *pb.XListPopBackResponse_Missing:
 		r.response = &ListPopBackMiss{}
 	default:

@@ -47,7 +47,7 @@ func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
 type SortedSetGetScoreRequest struct {
 	CacheName    string
 	SetName      string
-	ElementNames []Bytes
+	ElementNames []Value
 
 	grpcRequest  *pb.XSortedSetGetScoreRequest
 	grpcResponse *pb.XSortedSetGetScoreResponse
@@ -109,10 +109,10 @@ func (r *SortedSetGetScoreRequest) interpretGrpcResponse() error {
 func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []SortedSetScoreElement {
 	var rList []SortedSetScoreElement
 	for _, element := range grpcSetElements {
-		switch CacheResult(element.Result) {
-		case Hit:
+		switch element.Result {
+		case pb.ECacheResult_Hit:
 			rList = append(rList, &SortedSetScoreHit{Score: element.Score})
-		case Miss:
+		case pb.ECacheResult_Miss:
 			rList = append(rList, &SortedSetScoreMiss{})
 		default:
 			rList = append(rList, &SortedSetScoreInvalid{})

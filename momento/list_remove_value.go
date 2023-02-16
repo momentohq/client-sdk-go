@@ -21,7 +21,7 @@ func (ListRemoveValueSuccess) isListRemoveValueResponse() {}
 type ListRemoveValueRequest struct {
 	CacheName string
 	ListName  string
-	Value     Bytes
+	Value     Value
 
 	grpcRequest  *pb.XListRemoveRequest
 	grpcResponse *pb.XListRemoveResponse
@@ -30,7 +30,7 @@ type ListRemoveValueRequest struct {
 
 func (r *ListRemoveValueRequest) cacheName() string { return r.CacheName }
 
-func (r *ListRemoveValueRequest) value() Bytes { return r.Value }
+func (r *ListRemoveValueRequest) value() Value { return r.Value }
 
 func (r *ListRemoveValueRequest) requestName() string { return "ListRemoveValue" }
 

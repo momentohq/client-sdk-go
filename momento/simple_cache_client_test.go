@@ -45,8 +45,8 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	_, err = client.Set(ctx, &SetRequest{
 		CacheName: randomCacheName,
-		Key:       RawBytes{Bytes: key},
-		Value:     RawBytes{Bytes: value},
+		Key:       Bytes(key),
+		Value:     Bytes(value),
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key err=%+v", err)
@@ -54,8 +54,8 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	_, err = client.Set(ctx, &SetRequest{
 		CacheName: randomCacheName,
-		Key:       StringBytes{Text: uuid.NewString()},
-		Value:     RawBytes{Bytes: value},
+		Key:       String(uuid.NewString()),
+		Value:     Bytes(value),
 		TTL:       time.Second * 60,
 	})
 	if err != nil {
@@ -64,7 +64,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	getResp, err := client.Get(ctx, &GetRequest{
 		CacheName: randomCacheName,
-		Key:       RawBytes{Bytes: key},
+		Key:       Bytes(key),
 	})
 	if err != nil {
 		t.Errorf("error occurred getting key err=%+v", err)
@@ -85,7 +85,7 @@ func TestBasicHappyPathSDKFlow(t *testing.T) {
 
 	existingCacheResp, err := client.Get(ctx, &GetRequest{
 		CacheName: testCacheName,
-		Key:       RawBytes{Bytes: key},
+		Key:       Bytes(key),
 	})
 	if err != nil {
 		t.Error(err.Error())
@@ -126,8 +126,8 @@ func TestBasicHappyPathDelete(t *testing.T) {
 
 	_, err = client.Set(ctx, &SetRequest{
 		CacheName: cacheName,
-		Key:       RawBytes{Bytes: key},
-		Value:     RawBytes{Bytes: value},
+		Key:       Bytes(key),
+		Value:     Bytes(value),
 	})
 	if err != nil {
 		t.Errorf("error occurred setting key err=%+v", err)
@@ -135,7 +135,7 @@ func TestBasicHappyPathDelete(t *testing.T) {
 
 	getResp, err := client.Get(ctx, &GetRequest{
 		CacheName: cacheName,
-		Key:       RawBytes{Bytes: key},
+		Key:       Bytes(key),
 	})
 	if err != nil {
 		t.Errorf("error occurred getting key err=%+v", err)
@@ -156,14 +156,14 @@ func TestBasicHappyPathDelete(t *testing.T) {
 
 	_, err = client.Delete(ctx, &DeleteRequest{
 		CacheName: cacheName,
-		Key:       RawBytes{Bytes: key},
+		Key:       Bytes(key),
 	})
 	if err != nil {
 		t.Errorf("error occurred deleting key err=%+v", err)
 	}
 	existingCacheResp, err := client.Get(ctx, &GetRequest{
 		CacheName: testCacheName,
-		Key:       RawBytes{Bytes: key},
+		Key:       Bytes(key),
 	})
 	if err != nil {
 		t.Error(err.Error())
@@ -468,8 +468,8 @@ func TestSetGet(t *testing.T) {
 				// set string key/value with default ttl
 				_, err := client.Set(ctx, &SetRequest{
 					CacheName: testCacheName,
-					Key:       &StringBytes{Text: tt.key},
-					Value:     &StringBytes{Text: tt.value},
+					Key:       String(tt.key),
+					Value:     String(tt.value),
 				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on setting cache err=%+v", err)
@@ -478,8 +478,8 @@ func TestSetGet(t *testing.T) {
 				// set string key/value with different ttl
 				_, err := client.Set(ctx, &SetRequest{
 					CacheName: testCacheName,
-					Key:       &StringBytes{Text: tt.key},
-					Value:     &StringBytes{Text: tt.value},
+					Key:       String(tt.key),
+					Value:     String(tt.value),
 					TTL:       tt.ttl,
 				})
 				if err != nil {
@@ -490,7 +490,7 @@ func TestSetGet(t *testing.T) {
 			if tt.expectedGetResult == "HIT" {
 				resp, err := client.Get(ctx, &GetRequest{
 					CacheName: testCacheName,
-					Key:       &StringBytes{Text: tt.key},
+					Key:       String(tt.key),
 				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
@@ -512,7 +512,7 @@ func TestSetGet(t *testing.T) {
 				time.Sleep(5 * time.Second)
 				resp, err := client.Get(ctx, &GetRequest{
 					CacheName: testCacheName,
-					Key:       &StringBytes{Text: tt.key},
+					Key:       String(tt.key),
 				})
 				if err != nil {
 					t.Errorf("unexpected error occurred on getting cache err=%+v", err)
@@ -573,8 +573,8 @@ func TestSet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := client.Set(ctx, &SetRequest{
 				CacheName: tt.cacheName,
-				Key:       &StringBytes{Text: tt.key},
-				Value:     &StringBytes{Text: tt.value},
+				Key:       String(tt.key),
+				Value:     String(tt.value),
 			})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -630,7 +630,7 @@ func TestGet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := client.Get(ctx, &GetRequest{
 				CacheName: tt.cacheName,
-				Key:       &StringBytes{Text: tt.key},
+				Key:       String(tt.key),
 			})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)
@@ -686,7 +686,7 @@ func TestDelete(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err = client.Delete(ctx, &DeleteRequest{
 				CacheName: tt.cacheName,
-				Key:       StringBytes{Text: tt.key},
+				Key:       String(tt.key),
 			})
 			if tt.expectedErr != "" && err == nil {
 				t.Errorf("expected error but got none expected=%+v got=%+v", tt.expectedErr, err)

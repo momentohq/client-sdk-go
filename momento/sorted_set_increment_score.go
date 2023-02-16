@@ -23,7 +23,7 @@ func (SortedSetIncrementScoreSuccess) isSortedSetIncrementResponse() {}
 type SortedSetIncrementScoreRequest struct {
 	CacheName     string
 	SetName       string
-	ElementName   Bytes
+	ElementName   Value
 	Amount        float64
 	CollectionTTL utils.CollectionTTL
 
@@ -47,7 +47,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 
 	r.grpcRequest = &pb.XSortedSetIncrementRequest{
 		SetName:         []byte(r.SetName),
-		ElementName:     r.ElementName.AsBytes(),
+		ElementName:     r.ElementName.asBytes(),
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMills,
 		RefreshTtl:      refreshTTL,

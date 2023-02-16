@@ -40,7 +40,7 @@ type GetRequest struct {
 	// Name of the cache to get the item from
 	CacheName string
 	// string or byte key to be used to store item
-	Key Bytes
+	Key Key
 
 	grpcRequest  *pb.XGetRequest
 	grpcResponse *pb.XGetResponse
@@ -49,7 +49,7 @@ type GetRequest struct {
 
 func (r *GetRequest) cacheName() string { return r.CacheName }
 
-func (r *GetRequest) key() Bytes { return r.Key }
+func (r *GetRequest) key() Key { return r.Key }
 
 func (r *GetRequest) requestName() string { return "Get" }
 
