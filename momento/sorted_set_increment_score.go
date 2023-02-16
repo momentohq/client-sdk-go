@@ -51,7 +51,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 	if r.Amount == 0 {
 		return momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"Increment score amount must be passed cannot have 0 increment amount",
+			"Amount must be given and cannot be 0",
 			errors.New("invalid argument"),
 		)
 	}
