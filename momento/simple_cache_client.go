@@ -131,6 +131,9 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 		CacheName: request.CacheName,
 	})
 	if err != nil {
+		if err.Code() == AlreadyExistsError {
+			return &CreateCacheAlreadyExists{}, nil
+		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return &CreateCacheSuccess{}, nil
