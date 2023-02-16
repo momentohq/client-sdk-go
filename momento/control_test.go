@@ -13,10 +13,6 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 )
 
-func cacheName() string {
-	return uuid.NewString()
-}
-
 var _ = Describe("Control ops", func() {
 	var client SimpleCacheClient
 	var ctx context.Context
@@ -34,7 +30,7 @@ var _ = Describe("Control ops", func() {
 
 	Describe(`Happy Path`, func() {
 		It(`creates, lists, and deletes caches`, func() {
-			cacheNames := []string{cacheName(), cacheName()}
+			cacheNames := []string{uuid.NewString(), uuid.NewString()}
 
 			for _, cacheName := range cacheNames {
 				Expect(
