@@ -28,6 +28,8 @@ var _ = Describe("Control ops", func() {
 			Configuration: config.LatestLaptopConfig(),
 			DefaultTTL:    60 * time.Second,
 		})
+
+		DeferCleanup(func() { client.Close() })
 	})
 
 	Describe(`Happy Path`, func() {

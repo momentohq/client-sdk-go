@@ -69,6 +69,9 @@ var _ = Describe("Pubsub", func() {
 			Configuration: config.LatestLaptopConfig(),
 			DefaultTTL:    60 * time.Second,
 		})
+		DeferCleanup(func() {
+			client.Close()
+		})
 
 		cacheName = createCache(client)
 		DeferCleanup(func() {
