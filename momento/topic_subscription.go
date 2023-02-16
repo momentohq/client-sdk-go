@@ -1,6 +1,7 @@
 package momento
 
 import (
+	"fmt"
 	"io"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -45,6 +46,11 @@ func (s topicSubscription) Item() (TopicValue, error) {
 					Bytes: subscriptionItem.Binary,
 				}, nil
 			}
+		case *pb.XSubscriptionItem_Heartbeat:
+			// Doesn't count against our retries.
+			continue
+		default:
+			return nil, fmt.Errorf("unexpected gRPC response when polling a subscription: %T %v", typedMsg, typedMsg)
 		}
 	}
 }
