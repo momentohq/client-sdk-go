@@ -107,15 +107,12 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 		var responses []DictionaryGetFieldResponse
 		var fields [][]byte
 		for idx, val := range rtype.Found.Items {
-			var field []byte
+			field := r.Fields[idx].asBytes()
 			if val.Result == pb.ECacheResult_Hit {
-				field = val.CacheBody
-				responses = append(responses, &DictionaryGetFieldHit{field: field})
+				responses = append(responses, &DictionaryGetFieldHit{field: field, body: val.CacheBody})
 			} else if val.Result == pb.ECacheResult_Miss {
-				field = r.Fields[idx].asBytes()
 				responses = append(responses, &DictionaryGetFieldMiss{field: field})
 			} else {
-				field = r.Fields[idx].asBytes()
 				responses = append(responses, nil)
 			}
 			fields = append(fields, field)
