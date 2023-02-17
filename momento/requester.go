@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/utils"
 )
 
 func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors.MomentoSvcErr {
@@ -95,22 +94,20 @@ func prepareKey(r hasKey) ([]byte, error) {
 
 func prepareField(r hasField) ([]byte, error) {
 	field := r.field().asBytes()
-
-	if len(field) == 0 {
-		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "field cannot be empty", nil)
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+	if err := validateNotEmpty(field, "field"); err != nil {
+		return nil, err
 	}
 	return field, nil
 }
 
 func prepareFields(r hasFields) ([][]byte, error) {
 	var fields [][]byte
-	for _, field := range r.fields() {
-		if len(field.asBytes()) == 0 {
-			err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "field cannot be empty", nil)
-			return nil, convertMomentoSvcErrorToCustomerError(err)
+	for _, valueField := range r.fields() {
+		field := valueField.asBytes()
+		if err := validateNotEmpty(field, "field"); err != nil {
+			return nil, err
 		}
-		fields = append(fields, field.asBytes())
+		fields = append(fields, field)
 	}
 	return fields, nil
 }
@@ -138,29 +135,30 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareItems(r hasItems) (map[string][]byte, momentoerrors.MomentoSvcErr) {
+func prepareItems(r hasItems) (map[string][]byte, error) {
 	retMap := make(map[string][]byte)
 	for k, v := range r.items() {
+		if err := validateNotEmpty([]byte(k), "item keys"); err != nil {
+			return nil, err
+		}
 		retMap[k] = v.asBytes()
 	}
 	return retMap, nil
 }
 
 func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
-	ttl := defaultTtl
-	if r.ttl() != time.Duration(0) {
-		ttl = r.ttl()
+	ttl := r.ttl()
+	if r.ttl() == time.Duration(0) {
+		ttl = defaultTtl
+	}
+	if ttl <= time.Duration(0) {
+		return 0, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"ttl must be a non-zero positive value",
+			nil,
+		)
 	}
 	return uint64(ttl.Milliseconds()), nil
-}
-
-func prepareCollectionTtl(ttl utils.CollectionTTL, defaultTtl time.Duration) (uint64, bool) {
-	ttlDuration := defaultTtl
-	if ttl.Ttl != time.Duration(0) {
-		ttlDuration = ttl.Ttl
-	}
-
-	return uint64(ttlDuration.Milliseconds()), ttl.RefreshTtl
 }
 
 func momentoBytesListToPrimitiveByteList(i []Value) [][]byte {
@@ -169,4 +167,13 @@ func momentoBytesListToPrimitiveByteList(i []Value) [][]byte {
 		rList = append(rList, mb.asBytes())
 	}
 	return rList
+}
+
+func validateNotEmpty(field []byte, label string) error {
+	if len(field) == 0 {
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError, fmt.Sprintf("%s cannot be empty", label), nil,
+		)
+	}
+	return nil
 }
