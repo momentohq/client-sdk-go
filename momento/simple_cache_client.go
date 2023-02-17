@@ -6,12 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
-
-	"github.com/momentohq/client-sdk-go/auth"
-	"github.com/momentohq/client-sdk-go/config"
 )
 
 type SimpleCacheClient interface {
@@ -42,6 +41,15 @@ type SimpleCacheClient interface {
 	ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error)
 	ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error)
 	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error)
+
+	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error)
+	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error)
+	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (DictionaryFetchResponse, error)
+	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error)
+	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (DictionaryGetFieldsResponse, error)
+	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (DictionaryIncrementResponse, error)
+	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error)
+	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error)
 
 	Close()
 }
@@ -293,6 +301,90 @@ func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) 
 }
 
 func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
+	items := make(map[string]Value)
+	items[string(r.Field.asBytes())] = r.Value
+	newRequest := &DictionarySetFieldsRequest{
+		CacheName:      r.CacheName,
+		DictionaryName: r.DictionaryName,
+		Items:          items,
+		CollectionTTL:  r.CollectionTTL,
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	return DictionarySetFieldSuccess{}, nil
+}
+
+func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (DictionaryFetchResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error) {
+	newRequest := &DictionaryGetFieldsRequest{
+		CacheName:      r.CacheName,
+		DictionaryName: r.DictionaryName,
+		Fields:         []Value{r.Field},
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	switch rtype := newRequest.response.(type) {
+	case *DictionaryGetFieldsMiss:
+		return &DictionaryGetFieldMiss{}, nil
+	case *DictionaryGetFieldsHit:
+		return &DictionaryGetFieldHit{
+			field: rtype.fields[0],
+			body:  rtype.items[0].CacheBody,
+		}, nil
+	default:
+		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
+	}
+}
+
+func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (DictionaryGetFieldsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (DictionaryIncrementResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error) {
+	newRequest := &DictionaryRemoveFieldsRequest{
+		CacheName:      r.CacheName,
+		DictionaryName: r.DictionaryName,
+		Fields:         []Value{r.Field},
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	return DictionaryRemoveFieldSuccess{}, nil
+}
+
+func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package momento
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -39,6 +40,8 @@ func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName
 
 func (r *SortedSetIncrementScoreRequest) requestName() string { return "Sorted set increment" }
 
+func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+
 func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
@@ -46,7 +49,10 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		return err
 	}
 
-	ttlMills, refreshTTL := prepareCollectionTtl(r.CollectionTTL, client.defaultTtl)
+	var ttlMillis uint64
+	if ttlMillis, err = prepareTTL(r, client.defaultTtl); err != nil {
+		return err
+	}
 
 	if r.Amount == 0 {
 		return momentoerrors.NewMomentoSvcErr(
@@ -60,8 +66,8 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		SetName:         []byte(r.SetName),
 		ElementName:     r.ElementName.asBytes(),
 		Amount:          r.Amount,
-		TtlMilliseconds: ttlMills,
-		RefreshTtl:      refreshTTL,
+		TtlMilliseconds: ttlMillis,
+		RefreshTtl:      r.CollectionTTL.RefreshTtl,
 	}
 	return nil
 }
