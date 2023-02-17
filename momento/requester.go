@@ -113,26 +113,11 @@ func prepareFields(r hasFields) ([][]byte, error) {
 }
 
 func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
-	value := r.value().asBytes()
-	if len(value) == 0 {
-		err := momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "value cannot be empty", nil)
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	return value, nil
+	return r.value().asBytes(), nil
 }
 
 func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
-	values := momentoValuesToPrimitiveByteList(r.values())
-	for i := range values {
-		if len(values[i]) == 0 {
-			return nil, momentoerrors.NewMomentoSvcErr(
-				momentoerrors.InvalidArgumentError,
-				"value in list cannot be empty",
-				nil,
-			)
-		}
-	}
-	return values, nil
+	return momentoValuesToPrimitiveByteList(r.values()), nil
 }
 
 func prepareItems(r hasItems) (map[string][]byte, error) {

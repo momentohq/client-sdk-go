@@ -48,12 +48,11 @@ jobs:
       - name: Verify no changes from goimports and go mod tidy
         run: |
           if [ -n "$(git status --porcelain)" ]; then
+            git diff
             exit 1
           fi
 
       - name: Run test
-        run: |
-          go vet ./...
-          go test -v ./momento
+        run: make test
 
 
