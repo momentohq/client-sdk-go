@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"time"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
@@ -39,6 +40,8 @@ func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetPutRequest) requestName() string { return "Sorted set put" }
 
+func (r *SortedSetPutRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+
 func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
@@ -46,7 +49,10 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	ttlMills, refreshTTL := prepareCollectionTtl(r.CollectionTTL, client.defaultTtl)
+	var ttlMills uint64
+	if ttlMills, err = prepareTTL(r, client.defaultTtl); err != nil {
+		return err
+	}
 
 	elements := convertSortedSetElementToGrpc(r.Elements)
 
@@ -54,7 +60,7 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
 		TtlMilliseconds: ttlMills,
-		RefreshTtl:      refreshTTL,
+		RefreshTtl:      r.CollectionTTL.RefreshTtl,
 	}
 	return nil
 }

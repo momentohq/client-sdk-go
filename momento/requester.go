@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/utils"
 )
 
 func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors.MomentoSvcErr {
@@ -55,6 +54,18 @@ type hasValues interface {
 	values() []Value
 }
 
+type hasField interface {
+	field() Value
+}
+
+type hasFields interface {
+	fields() []Value
+}
+
+type hasItems interface {
+	items() map[string]Value
+}
+
 type hasScalarTTL interface {
 	ttl() time.Duration
 }
@@ -81,6 +92,26 @@ func prepareKey(r hasKey) ([]byte, error) {
 	return key, nil
 }
 
+func prepareField(r hasField) ([]byte, error) {
+	field := r.field().asBytes()
+	if err := validateNotEmpty(field, "field"); err != nil {
+		return nil, err
+	}
+	return field, nil
+}
+
+func prepareFields(r hasFields) ([][]byte, error) {
+	var fields [][]byte
+	for _, valueField := range r.fields() {
+		field := valueField.asBytes()
+		if err := validateNotEmpty(field, "field"); err != nil {
+			return nil, err
+		}
+		fields = append(fields, field)
+	}
+	return fields, nil
+}
+
 func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
 	value := r.value().asBytes()
 	if len(value) == 0 {
@@ -104,21 +135,30 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
-	ttl := defaultTtl
-	if r.ttl() != time.Duration(0) {
-		ttl = r.ttl()
+func prepareItems(r hasItems) (map[string][]byte, error) {
+	retMap := make(map[string][]byte)
+	for k, v := range r.items() {
+		if err := validateNotEmpty([]byte(k), "item keys"); err != nil {
+			return nil, err
+		}
+		retMap[k] = v.asBytes()
 	}
-	return uint64(ttl.Milliseconds()), nil
+	return retMap, nil
 }
 
-func prepareCollectionTtl(ttl utils.CollectionTTL, defaultTtl time.Duration) (uint64, bool) {
-	ttlDuration := defaultTtl
-	if ttl.Ttl != time.Duration(0) {
-		ttlDuration = ttl.Ttl
+func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
+	ttl := r.ttl()
+	if r.ttl() == time.Duration(0) {
+		ttl = defaultTtl
 	}
-
-	return uint64(ttlDuration.Milliseconds()), ttl.RefreshTtl
+	if ttl <= time.Duration(0) {
+		return 0, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"ttl must be a non-zero positive value",
+			nil,
+		)
+	}
+	return uint64(ttl.Milliseconds()), nil
 }
 
 func momentoBytesListToPrimitiveByteList(i []Value) [][]byte {
@@ -127,4 +167,13 @@ func momentoBytesListToPrimitiveByteList(i []Value) [][]byte {
 		rList = append(rList, mb.asBytes())
 	}
 	return rList
+}
+
+func validateNotEmpty(field []byte, label string) error {
+	if len(field) == 0 {
+		return momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError, fmt.Sprintf("%s cannot be empty", label), nil,
+		)
+	}
+	return nil
 }
