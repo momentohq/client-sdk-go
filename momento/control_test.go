@@ -31,6 +31,14 @@ var _ = Describe("Control ops", func() {
 	Describe(`Happy Path`, func() {
 		It(`creates, lists, and deletes caches`, func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
+			defer func() {
+				for _, cacheName := range cacheNames {
+					_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: cacheName})
+					if err != nil {
+						panic(err)
+					}
+				}
+			}()
 
 			for _, cacheName := range cacheNames {
 				Expect(
@@ -40,9 +48,6 @@ var _ = Describe("Control ops", func() {
 				Expect(
 					client.CreateCache(ctx, &CreateCacheRequest{CacheName: cacheName}),
 				).To(BeAssignableToTypeOf(&CreateCacheAlreadyExists{}))
-
-				// Just in case the test fails.
-				defer client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: cacheName})
 			}
 
 			resp, err := client.ListCaches(ctx, &ListCachesRequest{})
@@ -77,7 +82,7 @@ var _ = Describe("Control ops", func() {
 	})
 
 	Describe(`Validate cache name`, func() {
-		It(`CreateCache and DelteCache errors on bad cache names`, func() {
+		It(`CreateCache and DeleteCache errors on bad cache names`, func() {
 			badCacheNames := []string{``, `   `}
 			for _, badCacheName := range badCacheNames {
 				createResp, err := client.CreateCache(ctx, &CreateCacheRequest{CacheName: badCacheName})
@@ -93,6 +98,14 @@ var _ = Describe("Control ops", func() {
 					Expect(momentoErr.Code()).To(Equal(InvalidArgumentError))
 				}
 			}
+		})
+	})
+
+	Describe(`DeleteCache`, func() {
+		It(`succeeds even if the cache does not exist`, func() {
+			Expect(
+				client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),
+			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
 	})
 })

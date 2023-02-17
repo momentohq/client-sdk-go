@@ -61,7 +61,10 @@ var _ = Describe("Scalar methods", func() {
 			client.CreateCache(ctx, &CreateCacheRequest{CacheName: testCacheName}),
 		).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
 		DeferCleanup(func() {
-			client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: testCacheName})
+			_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: testCacheName})
+			if err != nil {
+				panic(err)
+			}
 		})
 	})
 
@@ -163,7 +166,7 @@ var _ = Describe("Scalar methods", func() {
 		},
 		Entry(`With an empty cache name`, "", String("key"), String("value")),
 		Entry(`With an bank cache name`, "   ", String("key"), String("value")),
-		Entry(`With an empty key`, cacheName(), String(""), String("value")),
+		Entry(`With an empty key`, uuid.NewString(), String(""), String("value")),
 	)
 
 	Describe(`Set`, func() {

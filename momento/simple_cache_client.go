@@ -147,6 +147,9 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 		CacheName: request.CacheName,
 	})
 	if err != nil {
+		if err.Code() == NotFoundError {
+			return &DeleteCacheSuccess{}, nil
+		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return &DeleteCacheSuccess{}, nil
