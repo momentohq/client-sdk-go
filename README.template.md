@@ -50,7 +50,7 @@ But if the cache read results in a Miss, you'll also get a type-safe object that
 In cases where you get an error response, it can be treated as `momentoErr` using `As` method and it always include an `momentoErr.Code` that you can use to check the error type:
 
 ```go
-_, err := client.Set(ctx, &momento.GetRequest{
+_, err := client.Set(ctx, &momento.SetRequest{
     CacheName: cacheName,
     Key:       momento.String(key),
     Value:     momento.String(value),
