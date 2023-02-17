@@ -66,7 +66,7 @@ type hasItems interface {
 	items() map[string]Value
 }
 
-type hasScalarTTL interface {
+type hasTTL interface {
 	ttl() time.Duration
 }
 
@@ -131,7 +131,7 @@ func prepareItems(r hasItems) (map[string][]byte, error) {
 	return retMap, nil
 }
 
-func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
+func prepareTTL(r hasTTL, defaultTtl time.Duration) (uint64, error) {
 	ttl := r.ttl()
 	if r.ttl() == time.Duration(0) {
 		ttl = defaultTtl
