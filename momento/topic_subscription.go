@@ -45,6 +45,13 @@ func (s topicSubscription) Item() (TopicValue, error) {
 					Bytes: subscriptionItem.Binary,
 				}, nil
 			}
+		case *pb.XSubscriptionItem_Heartbeat:
+			// Doesn't count against our retries.
+			continue
+		default:
+			// Ignore unknown responses so we don't stop polling if we add a new message.
+			// For example, we wouldn't want to stop because of an unknown heartbeat response.
+			continue
 		}
 	}
 }
