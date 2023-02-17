@@ -30,7 +30,7 @@ type SetRemoveElementsRequest struct {
 
 func (r *SetRemoveElementsRequest) cacheName() string { return r.CacheName }
 
-func (r *SetRemoveElementsRequest) requestName() string { return "SetAddElements" }
+func (r *SetRemoveElementsRequest) requestName() string { return "SetRemoveElements" }
 
 func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
