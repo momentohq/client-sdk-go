@@ -2,10 +2,10 @@ package momento
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/utils"
 	"time"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 // SetAddElementsResponse
