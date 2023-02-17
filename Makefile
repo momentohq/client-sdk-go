@@ -2,6 +2,7 @@
 install-devtools:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install github.com/onsi/ginkgo/v2/ginkgo
 
 .PHONY: format
 format:
@@ -42,7 +43,7 @@ precommit: lint test
 
 .PHONY: test
 test:
-	go test -v ./momento
+	ginkgo momento/ auth/
 
 .PHONY: vendor
 vendor:

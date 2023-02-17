@@ -26,6 +26,7 @@ Run `make install-devtools`. This will install...
 
 * [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports)
 * [staticcheck](https://staticcheck.io/)
+* [gingko](https://onsi.github.io/ginkgo/) for testing
 
 ## Developing :computer:
 
@@ -35,6 +36,8 @@ Running `make precommit` will run all formatters, linters, and the tests. Run th
 * `make lint` will just run the formatting and linters
 
 ## Tests :zap:
+
+We use [Ginkgo](https://onsi.github.io/ginkgo/) and [Gomega](https://onsi.github.io/gomega/) to write our tests.
 
 Integration tests require an auth token for testing. Set the env var `TEST_AUTH_TOKEN` to
 provide it, you can get this from your `~/.momento/credentials` file. The env `TEST_CACHE_NAME` is also required, but for now any string value works.
