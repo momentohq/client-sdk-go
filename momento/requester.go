@@ -122,7 +122,7 @@ func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
 }
 
 func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
-	values := momentoBytesListToPrimitiveByteList(r.values())
+	values := momentoValuesToPrimitiveByteList(r.values())
 	for i := range values {
 		if len(values[i]) == 0 {
 			return nil, momentoerrors.NewMomentoSvcErr(
@@ -161,7 +161,7 @@ func prepareTTL(r hasScalarTTL, defaultTtl time.Duration) (uint64, error) {
 	return uint64(ttl.Milliseconds()), nil
 }
 
-func momentoBytesListToPrimitiveByteList(i []Value) [][]byte {
+func momentoValuesToPrimitiveByteList(i []Value) [][]byte {
 	var rList [][]byte
 	for _, mb := range i {
 		rList = append(rList, mb.asBytes())
