@@ -62,8 +62,7 @@ func (s *topicSubscription) handleStreamError(ctx context.Context, err error) er
 	var returnErr error
 	if err == io.EOF {
 		returnErr = s.reInitStream(ctx)
-	}
-	if grpcStatusErr, ok := status.FromError(err); ok {
+	} else if grpcStatusErr, ok := status.FromError(err); ok {
 		if grpcStatusErr.Code() == codes.Internal &&
 			grpcStatusErr.Message() == "stream terminated by RST_STREAM with error code: NO_ERROR" {
 			returnErr = s.reInitStream(ctx)
