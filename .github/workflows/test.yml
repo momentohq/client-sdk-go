@@ -47,6 +47,7 @@ jobs:
       # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
         run: |
+          git status --porcelain
           if [ -n "$(git status --porcelain)" ]; then
             exit 1
           fi
