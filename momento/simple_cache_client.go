@@ -32,6 +32,10 @@ type SimpleCacheClient interface {
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error)
 
+	SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error)
+	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error)
+	SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error)
+
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error)
 	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error)
@@ -238,6 +242,33 @@ func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetR
 }
 
 func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error) {
+	newRequest := &SetAddElementsRequest{
+		CacheName:     r.CacheName,
+		SetName:       r.SetName,
+		Elements:      []Value{r.Element},
+		CollectionTTL: r.CollectionTTL,
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	return SetAddElementSuccess{}, nil
+}
+
+func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
