@@ -45,7 +45,7 @@ func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) error {
 			Subtrahend: &pb.XSetDifferenceRequest_XSubtrahend{
 				SubtrahendSet: &pb.XSetDifferenceRequest_XSubtrahend_Set{
 					Set: &pb.XSetDifferenceRequest_XSubtrahend_XSet{
-						Elements: momentoBytesListToPrimitiveByteList(r.Elements),
+						Elements: momentoValuesToPrimitiveByteList(r.Elements),
 					},
 				},
 			},

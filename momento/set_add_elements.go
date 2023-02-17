@@ -51,7 +51,7 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 
 	r.grpcRequest = &pb.XSetUnionRequest{
 		SetName:         []byte(r.SetName),
-		Elements:        momentoBytesListToPrimitiveByteList(r.Elements),
+		Elements:        momentoValuesToPrimitiveByteList(r.Elements),
 		TtlMilliseconds: ttl,
 		RefreshTtl:      r.CollectionTTL.RefreshTtl,
 	}
