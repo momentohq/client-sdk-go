@@ -54,7 +54,7 @@ service Scs {
   // If an element exists, then its associate score gets overridden with the one
   // provided in this operation.
   rpc SortedSetPut(_SortedSetPutRequest) returns (_SortedSetPutResponse) {}
-  // Fetches all the elements in the sorted set.
+  // Fetches a subset of elements in the sorted set.
   rpc SortedSetFetch(_SortedSetFetchRequest) returns (_SortedSetFetchResponse) {}
   // Gets the specified element and its associated score if it exists in the
   // sorted set.
@@ -455,10 +455,33 @@ message _SortedSetFetchRequest {
     DESCENDING = 1;
   }
 
+  // num_results fields
   message _All {}
 
   message _Limit {
     uint32 limit = 1;
+  }
+
+  // range fields
+  message _ByIndex {}
+
+  message _ByScore {
+    message _Endpoint {
+      message _Score {
+        double score = 1;
+        bool open = 2; // if true, the endpoint is open (exclusive); false, closed (inclusive)
+      }
+
+      message _Inf {}
+
+      oneof kind {
+        _Score score = 1;
+        _Inf inf = 2;
+      }
+    }
+
+    _Endpoint start = 1;
+    _Endpoint stop = 2;
   }
 
   bytes set_name = 1;
@@ -466,6 +489,10 @@ message _SortedSetFetchRequest {
   oneof num_results {
     _All all = 3;
     _Limit limit = 4;
+  }
+  oneof range {
+    _ByIndex by_index = 5;
+    _ByScore by_score = 6;
   }
 }
 
