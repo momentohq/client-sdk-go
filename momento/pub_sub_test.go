@@ -92,7 +92,7 @@ func TestHappyPathPubSub(t *testing.T) {
 			case <-cancelContext.Done():
 				return
 			default:
-				_, err := sub.Item()
+				_, err := sub.Item(ctx)
 				if err != nil {
 					panic(err)
 				}
