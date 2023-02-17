@@ -35,6 +35,8 @@ type SimpleCacheClient interface {
 	SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error)
 	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error)
 	SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error)
+	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error)
+	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error)
 
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error)
@@ -273,6 +275,25 @@ func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (Set
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error) {
+	newRequest := &SetRemoveElementsRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Elements:  []Value{r.Element},
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	return &SetRemoveElementSuccess{}, nil
 }
 
 func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error) {

@@ -19,7 +19,7 @@ type SetFetchHit struct {
 
 func (SetFetchHit) isSetFetchResponse() {}
 
-func (resp SetFetchHit) ValueSetString() []string {
+func (resp SetFetchHit) ValueString() []string {
 	if resp.elementsString == nil {
 		for _, value := range resp.elements {
 			resp.elementsString = append(resp.elementsString, string(value))
@@ -28,7 +28,7 @@ func (resp SetFetchHit) ValueSetString() []string {
 	return resp.elementsString
 }
 
-func (resp SetFetchHit) ValueSetByte() [][]byte {
+func (resp SetFetchHit) ValueByte() [][]byte {
 	return resp.elements
 }
 
