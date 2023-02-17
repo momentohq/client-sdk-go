@@ -50,7 +50,9 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	}
 
 	var ttlMills uint64
-	ttlMills, err = prepareTTL(r, client.defaultTtl)
+	if ttlMills, err = prepareTTL(r, client.defaultTtl); err != nil {
+		return err
+	}
 
 	elements := convertSortedSetElementToGrpc(r.Elements)
 
