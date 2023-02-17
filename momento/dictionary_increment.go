@@ -23,7 +23,7 @@ type DictionaryIncrementSuccess struct {
 
 func (DictionaryIncrementSuccess) isDictionaryIncrementResponse() {}
 
-func (resp DictionaryIncrementSuccess) ValueInt64() int64 {
+func (resp DictionaryIncrementSuccess) Value() int64 {
 	return resp.value
 }
 
