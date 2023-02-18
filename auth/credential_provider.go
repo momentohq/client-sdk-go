@@ -95,7 +95,11 @@ func resolve(request *ResolveRequest) (*Endpoints, momentoerrors.MomentoSvcErr) 
 func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoSvcErr) {
 	token, _, err := new(jwt.Parser).ParseUnverified(authToken, jwt.MapClaims{})
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Could not parse auth token.",
+			err,
+		)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		return &Endpoints{
