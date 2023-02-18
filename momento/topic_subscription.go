@@ -47,7 +47,6 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 					}, nil
 				}
 			case *pb.XSubscriptionItem_Heartbeat:
-				// Doesn't count against our retries.
 				continue
 			default:
 				// Ignore unknown responses, so we don't stop polling if we add a new message.
@@ -66,6 +65,7 @@ func (s *topicSubscription) handleStreamError(ctx context.Context, err error) er
 		if grpcStatusErr.Code() == codes.Internal &&
 			grpcStatusErr.Message() == "stream terminated by RST_STREAM with error code: NO_ERROR" {
 			returnErr = s.reInitStream(ctx)
+
 		}
 	}
 	if returnErr != nil {
