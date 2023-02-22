@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/utils"
 )
 
 func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors.MomentoSvcErr {
@@ -24,13 +23,6 @@ func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors
 		),
 		nil,
 	)
-}
-
-func processCollectionTtl(collectionTtl utils.CollectionTTL) time.Duration {
-	if collectionTtl.RefreshTtl {
-		return collectionTtl.Ttl
-	}
-	return 0
 }
 
 type requester interface {

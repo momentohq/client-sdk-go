@@ -344,52 +344,66 @@ var _ = Describe("Set methods", func() {
 			})
 
 			It("returns a miss after the client default when refreshTTL is false", func() {
-				_, err := client.SetAddElement(ctx, &SetAddElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Element:   String("hello"),
-					CollectionTTL: utils.CollectionTTL{
-						Ttl:        defaultTTL + (time.Second * 2),
-						RefreshTtl: false,
-					},
-				})
-				Expect(err).To(BeNil())
+				// Initialize the set. If the set isn't initialized, there's
+				// nothing to refresh and it will use the passed in TTL.
+				Expect(
+					client.SetAddElement(ctx, &SetAddElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   String("goodbye"),
+					}),
+				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-				})
-				Expect(err).To(BeNil())
-				Expect(fetchResp).To(HaveLength(1))
+				Expect(
+					client.SetAddElement(ctx, &SetAddElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   String("hello"),
+						CollectionTTL: utils.CollectionTTL{
+							Ttl:        defaultTTL + 1*time.Second,
+							RefreshTtl: false,
+						},
+					}),
+				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
-				time.Sleep(defaultTTL)
+				Expect(
+					client.SetFetch(ctx, &SetFetchRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+					}),
+				).To(HaveLength(2))
 
-				fetchResp, err = client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-				})
-				Expect(err).To(BeNil())
-				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchMiss{}))
+				time.Sleep(defaultTTL + 500*time.Millisecond)
+
+				Expect(
+					client.SetFetch(ctx, &SetFetchRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+					}),
+				).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 			})
 
 			It("returns a miss after overriding the client timeout with a short duration", func() {
-				_, err := client.SetAddElement(ctx, &SetAddElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Element:   String("hello"),
-					CollectionTTL: utils.CollectionTTL{
-						Ttl:        time.Millisecond * 20,
-						RefreshTtl: true,
-					},
-				})
-				Expect(err).To(BeNil())
+				Expect(
+					client.SetAddElement(ctx, &SetAddElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   String("hello"),
+						CollectionTTL: utils.CollectionTTL{
+							Ttl:        time.Millisecond * 200,
+							RefreshTtl: true,
+						},
+					}),
+				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-				})
-				Expect(err).To(BeNil())
-				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchMiss{}))
+				time.Sleep(time.Millisecond * 500)
+
+				Expect(
+					client.SetFetch(ctx, &SetFetchRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+					}),
+				).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 			})
 		})
 	})
