@@ -84,62 +84,62 @@ var _ = Describe("Set methods", func() {
 		cacheName := uuid.NewString()
 		setName := uuid.NewString()
 
-		fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-			CacheName: cacheName,
-			SetName:   setName,
-		})
-		Expect(fetchResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(
+			client.SetFetch(ctx, &SetFetchRequest{
+				CacheName: cacheName,
+				SetName:   setName,
+			}),
+		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		addOneResp, err := client.SetAddElement(ctx, &SetAddElementRequest{
-			CacheName: cacheName,
-			SetName:   setName,
-			Element:   String("astring"),
-		})
-		Expect(addOneResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(
+			client.SetAddElement(ctx, &SetAddElementRequest{
+				CacheName: cacheName,
+				SetName:   setName,
+				Element:   String("astring"),
+			}),
+		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		addManyResp, err := client.SetAddElements(ctx, &SetAddElementsRequest{
-			CacheName: cacheName,
-			SetName:   setName,
-			Elements:  []Value{String("astring"), String("bstring")},
-		})
-		Expect(addManyResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(
+			client.SetAddElements(ctx, &SetAddElementsRequest{
+				CacheName: cacheName,
+				SetName:   setName,
+				Elements:  []Value{String("astring"), String("bstring")},
+			}),
+		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		removeOneResp, err := client.SetRemoveElement(ctx, &SetRemoveElementRequest{
-			CacheName: cacheName,
-			SetName:   setName,
-			Element:   String("astring"),
-		})
-		Expect(removeOneResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(
+			client.SetRemoveElement(ctx, &SetRemoveElementRequest{
+				CacheName: cacheName,
+				SetName:   setName,
+				Element:   String("astring"),
+			}),
+		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		removeManyResp, err := client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
-			CacheName: cacheName,
-			SetName:   setName,
-			Elements:  nil,
-		})
-		Expect(removeManyResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(
+			client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
+				CacheName: cacheName,
+				SetName:   setName,
+				Elements:  nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(NotFoundError))
 	})
 
 	It("errors on invalid set name", func() {
 		setName := ""
-		fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-			CacheName: testCacheName,
-			SetName:   setName,
-		})
-		Expect(fetchResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+		Expect(
+			client.SetFetch(ctx, &SetFetchRequest{
+				CacheName: testCacheName,
+				SetName:   setName,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
-		removeManyResp, err := client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
-			CacheName: testCacheName,
-			SetName:   setName,
-			Elements:  nil,
-		})
-		Expect(removeManyResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+		Expect(
+			client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
+				CacheName: testCacheName,
+				SetName:   setName,
+				Elements:  nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
 	DescribeTable("add string and byte single elements happy path",
@@ -222,22 +222,25 @@ var _ = Describe("Set methods", func() {
 
 		BeforeEach(func() {
 			elements := getElements(10)
-			_, err := client.SetAddElements(ctx, &SetAddElementsRequest{
-				CacheName: testCacheName,
-				SetName:   testSetName,
-				Elements:  elements,
-			})
-			Expect(err).To(BeNil())
+			Expect(
+				client.SetAddElements(ctx, &SetAddElementsRequest{
+					CacheName: testCacheName,
+					SetName:   testSetName,
+					Elements:  elements,
+				}),
+			).Error().To(BeNil())
 		})
 
 		DescribeTable("single elements as strings and as bytes",
 			func(toRemove Value, expectedLength int) {
-				_, err := client.SetRemoveElement(ctx, &SetRemoveElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Element:   toRemove,
-				})
-				Expect(err).To(BeNil())
+				Expect(
+					client.SetRemoveElement(ctx, &SetRemoveElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   toRemove,
+					}),
+				).Error().To(BeNil())
+
 				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
 					CacheName: testCacheName,
 					SetName:   testSetName,
@@ -258,12 +261,14 @@ var _ = Describe("Set methods", func() {
 
 		DescribeTable("multiple elements as strings and bytes",
 			func(toRemove []Value, expectedLength int) {
-				_, err := client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Elements:  toRemove,
-				})
-				Expect(err).To(BeNil())
+				Expect(
+					client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Elements:  toRemove,
+					}),
+				).Error().To(BeNil())
+
 				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
 					CacheName: testCacheName,
 					SetName:   testSetName,
@@ -286,12 +291,13 @@ var _ = Describe("Set methods", func() {
 	Describe("using client default TTL", func() {
 		Context("when the TTL is exceeded", func() {
 			It("returns a miss for the collection", func() {
-				_, err := client.SetAddElement(ctx, &SetAddElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Element:   String("hello"),
-				})
-				Expect(err).To(BeNil())
+				Expect(
+					client.SetAddElement(ctx, &SetAddElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   String("hello"),
+					}),
+				).Error().To(BeNil())
 
 				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
 					CacheName: testCacheName,
@@ -328,16 +334,17 @@ var _ = Describe("Set methods", func() {
 			})
 
 			It("returns a hit after the client default has expired", func() {
-				_, err := client.SetAddElement(ctx, &SetAddElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Element:   String("hello"),
-					CollectionTTL: utils.CollectionTTL{
-						Ttl:        time.Second * 10,
-						RefreshTtl: true,
-					},
-				})
-				Expect(err).To(BeNil())
+				Expect(
+					client.SetAddElement(ctx, &SetAddElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   String("hello"),
+						CollectionTTL: utils.CollectionTTL{
+							Ttl:        time.Second * 10,
+							RefreshTtl: true,
+						},
+					}),
+				).Error().To(BeNil())
 
 				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
 					CacheName: testCacheName,
@@ -387,16 +394,17 @@ var _ = Describe("Set methods", func() {
 			})
 
 			It("ignores collection ttl when refresh ttl is false", func() {
-				_, err := client.SetAddElement(ctx, &SetAddElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
-					Element:   String("hello"),
-					CollectionTTL: utils.CollectionTTL{
-						Ttl:        time.Millisecond * 20,
-						RefreshTtl: false,
-					},
-				})
-				Expect(err).To(BeNil())
+				Expect(
+					client.SetAddElement(ctx, &SetAddElementRequest{
+						CacheName: testCacheName,
+						SetName:   testSetName,
+						Element:   String("hello"),
+						CollectionTTL: utils.CollectionTTL{
+							Ttl:        time.Millisecond * 20,
+							RefreshTtl: false,
+						},
+					}),
+				).Error().To(BeNil())
 
 				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
 					CacheName: testCacheName,
