@@ -197,7 +197,12 @@ func (c defaultScsClient) TopicSubscribe(ctx context.Context, request *TopicSubs
 	if err != nil {
 		return nil, err
 	}
-	return topicSubscription{grpcClient: clientStream}, err
+	return &topicSubscription{
+		grpcClient:         clientStream,
+		momentoTopicClient: c.pubSubClient,
+		cacheName:          request.CacheName,
+		topicName:          request.TopicName,
+	}, err
 }
 
 func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {

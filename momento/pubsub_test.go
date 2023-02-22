@@ -103,7 +103,7 @@ var _ = Describe("Pubsub", func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					value, err := sub.Item()
+					value, err := sub.Item(ctx)
 					if err != nil {
 						panic(err)
 					}
