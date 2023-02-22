@@ -32,16 +32,16 @@ func main() {
 	}
 
 	// Receive and print messages in a goroutine
-	go func() { pollForMessages(sub) }()
+	go func() { pollForMessages(ctx, sub) }()
 	time.Sleep(time.Second)
 
 	// Publish messages for the subscriber
 	publishMessages(client, ctx)
 }
 
-func pollForMessages(sub momento.TopicSubscription) {
+func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
 	for {
-		item, err := sub.Item()
+		item, err := sub.Item(ctx)
 		if err != nil {
 			panic(err)
 		}
