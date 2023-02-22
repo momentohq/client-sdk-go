@@ -33,7 +33,9 @@ type SetAddElementsRequest struct {
 
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }
 
-func (r *SetAddElementsRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *SetAddElementsRequest) ttl() time.Duration {
+	return processCollectionTtl(r.CollectionTTL)
+}
 
 func (r *SetAddElementsRequest) requestName() string { return "SetAddElements" }
 
