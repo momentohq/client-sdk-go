@@ -75,11 +75,11 @@ func (r *SetFetchRequest) makeGrpcRequest(metadata context.Context, client scsDa
 func (r *SetFetchRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.Set.(type) {
 	case *pb.XSetFetchResponse_Found:
-		r.response = SetFetchHit{
+		r.response = &SetFetchHit{
 			elements: rtype.Found.Elements,
 		}
 	case *pb.XSetFetchResponse_Missing:
-		r.response = SetFetchMiss{}
+		r.response = &SetFetchMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
