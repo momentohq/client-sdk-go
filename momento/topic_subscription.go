@@ -47,8 +47,10 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 					}, nil
 				}
 			case *pb.XSubscriptionItem_Heartbeat:
+				// FIXME add warning logging here
 				continue
 			default:
+				// FIXME add warning logging here
 				// Ignore unknown responses, so we don't stop polling if we add a new message.
 				// For example, we wouldn't want to stop because of an unknown heartbeat response.
 				continue
@@ -62,8 +64,11 @@ func (s *topicSubscription) handleStreamError(ctx context.Context, err error) er
 	if err == io.EOF {
 		returnErr = s.reInitStream(ctx)
 	} else if grpcStatusErr, ok := status.FromError(err); ok {
+		// FIXME ideally we could retry on raw h2 error not grpc error
+		// See this ticket for follow up https://github.com/momentohq/client-sdk-go/issues/156
 		if grpcStatusErr.Code() == codes.Internal &&
 			grpcStatusErr.Message() == "stream terminated by RST_STREAM with error code: NO_ERROR" {
+
 			returnErr = s.reInitStream(ctx)
 
 		}
