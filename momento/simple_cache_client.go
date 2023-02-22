@@ -278,7 +278,7 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return SetAddElementSuccess{}, nil
+	return &SetAddElementSuccess{}, nil
 }
 
 func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error) {
@@ -382,7 +382,7 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return DictionarySetFieldSuccess{}, nil
+	return &DictionarySetFieldSuccess{}, nil
 }
 
 func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error) {
@@ -444,7 +444,7 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return DictionaryRemoveFieldSuccess{}, nil
+	return &DictionaryRemoveFieldSuccess{}, nil
 }
 
 func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error) {
