@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -164,12 +163,7 @@ func main() {
 		CacheName: cacheName,
 	})
 	if err != nil {
-		var momentoErr momento.MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != momento.AlreadyExistsError {
-				panic(err)
-			}
-		}
+		panic(err)
 	}
 
 	printListLength()

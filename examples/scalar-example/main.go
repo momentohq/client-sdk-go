@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -35,17 +34,12 @@ func main() {
 		panic(err)
 	}
 
-	// Create Cache and check if CacheName exists
+	// Create Cache
 	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
-		var momentoErr momento.MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != momento.AlreadyExistsError {
-				panic(err)
-			}
-		}
+		panic(err)
 	}
 
 	// Sets key with default TTL and gets value with that key
