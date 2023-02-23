@@ -27,6 +27,9 @@ const (
 	LimitExceededError         = "LimitExceededError"
 	NotFoundError              = "NotFoundError"
 	AlreadyExistsError         = "AlreadyExistsError"
+	UnknownServiceError        = "UnknownServiceError"
+	ServerUnavailableError     = "ServerUnavailableError"
+	FailedPreconditionError    = "FailedPreconditionError"
 	InternalServerErrorMessage = "CacheService failed with an internal error"
 	ClientSdkErrorMessage      = "SDK Failed to process the request."
 )
@@ -35,13 +38,13 @@ func ConvertSvcErr(err error) MomentoSvcErr {
 	if grpcStatus, ok := status.FromError(err); ok {
 		switch grpcStatus.Code().String() {
 		case "InvalidArgument":
-			return NewMomentoSvcErr(BadRequestError, grpcStatus.Message(), err)
+			return NewMomentoSvcErr(InvalidArgumentError, grpcStatus.Message(), err)
 		case "Unimplemented":
 			return NewMomentoSvcErr(BadRequestError, grpcStatus.Message(), err)
 		case "OutOfRange":
 			return NewMomentoSvcErr(BadRequestError, grpcStatus.Message(), err)
 		case "FailedPrecondition":
-			return NewMomentoSvcErr(BadRequestError, grpcStatus.Message(), err)
+			return NewMomentoSvcErr(FailedPreconditionError, grpcStatus.Message(), err)
 		case "Canceled":
 			return NewMomentoSvcErr(CanceledError, grpcStatus.Message(), err)
 		case "DeadlineExceeded":
@@ -57,17 +60,17 @@ func ConvertSvcErr(err error) MomentoSvcErr {
 		case "AlreadyExists":
 			return NewMomentoSvcErr(AlreadyExistsError, grpcStatus.Message(), err)
 		case "Unknown":
-			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
+			return NewMomentoSvcErr(UnknownServiceError, grpcStatus.Message(), err)
 		case "Aborted":
 			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
 		case "Internal":
 			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
 		case "Unavailable":
-			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
+			return NewMomentoSvcErr(ServerUnavailableError, grpcStatus.Message(), err)
 		case "DataLoss":
 			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
 		default:
-			return NewMomentoSvcErr(InternalServerError, InternalServerErrorMessage, err)
+			return NewMomentoSvcErr(UnknownServiceError, InternalServerErrorMessage, err)
 		}
 	}
 	return NewMomentoSvcErr(ClientSdkError, ClientSdkErrorMessage, err)
