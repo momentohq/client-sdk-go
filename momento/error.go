@@ -6,17 +6,20 @@ import (
 
 // Momento Error codes
 const (
-	InvalidArgumentError = "InvalidArgumentError"
-	InternalServerError  = "InternalServerError"
-	ClientSdkError       = "ClientSdkError"
-	BadRequestError      = "BadRequestError"
-	CanceledError        = "CanceledError"
-	TimeoutError         = "TimeoutError"
-	PermissionError      = "PermissionError"
-	AuthenticationError  = "AuthenticationError"
-	LimitExceededError   = "LimitExceededError"
-	NotFoundError        = "NotFoundError"
-	AlreadyExistsError   = "AlreadyExistsError"
+	InvalidArgumentError    = "InvalidArgumentError"
+	InternalServerError     = "InternalServerError"
+	ClientSdkError          = "ClientSdkError"
+	BadRequestError         = "BadRequestError"
+	CanceledError           = "CanceledError"
+	TimeoutError            = "TimeoutError"
+	PermissionError         = "PermissionError"
+	AuthenticationError     = "AuthenticationError"
+	LimitExceededError      = "LimitExceededError"
+	NotFoundError           = "NotFoundError"
+	AlreadyExistsError      = "AlreadyExistsError"
+	UnknownServiceError     = "UnknownServiceError"
+	ServerUnavailableError  = "ServerUnavailableError"
+	FailedPreconditionError = "FailedPreconditionError"
 )
 
 type MomentoError interface {
