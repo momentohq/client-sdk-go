@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -40,17 +39,12 @@ func setup() {
 		panic(err)
 	}
 
-	// Create Cache and check if CacheName exists
+	// Create Cache
 	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
 	if err != nil {
-		var momentoErr momento.MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != momento.AlreadyExistsError {
-				panic(err)
-			}
-		}
+		panic(err)
 	}
 }
 
