@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -75,12 +74,7 @@ func setupCache(client momento.SimpleCacheClient, ctx context.Context) {
 		CacheName: "test-cache",
 	})
 	if err != nil {
-		var momentoErr momento.MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != momento.AlreadyExistsError {
-				panic(err)
-			}
-		}
+		panic(err)
 	}
 }
 
