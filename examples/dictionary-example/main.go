@@ -40,7 +40,7 @@ func setup() {
 		panic(err)
 	}
 
-	// Create Cache and check if CacheName exists
+	// Create Cache
 	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
