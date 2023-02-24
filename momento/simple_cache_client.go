@@ -216,7 +216,7 @@ func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublis
 		return nil, err
 	}
 
-	return TopicPublishSuccess{}, err
+	return &TopicPublishSuccess{}, err
 }
 
 func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
