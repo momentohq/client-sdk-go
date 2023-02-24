@@ -1,31 +1,22 @@
 package momento_test
 
 import (
-	"context"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
+	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
 var _ = Describe("Control ops", func() {
-	var client SimpleCacheClient
-	var ctx context.Context
+	var sharedContext SharedContext
 
 	BeforeEach(func() {
-		ctx = context.Background()
-
-		client = getClient(&SimpleCacheClientProps{
-			Configuration: config.LatestLaptopConfig(),
-			DefaultTTL:    60 * time.Second,
-		})
-
-		DeferCleanup(func() { client.Close() })
+		sharedContext = NewSharedContext()
+		DeferCleanup(func() { sharedContext.Close() })
 	})
 
 	Describe(`Happy Path`, func() {
@@ -33,7 +24,7 @@ var _ = Describe("Control ops", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
 			defer func() {
 				for _, cacheName := range cacheNames {
-					_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: cacheName})
+					_, err := sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName})
 					if err != nil {
 						panic(err)
 					}
@@ -42,15 +33,15 @@ var _ = Describe("Control ops", func() {
 
 			for _, cacheName := range cacheNames {
 				Expect(
-					client.CreateCache(ctx, &CreateCacheRequest{CacheName: cacheName}),
+					sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
 				).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
 
 				Expect(
-					client.CreateCache(ctx, &CreateCacheRequest{CacheName: cacheName}),
+					sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
 				).To(BeAssignableToTypeOf(&CreateCacheAlreadyExists{}))
 			}
 
-			resp, err := client.ListCaches(ctx, &ListCachesRequest{})
+			resp, err := sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
 
 			listedCaches := []string{}
@@ -66,10 +57,10 @@ var _ = Describe("Control ops", func() {
 
 			for _, cacheName := range cacheNames {
 				Expect(
-					client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: cacheName}),
+					sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName}),
 				).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 			}
-			resp, err = client.ListCaches(ctx, &ListCachesRequest{})
+			resp, err = sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
 			Expect(resp).To(BeAssignableToTypeOf(&ListCachesSuccess{}))
 			switch r := resp.(type) {
@@ -85,14 +76,14 @@ var _ = Describe("Control ops", func() {
 		It(`CreateCache and DeleteCache errors on bad cache names`, func() {
 			badCacheNames := []string{``, `   `}
 			for _, badCacheName := range badCacheNames {
-				createResp, err := client.CreateCache(ctx, &CreateCacheRequest{CacheName: badCacheName})
+				createResp, err := sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: badCacheName})
 				Expect(createResp).To(BeNil())
 				var momentoErr MomentoError
 				if errors.As(err, &momentoErr) {
 					Expect(momentoErr.Code()).To(Equal(InvalidArgumentError))
 				}
 
-				deleteResp, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: badCacheName})
+				deleteResp, err := sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: badCacheName})
 				Expect(deleteResp).To(BeNil())
 				if errors.As(err, &momentoErr) {
 					Expect(momentoErr.Code()).To(Equal(InvalidArgumentError))
@@ -104,7 +95,7 @@ var _ = Describe("Control ops", func() {
 	Describe(`DeleteCache`, func() {
 		It(`succeeds even if the cache does not exist`, func() {
 			Expect(
-				client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),
+				sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
 	})

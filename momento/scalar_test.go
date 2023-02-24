@@ -1,85 +1,37 @@
 package momento_test
 
 import (
-	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
 
-	"github.com/momentohq/client-sdk-go/auth"
-	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
+	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-func HaveMomentoErrorCode(code string) types.GomegaMatcher {
-	return WithTransform(
-		func(err error) (string, error) {
-			switch mErr := err.(type) {
-			case MomentoError:
-				return mErr.Code(), nil
-			default:
-				return "", fmt.Errorf("Expected MomentoError, but got %T", err)
-			}
-		}, Equal(code),
-	)
-}
-
 var _ = Describe("Scalar methods", func() {
-	var clientProps SimpleCacheClientProps
-	var credentialProvider auth.CredentialProvider
-	var configuration config.Configuration
-	var client SimpleCacheClient
-	var defaultTTL time.Duration
-	var testCacheName string
-	var ctx context.Context
-
+	var sharedContext SharedContext
 	BeforeEach(func() {
-		ctx = context.Background()
-		credentialProvider, _ = auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
-		configuration = config.LatestLaptopConfig()
-		defaultTTL = 1 * time.Second
+		sharedContext = NewSharedContext()
+		sharedContext.CreateDefaultCache()
 
-		clientProps = SimpleCacheClientProps{
-			CredentialProvider: credentialProvider,
-			Configuration:      configuration,
-			DefaultTTL:         defaultTTL,
-		}
-
-		var err error
-		client, err = NewSimpleCacheClient(&clientProps)
-		if err != nil {
-			panic(err)
-		}
-		DeferCleanup(func() { client.Close() })
-
-		testCacheName = uuid.NewString()
-		Expect(
-			client.CreateCache(ctx, &CreateCacheRequest{CacheName: testCacheName}),
-		).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
-		DeferCleanup(func() {
-			_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: testCacheName})
-			if err != nil {
-				panic(err)
-			}
-		})
+		DeferCleanup(func() { sharedContext.Close() })
 	})
 
 	DescribeTable(`Gets, Sets, and Deletes`,
 		func(key Key, value Value, expectedString string, expectedBytes []byte) {
 			Expect(
-				client.Set(ctx, &SetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 					Value:     value,
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			getResp, err := client.Get(ctx, &GetRequest{
-				CacheName: testCacheName,
+			getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: sharedContext.CacheName,
 				Key:       key,
 			})
 			Expect(err).To(BeNil())
@@ -93,15 +45,15 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			Expect(
-				client.Delete(ctx, &DeleteRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&DeleteSuccess{}))
 
 			Expect(
-				client.Get(ctx, &GetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
@@ -117,14 +69,14 @@ var _ = Describe("Scalar methods", func() {
 		key := String("key")
 		value := String("value")
 
-		getResp, err := client.Get(ctx, &GetRequest{
+		getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
 			CacheName: cacheName,
 			Key:       key,
 		})
 		Expect(getResp).To(BeNil())
 		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
 
-		setResp, err := client.Set(ctx, &SetRequest{
+		setResp, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 			CacheName: cacheName,
 			Key:       key,
 			Value:     value,
@@ -132,7 +84,7 @@ var _ = Describe("Scalar methods", func() {
 		Expect(setResp).To(BeNil())
 		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
 
-		deleteResp, err := client.Delete(ctx, &DeleteRequest{
+		deleteResp, err := sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
 			CacheName: cacheName,
 			Key:       key,
 		})
@@ -142,14 +94,14 @@ var _ = Describe("Scalar methods", func() {
 
 	DescribeTable(`invalid cache names and keys`,
 		func(cacheName string, key Key, value Key) {
-			getResp, err := client.Get(ctx, &GetRequest{
+			getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
 				CacheName: cacheName,
 				Key:       key,
 			})
 			Expect(getResp).To(BeNil())
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			setResp, err := client.Set(ctx, &SetRequest{
+			setResp, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -157,7 +109,7 @@ var _ = Describe("Scalar methods", func() {
 			Expect(setResp).To(BeNil())
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			deleteResp, err := client.Delete(ctx, &DeleteRequest{
+			deleteResp, err := sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
 				CacheName: cacheName,
 				Key:       key,
 			})
@@ -175,27 +127,27 @@ var _ = Describe("Scalar methods", func() {
 			value := String("value")
 
 			Expect(
-				client.Set(ctx, &SetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 					Value:     value,
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			time.Sleep(defaultTTL / 2)
+			time.Sleep(sharedContext.DefaultTTL / 2)
 
 			Expect(
-				client.Get(ctx, &GetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(defaultTTL)
+			time.Sleep(sharedContext.DefaultTTL)
 
 			Expect(
-				client.Get(ctx, &GetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
@@ -206,37 +158,37 @@ var _ = Describe("Scalar methods", func() {
 			value := String("value")
 
 			Expect(
-				client.Set(ctx, &SetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 					Value:     value,
-					TTL:       defaultTTL * 2,
+					TTL:       sharedContext.DefaultTTL * 2,
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			time.Sleep(defaultTTL / 2)
+			time.Sleep(sharedContext.DefaultTTL / 2)
 
 			Expect(
-				client.Get(ctx, &GetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(defaultTTL)
+			time.Sleep(sharedContext.DefaultTTL)
 
 			Expect(
-				client.Get(ctx, &GetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(defaultTTL)
+			time.Sleep(sharedContext.DefaultTTL)
 
 			Expect(
-				client.Get(ctx, &GetRequest{
-					CacheName: testCacheName,
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))

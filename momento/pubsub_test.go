@@ -2,80 +2,24 @@ package momento_test
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/momentohq/client-sdk-go/auth"
-	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
+	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-func getClient(client_props *SimpleCacheClientProps) SimpleCacheClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
-	if err != nil {
-		panic(err)
-	}
-	client_props.CredentialProvider = credProvider
-	client, err := NewSimpleCacheClient(client_props)
-	if err != nil {
-		panic(err)
-	}
-	return client
-}
-
-func createCache(client SimpleCacheClient) string {
-	ctx := context.Background()
-	cacheName := "go-pubsub-" + uuid.NewString()
-
-	_, err := client.CreateCache(ctx, &CreateCacheRequest{
-		CacheName: cacheName,
-	})
-	if err != nil {
-		var momentoErr MomentoError
-		if errors.As(err, &momentoErr) {
-			if momentoErr.Code() != AlreadyExistsError {
-				panic(err)
-			}
-		}
-	}
-
-	return cacheName
-}
-
-func deleteCache(client SimpleCacheClient, cacheName string) {
-	ctx := context.Background()
-
-	_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: cacheName})
-	if err != nil {
-		panic(err)
-	}
-}
-
 var _ = Describe("Pubsub", func() {
-	var client SimpleCacheClient
-	var cacheName string
-	var ctx context.Context
-	var topicName string
+	var sharedContext SharedContext
 
 	BeforeEach(func() {
-		ctx = context.Background()
-		topicName = uuid.NewString()
+		sharedContext = NewSharedContext()
+		sharedContext.CreateDefaultCache()
 
-		client = getClient(&SimpleCacheClientProps{
-			Configuration: config.LatestLaptopConfig(),
-			DefaultTTL:    60 * time.Second,
-		})
 		DeferCleanup(func() {
-			client.Close()
-		})
-
-		cacheName = createCache(client)
-		DeferCleanup(func() {
-			deleteCache(client, cacheName)
+			sharedContext.Close()
 		})
 	})
 
@@ -85,15 +29,15 @@ var _ = Describe("Pubsub", func() {
 			&TopicValueBytes{Bytes: []byte{1, 2, 3}},
 		}
 
-		sub, err := client.TopicSubscribe(ctx, &TopicSubscribeRequest{
-			CacheName: cacheName,
-			TopicName: topicName,
+		sub, err := sharedContext.Client.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: sharedContext.CollectionName,
 		})
 		if err != nil {
 			panic(err)
 		}
 
-		cancelContext, cancelFunction := context.WithCancel(ctx)
+		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
 		receivedValues := []TopicValue{}
 		ready := make(chan int, 1)
 		go func() {
@@ -103,7 +47,7 @@ var _ = Describe("Pubsub", func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					value, err := sub.Item(ctx)
+					value, err := sub.Item(sharedContext.Ctx)
 					if err != nil {
 						panic(err)
 					}
@@ -115,9 +59,9 @@ var _ = Describe("Pubsub", func() {
 
 		time.Sleep(time.Millisecond * 100)
 		for _, value := range publishedValues {
-			_, err := client.TopicPublish(ctx, &TopicPublishRequest{
-				CacheName: cacheName,
-				TopicName: topicName,
+			_, err := sharedContext.Client.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: sharedContext.CollectionName,
 				Value:     value,
 			})
 			if err != nil {
