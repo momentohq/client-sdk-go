@@ -1,7 +1,6 @@
 package momento_test
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -12,9 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	"github.com/momentohq/client-sdk-go/auth"
-	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
+	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
 func HaveLength(length int) types.GomegaMatcher {
@@ -39,44 +37,13 @@ func getElements(numElements int) []Value {
 }
 
 var _ = Describe("Set methods", func() {
-	var clientProps SimpleCacheClientProps
-	var credentialProvider auth.CredentialProvider
-	var configuration config.Configuration
-	var client SimpleCacheClient
-	var defaultTTL time.Duration
-	var testCacheName string
-	var testSetName string
-	var ctx context.Context
+	var sharedContext SharedContext
 
 	BeforeEach(func() {
-		ctx = context.Background()
-		credentialProvider, _ = auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
-		configuration = config.LatestLaptopConfig()
-		defaultTTL = 3 * time.Second
-
-		clientProps = SimpleCacheClientProps{
-			CredentialProvider: credentialProvider,
-			Configuration:      configuration,
-			DefaultTTL:         defaultTTL,
-		}
-
-		var err error
-		client, err = NewSimpleCacheClient(&clientProps)
-		if err != nil {
-			panic(err)
-		}
-		DeferCleanup(func() { client.Close() })
-
-		testCacheName = uuid.NewString()
-		testSetName = uuid.NewString()
-		Expect(
-			client.CreateCache(ctx, &CreateCacheRequest{CacheName: testCacheName}),
-		).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
+		sharedContext = NewSharedContext()
+		sharedContext.CreateDefaultCache()
 		DeferCleanup(func() {
-			_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: testCacheName})
-			if err != nil {
-				panic(err)
-			}
+			sharedContext.Close()
 		})
 	})
 
@@ -85,14 +52,14 @@ var _ = Describe("Set methods", func() {
 		setName := uuid.NewString()
 
 		Expect(
-			client.SetFetch(ctx, &SetFetchRequest{
+			sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 				CacheName: cacheName,
 				SetName:   setName,
 			}),
 		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
 		Expect(
-			client.SetAddElement(ctx, &SetAddElementRequest{
+			sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 				CacheName: cacheName,
 				SetName:   setName,
 				Element:   String("astring"),
@@ -100,7 +67,7 @@ var _ = Describe("Set methods", func() {
 		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
 		Expect(
-			client.SetAddElements(ctx, &SetAddElementsRequest{
+			sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 				CacheName: cacheName,
 				SetName:   setName,
 				Elements:  []Value{String("astring"), String("bstring")},
@@ -108,7 +75,7 @@ var _ = Describe("Set methods", func() {
 		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
 		Expect(
-			client.SetRemoveElement(ctx, &SetRemoveElementRequest{
+			sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
 				CacheName: cacheName,
 				SetName:   setName,
 				Element:   String("astring"),
@@ -116,7 +83,7 @@ var _ = Describe("Set methods", func() {
 		).Error().To(HaveMomentoErrorCode(NotFoundError))
 
 		Expect(
-			client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
+			sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
 				CacheName: cacheName,
 				SetName:   setName,
 				Elements:  nil,
@@ -127,15 +94,15 @@ var _ = Describe("Set methods", func() {
 	It("errors on invalid set name", func() {
 		setName := ""
 		Expect(
-			client.SetFetch(ctx, &SetFetchRequest{
-				CacheName: testCacheName,
+			sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+				CacheName: sharedContext.CacheName,
 				SetName:   setName,
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		Expect(
-			client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
-				CacheName: testCacheName,
+			sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
+				CacheName: sharedContext.CacheName,
 				SetName:   setName,
 				Elements:  nil,
 			}),
@@ -145,16 +112,16 @@ var _ = Describe("Set methods", func() {
 	DescribeTable("add string and byte single elements happy path",
 		func(element Value, expectedStrings []string, expectedBytes [][]byte) {
 			Expect(
-				client.SetAddElement(ctx, &SetAddElementRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 					Element:   element,
 				}),
 			).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
-			fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-				CacheName: testCacheName,
-				SetName:   testSetName,
+			fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
 			})
 			Expect(err).To(BeNil())
 			switch result := fetchResp.(type) {
@@ -173,15 +140,15 @@ var _ = Describe("Set methods", func() {
 	DescribeTable("add string and byte multiple elements happy path",
 		func(elements []Value, expectedStrings []string, expectedBytes [][]byte) {
 			Expect(
-				client.SetAddElements(ctx, &SetAddElementsRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 					Elements:  elements,
 				}),
 			).To(BeAssignableToTypeOf(&SetAddElementsSuccess{}))
-			fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-				CacheName: testCacheName,
-				SetName:   testSetName,
+			fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
 			})
 			Expect(err).To(BeNil())
 			switch result := fetchResp.(type) {
@@ -223,9 +190,9 @@ var _ = Describe("Set methods", func() {
 		BeforeEach(func() {
 			elements := getElements(10)
 			Expect(
-				client.SetAddElements(ctx, &SetAddElementsRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 					Elements:  elements,
 				}),
 			).Error().To(BeNil())
@@ -234,16 +201,16 @@ var _ = Describe("Set methods", func() {
 		DescribeTable("single elements as strings and as bytes",
 			func(toRemove Value, expectedLength int) {
 				Expect(
-					client.SetRemoveElement(ctx, &SetRemoveElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   toRemove,
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveLength(expectedLength))
@@ -262,16 +229,16 @@ var _ = Describe("Set methods", func() {
 		DescribeTable("multiple elements as strings and bytes",
 			func(toRemove []Value, expectedLength int) {
 				Expect(
-					client.SetRemoveElements(ctx, &SetRemoveElementsRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Elements:  toRemove,
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveLength(expectedLength))
@@ -292,25 +259,25 @@ var _ = Describe("Set methods", func() {
 		Context("when the TTL is exceeded", func() {
 			It("returns a miss for the collection", func() {
 				Expect(
-					client.SetAddElement(ctx, &SetAddElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveLength(1))
 
-				time.Sleep(defaultTTL)
+				time.Sleep(sharedContext.DefaultTTL)
 
-				fetchResp, err = client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchMiss{}))
@@ -325,9 +292,9 @@ var _ = Describe("Set methods", func() {
 				// Initialize the set. If the set isn't initialized, there's
 				// nothing to refresh and it will use the passed in TTL.
 				Expect(
-					client.SetAddElement(ctx, &SetAddElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   String("goodbye"),
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
@@ -335,9 +302,9 @@ var _ = Describe("Set methods", func() {
 
 			It("returns a hit after the client default has expired", func() {
 				Expect(
-					client.SetAddElement(ctx, &SetAddElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						CollectionTTL: utils.CollectionTTL{
 							Ttl:        time.Second * 10,
@@ -346,18 +313,18 @@ var _ = Describe("Set methods", func() {
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveLength(2))
 
-				time.Sleep(defaultTTL)
+				time.Sleep(sharedContext.DefaultTTL)
 
-				fetchResp, err = client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchHit{}))
@@ -365,39 +332,39 @@ var _ = Describe("Set methods", func() {
 
 			It("returns a miss after the client default when refreshTTL is false", func() {
 				Expect(
-					client.SetAddElement(ctx, &SetAddElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						CollectionTTL: utils.CollectionTTL{
-							Ttl:        defaultTTL + 1*time.Second,
+							Ttl:        sharedContext.DefaultTTL + 1*time.Second,
 							RefreshTtl: false,
 						},
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
 				Expect(
-					client.SetFetch(ctx, &SetFetchRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 					}),
 				).To(HaveLength(2))
 
-				time.Sleep(defaultTTL + 500*time.Millisecond)
+				time.Sleep(sharedContext.DefaultTTL + 500*time.Millisecond)
 
 				Expect(
-					client.SetFetch(ctx, &SetFetchRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 					}),
 				).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 			})
 
 			It("ignores collection ttl when refresh ttl is false", func() {
 				Expect(
-					client.SetAddElement(ctx, &SetAddElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						CollectionTTL: utils.CollectionTTL{
 							Ttl:        time.Millisecond * 20,
@@ -406,18 +373,18 @@ var _ = Describe("Set methods", func() {
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveLength(2))
 
-				time.Sleep(defaultTTL / 2)
+				time.Sleep(sharedContext.DefaultTTL / 2)
 
-				fetchResp, err = client.SetFetch(ctx, &SetFetchRequest{
-					CacheName: testCacheName,
-					SetName:   testSetName,
+				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchHit{}))
@@ -425,9 +392,9 @@ var _ = Describe("Set methods", func() {
 
 			It("returns a miss after overriding the client timeout with a short duration", func() {
 				Expect(
-					client.SetAddElement(ctx, &SetAddElementRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						CollectionTTL: utils.CollectionTTL{
 							Ttl:        time.Millisecond * 200,
@@ -439,9 +406,9 @@ var _ = Describe("Set methods", func() {
 				time.Sleep(time.Millisecond * 500)
 
 				Expect(
-					client.SetFetch(ctx, &SetFetchRequest{
-						CacheName: testCacheName,
-						SetName:   testSetName,
+					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
 					}),
 				).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 			})

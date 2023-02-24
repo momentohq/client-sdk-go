@@ -7,30 +7,21 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
+	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
 var _ = Describe("SimpleCacheClient", func() {
-	var clientProps SimpleCacheClientProps
-	var credentialProvider auth.CredentialProvider
-	var configuration config.Configuration
+	var sharedContext SharedContext
 
 	BeforeEach(func() {
-		credentialProvider, _ = auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
-		configuration = config.LatestLaptopConfig()
-
-		clientProps = SimpleCacheClientProps{
-			CredentialProvider: credentialProvider,
-			Configuration:      configuration,
-			DefaultTTL:         100 * time.Second,
-		}
+		sharedContext = NewSharedContext()
 	})
 
 	It(`errors on an invalid TTL`, func() {
-		clientProps.DefaultTTL = 0 * time.Second
-		client, err := NewSimpleCacheClient(&clientProps)
+		sharedContext.ClientProps.DefaultTTL = 0 * time.Second
+		client, err := NewSimpleCacheClient(sharedContext.ClientProps)
 
 		Expect(client).To(BeNil())
 		Expect(err).NotTo(BeNil())
@@ -42,14 +33,9 @@ var _ = Describe("SimpleCacheClient", func() {
 
 	It(`errors on invalid timeout`, func() {
 		badRequestTimeout := 0 * time.Second
-		clientProps.Configuration = config.LatestLaptopConfig().WithClientTimeout(badRequestTimeout)
-		client, err := NewSimpleCacheClient(&clientProps)
-
-		Expect(client).To(BeNil())
-		Expect(err).NotTo(BeNil())
-		var momentoErr MomentoError
-		if errors.As(err, &momentoErr) {
-			Expect(momentoErr.Code()).To(Equal(InvalidArgumentError))
-		}
+		sharedContext.ClientProps.Configuration = config.LatestLaptopConfig().WithClientTimeout(badRequestTimeout)
+		Expect(
+			NewSimpleCacheClient(sharedContext.ClientProps),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 })
