@@ -165,7 +165,7 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("using bytes value and field", Bytes("myField"), Bytes("myValue"), "myField", []byte("myField"), "myValue", []byte("myValue")),
 	)
 
-	It("returns an error when field is empty", func() {
+	It("returns an error for set field when field is empty", func() {
 		Expect(
 			client.DictionarySetField(ctx, &DictionarySetFieldRequest{
 				CacheName:      testCacheName,
@@ -307,17 +307,17 @@ var _ = Describe("Dictionary methods", func() {
 
 	Describe("dictionary get", func() {
 
-		When("getting single field", func() {
+		BeforeEach(func() {
+			Expect(
+				client.DictionarySetFields(ctx, &DictionarySetFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+				}),
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
+		})
 
-			BeforeEach(func() {
-				Expect(
-					client.DictionarySetFields(ctx, &DictionarySetFieldsRequest{
-						CacheName:      testCacheName,
-						DictionaryName: testDictionaryName,
-						Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
-					}),
-				).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
-			})
+		When("getting single field", func() {
 
 			It("returns the correct string and byte values", func() {
 				expected := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
@@ -366,18 +366,68 @@ var _ = Describe("Dictionary methods", func() {
 
 		When("getting multiple fields", func() {
 
-			BeforeEach(func() {
-				Expect(
-					client.DictionarySetFields(ctx, &DictionarySetFieldsRequest{
-						CacheName:      testCacheName,
-						DictionaryName: testDictionaryName,
-						Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
-					}),
-				).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
+			It("returns the correct string and byte values", func() {
+				getResp, err := client.DictionaryGetFields(ctx, &DictionaryGetFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Fields:         []Value{String("myField1"), String("myField2")},
+				})
+				Expect(err).To(BeNil())
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldsHit{}))
+
+				expectedStrings := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
+				expectedBytes := map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")}
+				switch result := getResp.(type) {
+				case *DictionaryGetFieldsHit:
+					Expect(result.ValueMapStringString()).To(Equal(expectedStrings))
+					Expect(result.ValueMap()).To(Equal(expectedStrings))
+					Expect(result.ValueMapStringBytes()).To(Equal(expectedBytes))
+				}
 			})
 
-			It("returns the correct string and byte values", func() {
-				
+			It("returns a miss for nonexistent dictionary", func() {
+				Expect(
+					client.DictionaryGetFields(ctx, &DictionaryGetFieldsRequest{
+						CacheName:      testCacheName,
+						DictionaryName: uuid.NewString(),
+						Fields:         []Value{String("myField1")},
+					}),
+				).To(BeAssignableToTypeOf(&DictionaryGetFieldsMiss{}))
+			})
+
+			It("returns misses for nonexistent fields", func() {
+				getResp, err := client.DictionaryGetFields(ctx, &DictionaryGetFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Fields:         []Value{String("bogusField1"), String("bogusField2")},
+				})
+				Expect(err).To(BeNil())
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldsHit{}))
+				switch result := getResp.(type) {
+				case *DictionaryGetFieldsHit:
+					Expect(result.ValueMap()).To(BeEmpty())
+					for _, value := range result.Responses() {
+						switch value.(type) {
+						case *DictionaryGetFieldHit:
+							Fail("got a hit response for a field that should return a miss")
+						}
+					}
+				}
+			})
+
+			It("filters missing fields out of response value maps", func() {
+				getResp, err := client.DictionaryGetFields(ctx, &DictionaryGetFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Fields:         []Value{String("bogusField1"), String("myField2")},
+				})
+				Expect(err).To(BeNil())
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldsHit{}))
+				switch result := getResp.(type) {
+				case *DictionaryGetFieldsHit:
+					Expect(result.ValueMap()).To(Equal(map[string]string{"myField2": "myValue2"}))
+					Expect(len(result.Responses())).To(Equal(2))
+				}
 			})
 
 		})
@@ -385,6 +435,113 @@ var _ = Describe("Dictionary methods", func() {
 
 	Describe("dictionary fetch", func() {
 
+		BeforeEach(func() {
+			Expect(
+				client.DictionarySetFields(ctx, &DictionarySetFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+				}),
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
+		})
+
+		It("fetches on the happy path", func() {
+			expected := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
+			fetchResp, err := client.DictionaryFetch(ctx, &DictionaryFetchRequest{
+				CacheName:      testCacheName,
+				DictionaryName: testDictionaryName,
+			})
+			Expect(err).To(BeNil())
+			Expect(fetchResp).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
+			switch result := fetchResp.(type) {
+			case *DictionaryFetchHit:
+				Expect(result.ValueMap()).To(Equal(expected))
+			}
+		})
+
+		It("returns a miss for nonexistent dictionary", func() {
+			Expect(
+				client.DictionaryFetch(ctx, &DictionaryFetchRequest{
+					CacheName:      testCacheName,
+					DictionaryName: uuid.NewString(),
+				}),
+			).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
+		})
+
 	})
 
+	Describe("dictionary remove", func() {
+
+		BeforeEach(func() {
+			Expect(
+				client.DictionarySetFields(ctx, &DictionarySetFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+				}),
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
+		})
+
+		When("removing a single field", func() {
+
+			It("properly removes a field", func() {
+				removeResp, err := client.DictionaryRemoveField(ctx, &DictionaryRemoveFieldRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Field:          String("myField1"),
+				})
+				Expect(err).To(BeNil())
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
+
+				fetchResp, err := client.DictionaryFetch(ctx, &DictionaryFetchRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *DictionaryFetchHit:
+					Expect(result.ValueMap()).To(Equal(map[string]string{"myField2": "myValue2"}))
+				default:
+					Fail("expected a hit from dictionary fetch but got a miss")
+				}
+			})
+
+			It("does something when attempting to remove a nonexistent field", func() {
+
+			})
+
+		})
+
+		When("removing multiple fields", func() {
+
+			It("properly removes multiple fields", func() {
+				removeResp, err := client.DictionaryRemoveFields(ctx, &DictionaryRemoveFieldsRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+					Fields:         []Value{String("myField1"), Bytes("myField2")},
+				})
+				Expect(err).To(BeNil())
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
+
+				fetchResp, err := client.DictionaryFetch(ctx, &DictionaryFetchRequest{
+					CacheName:      testCacheName,
+					DictionaryName: testDictionaryName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *DictionaryFetchHit:
+					Expect(result.ValueMap()).To(BeEmpty())
+				default:
+					Fail("expected a hit from dictionary fetch but got a miss")
+				}
+
+			})
+
+			It("does something when attempting to remove a nonexistent field", func() {
+
+			})
+
+		})
+
+	})
 })
