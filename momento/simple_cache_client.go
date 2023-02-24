@@ -412,10 +412,17 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 	case *DictionaryGetFieldsMiss:
 		return &DictionaryGetFieldMiss{}, nil
 	case *DictionaryGetFieldsHit:
-		return &DictionaryGetFieldHit{
-			field: rtype.fields[0],
-			body:  rtype.items[0].CacheBody,
-		}, nil
+		switch rtype.responses[0].(type) {
+		case *DictionaryGetFieldHit:
+			return &DictionaryGetFieldHit{
+				field: rtype.fields[0],
+				body:  rtype.items[0].CacheBody,
+			}, nil
+		case *DictionaryGetFieldMiss:
+			return &DictionaryGetFieldMiss{}, nil
+		default:
+			return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
+		}
 	default:
 		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 	}
