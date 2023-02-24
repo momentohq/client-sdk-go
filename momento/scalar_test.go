@@ -1,30 +1,15 @@
 package momento_test
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
-
-func HaveMomentoErrorCode(code string) types.GomegaMatcher {
-	return WithTransform(
-		func(err error) (string, error) {
-			switch mErr := err.(type) {
-			case MomentoError:
-				return mErr.Code(), nil
-			default:
-				return "", fmt.Errorf("Expected MomentoError, but got %T", err)
-			}
-		}, Equal(code),
-	)
-}
 
 var _ = Describe("Scalar methods", func() {
 	var sharedContext SharedContext
