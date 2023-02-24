@@ -17,6 +17,20 @@ var _ = Describe("SortedSet", func() {
 		DeferCleanup(func() { sharedContext.Close() })
 	})
 
+	// A convenience for adding elements to a sorted set.
+	var putElements = func(elements []*SortedSetScoreRequestElement) {
+		Expect(
+			sharedContext.Client.SortedSetPut(
+				sharedContext.Ctx,
+				&SortedSetPutRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  elements,
+				},
+			),
+		).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
+	}
+
 	DescribeTable(`Validates the names`,
 		func(badName string) {
 			client := sharedContext.Client
@@ -99,4 +113,313 @@ var _ = Describe("SortedSet", func() {
 		Entry("Empty name", ""),
 		Entry("Blank name", "  "),
 	)
+
+	Describe("SortedSetFetch", func() {
+		It(`Misses if the set does not exist`, func() {
+			Expect(
+				sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetFetchMiss{}))
+		})
+
+		It(`Fetches`, func() {
+			putElements(
+				[]*SortedSetScoreRequestElement{
+					{Value: String("first"), Score: 9999},
+					{Value: String("last"), Score: -9999},
+					{Value: String("middle"), Score: 50},
+				},
+			)
+
+			Expect(
+				sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				),
+			).To(Equal(
+				&SortedSetFetchHit{
+					Elements: []*SortedSetElement{
+						{Value: []byte("last"), Score: -9999},
+						{Value: []byte("middle"), Score: 50},
+						{Value: []byte("first"), Score: 9999},
+					},
+				},
+			))
+
+			Expect(
+				sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Order:     DESCENDING,
+					},
+				),
+			).To(Equal(
+				&SortedSetFetchHit{
+					Elements: []*SortedSetElement{
+						{Value: []byte("first"), Score: 9999},
+						{Value: []byte("middle"), Score: 50},
+						{Value: []byte("last"), Score: -9999},
+					},
+				},
+			))
+
+			Expect(
+				sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName:       sharedContext.CacheName,
+						SetName:         sharedContext.CollectionName,
+						Order:           DESCENDING,
+						NumberOfResults: FetchLimitedElements{Limit: 2},
+					},
+				),
+			).To(Equal(
+				&SortedSetFetchHit{
+					Elements: []*SortedSetElement{
+						{Value: []byte("first"), Score: 9999},
+						{Value: []byte("middle"), Score: 50},
+					},
+				},
+			))
+		})
+	})
+
+	Describe(`SortedSetGetRank`, func() {
+		It(`Misses when the element does not exist`, func() {
+			Expect(
+				sharedContext.Client.SortedSetGetRank(
+					sharedContext.Ctx,
+					&SortedSetGetRankRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("foo"),
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetGetRankMiss{}))
+		})
+
+		It(`Gets the rank`, func() {
+			putElements(
+				[]*SortedSetScoreRequestElement{
+					{Value: String("first"), Score: 9999},
+					{Value: String("last"), Score: -9999},
+					{Value: String("middle"), Score: 50},
+				},
+			)
+
+			Expect(
+				sharedContext.Client.SortedSetGetRank(
+					sharedContext.Ctx,
+					&SortedSetGetRankRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("first"),
+					},
+				),
+			).To(Equal(&SortedSetGetRankHit{Rank: 2}))
+
+			Expect(
+				sharedContext.Client.SortedSetGetRank(
+					sharedContext.Ctx,
+					&SortedSetGetRankRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("last"),
+					},
+				),
+			).To(Equal(&SortedSetGetRankHit{Rank: 0}))
+		})
+	})
+
+	Describe(`SortedSetGetScore`, func() {
+		It(`Misses when the element does not exist`, func() {
+			Expect(
+				sharedContext.Client.SortedSetGetScore(
+					sharedContext.Ctx,
+					&SortedSetGetScoreRequest{
+						CacheName:    sharedContext.CacheName,
+						SetName:      sharedContext.CollectionName,
+						ElementNames: []Value{String("foo")},
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetGetScoreMiss{}))
+		})
+
+		It(`Gets the score`, func() {
+			putElements(
+				[]*SortedSetScoreRequestElement{
+					{Value: String("first"), Score: 9999},
+					{Value: String("last"), Score: -9999},
+					{Value: String("middle"), Score: 50},
+				},
+			)
+
+			Expect(
+				sharedContext.Client.SortedSetGetScore(
+					sharedContext.Ctx,
+					&SortedSetGetScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						ElementNames: []Value{
+							String("first"), String("last"), String("dne"),
+						},
+					},
+				),
+			).To(Equal(
+				&SortedSetGetScoreHit{
+					Elements: []SortedSetScoreElement{
+						&SortedSetScoreHit{Score: 9999},
+						&SortedSetScoreHit{Score: -9999},
+						&SortedSetScoreMiss{},
+					},
+				},
+			))
+		})
+	})
+
+	Describe(`SortedSetIncrementScore`, func() {
+		It(`Increments if it does not exist`, func() {
+			Expect(
+				sharedContext.Client.SortedSetIncrementScore(
+					sharedContext.Ctx,
+					&SortedSetIncrementScoreRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("dne"),
+						Amount:      99,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 99}))
+		})
+
+		It(`Is invalid to increment by 0`, func() {
+			Expect(
+				sharedContext.Client.SortedSetIncrementScore(
+					sharedContext.Ctx,
+					&SortedSetIncrementScoreRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("dne"),
+						Amount:      0,
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+		It(`Is invalid to not include the Amount`, func() {
+			Expect(
+				sharedContext.Client.SortedSetIncrementScore(
+					sharedContext.Ctx,
+					&SortedSetIncrementScoreRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("dne"),
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+		It(`Increments the score`, func() {
+			putElements(
+				[]*SortedSetScoreRequestElement{
+					{Value: String("first"), Score: 9999},
+					{Value: String("last"), Score: -9999},
+					{Value: String("middle"), Score: 50},
+				},
+			)
+
+			Expect(
+				sharedContext.Client.SortedSetIncrementScore(
+					sharedContext.Ctx,
+					&SortedSetIncrementScoreRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("middle"),
+						Amount:      42,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 92}))
+
+			Expect(
+				sharedContext.Client.SortedSetIncrementScore(
+					sharedContext.Ctx,
+					&SortedSetIncrementScoreRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: String("middle"),
+						Amount:      -42,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 50}))
+		})
+	})
+
+	Describe(`SortedSetRemove`, func() {
+		It(`Succeeds when the element does not exist`, func() {
+			Expect(
+				sharedContext.Client.SortedSetRemove(
+					sharedContext.Ctx,
+					&SortedSetRemoveRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						ElementsToRemove: RemoveSomeElements{
+							Elements: []Value{String("dne")},
+						},
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetRemoveSuccess{}))
+		})
+
+		It(`Removes elements`, func() {
+			putElements(
+				[]*SortedSetScoreRequestElement{
+					{Value: String("first"), Score: 9999},
+					{Value: String("last"), Score: -9999},
+					{Value: String("middle"), Score: 50},
+				},
+			)
+
+			Expect(
+				sharedContext.Client.SortedSetRemove(
+					sharedContext.Ctx,
+					&SortedSetRemoveRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						ElementsToRemove: RemoveSomeElements{
+							Elements: []Value{
+								String("first"), String("dne"),
+							},
+						},
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetRemoveSuccess{}))
+
+			Expect(
+				sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				),
+			).To(Equal(
+				&SortedSetFetchHit{
+					Elements: []*SortedSetElement{
+						{Value: []byte("last"), Score: -9999},
+						{Value: []byte("middle"), Score: 50},
+					},
+				},
+			))
+		})
+	})
 })
