@@ -22,7 +22,7 @@ func HaveMomentoErrorCode(code string) types.GomegaMatcher {
 			case momento.MomentoError:
 				return mErr.Code(), nil
 			default:
-				return "", fmt.Errorf("Expected MomentoError, but got %T", err)
+				return "", fmt.Errorf("expected MomentoError, but got %T", err)
 			}
 		}, Equal(code),
 	)
