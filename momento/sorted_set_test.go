@@ -174,7 +174,9 @@ var _ = Describe("SortedSet", func() {
 					request.CollectionTTL = *ttl
 				}
 
-				sharedContext.Client.SortedSetIncrementScore(sharedContext.Ctx, request)
+				Expect(
+					sharedContext.Client.SortedSetIncrementScore(sharedContext.Ctx, request),
+				).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{}))
 			},
 		),
 		Entry(`SortedSetPut`,
@@ -188,7 +190,9 @@ var _ = Describe("SortedSet", func() {
 					request.CollectionTTL = *ttl
 				}
 
-				sharedContext.Client.SortedSetPut(sharedContext.Ctx, request)
+				Expect(
+					sharedContext.Client.SortedSetPut(sharedContext.Ctx, request),
+				).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
 			},
 		),
 	)
