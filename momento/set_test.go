@@ -9,24 +9,10 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
-
-func HaveLength(length int) types.GomegaMatcher {
-	return WithTransform(
-		func(fetchResp SetFetchResponse) (int, error) {
-			switch rtype := fetchResp.(type) {
-			case *SetFetchHit:
-				return len(rtype.ValueString()), nil
-			default:
-				return 0, fmt.Errorf("expected set fetch hit but got %T", fetchResp)
-			}
-		}, Equal(length),
-	)
-}
 
 func getElements(numElements int) []Value {
 	var elements []Value
@@ -213,7 +199,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
-				Expect(fetchResp).To(HaveLength(expectedLength))
+				Expect(fetchResp).To(HaveSetLength(expectedLength))
 				switch result := fetchResp.(type) {
 				case *SetFetchHit:
 					Expect(result.ValueString()).ToNot(ContainElement(toRemove))
@@ -241,7 +227,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
-				Expect(fetchResp).To(HaveLength(expectedLength))
+				Expect(fetchResp).To(HaveSetLength(expectedLength))
 				switch result := fetchResp.(type) {
 				case *SetFetchHit:
 					Expect(result.ValueString()).ToNot(ContainElements(toRemove))
@@ -271,7 +257,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
-				Expect(fetchResp).To(HaveLength(1))
+				Expect(fetchResp).To(HaveSetLength(1))
 
 				time.Sleep(sharedContext.DefaultTTL)
 
@@ -307,7 +293,7 @@ var _ = Describe("Set methods", func() {
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						CollectionTTL: utils.CollectionTTL{
-							Ttl:        time.Second * 10,
+							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: true,
 						},
 					}),
@@ -318,7 +304,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
-				Expect(fetchResp).To(HaveLength(2))
+				Expect(fetchResp).To(HaveSetLength(2))
 
 				time.Sleep(sharedContext.DefaultTTL)
 
@@ -348,7 +334,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 					}),
-				).To(HaveLength(2))
+				).To(HaveSetLength(2))
 
 				time.Sleep(sharedContext.DefaultTTL + 500*time.Millisecond)
 
@@ -378,7 +364,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
-				Expect(fetchResp).To(HaveLength(2))
+				Expect(fetchResp).To(HaveSetLength(2))
 
 				time.Sleep(sharedContext.DefaultTTL / 2)
 
