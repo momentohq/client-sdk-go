@@ -46,57 +46,35 @@ var _ = Describe("SortedSet", func() {
 	}
 
 	DescribeTable(`Validates the names`,
-		func(badName string) {
+		func(cacheName string, collectionName string, expectedError string) {
 			client := sharedContext.Client
 			ctx := sharedContext.Ctx
-			cacheName := uuid.NewString()
-			collectionName := sharedContext.CollectionName
 			element := String(uuid.NewString())
 
 			Expect(
 				client.SortedSetFetch(ctx, &SortedSetFetchRequest{
-					CacheName: badName, SetName: collectionName,
+					CacheName: cacheName, SetName: collectionName,
 				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			Expect(
-				client.SortedSetFetch(ctx, &SortedSetFetchRequest{
-					CacheName: cacheName, SetName: badName,
-				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
 				client.SortedSetGetRank(ctx, &SortedSetGetRankRequest{
-					CacheName: badName, SetName: collectionName, ElementName: element,
+					CacheName: cacheName, SetName: collectionName, ElementName: element,
 				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			Expect(
-				client.SortedSetGetRank(ctx, &SortedSetGetRankRequest{
-					CacheName: cacheName, SetName: badName, ElementName: element,
-				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			elements := []Value{element}
 			Expect(
 				client.SortedSetGetScore(ctx, &SortedSetGetScoreRequest{
-					CacheName: badName, SetName: collectionName, ElementNames: elements,
+					CacheName: cacheName, SetName: collectionName, ElementNames: elements,
 				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			Expect(
-				client.SortedSetGetScore(ctx, &SortedSetGetScoreRequest{
-					CacheName: cacheName, SetName: badName, ElementNames: elements,
-				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
 				client.SortedSetIncrementScore(ctx, &SortedSetIncrementScoreRequest{
-					CacheName: badName, SetName: collectionName, ElementName: element,
+					CacheName: cacheName, SetName: collectionName, ElementName: element, Amount: 1,
 				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			Expect(
-				client.SortedSetIncrementScore(ctx, &SortedSetIncrementScoreRequest{
-					CacheName: cacheName, SetName: badName, ElementName: element,
-				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			putElements := []*SortedSetPutElement{{
 				Value: element,
@@ -104,28 +82,21 @@ var _ = Describe("SortedSet", func() {
 			}}
 			Expect(
 				client.SortedSetPut(ctx, &SortedSetPutRequest{
-					CacheName: badName, SetName: collectionName, Elements: putElements,
+					CacheName: cacheName, SetName: collectionName, Elements: putElements,
 				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			Expect(
-				client.SortedSetPut(ctx, &SortedSetPutRequest{
-					CacheName: cacheName, SetName: badName, Elements: putElements,
-				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
 				client.SortedSetRemove(ctx, &SortedSetRemoveRequest{
-					CacheName: badName, SetName: collectionName, ElementsToRemove: &RemoveSomeElements{elements},
+					CacheName: cacheName, SetName: collectionName, ElementsToRemove: &RemoveSomeElements{elements},
 				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			Expect(
-				client.SortedSetRemove(ctx, &SortedSetRemoveRequest{
-					CacheName: cacheName, SetName: badName, ElementsToRemove: &RemoveSomeElements{elements},
-				}),
-			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			).Error().To(HaveMomentoErrorCode(expectedError))
 		},
-		Entry("Empty name", ""),
-		Entry("Blank name", "  "),
+		Entry("Empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Blank cache name", "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty collection name", sharedContext.CacheName, "", InvalidArgumentError),
+		Entry("Blank collection name", sharedContext.CacheName, "  ", InvalidArgumentError),
+		Entry("Non-existant cache", uuid.NewString(), uuid.NewString(), NotFoundError),
 	)
 
 	DescribeTable(`Honors CollectionTTL`,
