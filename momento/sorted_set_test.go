@@ -1,9 +1,12 @@
 package momento_test
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	"github.com/momentohq/client-sdk-go/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -29,6 +32,17 @@ var _ = Describe("SortedSet", func() {
 				},
 			),
 		).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
+	}
+
+	// Convenience for fetching elements.
+	fetch := func() (SortedSetFetchResponse, error) {
+		return sharedContext.Client.SortedSetFetch(
+			sharedContext.Ctx,
+			&SortedSetFetchRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+			},
+		)
 	}
 
 	DescribeTable(`Validates the names`,
@@ -112,6 +126,100 @@ var _ = Describe("SortedSet", func() {
 		},
 		Entry("Empty name", ""),
 		Entry("Blank name", "  "),
+	)
+
+	DescribeTable(`Honors CollectionTTL`,
+		func(
+			changer func(SortedSetPutElement, *utils.CollectionTTL),
+		) {
+			value := "foo"
+			element := SortedSetPutElement{
+				Value: String(value),
+				Score: 99,
+			}
+
+			expectedFetchHit := &SortedSetFetchHit{
+				Elements: []*SortedSetElement{
+					{Value: []byte(value), Score: element.Score},
+				},
+			}
+
+			// It does nothing with no TTL
+			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			changer(element, nil)
+
+			Expect(fetch()).To(Equal(expectedFetchHit))
+
+			time.Sleep(sharedContext.DefaultTTL)
+
+			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
+
+			// It does nothing without refresh TTL set.
+			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			changer(
+				element,
+				&utils.CollectionTTL{
+					Ttl:        5 * time.Hour,
+					RefreshTtl: false,
+				},
+			)
+
+			Expect(fetch()).To(Equal(expectedFetchHit))
+
+			time.Sleep(sharedContext.DefaultTTL)
+
+			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
+
+			// It does nothing without refresh TTL set.
+			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			changer(
+				element,
+				&utils.CollectionTTL{
+					Ttl:        sharedContext.DefaultTTL + 1*time.Second,
+					RefreshTtl: true,
+				},
+			)
+
+			Expect(fetch()).To(Equal(expectedFetchHit))
+
+			time.Sleep(sharedContext.DefaultTTL)
+
+			Expect(fetch()).To(Equal(expectedFetchHit))
+
+			time.Sleep(1 * time.Second)
+
+			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
+		},
+		Entry(
+			`SortedSetIncrementScore`,
+			func(element SortedSetPutElement, ttl *utils.CollectionTTL) {
+				request := &SortedSetIncrementScoreRequest{
+					CacheName:   sharedContext.CacheName,
+					SetName:     sharedContext.CollectionName,
+					ElementName: element.Value,
+					Amount:      element.Score,
+				}
+				if ttl != nil {
+					request.CollectionTTL = *ttl
+				}
+
+				sharedContext.Client.SortedSetIncrementScore(sharedContext.Ctx, request)
+			},
+		),
+		Entry(`SortedSetPut`,
+			func(element SortedSetPutElement, ttl *utils.CollectionTTL) {
+				request := &SortedSetPutRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  []*SortedSetPutElement{&element},
+				}
+				if ttl != nil {
+					request.CollectionTTL = *ttl
+				}
+
+				sharedContext.Client.SortedSetPut(sharedContext.Ctx, request)
+			},
+		),
 	)
 
 	Describe("SortedSetFetch", func() {
