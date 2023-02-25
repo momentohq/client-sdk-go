@@ -20,7 +20,7 @@ func (SortedSetPutSuccess) isSortedSetPutResponse() {}
 
 ///////// Request
 
-type SortedSetScoreRequestElement struct {
+type SortedSetPutElement struct {
 	Value Value
 	Score float64
 }
@@ -28,7 +28,7 @@ type SortedSetScoreRequestElement struct {
 type SortedSetPutRequest struct {
 	CacheName     string
 	SetName       string
-	Elements      []*SortedSetScoreRequestElement
+	Elements      []*SortedSetPutElement
 	CollectionTTL utils.CollectionTTL
 
 	grpcRequest  *pb.XSortedSetPutRequest
@@ -79,7 +79,7 @@ func (r *SortedSetPutRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetElementToGrpc(modelSetElements []*SortedSetScoreRequestElement) []*pb.XSortedSetElement {
+func convertSortedSetElementToGrpc(modelSetElements []*SortedSetPutElement) []*pb.XSortedSetElement {
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
 		returnList = append(returnList, &pb.XSortedSetElement{

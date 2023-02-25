@@ -18,7 +18,7 @@ var _ = Describe("SortedSet", func() {
 	})
 
 	// A convenience for adding elements to a sorted set.
-	var putElements = func(elements []*SortedSetScoreRequestElement) {
+	putElements := func(elements []*SortedSetPutElement) {
 		Expect(
 			sharedContext.Client.SortedSetPut(
 				sharedContext.Ctx,
@@ -84,7 +84,7 @@ var _ = Describe("SortedSet", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			putElements := []*SortedSetScoreRequestElement{{
+			putElements := []*SortedSetPutElement{{
 				Value: element,
 				Score: float64(1),
 			}}
@@ -129,7 +129,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Fetches`, func() {
 			putElements(
-				[]*SortedSetScoreRequestElement{
+				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -210,7 +210,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Gets the rank`, func() {
 			putElements(
-				[]*SortedSetScoreRequestElement{
+				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -257,7 +257,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Gets the score`, func() {
 			putElements(
-				[]*SortedSetScoreRequestElement{
+				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -331,7 +331,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Increments the score`, func() {
 			putElements(
-				[]*SortedSetScoreRequestElement{
+				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -382,7 +382,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Removes elements`, func() {
 			putElements(
-				[]*SortedSetScoreRequestElement{
+				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},

@@ -30,7 +30,7 @@ func main() {
 		_, err := client.SortedSetPut(ctx, &momento.SortedSetPutRequest{
 			CacheName: cacheName,
 			SetName:   setName,
-			Elements: []*momento.SortedSetScoreRequestElement{{
+			Elements: []*momento.SortedSetPutElement{{
 				Value: momento.String(fmt.Sprintf("element-%d", i)),
 				Score: float64(i),
 			}},
