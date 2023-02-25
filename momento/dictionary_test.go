@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -219,7 +220,6 @@ var _ = Describe("Dictionary methods", func() {
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
-			// TODO: update error code when additional error codes PR goes through
 			Expect(
 				sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 					CacheName:      sharedContext.CacheName,
@@ -546,4 +546,131 @@ var _ = Describe("Dictionary methods", func() {
 
 		})
 	})
+
+	Describe("client TTL", func() {
+
+		When("client TTL is exceeded", func() {
+
+			It("returns a miss for the collection", func() {
+				Expect(
+					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Items:          map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+					}),
+				).Error().To(BeNil())
+
+				Expect(
+					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+					}),
+				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
+
+				time.Sleep(sharedContext.DefaultTTL)
+
+				Expect(
+					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+					}),
+				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
+			})
+
+		})
+
+	})
+
+	Describe("collection TTL", func() {
+
+		BeforeEach(func() {
+			Expect(
+				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+					CacheName:      sharedContext.CacheName,
+					DictionaryName: sharedContext.CollectionName,
+					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+				}),
+			).Error().To(BeNil())
+		})
+
+		When("collection TTL is empty", func() {
+
+			It("will have a false refreshTTL and fetch will miss after client default ttl", func() {
+				time.Sleep(sharedContext.DefaultTTL / 2)
+				Expect(
+					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Field:          String("foo"),
+						Value:          String("bar"),
+						CollectionTTL:  utils.CollectionTTL{},
+					}),
+				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
+
+				time.Sleep(sharedContext.DefaultTTL / 2)
+
+				Expect(
+					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+					}),
+				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
+			})
+
+		})
+
+		When("collection TTL is configured", func() {
+
+			It("is ignored if refresh ttl is false", func() {
+				Expect(
+					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Field:          String("myField3"),
+						Value:          String("myValue3"),
+						CollectionTTL: utils.CollectionTTL{
+							Ttl:        sharedContext.DefaultTTL + time.Second*60,
+							RefreshTtl: false,
+						},
+					}),
+				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
+
+				time.Sleep(sharedContext.DefaultTTL)
+
+				Expect(
+					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+					}),
+				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
+			})
+
+			It("is respected if refresh TTL is true", func() {
+				Expect(
+					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Field:          String("myField3"),
+						Value:          String("myValue3"),
+						CollectionTTL: utils.CollectionTTL{
+							Ttl:        sharedContext.DefaultTTL + time.Second*60,
+							RefreshTtl: true,
+						},
+					}),
+				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
+
+				time.Sleep(sharedContext.DefaultTTL)
+
+				Expect(
+					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+					}),
+				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
+			})
+
+		})
+
+	})
+
 })

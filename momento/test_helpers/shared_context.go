@@ -28,7 +28,7 @@ func NewSharedContext() SharedContext {
 	credentialProvider, _ := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LatestLaptopConfig()
-	shared.DefaultTTL = 1 * time.Second
+	shared.DefaultTTL = 3 * time.Second
 
 	shared.ClientProps = &momento.SimpleCacheClientProps{
 		CredentialProvider: shared.CredentialProvider,
