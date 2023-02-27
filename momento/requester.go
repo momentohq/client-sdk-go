@@ -113,16 +113,34 @@ func prepareFields(r hasFields) ([][]byte, error) {
 }
 
 func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
+	if r.value() == nil {
+		return []byte{}, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"value may not be nil",
+			nil,
+		)
+	}
 	return r.value().asBytes(), nil
 }
 
 func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
-	return momentoValuesToPrimitiveByteList(r.values()), nil
+	values, err := momentoValuesToPrimitiveByteList(r.values())
+	if err != nil {
+		return [][]byte{}, err
+	}
+	return values, nil
 }
 
 func prepareItems(r hasItems) (map[string][]byte, error) {
 	retMap := make(map[string][]byte)
 	for k, v := range r.items() {
+		if v == nil {
+			return map[string][]byte{}, momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"item values may not be nil",
+				nil,
+			)
+		}
 		if err := validateNotEmpty([]byte(k), "item keys"); err != nil {
 			return nil, err
 		}
@@ -146,12 +164,19 @@ func prepareTTL(r hasTTL, defaultTtl time.Duration) (uint64, error) {
 	return uint64(ttl.Milliseconds()), nil
 }
 
-func momentoValuesToPrimitiveByteList(i []Value) [][]byte {
+func momentoValuesToPrimitiveByteList(i []Value) ([][]byte, momentoerrors.MomentoSvcErr) {
 	var rList [][]byte
 	for _, mb := range i {
+		if mb == nil {
+			return [][]byte{}, momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"values may not be nil",
+				nil,
+			)
+		}
 		rList = append(rList, mb.asBytes())
 	}
-	return rList
+	return rList, nil
 }
 
 func validateNotEmpty(field []byte, label string) error {

@@ -39,13 +39,18 @@ func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
+	elements, err := momentoValuesToPrimitiveByteList(r.Elements)
+	if err != nil {
+		return err
+	}
+
 	r.grpcRequest = &pb.XSetDifferenceRequest{
 		SetName: []byte(r.SetName),
 		Difference: &pb.XSetDifferenceRequest_Subtrahend{
 			Subtrahend: &pb.XSetDifferenceRequest_XSubtrahend{
 				SubtrahendSet: &pb.XSetDifferenceRequest_XSubtrahend_Set{
 					Set: &pb.XSetDifferenceRequest_XSubtrahend_XSet{
-						Elements: momentoValuesToPrimitiveByteList(r.Elements),
+						Elements: elements,
 					},
 				},
 			},
