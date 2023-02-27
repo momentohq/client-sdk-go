@@ -12,7 +12,7 @@ import (
 
 type SharedContext struct {
 	ClientProps        *momento.SimpleCacheClientProps
-	Client             momento.SimpleCacheClient
+	Client             momento.CacheClient
 	CacheName          string
 	CollectionName     string
 	Ctx                context.Context

@@ -20,7 +20,7 @@ const (
 
 var (
 	ctx    context.Context
-	client momento.SimpleCacheClient
+	client momento.CacheClient
 )
 
 func pushFrontToList(value string) {

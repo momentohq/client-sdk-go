@@ -4,15 +4,12 @@ import (
 	"errors"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-var _ = Describe("SimpleCacheClient", func() {
+var _ = Describe("CacheClient", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

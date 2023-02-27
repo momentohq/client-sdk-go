@@ -1,9 +1,9 @@
 // This is a template for making a new requester.
-// Each SimpleCacheClient method should have a corresponding requester.
+// Each CacheClient method should have a corresponding requester.
 // The requester is used in scsDataClient.makeRequest().
 //
 // For this example we'll be assuming you'r writing
-// SimpleCacheClient.DictionaryIterate()
+// CacheClient.DictionaryIterate()
 //
 // 1. Copy this file and give it the appropriate name. (momento/dictionary-iterate.go)
 // 2. Search and replace "Template" with the name of your method. (DictionaryIterate)
@@ -77,7 +77,7 @@ func (r *TemplateRequest) makeGrpcRequest(metadata context.Context, client scsDa
 }
 
 // Translate the GRPC response in r.grpcResponse into a Momento response.
-// Store the result in r.repsonse. This response will be returned from SimpleCacheClient.
+// Store the result in r.repsonse. This response will be returned from CacheClient.
 func (r *TemplateRequest) interpretGrpcResponse() error {
 	r.response = TemplateSuccess{}
 	return nil

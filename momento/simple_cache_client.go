@@ -1,4 +1,4 @@
-// Package momento represents API SimpleCacheClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
+// Package momento represents API CacheClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
 package momento
 
 import (
@@ -13,7 +13,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/services"
 )
 
-type SimpleCacheClient interface {
+type CacheClient interface {
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
 	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
@@ -74,8 +74,8 @@ type SimpleCacheClientProps struct {
 	DefaultTTL         time.Duration
 }
 
-// NewSimpleCacheClient returns a new SimpleCacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewSimpleCacheClient(props *SimpleCacheClientProps) (SimpleCacheClient, error) {
+// NewSimpleCacheClient returns a new CacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
+func NewSimpleCacheClient(props *SimpleCacheClientProps) (CacheClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
