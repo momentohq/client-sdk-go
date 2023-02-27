@@ -54,6 +54,11 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
+	var value []byte
+	if value, err = prepareValue(r); err != nil {
+		return err
+	}
+
 	var ttl uint64
 	if ttl, err = prepareTTL(r, client.defaultTtl); err != nil {
 		return err
@@ -61,7 +66,7 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 
 	r.grpcRequest = &pb.XListPushBackRequest{
 		ListName:            []byte(r.ListName),
-		Value:               r.Value.asBytes(),
+		Value:               value,
 		TtlMilliseconds:     ttl,
 		RefreshTtl:          r.CollectionTTL.RefreshTtl,
 		TruncateFrontToSize: r.TruncateFrontToSize,

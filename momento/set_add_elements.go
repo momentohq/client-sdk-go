@@ -51,9 +51,14 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
+	elements, err := momentoValuesToPrimitiveByteList(r.Elements)
+	if err != nil {
+		return err
+	}
+
 	r.grpcRequest = &pb.XSetUnionRequest{
 		SetName:         []byte(r.SetName),
-		Elements:        momentoValuesToPrimitiveByteList(r.Elements),
+		Elements:        elements,
 		TtlMilliseconds: ttl,
 		RefreshTtl:      r.CollectionTTL.RefreshTtl,
 	}
