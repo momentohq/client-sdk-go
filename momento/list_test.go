@@ -31,13 +31,12 @@ func populateList(sharedContext SharedContext, numItems int) []string {
 	values, expected := getValueAndExpectedValueLists(numItems)
 	for _, value := range values {
 		Expect(
-			sharedContext.Client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
-				CacheName:          sharedContext.CacheName,
-				ListName:           sharedContext.CollectionName,
-				Value:              value,
-				TruncateBackToSize: 0,
+			sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+				CacheName: sharedContext.CacheName,
+				ListName:  sharedContext.CollectionName,
+				Value:     value,
 			}),
-		).To(BeAssignableToTypeOf(&ListPushFrontSuccess{}))
+		).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
 	}
 	return expected
 }
@@ -82,7 +81,6 @@ var _ = Describe("List methods", func() {
 			It("pushes strings and bytes on the happy path", func() {
 				numItems := 10
 				expected := populateList(sharedContext, numItems)
-
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
 					ListName:  sharedContext.CollectionName,
@@ -91,8 +89,7 @@ var _ = Describe("List methods", func() {
 				Expect(fetchResp).To(HaveListLength(numItems))
 				switch result := fetchResp.(type) {
 				case *ListFetchHit:
-					Expect(result.ValueList()).To(ConsistOf(expected))
-					Expect(result.ValueList()).NotTo(Equal(expected))
+					Expect(result.ValueList()).To(Equal(expected))
 				}
 			})
 
@@ -151,7 +148,6 @@ var _ = Describe("List methods", func() {
 				Expect(fetchResp).To(HaveListLength(numItems))
 				switch result := fetchResp.(type) {
 				case *ListFetchHit:
-					Expect(result.ValueList()).To(ConsistOf(expected))
 					Expect(result.ValueList()).To(Equal(expected))
 				}
 			})
@@ -197,10 +193,6 @@ var _ = Describe("List methods", func() {
 			It("pushes strings and bytes on the happy path", func() {
 				numItems := 10
 				expected := populateList(sharedContext, numItems)
-				// items are in reverse order from expected because of how they're pushed.
-				for i, j := 0, len(expected)-1; i < j; i, j = i+1, j-1 {
-					expected[i], expected[j] = expected[j], expected[i]
-				}
 
 				numConcatItems := 5
 				concatValues, concatExpected := getValueAndExpectedValueLists(numConcatItems)
@@ -261,10 +253,285 @@ var _ = Describe("List methods", func() {
 						Values:             concatValues,
 						TruncateBackToSize: 3,
 					}),
-				).Error().To(BeAssignableToTypeOf(InvalidArgumentError))
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			})
+
+		})
+
+		When("concatenating to the back of the list", func() {
+
+			It("pushes strings and bytes on the happy path", func() {
+				numItems := 10
+				expected := populateList(sharedContext, numItems)
+
+				numConcatItems := 5
+				concatValues, concatExpected := getValueAndExpectedValueLists(numConcatItems)
+				concatResp, err := sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+					Values:    concatValues,
+				})
+				Expect(err).To(BeNil())
+				Expect(concatResp).To(BeAssignableToTypeOf(&ListConcatenateBackSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
+				Expect(fetchResp).To(HaveListLength(numItems + numConcatItems))
+				expected = append(expected, concatExpected...)
+				switch result := fetchResp.(type) {
+				case *ListFetchHit:
+					Expect(result.ValueList()).To(Equal(expected))
+				}
+			})
+
+			It("truncates the list properly", func() {
+				populateList(sharedContext, 5)
+				concatValues := []Value{String("100"), String("101"), String("102")}
+				concatResp, err := sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
+					CacheName:           sharedContext.CacheName,
+					ListName:            sharedContext.CollectionName,
+					Values:              concatValues,
+					TruncateFrontToSize: 3,
+				})
+				Expect(err).To(BeNil())
+				Expect(concatResp).To(BeAssignableToTypeOf(&ListConcatenateBackSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
+				Expect(fetchResp).To(HaveListLength(3))
+				switch result := fetchResp.(type) {
+				case *ListFetchHit:
+					Expect(result.ValueList()).To(Equal([]string{"100", "101", "102"}))
+				}
+			})
+
+			It("returns an invalid argument for a nil value", func() {
+				populateList(sharedContext, 5)
+				concatValues := []Value{nil, nil}
+				Expect(
+					sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
+						CacheName:           sharedContext.CacheName,
+						ListName:            sharedContext.CollectionName,
+						Values:              concatValues,
+						TruncateFrontToSize: 3,
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
 		})
 
 	})
+
+	Describe("list pop", func() {
+
+		When("popping from the front of the list", func() {
+
+			It("pops strings and bytes on the happy path", func() {
+				numItems := 5
+				expected := populateList(sharedContext, numItems)
+
+				popResp, err := sharedContext.Client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := popResp.(type) {
+				case *ListPopFrontHit:
+					Expect(result.ValueString()).To(Equal(string(expected[0])))
+				default:
+					Fail("expected a hit from list pop front but got a miss")
+				}
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(numItems - 1))
+			})
+
+			It("returns a miss after popping the last item", func() {
+				numItems := 3
+				populateList(sharedContext, numItems)
+				for i := 0; i < 3; i++ {
+					Expect(
+						sharedContext.Client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
+							CacheName: sharedContext.CacheName,
+							ListName:  sharedContext.CollectionName,
+						}),
+					).To(BeAssignableToTypeOf(&ListPopFrontHit{}))
+				}
+				popResp, err := sharedContext.Client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(popResp).To(BeAssignableToTypeOf(&ListPopFrontMiss{}))
+			})
+
+		})
+
+		When("popping from the back of the list", func() {
+
+			It("pops strings and bytes on the happy path", func() {
+				numItems := 5
+				expected := populateList(sharedContext, numItems)
+
+				popResp, err := sharedContext.Client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := popResp.(type) {
+				case *ListPopBackHit:
+					Expect(result.ValueString()).To(Equal(string(expected[numItems-1])))
+				default:
+					Fail("expected a hit from list pop front but got a miss")
+				}
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(numItems - 1))
+			})
+
+			It("returns a miss after popping the last item", func() {
+				numItems := 3
+				populateList(sharedContext, numItems)
+				for i := 0; i < 3; i++ {
+					Expect(
+						sharedContext.Client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
+							CacheName: sharedContext.CacheName,
+							ListName:  sharedContext.CollectionName,
+						}),
+					).To(BeAssignableToTypeOf(&ListPopBackHit{}))
+				}
+				popResp, err := sharedContext.Client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(popResp).To(BeAssignableToTypeOf(&ListPopBackMiss{}))
+			})
+
+		})
+
+	})
+
+	Describe("list remove value", func() {
+
+		When("removing a value that appears once", func() {
+
+			It("removes the value", func() {
+				numItems := 5
+				expected := populateList(sharedContext, numItems)
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     String(expected[0]),
+					}),
+				).Error().To(BeNil())
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *ListFetchHit:
+					Expect(result.ValueList()).To(Equal(expected[1:]))
+				default:
+					Fail("expected a hit for list fetch but got a miss")
+				}
+			})
+
+		})
+
+		When("removing a value that appears multiple times", func() {
+
+			It("removes all occurrences of the value", func() {
+				numItems := 5
+				populateList(sharedContext, numItems)
+				toAdd := []Value{String("#4"), String("#4"), String("#4"), String("#0")}
+				Expect(
+					sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Values:    toAdd,
+					}),
+				).To(BeAssignableToTypeOf(&ListConcatenateBackSuccess{}))
+
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     String("#4"),
+					}),
+				).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *ListFetchHit:
+					Expect(result.ValueList()).To(Equal([]string{"#0", "#1", "#2", "#3", "#0"}))
+				default:
+					Fail("expected a hit from list fetch but got a miss")
+				}
+			})
+
+		})
+
+		When("removing a value that isn't in the list", func() {
+
+			It("returns success", func() {
+				numItems := 5
+				populateList(sharedContext, numItems)
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     String("iamnotinthelist"),
+					}),
+				).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(numItems))
+			})
+
+		})
+
+		When("removing from a nonexistent list", func() {
+
+			It("returns success", func() {
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  uuid.NewString(),
+						Value:     String("iamnotinthelist"),
+					}),
+				).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
+
+			})
+		})
+
+	})
+
 })
