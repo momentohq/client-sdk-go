@@ -24,7 +24,7 @@ func (DictionarySetFieldsSuccess) isDictionarySetFieldsResponse() {}
 type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
-	Items          map[string]Value
+	Elements       map[string]Value
 	CollectionTTL  utils.CollectionTTL
 
 	grpcRequest  *pb.XDictionarySetRequest
@@ -34,7 +34,7 @@ type DictionarySetFieldsRequest struct {
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionarySetFieldsRequest) items() map[string]Value { return r.Items }
+func (r *DictionarySetFieldsRequest) elements() map[string]Value { return r.Elements }
 
 func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
 
@@ -47,13 +47,13 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		return err
 	}
 
-	var items map[string][]byte
-	if items, err = prepareItems(r); err != nil {
+	var elements map[string][]byte
+	if elements, err = prepareItems(r); err != nil {
 		return err
 	}
 
 	var pbItems []*pb.XDictionaryFieldValuePair
-	for k, v := range items {
+	for k, v := range elements {
 		pbItems = append(pbItems, &pb.XDictionaryFieldValuePair{
 			Field: []byte(k),
 			Value: v,

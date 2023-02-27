@@ -62,8 +62,8 @@ type hasFields interface {
 	fields() []Value
 }
 
-type hasItems interface {
-	items() map[string]Value
+type hasElements interface {
+	elements() map[string]Value
 }
 
 type hasTTL interface {
@@ -131,9 +131,9 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareItems(r hasItems) (map[string][]byte, error) {
+func prepareItems(r hasElements) (map[string][]byte, error) {
 	retMap := make(map[string][]byte)
-	for k, v := range r.items() {
+	for k, v := range r.elements() {
 		if v == nil {
 			return map[string][]byte{}, momentoerrors.NewMomentoSvcErr(
 				momentoerrors.InvalidArgumentError,

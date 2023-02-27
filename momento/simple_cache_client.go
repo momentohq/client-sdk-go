@@ -371,12 +371,12 @@ func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValu
 }
 
 func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
-	items := make(map[string]Value)
-	items[string(r.Field.asBytes())] = r.Value
+	elements := make(map[string]Value)
+	elements[string(r.Field.asBytes())] = r.Value
 	newRequest := &DictionarySetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
-		Items:          items,
+		Elements:       elements,
 		CollectionTTL:  r.CollectionTTL,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
@@ -416,7 +416,7 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 		case *DictionaryGetFieldHit:
 			return &DictionaryGetFieldHit{
 				field: rtype.fields[0],
-				body:  rtype.items[0].CacheBody,
+				body:  rtype.elements[0].CacheBody,
 			}, nil
 		case *DictionaryGetFieldMiss:
 			return &DictionaryGetFieldMiss{}, nil
