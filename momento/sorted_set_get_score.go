@@ -65,9 +65,14 @@ func (r *SortedSetGetScoreRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
+	elementNames, err := momentoValuesToPrimitiveByteList(r.ElementNames)
+	if err != nil {
+		return err
+	}
+
 	resp := &pb.XSortedSetGetScoreRequest{
 		SetName:     []byte(r.SetName),
-		ElementName: momentoValuesToPrimitiveByteList(r.ElementNames),
+		ElementName: elementNames,
 	}
 
 	r.grpcRequest = resp

@@ -68,15 +68,23 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	case *RemoveAllElements:
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
 	case RemoveSomeElements:
+		elemToRemove, err := momentoValuesToPrimitiveByteList(toRemove.Elements)
+		if err != nil {
+			return err
+		}
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoValuesToPrimitiveByteList(toRemove.Elements),
+				ElementName: elemToRemove,
 			},
 		}
 	case *RemoveSomeElements:
+		elemToRemove, err := momentoValuesToPrimitiveByteList(toRemove.Elements)
+		if err != nil {
+			return err
+		}
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: momentoValuesToPrimitiveByteList(toRemove.Elements),
+				ElementName: elemToRemove,
 			},
 		}
 	default:
