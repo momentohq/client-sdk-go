@@ -54,6 +54,11 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		return err
 	}
 
+	var elementName []byte
+	if elementName, err = prepareElementName(r.ElementName); err != nil {
+		return err
+	}
+
 	if r.Amount == 0 {
 		return momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
@@ -64,7 +69,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 
 	r.grpcRequest = &pb.XSortedSetIncrementRequest{
 		SetName:         []byte(r.SetName),
-		ElementName:     r.ElementName.asBytes(),
+		ElementName:     elementName,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMillis,
 		RefreshTtl:      r.CollectionTtl.RefreshTtl,

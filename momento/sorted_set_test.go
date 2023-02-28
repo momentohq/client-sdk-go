@@ -97,7 +97,7 @@ var _ = Describe("SortedSet", func() {
 		Entry("Blank cache name", "  ", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("Empty collection name", sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name", sharedContext.CacheName, "  ", InvalidArgumentError),
-		Entry("Non-existant cache", uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("Non-existent cache", uuid.NewString(), uuid.NewString(), NotFoundError),
 	)
 
 	DescribeTable(`Honors CollectionTtl  `,
@@ -323,6 +323,19 @@ var _ = Describe("SortedSet", func() {
 				),
 			).To(Equal(&SortedSetGetRankHit{Rank: 0}))
 		})
+
+		It(`returns an error for a nil element name`, func() {
+			Expect(
+				sharedContext.Client.SortedSetGetRank(
+					sharedContext.Ctx,
+					&SortedSetGetRankRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: nil,
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
 	})
 
 	Describe(`SortedSetGetScore`, func() {
@@ -368,6 +381,30 @@ var _ = Describe("SortedSet", func() {
 					},
 				},
 			))
+		})
+
+		It(`returns an error when element names are nil`, func() {
+			Expect(
+				sharedContext.Client.SortedSetGetScore(
+					sharedContext.Ctx,
+					&SortedSetGetScoreRequest{
+						CacheName:    sharedContext.CacheName,
+						SetName:      sharedContext.CollectionName,
+						ElementNames: nil,
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SortedSetGetScore(
+					sharedContext.Ctx,
+					&SortedSetGetScoreRequest{
+						CacheName:    sharedContext.CacheName,
+						SetName:      sharedContext.CollectionName,
+						ElementNames: []Value{nil, String("aValue"), nil},
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
 
@@ -446,6 +483,21 @@ var _ = Describe("SortedSet", func() {
 				),
 			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 50}))
 		})
+
+		It("returns an error when element name is nil", func() {
+			Expect(
+				sharedContext.Client.SortedSetIncrementScore(
+					sharedContext.Ctx,
+					&SortedSetIncrementScoreRequest{
+						CacheName:   sharedContext.CacheName,
+						SetName:     sharedContext.CollectionName,
+						ElementName: nil,
+						Amount:      42,
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
 	})
 
 	Describe(`SortedSetRemove`, func() {
@@ -505,5 +557,45 @@ var _ = Describe("SortedSet", func() {
 				},
 			))
 		})
+
+		It("returns an error when elements are nil", func() {
+			Expect(
+				sharedContext.Client.SortedSetRemove(
+					sharedContext.Ctx,
+					&SortedSetRemoveRequest{
+						CacheName:        sharedContext.CacheName,
+						SetName:          sharedContext.CollectionName,
+						ElementsToRemove: nil,
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SortedSetRemove(
+					sharedContext.Ctx,
+					&SortedSetRemoveRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						ElementsToRemove: RemoveSomeElements{
+							Elements: nil,
+						},
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SortedSetRemove(
+					sharedContext.Ctx,
+					&SortedSetRemoveRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						ElementsToRemove: RemoveSomeElements{
+							Elements: []Value{nil, String("aValue"), nil},
+						},
+					},
+				),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
 	})
 })

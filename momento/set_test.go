@@ -66,14 +66,6 @@ var _ = Describe("Set methods", func() {
 				Element:   String("astring"),
 			}),
 		).Error().To(HaveMomentoErrorCode(NotFoundError))
-
-		Expect(
-			sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
-				CacheName: cacheName,
-				SetName:   setName,
-				Elements:  nil,
-			}),
-		).Error().To(HaveMomentoErrorCode(NotFoundError))
 	})
 
 	It("errors on invalid set name", func() {
@@ -86,6 +78,30 @@ var _ = Describe("Set methods", func() {
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		Expect(
+			sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   setName,
+				Element:   String("hi"),
+			}),
+		)
+
+		Expect(
+			sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   setName,
+				Elements:  []Value{String("hi")},
+			}),
+		)
+
+		Expect(
+			sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   setName,
+				Element:   nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+		Expect(
 			sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   setName,
@@ -94,81 +110,110 @@ var _ = Describe("Set methods", func() {
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
-	DescribeTable("add string and byte single elements happy path",
-		func(element Value, expectedStrings []string, expectedBytes [][]byte) {
+	Describe("add", func() {
+		DescribeTable("add string and byte single elements happy path",
+			func(element Value, expectedStrings []string, expectedBytes [][]byte) {
+				Expect(
+					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Element:   element,
+					}),
+				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
+
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *SetFetchHit:
+					Expect(result.ValueString()).To(Equal(expectedStrings))
+					Expect(result.ValueByte()).To(Equal(expectedBytes))
+				default:
+					Fail("Unexpected result for Set Fetch")
+				}
+			},
+			Entry("when element is a string", String("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
+			Entry("when element is bytes", Bytes("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
+			Entry("when element is a empty", String(""), []string{""}, [][]byte{[]byte("")}),
+		)
+
+		DescribeTable("add string and byte multiple elements happy path",
+			func(elements []Value, expectedStrings []string, expectedBytes [][]byte) {
+				Expect(
+					sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Elements:  elements,
+					}),
+				).To(BeAssignableToTypeOf(&SetAddElementsSuccess{}))
+				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *SetFetchHit:
+					Expect(result.ValueString()).To(ConsistOf(expectedStrings))
+					Expect(result.ValueByte()).To(ConsistOf(expectedBytes))
+				default:
+					Fail("Unexpected results for Set Fetch")
+				}
+			},
+			Entry(
+				"when elements are strings",
+				[]Value{String("hello"), String("world"), String("!"), String("␆")},
+				[]string{"hello", "world", "!", "␆"},
+				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
+			),
+			Entry(
+				"when elements are bytes",
+				[]Value{Bytes([]byte("hello")), Bytes([]byte("world")), Bytes([]byte("!")), Bytes([]byte("␆"))},
+				[]string{"hello", "world", "!", "␆"},
+				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
+			),
+			Entry(
+				"when elements are mixed",
+				[]Value{Bytes([]byte("hello")), String([]byte("world")), Bytes([]byte("!")), String([]byte("␆"))},
+				[]string{"hello", "world", "!", "␆"},
+				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
+			),
+			Entry(
+				"when elements are empty",
+				[]Value{Bytes([]byte("")), Bytes([]byte(""))},
+				[]string{""},
+				[][]byte{[]byte("")},
+			),
+		)
+
+		It("returns an error when trying to add nil elements", func() {
 			Expect(
 				sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
-					Element:   element,
+					Element:   nil,
 				}),
-			).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
-			})
-			Expect(err).To(BeNil())
-			switch result := fetchResp.(type) {
-			case *SetFetchHit:
-				Expect(result.ValueString()).To(Equal(expectedStrings))
-				Expect(result.ValueByte()).To(Equal(expectedBytes))
-			default:
-				Fail("Unexpected result for Set Fetch")
-			}
-		},
-		Entry("when element is a string", String("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
-		Entry("when element is bytes", Bytes("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
-		Entry("when element is a empty", String(""), []string{""}, [][]byte{[]byte("")}),
-	)
-
-	DescribeTable("add string and byte multiple elements happy path",
-		func(elements []Value, expectedStrings []string, expectedBytes [][]byte) {
 			Expect(
 				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
-					Elements:  elements,
+					Elements:  nil,
 				}),
-			).To(BeAssignableToTypeOf(&SetAddElementsSuccess{}))
-			fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
-			})
-			Expect(err).To(BeNil())
-			switch result := fetchResp.(type) {
-			case *SetFetchHit:
-				Expect(result.ValueString()).To(ConsistOf(expectedStrings))
-				Expect(result.ValueByte()).To(ConsistOf(expectedBytes))
-			default:
-				Fail("Unexpected results for Set Fetch")
-			}
-		},
-		Entry(
-			"when elements are strings",
-			[]Value{String("hello"), String("world"), String("!"), String("␆")},
-			[]string{"hello", "world", "!", "␆"},
-			[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
-		),
-		Entry(
-			"when elements are bytes",
-			[]Value{Bytes([]byte("hello")), Bytes([]byte("world")), Bytes([]byte("!")), Bytes([]byte("␆"))},
-			[]string{"hello", "world", "!", "␆"},
-			[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
-		),
-		Entry(
-			"when elements are mixed",
-			[]Value{Bytes([]byte("hello")), String([]byte("world")), Bytes([]byte("!")), String([]byte("␆"))},
-			[]string{"hello", "world", "!", "␆"},
-			[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
-		),
-		Entry(
-			"when elements are empty",
-			[]Value{Bytes([]byte("")), Bytes([]byte(""))},
-			[]string{""},
-			[][]byte{[]byte("")},
-		),
-	)
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  []Value{nil, String("aValue"), nil},
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+	})
 
 	Describe("remove", func() {
 
@@ -238,6 +283,34 @@ var _ = Describe("Set methods", func() {
 			Entry("as bytes", []Value{Bytes("#3"), Bytes("#4")}, 8),
 			Entry("unmatched", []Value{String("notvalid")}, 10),
 		)
+
+		It("returns an error when trying to remove nil elements", func() {
+			Expect(
+				sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Element:   nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  []Value{nil, String("aValue"), nil},
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+		})
+
 	})
 
 	Describe("using client default TTL", func() {

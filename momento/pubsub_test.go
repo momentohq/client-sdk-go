@@ -100,6 +100,16 @@ var _ = Describe("Pubsub", func() {
 		Expect(receivedValues).To(Equal(publishedValues))
 	})
 
+	It("returns an error when trying to publish a nil topic value", func() {
+		Expect(
+			sharedContext.Client.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: sharedContext.CollectionName,
+				Value:     nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
+	
 	Describe(`TopicSubscribe`, func() {
 		It(`Does not error on a non-existent topic`, func() {
 			Expect(

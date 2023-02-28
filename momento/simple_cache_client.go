@@ -281,6 +281,13 @@ func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGet
 }
 
 func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error) {
+	if r.ElementsToRemove == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "elements to remove cannot be nil", nil,
+			),
+		)
+	}
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}

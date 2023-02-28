@@ -312,7 +312,7 @@ var _ = Describe("List methods", func() {
 
 			It("returns an invalid argument for a nil value", func() {
 				populateList(sharedContext, 5)
-				concatValues := []Value{nil, nil}
+				concatValues := []Value{nil, String("aRealValue"), nil}
 				Expect(
 					sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
 						CacheName:          sharedContext.CacheName,
@@ -382,7 +382,7 @@ var _ = Describe("List methods", func() {
 
 			It("returns an invalid argument for a nil value", func() {
 				populateList(sharedContext, 5)
-				concatValues := []Value{nil, nil}
+				concatValues := []Value{nil, String("aRealValue"), nil}
 				Expect(
 					sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
 						CacheName:           sharedContext.CacheName,
@@ -523,6 +523,16 @@ var _ = Describe("List methods", func() {
 				}
 			})
 
+			It("returns an error for a nil value", func() {
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     nil,
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			})
+
 		})
 
 		When("removing a value that appears multiple times", func() {
@@ -558,6 +568,16 @@ var _ = Describe("List methods", func() {
 				default:
 					Fail("expected a hit from list fetch but got a miss")
 				}
+			})
+
+			It("returns an error for a nil value", func() {
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     nil,
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
 		})
@@ -597,6 +617,7 @@ var _ = Describe("List methods", func() {
 				).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
 
 			})
+
 		})
 
 	})
