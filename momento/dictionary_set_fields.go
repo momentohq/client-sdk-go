@@ -25,7 +25,7 @@ type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
 	Elements       map[string]Value
-	CollectionTTL  utils.CollectionTTL
+	CollectionTtl  utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionarySetRequest
 	grpcResponse *pb.XDictionarySetResponse
@@ -36,7 +36,7 @@ func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
 
 func (r *DictionarySetFieldsRequest) elements() map[string]Value { return r.Elements }
 
-func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.CollectionTtl.Ttl }
 
 func (r *DictionarySetFieldsRequest) requestName() string { return "DictionarySetFields" }
 
@@ -69,7 +69,7 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		DictionaryName:  []byte(r.DictionaryName),
 		Items:           pbItems,
 		TtlMilliseconds: ttl,
-		RefreshTtl:      r.CollectionTTL.RefreshTtl,
+		RefreshTtl:      r.CollectionTtl.RefreshTtl,
 	}
 
 	return nil

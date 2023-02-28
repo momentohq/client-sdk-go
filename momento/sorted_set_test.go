@@ -7,8 +7,6 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	"github.com/momentohq/client-sdk-go/utils"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("SortedSet", func() {
@@ -99,9 +97,9 @@ var _ = Describe("SortedSet", func() {
 		Entry("Non-existant cache", uuid.NewString(), uuid.NewString(), NotFoundError),
 	)
 
-	DescribeTable(`Honors CollectionTTL`,
+	DescribeTable(`Honors CollectionTtl  `,
 		func(
-			changer func(SortedSetPutElement, *utils.CollectionTTL),
+			changer func(SortedSetPutElement, *utils.CollectionTtl),
 		) {
 			value := "foo"
 			element := SortedSetPutElement{
@@ -129,7 +127,7 @@ var _ = Describe("SortedSet", func() {
 			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
 			changer(
 				element,
-				&utils.CollectionTTL{
+				&utils.CollectionTtl{
 					Ttl:        5 * time.Hour,
 					RefreshTtl: false,
 				},
@@ -145,7 +143,7 @@ var _ = Describe("SortedSet", func() {
 			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
 			changer(
 				element,
-				&utils.CollectionTTL{
+				&utils.CollectionTtl{
 					Ttl:        sharedContext.DefaultTTL + 1*time.Second,
 					RefreshTtl: true,
 				},
@@ -163,7 +161,7 @@ var _ = Describe("SortedSet", func() {
 		},
 		Entry(
 			`SortedSetIncrementScore`,
-			func(element SortedSetPutElement, ttl *utils.CollectionTTL) {
+			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetIncrementScoreRequest{
 					CacheName:   sharedContext.CacheName,
 					SetName:     sharedContext.CollectionName,
@@ -171,7 +169,7 @@ var _ = Describe("SortedSet", func() {
 					Amount:      element.Score,
 				}
 				if ttl != nil {
-					request.CollectionTTL = *ttl
+					request.CollectionTtl = *ttl
 				}
 
 				Expect(
@@ -180,14 +178,14 @@ var _ = Describe("SortedSet", func() {
 			},
 		),
 		Entry(`SortedSetPut`,
-			func(element SortedSetPutElement, ttl *utils.CollectionTTL) {
+			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetPutRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
 					Elements:  []*SortedSetPutElement{&element},
 				}
 				if ttl != nil {
-					request.CollectionTTL = *ttl
+					request.CollectionTtl = *ttl
 				}
 
 				Expect(

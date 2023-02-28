@@ -24,7 +24,7 @@ type SetAddElementsRequest struct {
 	CacheName     string
 	SetName       string
 	Elements      []Value
-	CollectionTTL utils.CollectionTTL
+	CollectionTtl utils.CollectionTtl
 
 	grpcRequest  *pb.XSetUnionRequest
 	grpcResponse *pb.XSetUnionResponse
@@ -34,7 +34,7 @@ type SetAddElementsRequest struct {
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }
 
 func (r *SetAddElementsRequest) ttl() time.Duration {
-	return r.CollectionTTL.Ttl
+	return r.CollectionTtl.Ttl
 }
 
 func (r *SetAddElementsRequest) requestName() string { return "SetAddElements" }
@@ -60,7 +60,7 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
 		TtlMilliseconds: ttl,
-		RefreshTtl:      r.CollectionTTL.RefreshTtl,
+		RefreshTtl:      r.CollectionTtl.RefreshTtl,
 	}
 
 	return nil

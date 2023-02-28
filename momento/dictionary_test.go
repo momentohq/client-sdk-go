@@ -77,7 +77,7 @@ var _ = Describe("Dictionary methods", func() {
 					DictionaryName: dictionaryName,
 					Field:          String("hi"),
 					Value:          String("hi"),
-					CollectionTTL:  utils.CollectionTTL{},
+					CollectionTtl:  utils.CollectionTtl{},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
@@ -86,7 +86,7 @@ var _ = Describe("Dictionary methods", func() {
 					CacheName:      cacheName,
 					DictionaryName: dictionaryName,
 					Elements:       nil,
-					CollectionTTL:  utils.CollectionTTL{},
+					CollectionTtl:  utils.CollectionTtl{},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
@@ -600,7 +600,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("foo"),
 						Value:          String("bar"),
-						CollectionTTL:  utils.CollectionTTL{},
+						CollectionTtl:  utils.CollectionTtl{},
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
@@ -625,7 +625,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: false,
 						},
@@ -649,7 +649,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: true,
 						},

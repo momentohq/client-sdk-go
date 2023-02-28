@@ -7,9 +7,6 @@ import (
 	"github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
@@ -292,7 +289,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: true,
 						},
@@ -322,7 +319,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + 1*time.Second,
 							RefreshTtl: false,
 						},
@@ -352,7 +349,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        time.Millisecond * 20,
 							RefreshTtl: false,
 						},
@@ -382,7 +379,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        time.Millisecond * 200,
 							RefreshTtl: true,
 						},

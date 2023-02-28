@@ -21,5 +21,5 @@ type DictionarySetFieldRequest struct {
 	DictionaryName string
 	Field          Value
 	Value          Value
-	CollectionTTL  utils.CollectionTTL
+	CollectionTtl  utils.CollectionTtl
 }
