@@ -270,10 +270,10 @@ func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsR
 
 func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error) {
 	newRequest := &SetAddElementsRequest{
-		CacheName:     r.CacheName,
-		SetName:       r.SetName,
-		Elements:      []Value{r.Element},
-		CollectionTtl: r.CollectionTtl,
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Elements:  []Value{r.Element},
+		Ttl:       r.Ttl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
@@ -377,7 +377,7 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
 		Elements:       elements,
-		CollectionTtl:  r.CollectionTtl,
+		Ttl:            r.Ttl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
