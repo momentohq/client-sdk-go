@@ -123,7 +123,7 @@ func main() {
 
 ### Error Handling
 
-The preferred way of interpreting the return values from `SimpleCacheClient` methods is using a `switch` statement to match and handle the specific response type. 
+The preferred way of interpreting the return values from `CacheClient` methods is using a `switch` statement to match and handle the specific response type. 
 Here's a quick example:
 
 ```go

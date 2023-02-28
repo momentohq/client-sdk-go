@@ -2,36 +2,36 @@ package utils
 
 import "time"
 
-type CollectionTTL struct {
+type CollectionTtl struct {
 	Ttl        time.Duration
 	RefreshTtl bool
 }
 
-func FromCacheTtl() CollectionTTL {
-	return CollectionTTL{RefreshTtl: true}
+func FromCacheTtl() CollectionTtl {
+	return CollectionTtl{RefreshTtl: true}
 }
 
-func Of(ttl time.Duration) CollectionTTL {
-	return CollectionTTL{Ttl: ttl}
+func Of(ttl time.Duration) CollectionTtl {
+	return CollectionTtl{Ttl: ttl}
 }
 
-func RefreshTtlIfProvided(ttl ...time.Duration) CollectionTTL {
+func RefreshTtlIfProvided(ttl ...time.Duration) CollectionTtl {
 	if len(ttl) > 0 {
-		return CollectionTTL{Ttl: ttl[0], RefreshTtl: true}
+		return CollectionTtl{Ttl: ttl[0], RefreshTtl: true}
 	}
-	return CollectionTTL{RefreshTtl: false}
+	return CollectionTtl{RefreshTtl: false}
 }
 
-func WithRefreshTtlOnUpdates(currentCollectionTtl CollectionTTL) CollectionTTL {
-	return CollectionTTL{
-		Ttl:        currentCollectionTtl.Ttl,
+func WithRefreshTtlOnUpdates(currentTtl CollectionTtl) CollectionTtl {
+	return CollectionTtl{
+		Ttl:        currentTtl.Ttl,
 		RefreshTtl: true,
 	}
 }
 
-func WithNoRefreshTtlOnUpdates(currentCollectionTtl CollectionTTL) CollectionTTL {
-	return CollectionTTL{
-		Ttl:        currentCollectionTtl.Ttl,
+func WithNoRefreshTtlOnUpdates(currentTtl CollectionTtl) CollectionTtl {
+	return CollectionTtl{
+		Ttl:        currentTtl.Ttl,
 		RefreshTtl: false,
 	}
 }

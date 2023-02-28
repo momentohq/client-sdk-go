@@ -4,15 +4,15 @@ import (
 	"errors"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("SimpleCacheClient", func() {
+var _ = Describe("CacheClient", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {
@@ -21,7 +21,7 @@ var _ = Describe("SimpleCacheClient", func() {
 
 	It(`errors on an invalid TTL`, func() {
 		sharedContext.ClientProps.DefaultTTL = 0 * time.Second
-		client, err := NewSimpleCacheClient(sharedContext.ClientProps)
+		client, err := NewCacheClient(sharedContext.ClientProps)
 
 		Expect(client).To(BeNil())
 		Expect(err).NotTo(BeNil())
@@ -35,7 +35,7 @@ var _ = Describe("SimpleCacheClient", func() {
 		badRequestTimeout := 0 * time.Second
 		sharedContext.ClientProps.Configuration = config.LatestLaptopConfig().WithClientTimeout(badRequestTimeout)
 		Expect(
-			NewSimpleCacheClient(sharedContext.ClientProps),
+			NewCacheClient(sharedContext.ClientProps),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 })

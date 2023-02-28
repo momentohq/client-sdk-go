@@ -1,4 +1,4 @@
-// Package momento represents API SimpleCacheClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
+// Package momento represents API CacheClient interface accessors including control/data operations, errors, operation requests and responses for the SDK.
 package momento
 
 import (
@@ -13,7 +13,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/services"
 )
 
-type SimpleCacheClient interface {
+type CacheClient interface {
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
 	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
@@ -68,14 +68,14 @@ type defaultScsClient struct {
 	pubSubClient       *pubSubClient
 }
 
-type SimpleCacheClientProps struct {
+type CacheClientProps struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
 	DefaultTTL         time.Duration
 }
 
-// NewSimpleCacheClient returns a new SimpleCacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewSimpleCacheClient(props *SimpleCacheClientProps) (SimpleCacheClient, error) {
+// NewCacheClient returns a new CacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
+func NewCacheClient(props *CacheClientProps) (CacheClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
@@ -273,7 +273,7 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 		CacheName:     r.CacheName,
 		SetName:       r.SetName,
 		Elements:      []Value{r.Element},
-		CollectionTTL: r.CollectionTTL,
+		CollectionTtl: r.CollectionTtl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
@@ -371,13 +371,13 @@ func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValu
 }
 
 func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
-	items := make(map[string]Value)
-	items[string(r.Field.asBytes())] = r.Value
+	elements := make(map[string]Value)
+	elements[string(r.Field.asBytes())] = r.Value
 	newRequest := &DictionarySetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
-		Items:          items,
-		CollectionTTL:  r.CollectionTTL,
+		Elements:       elements,
+		CollectionTtl:  r.CollectionTtl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
@@ -416,7 +416,7 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 		case *DictionaryGetFieldHit:
 			return &DictionaryGetFieldHit{
 				field: rtype.fields[0],
-				body:  rtype.items[0].CacheBody,
+				body:  rtype.elements[0].CacheBody,
 			}, nil
 		case *DictionaryGetFieldMiss:
 			return &DictionaryGetFieldMiss{}, nil

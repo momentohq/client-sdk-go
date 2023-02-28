@@ -11,8 +11,8 @@ import (
 )
 
 type SharedContext struct {
-	ClientProps        *momento.SimpleCacheClientProps
-	Client             momento.SimpleCacheClient
+	ClientProps        *momento.CacheClientProps
+	Client             momento.CacheClient
 	CacheName          string
 	CollectionName     string
 	Ctx                context.Context
@@ -30,14 +30,14 @@ func NewSharedContext() SharedContext {
 	shared.Configuration = config.LatestLaptopConfig()
 	shared.DefaultTTL = 3 * time.Second
 
-	shared.ClientProps = &momento.SimpleCacheClientProps{
+	shared.ClientProps = &momento.CacheClientProps{
 		CredentialProvider: shared.CredentialProvider,
 		Configuration:      shared.Configuration,
 		DefaultTTL:         shared.DefaultTTL,
 	}
 
 	var err error
-	client, err := momento.NewSimpleCacheClient(shared.ClientProps)
+	client, err := momento.NewCacheClient(shared.ClientProps)
 	if err != nil {
 		panic(err)
 	}
