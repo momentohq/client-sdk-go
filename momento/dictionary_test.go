@@ -4,13 +4,13 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	"github.com/momentohq/client-sdk-go/utils"
+
+	"github.com/google/uuid"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Dictionary methods", func() {
@@ -80,7 +80,7 @@ var _ = Describe("Dictionary methods", func() {
 					DictionaryName: dictionaryName,
 					Field:          String("hi"),
 					Value:          String("hi"),
-					CollectionTTL:  utils.CollectionTTL{},
+					CollectionTtl:  utils.CollectionTtl{},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
@@ -88,8 +88,8 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      cacheName,
 					DictionaryName: dictionaryName,
-					Items:          nil,
-					CollectionTTL:  utils.CollectionTTL{},
+					Elements:       nil,
+					CollectionTtl:  utils.CollectionTtl{},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
@@ -141,12 +141,12 @@ var _ = Describe("Dictionary methods", func() {
 	})
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
-		func(items map[string]Value, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
+		func(elements map[string]Value, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Items:          items,
+					Elements:       elements,
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			fetchResp, err := sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
@@ -188,7 +188,7 @@ var _ = Describe("Dictionary methods", func() {
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
-				Items:          map[string]Value{"myField": String("myValue"), "": String("myOtherValue")},
+				Elements:       map[string]Value{"myField": String("myValue"), "": String("myOtherValue")},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
@@ -275,7 +275,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
@@ -403,7 +403,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
@@ -440,7 +440,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Items: map[string]Value{
+					Elements: map[string]Value{
 						"myField1": String("myValue1"),
 						"myField2": Bytes("myValue2"),
 						"myField3": String("myValue3"),
@@ -556,7 +556,7 @@ var _ = Describe("Dictionary methods", func() {
 					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
-						Items:          map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+						Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 					}),
 				).Error().To(BeNil())
 
@@ -588,7 +588,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Items:          map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 				}),
 			).Error().To(BeNil())
 		})
@@ -603,7 +603,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("foo"),
 						Value:          String("bar"),
-						CollectionTTL:  utils.CollectionTTL{},
+						CollectionTtl:  utils.CollectionTtl{},
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
@@ -628,7 +628,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: false,
 						},
@@ -652,7 +652,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						CollectionTTL: utils.CollectionTTL{
+						CollectionTtl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: true,
 						},

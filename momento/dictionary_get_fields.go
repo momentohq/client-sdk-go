@@ -13,7 +13,7 @@ type DictionaryGetFieldsResponse interface {
 }
 
 type DictionaryGetFieldsHit struct {
-	items     []*pb.XDictionaryGetResponse_XDictionaryGetResponsePart
+	elements  []*pb.XDictionaryGetResponse_XDictionaryGetResponsePart
 	fields    [][]byte
 	responses []DictionaryGetFieldResponse
 }
@@ -26,9 +26,9 @@ func (resp DictionaryGetFieldsHit) ValueMap() map[string]string {
 
 func (resp DictionaryGetFieldsHit) ValueMapStringString() map[string]string {
 	ret := make(map[string]string)
-	for idx, item := range resp.items {
-		if item.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx])] = string(item.CacheBody)
+	for idx, element := range resp.elements {
+		if element.Result == pb.ECacheResult_Hit {
+			ret[string(resp.fields[idx])] = string(element.CacheBody)
 		}
 	}
 	return ret
@@ -36,9 +36,9 @@ func (resp DictionaryGetFieldsHit) ValueMapStringString() map[string]string {
 
 func (resp DictionaryGetFieldsHit) ValueMapStringBytes() map[string][]byte {
 	ret := make(map[string][]byte)
-	for idx, item := range resp.items {
-		if item.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx])] = item.CacheBody
+	for idx, element := range resp.elements {
+		if element.Result == pb.ECacheResult_Hit {
+			ret[string(resp.fields[idx])] = element.CacheBody
 		}
 	}
 	return ret
@@ -117,7 +117,7 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 			}
 			fields = append(fields, field)
 		}
-		r.response = &DictionaryGetFieldsHit{fields: fields, items: rtype.Found.Items, responses: responses}
+		r.response = &DictionaryGetFieldsHit{fields: fields, elements: rtype.Found.Items, responses: responses}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}

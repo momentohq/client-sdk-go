@@ -13,8 +13,8 @@ type DictionaryFetchResponse interface {
 }
 
 type DictionaryFetchHit struct {
-	items             map[string][]byte
-	itemsStringString map[string]string
+	elementsStringByte   map[string][]byte
+	elementsStringString map[string]string
 }
 
 func (DictionaryFetchHit) isDictionaryFetchResponse() {}
@@ -24,17 +24,17 @@ func (resp DictionaryFetchHit) ValueMap() map[string]string {
 }
 
 func (resp DictionaryFetchHit) ValueMapStringString() map[string]string {
-	if resp.itemsStringString == nil {
-		resp.itemsStringString = make(map[string]string)
-		for k, v := range resp.items {
-			resp.itemsStringString[k] = string(v)
+	if resp.elementsStringString == nil {
+		resp.elementsStringString = make(map[string]string)
+		for k, v := range resp.elementsStringByte {
+			resp.elementsStringString[k] = string(v)
 		}
 	}
-	return resp.itemsStringString
+	return resp.elementsStringString
 }
 
 func (resp DictionaryFetchHit) ValueMapStringByte() map[string][]byte {
-	return resp.items
+	return resp.elementsStringByte
 }
 
 type DictionaryFetchMiss struct{}
@@ -80,11 +80,11 @@ func (r *DictionaryFetchRequest) makeGrpcRequest(metadata context.Context, clien
 func (r *DictionaryFetchRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryFetchResponse_Found:
-		items := make(map[string][]byte)
+		elements := make(map[string][]byte)
 		for _, i := range rtype.Found.Items {
-			items[(string(i.Field))] = i.Value
+			elements[(string(i.Field))] = i.Value
 		}
-		r.response = &DictionaryFetchHit{items: items}
+		r.response = &DictionaryFetchHit{elementsStringByte: elements}
 	case *pb.XDictionaryFetchResponse_Missing:
 		r.response = &DictionaryFetchMiss{}
 	default:

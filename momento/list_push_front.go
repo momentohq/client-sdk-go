@@ -32,7 +32,7 @@ type ListPushFrontRequest struct {
 	ListName           string
 	Value              Value
 	TruncateBackToSize uint32
-	CollectionTTL      utils.CollectionTTL
+	CollectionTtl      utils.CollectionTtl
 
 	grpcRequest  *pb.XListPushFrontRequest
 	grpcResponse *pb.XListPushFrontResponse
@@ -43,7 +43,7 @@ func (r *ListPushFrontRequest) cacheName() string { return r.CacheName }
 
 func (r *ListPushFrontRequest) value() Value { return r.Value }
 
-func (r *ListPushFrontRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *ListPushFrontRequest) ttl() time.Duration { return r.CollectionTtl.Ttl }
 
 func (r *ListPushFrontRequest) requestName() string { return "ListPushFront" }
 
@@ -68,7 +68,7 @@ func (r *ListPushFrontRequest) initGrpcRequest(client scsDataClient) error {
 		ListName:           []byte(r.ListName),
 		Value:              value,
 		TtlMilliseconds:    ttl,
-		RefreshTtl:         r.CollectionTTL.RefreshTtl,
+		RefreshTtl:         r.CollectionTtl.RefreshTtl,
 		TruncateBackToSize: r.TruncateBackToSize,
 	}
 

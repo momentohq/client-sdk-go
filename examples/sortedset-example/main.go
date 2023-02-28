@@ -69,7 +69,7 @@ func main() {
 	displayElements(setName, top5Rsp)
 }
 
-func getClient() momento.SimpleCacheClient {
+func getClient() momento.CacheClient {
 	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
@@ -85,7 +85,7 @@ func getClient() momento.SimpleCacheClient {
 	return client
 }
 
-func setupCache(client momento.SimpleCacheClient, ctx context.Context) {
+func setupCache(client momento.CacheClient, ctx context.Context) {
 	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: "test-cache",
 	})

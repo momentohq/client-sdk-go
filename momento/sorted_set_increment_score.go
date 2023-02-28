@@ -29,7 +29,7 @@ type SortedSetIncrementScoreRequest struct {
 	SetName       string
 	ElementName   Value
 	Amount        float64
-	CollectionTTL utils.CollectionTTL
+	CollectionTtl utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetIncrementRequest
 	grpcResponse *pb.XSortedSetIncrementResponse
@@ -40,7 +40,7 @@ func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName
 
 func (r *SortedSetIncrementScoreRequest) requestName() string { return "Sorted set increment" }
 
-func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.CollectionTTL.Ttl }
+func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.CollectionTtl.Ttl }
 
 func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
@@ -67,7 +67,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		ElementName:     r.ElementName.asBytes(),
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMillis,
-		RefreshTtl:      r.CollectionTTL.RefreshTtl,
+		RefreshTtl:      r.CollectionTtl.RefreshTtl,
 	}
 	return nil
 }
