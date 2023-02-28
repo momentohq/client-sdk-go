@@ -13,9 +13,3 @@ type TopicPublishResponse interface {
 type TopicPublishSuccess struct{}
 
 func (TopicPublishSuccess) isTopicPublishResponse() {}
-
-type TopicValue = Value
-
-type TopicValueBytes = Bytes
-
-type TopicValueString = String

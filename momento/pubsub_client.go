@@ -51,7 +51,7 @@ func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSu
 }
 func (client *pubSubClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) error {
 	switch value := request.Value.(type) {
-	case TopicValueString:
+	case String:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -62,7 +62,7 @@ func (client *pubSubClient) TopicPublish(ctx context.Context, request *TopicPubl
 			},
 		})
 		return err
-	case TopicValueBytes:
+	case Bytes:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,

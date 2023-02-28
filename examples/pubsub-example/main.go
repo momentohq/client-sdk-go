@@ -79,7 +79,7 @@ func publishMessages(client momento.CacheClient, ctx context.Context) {
 		_, err := client.TopicPublish(ctx, &momento.TopicPublishRequest{
 			CacheName: cacheName,
 			TopicName: topicName,
-			Value:     momento.TopicValueString(fmt.Sprintf("hello %d", i)),
+			Value:     momento.String(fmt.Sprintf("hello %d", i)),
 		})
 		if err != nil {
 			panic(err)
