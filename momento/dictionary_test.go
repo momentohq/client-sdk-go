@@ -206,7 +206,7 @@ var _ = Describe("Dictionary methods", func() {
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
-				Items:          map[string]Value{"myField": String("myValue"), "myOtherField": nil},
+				Elements:       map[string]Value{"myField": String("myValue"), "myOtherField": nil},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})

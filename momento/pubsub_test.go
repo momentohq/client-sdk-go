@@ -109,7 +109,7 @@ var _ = Describe("Pubsub", func() {
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
-	
+
 	Describe(`TopicSubscribe`, func() {
 		It(`Does not error on a non-existent topic`, func() {
 			Expect(
