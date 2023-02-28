@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -22,6 +23,31 @@ var _ = Describe("Pubsub", func() {
 			sharedContext.Close()
 		})
 	})
+
+	DescribeTable(`Validates the names`,
+		func(cacheName string, collectionName string, expectedError string) {
+			ctx := sharedContext.Ctx
+			client := sharedContext.Client
+			value := &TopicValueString{Text: "foo"}
+
+			Expect(
+				client.TopicSubscribe(ctx, &TopicSubscribeRequest{
+					CacheName: cacheName, TopicName: collectionName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
+				client.TopicPublish(ctx, &TopicPublishRequest{
+					CacheName: cacheName, TopicName: collectionName, Value: value,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+		},
+		Entry("Empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Blank cache name", "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty collection name", sharedContext.CacheName, "", InvalidArgumentError),
+		Entry("Blank collection name", sharedContext.CacheName, "  ", InvalidArgumentError),
+		Entry("Non-existent cache", uuid.NewString(), uuid.NewString(), NotFoundError),
+	)
 
 	It(`Publishes and receives`, func() {
 		publishedValues := []TopicValue{
@@ -72,5 +98,16 @@ var _ = Describe("Pubsub", func() {
 		cancelFunction()
 
 		Expect(receivedValues).To(Equal(publishedValues))
+	})
+
+	Describe(`TopicSubscribe`, func() {
+		It(`Does not error on a non-existent topic`, func() {
+			Expect(
+				sharedContext.Client.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+					CacheName: sharedContext.CacheName,
+					TopicName: sharedContext.CollectionName,
+				}),
+			).Error().NotTo(HaveOccurred())
+		})
 	})
 })
