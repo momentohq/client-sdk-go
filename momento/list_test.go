@@ -29,15 +29,13 @@ func getValueAndExpectedValueLists(numItems int) ([]Value, []string) {
 
 func populateList(sharedContext SharedContext, numItems int) []string {
 	values, expected := getValueAndExpectedValueLists(numItems)
-	for _, value := range values {
-		Expect(
-			sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
-				CacheName: sharedContext.CacheName,
-				ListName:  sharedContext.CollectionName,
-				Value:     value,
-			}),
-		).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
-	}
+	Expect(
+		sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
+			CacheName: sharedContext.CacheName,
+			ListName:  sharedContext.CollectionName,
+			Values:    values,
+		}),
+	).To(BeAssignableToTypeOf(&ListConcatenateFrontSuccess{}))
 	return expected
 }
 
@@ -68,11 +66,80 @@ var _ = Describe("List methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
+			Expect(
+				sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+					Values:    []Value{String("hi")},
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
+				sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+					Values:    []Value{String("hi")},
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
+				sharedContext.Client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
+				sharedContext.Client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
+				sharedContext.Client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+					Value:     String("hi"),
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
+				sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+					Value:     String("hi"),
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
+				sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+					CacheName: cacheName,
+					ListName:  listName,
+					Value:     String("hi"),
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
 		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), NotFoundError),
 		Entry("empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("empty list name", sharedContext.CacheName, "", InvalidArgumentError),
 	)
+
+	It("returns the correct list length", func() {
+		numItems := 33
+		populateList(sharedContext, numItems)
+		lengthResp, err := sharedContext.Client.ListLength(sharedContext.Ctx, &ListLengthRequest{
+			CacheName: sharedContext.CacheName,
+			ListName:  sharedContext.CollectionName,
+		})
+		Expect(err).To(BeNil())
+		switch result := lengthResp.(type) {
+		case *ListLengthHit:
+			Expect(result.Length()).To(Equal(uint32(numItems)))
+		default:
+			Fail("expected a hit for list length but got a miss")
+		}
+	})
 
 	Describe("list push", func() {
 
