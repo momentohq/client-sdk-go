@@ -17,8 +17,8 @@ func (SetAddElementSuccess) isSetAddElementResponse() {}
 // SetAddElementRequest
 
 type SetAddElementRequest struct {
-	CacheName     string
-	SetName       string
-	Element       Value
-	CollectionTtl utils.CollectionTtl
+	CacheName string
+	SetName   string
+	Element   Value
+	Ttl       utils.CollectionTtl
 }

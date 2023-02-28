@@ -291,7 +291,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTtl: utils.CollectionTtl{
+						Ttl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + time.Second*60,
 							RefreshTtl: true,
 						},
@@ -321,7 +321,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTtl: utils.CollectionTtl{
+						Ttl: utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTTL + 1*time.Second,
 							RefreshTtl: false,
 						},
@@ -351,7 +351,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTtl: utils.CollectionTtl{
+						Ttl: utils.CollectionTtl{
 							Ttl:        time.Millisecond * 20,
 							RefreshTtl: false,
 						},
@@ -381,7 +381,7 @@ var _ = Describe("Set methods", func() {
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
-						CollectionTtl: utils.CollectionTtl{
+						Ttl: utils.CollectionTtl{
 							Ttl:        time.Millisecond * 200,
 							RefreshTtl: true,
 						},

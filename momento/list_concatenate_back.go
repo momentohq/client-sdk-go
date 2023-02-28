@@ -31,7 +31,7 @@ type ListConcatenateBackRequest struct {
 	ListName            string
 	Values              []Value
 	TruncateFrontToSize uint32
-	CollectionTtl       utils.CollectionTtl
+	Ttl                 utils.CollectionTtl
 
 	grpcRequest  *pb.XListConcatenateBackRequest
 	grpcResponse *pb.XListConcatenateBackResponse
@@ -42,7 +42,7 @@ func (r *ListConcatenateBackRequest) cacheName() string { return r.CacheName }
 
 func (r *ListConcatenateBackRequest) values() []Value { return r.Values }
 
-func (r *ListConcatenateBackRequest) ttl() time.Duration { return r.CollectionTtl.Ttl }
+func (r *ListConcatenateBackRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
 func (r *ListConcatenateBackRequest) requestName() string { return "ListConcatenateBack" }
 
@@ -67,7 +67,7 @@ func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) error
 		ListName:            []byte(r.ListName),
 		Values:              values,
 		TtlMilliseconds:     ttl,
-		RefreshTtl:          r.CollectionTtl.RefreshTtl,
+		RefreshTtl:          r.Ttl.RefreshTtl,
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 
