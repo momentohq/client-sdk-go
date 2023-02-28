@@ -4,10 +4,13 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/uuid"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	"github.com/momentohq/client-sdk-go/utils"
+
+	"github.com/google/uuid"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Dictionary methods", func() {

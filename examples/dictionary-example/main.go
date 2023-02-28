@@ -103,11 +103,11 @@ func setField(field momento.Value, value momento.Value) {
 	}
 }
 
-func setItems(items map[string]momento.Value) {
+func setElements(elements map[string]momento.Value) {
 	resp, err := client.DictionarySetFields(ctx, &momento.DictionarySetFieldsRequest{
 		CacheName:      cacheName,
 		DictionaryName: dictionaryName,
-		Items:          items,
+		Elements:       elements,
 	})
 	if err != nil {
 		panic(err)
@@ -216,13 +216,13 @@ func main() {
 	setField(momento.String(field), momento.String(value))
 	printDict()
 
-	items := make(map[string]momento.Value)
+	elements := make(map[string]momento.Value)
 	for i := 1; i < 11; i++ {
 		numField := fmt.Sprintf("%s %d", field, i)
 		numValue := fmt.Sprintf("%s %d", value, i)
-		items[numField] = momento.String(numValue)
+		elements[numField] = momento.String(numValue)
 	}
-	setItems(items)
+	setElements(elements)
 	printDict()
 
 	printField(momento.String("my-field 6"))
