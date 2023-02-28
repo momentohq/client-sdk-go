@@ -44,12 +44,7 @@ func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.(type) {
-		case *momento.TopicValueString:
-			fmt.Printf("received message: '%s'\n", msg.Text)
-		case *momento.TopicValueBytes:
-			fmt.Printf("received message: '%s'\n", msg.Bytes)
-		}
+		fmt.Printf("received message: '%v'\n", item)
 	}
 }
 
@@ -84,9 +79,7 @@ func publishMessages(client momento.CacheClient, ctx context.Context) {
 		_, err := client.TopicPublish(ctx, &momento.TopicPublishRequest{
 			CacheName: cacheName,
 			TopicName: topicName,
-			Value: &momento.TopicValueString{
-				Text: fmt.Sprintf("hello %d", i),
-			},
+			Value:     momento.TopicValueString(fmt.Sprintf("hello %d", i)),
 		})
 		if err != nil {
 			panic(err)

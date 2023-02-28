@@ -14,18 +14,8 @@ type TopicPublishSuccess struct{}
 
 func (TopicPublishSuccess) isTopicPublishResponse() {}
 
-type TopicValue interface {
-	isTopicValue()
-}
+type TopicValue = Value
 
-type TopicValueBytes struct {
-	Bytes []byte
-}
+type TopicValueBytes = Bytes
 
-func (TopicValueBytes) isTopicValue() {}
-
-type TopicValueString struct {
-	Text string
-}
-
-func (TopicValueString) isTopicValue() {}
+type TopicValueString = String
