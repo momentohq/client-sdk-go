@@ -114,8 +114,22 @@ func prepareField(r hasField) ([]byte, error) {
 }
 
 func prepareFields(r hasFields) ([][]byte, error) {
+	if r.fields() == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil,
+			),
+		)
+	}
 	var fields [][]byte
 	for _, valueField := range r.fields() {
+		if valueField == nil {
+			return nil, convertMomentoSvcErrorToCustomerError(
+				momentoerrors.NewMomentoSvcErr(
+					momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil,
+				),
+			)
+		}
 		field := valueField.asBytes()
 		if err := validateNotEmpty(field, "field"); err != nil {
 			return nil, err

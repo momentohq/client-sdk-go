@@ -414,7 +414,7 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
-				momentoerrors.InvalidArgumentError, "Field cannot be nil", nil,
+				momentoerrors.InvalidArgumentError, "field cannot be nil", nil,
 			),
 		)
 	}
@@ -490,6 +490,13 @@ func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *Dictionary
 }
 
 func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error) {
+	if r.Field == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "field cannot be nil", nil,
+			),
+		)
+	}
 	newRequest := &DictionaryRemoveFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
