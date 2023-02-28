@@ -96,6 +96,8 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), NotFoundError),
 		Entry("empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("empty dictionary name", sharedContext.CacheName, "", InvalidArgumentError),
+		Entry("nil dictionary name", sharedContext.CacheName, nil, InvalidArgumentError),
+		Entry("nil cache name", nil, sharedContext.CollectionName, InvalidArgumentError),
 	)
 
 	DescribeTable("add string and bytes value for single field happy path",
@@ -129,16 +131,22 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("using bytes value and field", Bytes("myField"), Bytes("myValue"), "myField", []byte("myField"), "myValue", []byte("myValue")),
 	)
 
-	It("returns an error for set field when field is empty", func() {
-		Expect(
-			sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
-				CacheName:      sharedContext.CacheName,
-				DictionaryName: sharedContext.CollectionName,
-				Field:          String(""),
-				Value:          String("myValue"),
-			}),
-		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-	})
+	DescribeTable("try using empty and nil fields and values for set",
+		func(field Value, value Value) {
+			Expect(
+				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+					CacheName:      sharedContext.CacheName,
+					DictionaryName: sharedContext.CollectionName,
+					Field:          field,
+					Value:          value,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		},
+		Entry("empty field", String(""), String("value")),
+		Entry("nil field", nil, String("value")),
+		Entry("nil value", String("field"), nil),
+		Entry("both nil", nil, nil),
+	)
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
 		func(elements map[string]Value, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {

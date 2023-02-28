@@ -411,6 +411,13 @@ func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValu
 }
 
 func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
+	if r.Field == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "Field cannot be nil", nil,
+			),
+		)
+	}
 	elements := make(map[string]Value)
 	elements[string(r.Field.asBytes())] = r.Value
 	newRequest := &DictionarySetFieldsRequest{

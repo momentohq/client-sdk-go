@@ -92,6 +92,27 @@ var _ = Describe("Scalar methods", func() {
 		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
 	})
 
+	It(`errors when the key is nil`, func() {
+		Expect(
+			sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		Expect(
+			sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		Expect(
+			sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
+
 	DescribeTable(`invalid cache names and keys`,
 		func(cacheName string, key Key, value Key) {
 			getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -192,6 +213,17 @@ var _ = Describe("Scalar methods", func() {
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
+		})
+
+		It("returns an error for a nil value", func() {
+			key := String("key")
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
 })
