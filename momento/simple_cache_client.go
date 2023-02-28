@@ -3,6 +3,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/internal/services"
 )
 
@@ -190,6 +192,14 @@ func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteR
 }
 
 func (c defaultScsClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+
+	if _, err := prepareName(request.TopicName, "Topic name"); err != nil {
+		return nil, err
+	}
+
 	clientStream, err := c.pubSubClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
@@ -197,15 +207,45 @@ func (c defaultScsClient) TopicSubscribe(ctx context.Context, request *TopicSubs
 	if err != nil {
 		return nil, err
 	}
+
+	// Ping the stream to provide a nice error message if the cache does not exist.
+	rawMsg := new(pb.XSubscriptionItem)
+	err = clientStream.RecvMsg(rawMsg)
+	if err != nil {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.NotFoundError,
+			fmt.Sprintf("Did not get a heartbeat from topic %v in cache %v", request.TopicName, request.CacheName),
+			err,
+		)
+	}
+	switch rawMsg.Kind.(type) {
+	case *pb.XSubscriptionItem_Heartbeat:
+		// The first message to a new subscription will always be a heartbeat.
+	default:
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InternalServerError,
+			fmt.Sprintf("expected a heartbeat message, got: %T", rawMsg.Kind),
+			err,
+		)
+	}
+
 	return &topicSubscription{
 		grpcClient:         clientStream,
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
-	}, err
+	}, nil
 }
 
 func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+
+	if _, err := prepareName(request.TopicName, "Topic name"); err != nil {
+		return nil, err
+	}
+
 	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
@@ -213,7 +253,7 @@ func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublis
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
 	return &TopicPublishSuccess{}, err
