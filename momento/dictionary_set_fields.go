@@ -48,13 +48,13 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 	}
 
 	var elements map[string][]byte
-	if elements, err = prepareItems(r); err != nil {
+	if elements, err = prepareElements(r); err != nil {
 		return err
 	}
 
-	var pbItems []*pb.XDictionaryFieldValuePair
+	var pbElements []*pb.XDictionaryFieldValuePair
 	for k, v := range elements {
-		pbItems = append(pbItems, &pb.XDictionaryFieldValuePair{
+		pbElements = append(pbElements, &pb.XDictionaryFieldValuePair{
 			Field: []byte(k),
 			Value: v,
 		})
@@ -67,7 +67,7 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 
 	r.grpcRequest = &pb.XDictionarySetRequest{
 		DictionaryName:  []byte(r.DictionaryName),
-		Items:           pbItems,
+		Items:           pbElements,
 		TtlMilliseconds: ttl,
 		RefreshTtl:      r.CollectionTtl.RefreshTtl,
 	}

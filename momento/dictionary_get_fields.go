@@ -26,9 +26,9 @@ func (resp DictionaryGetFieldsHit) ValueMap() map[string]string {
 
 func (resp DictionaryGetFieldsHit) ValueMapStringString() map[string]string {
 	ret := make(map[string]string)
-	for idx, item := range resp.elements {
-		if item.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx])] = string(item.CacheBody)
+	for idx, element := range resp.elements {
+		if element.Result == pb.ECacheResult_Hit {
+			ret[string(resp.fields[idx])] = string(element.CacheBody)
 		}
 	}
 	return ret
@@ -36,9 +36,9 @@ func (resp DictionaryGetFieldsHit) ValueMapStringString() map[string]string {
 
 func (resp DictionaryGetFieldsHit) ValueMapStringBytes() map[string][]byte {
 	ret := make(map[string][]byte)
-	for idx, item := range resp.elements {
-		if item.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx])] = item.CacheBody
+	for idx, element := range resp.elements {
+		if element.Result == pb.ECacheResult_Hit {
+			ret[string(resp.fields[idx])] = element.CacheBody
 		}
 	}
 	return ret

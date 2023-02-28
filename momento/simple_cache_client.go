@@ -68,14 +68,14 @@ type defaultScsClient struct {
 	pubSubClient       *pubSubClient
 }
 
-type SimpleCacheClientProps struct {
+type CacheClientProps struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
 	DefaultTTL         time.Duration
 }
 
-// NewSimpleCacheClient returns a new CacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewSimpleCacheClient(props *SimpleCacheClientProps) (CacheClient, error) {
+// NewCacheClient returns a new CacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
+func NewCacheClient(props *CacheClientProps) (CacheClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}

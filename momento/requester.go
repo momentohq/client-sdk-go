@@ -131,7 +131,7 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareItems(r hasElements) (map[string][]byte, error) {
+func prepareElements(r hasElements) (map[string][]byte, error) {
 	retMap := make(map[string][]byte)
 	for k, v := range r.elements() {
 		if v == nil {

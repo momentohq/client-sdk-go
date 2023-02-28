@@ -13,8 +13,8 @@ type DictionaryFetchResponse interface {
 }
 
 type DictionaryFetchHit struct {
-	elements          map[string][]byte
-	itemsStringString map[string]string
+	elementsStringByte   map[string][]byte
+	elementsStringString map[string]string
 }
 
 func (DictionaryFetchHit) isDictionaryFetchResponse() {}
@@ -24,17 +24,17 @@ func (resp DictionaryFetchHit) ValueMap() map[string]string {
 }
 
 func (resp DictionaryFetchHit) ValueMapStringString() map[string]string {
-	if resp.itemsStringString == nil {
-		resp.itemsStringString = make(map[string]string)
-		for k, v := range resp.elements {
-			resp.itemsStringString[k] = string(v)
+	if resp.elementsStringString == nil {
+		resp.elementsStringString = make(map[string]string)
+		for k, v := range resp.elementsStringByte {
+			resp.elementsStringString[k] = string(v)
 		}
 	}
-	return resp.itemsStringString
+	return resp.elementsStringString
 }
 
 func (resp DictionaryFetchHit) ValueMapStringByte() map[string][]byte {
-	return resp.elements
+	return resp.elementsStringByte
 }
 
 type DictionaryFetchMiss struct{}
@@ -84,7 +84,7 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse() error {
 		for _, i := range rtype.Found.Items {
 			elements[(string(i.Field))] = i.Value
 		}
-		r.response = &DictionaryFetchHit{elements: elements}
+		r.response = &DictionaryFetchHit{elementsStringByte: elements}
 	case *pb.XDictionaryFetchResponse_Missing:
 		r.response = &DictionaryFetchMiss{}
 	default:
