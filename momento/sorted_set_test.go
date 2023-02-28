@@ -89,7 +89,7 @@ var _ = Describe("SortedSet", func() {
 
 			Expect(
 				client.SortedSetRemove(ctx, &SortedSetRemoveRequest{
-					CacheName: cacheName, SetName: collectionName, ElementsToRemove: &RemoveSomeElements{elements},
+					CacheName: cacheName, SetName: collectionName, ElementsToRemove: &RemoveSomeElements{Elements: elements},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 		},
@@ -122,7 +122,7 @@ var _ = Describe("SortedSet", func() {
 
 			Expect(fetch()).To(Equal(expectedFetchHit))
 
-			time.Sleep(sharedContext.DefaultTTL)
+			time.Sleep(sharedContext.DefaultTtl)
 
 			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
 
@@ -138,7 +138,7 @@ var _ = Describe("SortedSet", func() {
 
 			Expect(fetch()).To(Equal(expectedFetchHit))
 
-			time.Sleep(sharedContext.DefaultTTL)
+			time.Sleep(sharedContext.DefaultTtl)
 
 			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
 
@@ -147,14 +147,14 @@ var _ = Describe("SortedSet", func() {
 			changer(
 				element,
 				&utils.CollectionTtl{
-					Ttl:        sharedContext.DefaultTTL + 1*time.Second,
+					Ttl:        sharedContext.DefaultTtl + 1*time.Second,
 					RefreshTtl: true,
 				},
 			)
 
 			Expect(fetch()).To(Equal(expectedFetchHit))
 
-			time.Sleep(sharedContext.DefaultTTL)
+			time.Sleep(sharedContext.DefaultTtl)
 
 			Expect(fetch()).To(Equal(expectedFetchHit))
 

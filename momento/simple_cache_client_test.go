@@ -20,8 +20,8 @@ var _ = Describe("CacheClient", func() {
 	})
 
 	It(`errors on an invalid TTL`, func() {
-		sharedContext.ClientProps.DefaultTTL = 0 * time.Second
-		client, err := NewCacheClient(sharedContext.ClientProps)
+		sharedContext.DefaultTtl = 0 * time.Second
+		client, err := NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl)
 
 		Expect(client).To(BeNil())
 		Expect(err).NotTo(BeNil())
@@ -33,9 +33,9 @@ var _ = Describe("CacheClient", func() {
 
 	It(`errors on invalid timeout`, func() {
 		badRequestTimeout := 0 * time.Second
-		sharedContext.ClientProps.Configuration = config.LatestLaptopConfig().WithClientTimeout(badRequestTimeout)
+		sharedContext.Configuration = config.LatestLaptopConfig().WithClientTimeout(badRequestTimeout)
 		Expect(
-			NewCacheClient(sharedContext.ClientProps),
+			NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 })

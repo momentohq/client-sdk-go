@@ -155,7 +155,7 @@ var _ = Describe("Scalar methods", func() {
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			time.Sleep(sharedContext.DefaultTTL / 2)
+			time.Sleep(sharedContext.DefaultTtl / 2)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -164,7 +164,7 @@ var _ = Describe("Scalar methods", func() {
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(sharedContext.DefaultTTL)
+			time.Sleep(sharedContext.DefaultTtl)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -183,11 +183,11 @@ var _ = Describe("Scalar methods", func() {
 					CacheName: sharedContext.CacheName,
 					Key:       key,
 					Value:     value,
-					TTL:       sharedContext.DefaultTTL * 2,
+					TTL:       sharedContext.DefaultTtl * 2,
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			time.Sleep(sharedContext.DefaultTTL / 2)
+			time.Sleep(sharedContext.DefaultTtl / 2)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -196,7 +196,7 @@ var _ = Describe("Scalar methods", func() {
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(sharedContext.DefaultTTL)
+			time.Sleep(sharedContext.DefaultTtl)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -205,7 +205,7 @@ var _ = Describe("Scalar methods", func() {
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(sharedContext.DefaultTTL)
+			time.Sleep(sharedContext.DefaultTtl)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{

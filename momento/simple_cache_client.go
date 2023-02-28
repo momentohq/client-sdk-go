@@ -73,11 +73,16 @@ type defaultScsClient struct {
 type CacheClientProps struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
-	DefaultTTL         time.Duration
+	DefaultTtl         time.Duration
 }
 
-// NewCacheClient returns a new CacheClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewCacheClient(props *CacheClientProps) (CacheClient, error) {
+// NewCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments.
+func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration) (CacheClient, error) {
+	props := CacheClientProps{
+		Configuration:      configuration,
+		CredentialProvider: credentialProvider,
+		DefaultTtl:         defaultTtl,
+	}
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
@@ -101,7 +106,7 @@ func NewCacheClient(props *CacheClientProps) (CacheClient, error) {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
-	if props.DefaultTTL == 0 {
+	if props.DefaultTtl == 0 {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
 				momentoerrors.InvalidArgumentError,
@@ -112,7 +117,7 @@ func NewCacheClient(props *CacheClientProps) (CacheClient, error) {
 	dataClient, err := newScsDataClient(&models.DataClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
-		DefaultTtl:         props.DefaultTTL,
+		DefaultTtl:         props.DefaultTtl,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))

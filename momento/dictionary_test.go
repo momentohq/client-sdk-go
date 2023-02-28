@@ -646,7 +646,7 @@ var _ = Describe("Dictionary methods", func() {
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 
-				time.Sleep(sharedContext.DefaultTTL)
+				time.Sleep(sharedContext.DefaultTtl)
 
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
@@ -675,7 +675,7 @@ var _ = Describe("Dictionary methods", func() {
 		When("collection TTL is empty", func() {
 
 			It("will have a false refreshTTL and fetch will miss after client default ttl", func() {
-				time.Sleep(sharedContext.DefaultTTL / 2)
+				time.Sleep(sharedContext.DefaultTtl / 2)
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
@@ -686,7 +686,7 @@ var _ = Describe("Dictionary methods", func() {
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
-				time.Sleep(sharedContext.DefaultTTL / 2)
+				time.Sleep(sharedContext.DefaultTtl / 2)
 
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
@@ -714,7 +714,7 @@ var _ = Describe("Dictionary methods", func() {
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
-				time.Sleep(sharedContext.DefaultTTL)
+				time.Sleep(sharedContext.DefaultTtl)
 
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
@@ -738,7 +738,7 @@ var _ = Describe("Dictionary methods", func() {
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
-				time.Sleep(sharedContext.DefaultTTL)
+				time.Sleep(sharedContext.DefaultTtl)
 
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
