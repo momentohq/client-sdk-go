@@ -47,9 +47,14 @@ func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
+	var elementName []byte
+	if elementName, err = prepareElementName(r.ElementName); err != nil {
+		return err
+	}
+
 	resp := &pb.XSortedSetGetRankRequest{
 		SetName:     []byte(r.SetName),
-		ElementName: r.ElementName.asBytes(),
+		ElementName: elementName,
 	}
 
 	r.grpcRequest = resp

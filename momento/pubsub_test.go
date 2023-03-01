@@ -64,7 +64,7 @@ var _ = Describe("Pubsub", func() {
 		}
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
-		receivedValues := []TopicValue{}
+		var receivedValues []TopicValue
 		ready := make(chan int, 1)
 		go func() {
 			ready <- 1
@@ -98,6 +98,16 @@ var _ = Describe("Pubsub", func() {
 		cancelFunction()
 
 		Expect(receivedValues).To(Equal(publishedValues))
+	})
+
+	It("returns an error when trying to publish a nil topic value", func() {
+		Expect(
+			sharedContext.Client.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: sharedContext.CollectionName,
+				Value:     nil,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
 	Describe(`TopicSubscribe`, func() {

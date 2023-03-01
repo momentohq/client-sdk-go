@@ -96,6 +96,8 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), NotFoundError),
 		Entry("empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("empty dictionary name", sharedContext.CacheName, "", InvalidArgumentError),
+		Entry("nil dictionary name", sharedContext.CacheName, nil, InvalidArgumentError),
+		Entry("nil cache name", nil, sharedContext.CollectionName, InvalidArgumentError),
 	)
 
 	DescribeTable("add string and bytes value for single field happy path",
@@ -129,16 +131,22 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("using bytes value and field", Bytes("myField"), Bytes("myValue"), "myField", []byte("myField"), "myValue", []byte("myValue")),
 	)
 
-	It("returns an error for set field when field is empty", func() {
-		Expect(
-			sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
-				CacheName:      sharedContext.CacheName,
-				DictionaryName: sharedContext.CollectionName,
-				Field:          String(""),
-				Value:          String("myValue"),
-			}),
-		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-	})
+	DescribeTable("try using empty and nil fields and values for set",
+		func(field Value, value Value) {
+			Expect(
+				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+					CacheName:      sharedContext.CacheName,
+					DictionaryName: sharedContext.CollectionName,
+					Field:          field,
+					Value:          value,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		},
+		Entry("empty field", String(""), String("value")),
+		Entry("nil field", nil, String("value")),
+		Entry("nil value", String("field"), nil),
+		Entry("both nil", nil, nil),
+	)
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
 		func(elements map[string]Value, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
@@ -189,6 +197,16 @@ var _ = Describe("Dictionary methods", func() {
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
 				Elements:       map[string]Value{"myField": String("myValue"), "": String("myOtherValue")},
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
+
+	It("returns an error if an item value is nil", func() {
+		Expect(
+			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+				CacheName:      sharedContext.CacheName,
+				DictionaryName: sharedContext.CollectionName,
+				Elements:       map[string]Value{"myField": String("myValue"), "myOtherField": nil},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
@@ -266,6 +284,17 @@ var _ = Describe("Dictionary methods", func() {
 				Fail("expected a hit for get field but got a miss")
 			}
 		})
+
+		It("returns an error when field is nil", func() {
+			Expect(
+				sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
+					CacheName:      sharedContext.CacheName,
+					DictionaryName: sharedContext.CollectionName,
+					Field:          nil,
+					Amount:         1,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
 	})
 
 	Describe("dictionary get", func() {
@@ -323,6 +352,16 @@ var _ = Describe("Dictionary methods", func() {
 				})
 				Expect(err).To(BeNil())
 				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldMiss{}))
+			})
+
+			It("returns an error for a nil field", func() {
+				Expect(
+					sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Field:          nil,
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
 		})
@@ -391,6 +430,16 @@ var _ = Describe("Dictionary methods", func() {
 					Expect(result.ValueMap()).To(Equal(map[string]string{"myField2": "myValue2"}))
 					Expect(len(result.Responses())).To(Equal(2))
 				}
+			})
+
+			It("returns an error for a nil field", func() {
+				Expect(
+					sharedContext.Client.DictionaryGetFields(sharedContext.Ctx, &DictionaryGetFieldsRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Fields:         []Value{String("myField"), nil},
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
 		})
@@ -496,6 +545,16 @@ var _ = Describe("Dictionary methods", func() {
 				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
 			})
 
+			It("returns an error when trying to remove a nil field", func() {
+				Expect(
+					sharedContext.Client.DictionaryRemoveField(sharedContext.Ctx, &DictionaryRemoveFieldRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Field:          nil,
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			})
+
 		})
 
 		When("removing multiple fields", func() {
@@ -542,6 +601,26 @@ var _ = Describe("Dictionary methods", func() {
 				})
 				Expect(err).To(BeNil())
 				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
+			})
+
+			It("returns an error when Fields is nil", func() {
+				Expect(
+					sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Fields:         nil,
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			})
+
+			It("returns an error when one field is nil", func() {
+				Expect(
+					sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
+						CacheName:      sharedContext.CacheName,
+						DictionaryName: sharedContext.CollectionName,
+						Fields:         []Value{String("myField"), nil, String("myField2")},
+					}),
+				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
 		})

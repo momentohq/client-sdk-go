@@ -246,6 +246,14 @@ func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublis
 		return nil, err
 	}
 
+	if request.Value == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "value cannot be nil", nil,
+			),
+		)
+	}
+
 	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
@@ -281,6 +289,13 @@ func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGet
 }
 
 func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error) {
+	if r.ElementsToRemove == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "elements to remove cannot be nil", nil,
+			),
+		)
+	}
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -411,6 +426,13 @@ func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValu
 }
 
 func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
+	if r.Field == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "field cannot be nil", nil,
+			),
+		)
+	}
 	elements := make(map[string]Value)
 	elements[string(r.Field.asBytes())] = r.Value
 	newRequest := &DictionarySetFieldsRequest{
@@ -483,6 +505,13 @@ func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *Dictionary
 }
 
 func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error) {
+	if r.Field == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "field cannot be nil", nil,
+			),
+		)
+	}
 	newRequest := &DictionaryRemoveFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
