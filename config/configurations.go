@@ -6,7 +6,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
+func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
 	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
 	if len(loggerFactory) != 0 {
 		defaultLoggerFactory = loggerFactory[0]
@@ -15,7 +15,7 @@ func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
 		LoggerFactory: defaultLoggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline:           5 * time.Second,
+				deadline: 5 * time.Second,
 			}),
 		}),
 	})
