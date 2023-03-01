@@ -11,7 +11,7 @@ func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
 	if len(loggerFactory) != 0 {
 		defaultLoggerFactory = loggerFactory[0]
 	}
-	return NewSimpleCacheConfiguration(&ConfigurationProps{
+	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: defaultLoggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
@@ -26,7 +26,7 @@ func InRegionLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration 
 	if len(loggerFactory) != 0 {
 		defaultLoggerFactory = loggerFactory[0]
 	}
-	return NewSimpleCacheConfiguration(
+	return NewCacheConfiguration(
 		&ConfigurationProps{
 			LoggerFactory: defaultLoggerFactory,
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
