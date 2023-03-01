@@ -36,6 +36,7 @@ type ScsClient interface {
 	SetFetch(ctx context.Context, in *XSetFetchRequest, opts ...grpc.CallOption) (*XSetFetchResponse, error)
 	SetUnion(ctx context.Context, in *XSetUnionRequest, opts ...grpc.CallOption) (*XSetUnionResponse, error)
 	SetDifference(ctx context.Context, in *XSetDifferenceRequest, opts ...grpc.CallOption) (*XSetDifferenceResponse, error)
+	SetContains(ctx context.Context, in *XSetContainsRequest, opts ...grpc.CallOption) (*XSetContainsResponse, error)
 	ListPushFront(ctx context.Context, in *XListPushFrontRequest, opts ...grpc.CallOption) (*XListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, in *XListPushBackRequest, opts ...grpc.CallOption) (*XListPushBackResponse, error)
 	ListPopFront(ctx context.Context, in *XListPopFrontRequest, opts ...grpc.CallOption) (*XListPopFrontResponse, error)
@@ -46,6 +47,7 @@ type ScsClient interface {
 	ListLength(ctx context.Context, in *XListLengthRequest, opts ...grpc.CallOption) (*XListLengthResponse, error)
 	ListConcatenateFront(ctx context.Context, in *XListConcatenateFrontRequest, opts ...grpc.CallOption) (*XListConcatenateFrontResponse, error)
 	ListConcatenateBack(ctx context.Context, in *XListConcatenateBackRequest, opts ...grpc.CallOption) (*XListConcatenateBackResponse, error)
+	ListRetain(ctx context.Context, in *XListRetainRequest, opts ...grpc.CallOption) (*XListRetainResponse, error)
 	// Add or Updates new element with its score to the Sorted Set.
 	// If sorted set doesn't exist, a new one is created with the specified
 	// element and its associated score.
@@ -196,6 +198,15 @@ func (c *scsClient) SetDifference(ctx context.Context, in *XSetDifferenceRequest
 	return out, nil
 }
 
+func (c *scsClient) SetContains(ctx context.Context, in *XSetContainsRequest, opts ...grpc.CallOption) (*XSetContainsResponse, error) {
+	out := new(XSetContainsResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/SetContains", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *scsClient) ListPushFront(ctx context.Context, in *XListPushFrontRequest, opts ...grpc.CallOption) (*XListPushFrontResponse, error) {
 	out := new(XListPushFrontResponse)
 	err := c.cc.Invoke(ctx, "/cache_client.Scs/ListPushFront", in, out, opts...)
@@ -286,6 +297,15 @@ func (c *scsClient) ListConcatenateBack(ctx context.Context, in *XListConcatenat
 	return out, nil
 }
 
+func (c *scsClient) ListRetain(ctx context.Context, in *XListRetainRequest, opts ...grpc.CallOption) (*XListRetainResponse, error) {
+	out := new(XListRetainResponse)
+	err := c.cc.Invoke(ctx, "/cache_client.Scs/ListRetain", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *scsClient) SortedSetPut(ctx context.Context, in *XSortedSetPutRequest, opts ...grpc.CallOption) (*XSortedSetPutResponse, error) {
 	out := new(XSortedSetPutResponse)
 	err := c.cc.Invoke(ctx, "/cache_client.Scs/SortedSetPut", in, out, opts...)
@@ -357,6 +377,7 @@ type ScsServer interface {
 	SetFetch(context.Context, *XSetFetchRequest) (*XSetFetchResponse, error)
 	SetUnion(context.Context, *XSetUnionRequest) (*XSetUnionResponse, error)
 	SetDifference(context.Context, *XSetDifferenceRequest) (*XSetDifferenceResponse, error)
+	SetContains(context.Context, *XSetContainsRequest) (*XSetContainsResponse, error)
 	ListPushFront(context.Context, *XListPushFrontRequest) (*XListPushFrontResponse, error)
 	ListPushBack(context.Context, *XListPushBackRequest) (*XListPushBackResponse, error)
 	ListPopFront(context.Context, *XListPopFrontRequest) (*XListPopFrontResponse, error)
@@ -367,6 +388,7 @@ type ScsServer interface {
 	ListLength(context.Context, *XListLengthRequest) (*XListLengthResponse, error)
 	ListConcatenateFront(context.Context, *XListConcatenateFrontRequest) (*XListConcatenateFrontResponse, error)
 	ListConcatenateBack(context.Context, *XListConcatenateBackRequest) (*XListConcatenateBackResponse, error)
+	ListRetain(context.Context, *XListRetainRequest) (*XListRetainResponse, error)
 	// Add or Updates new element with its score to the Sorted Set.
 	// If sorted set doesn't exist, a new one is created with the specified
 	// element and its associated score.
@@ -436,6 +458,9 @@ func (UnimplementedScsServer) SetUnion(context.Context, *XSetUnionRequest) (*XSe
 func (UnimplementedScsServer) SetDifference(context.Context, *XSetDifferenceRequest) (*XSetDifferenceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetDifference not implemented")
 }
+func (UnimplementedScsServer) SetContains(context.Context, *XSetContainsRequest) (*XSetContainsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetContains not implemented")
+}
 func (UnimplementedScsServer) ListPushFront(context.Context, *XListPushFrontRequest) (*XListPushFrontResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPushFront not implemented")
 }
@@ -465,6 +490,9 @@ func (UnimplementedScsServer) ListConcatenateFront(context.Context, *XListConcat
 }
 func (UnimplementedScsServer) ListConcatenateBack(context.Context, *XListConcatenateBackRequest) (*XListConcatenateBackResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListConcatenateBack not implemented")
+}
+func (UnimplementedScsServer) ListRetain(context.Context, *XListRetainRequest) (*XListRetainResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRetain not implemented")
 }
 func (UnimplementedScsServer) SortedSetPut(context.Context, *XSortedSetPutRequest) (*XSortedSetPutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SortedSetPut not implemented")
@@ -731,6 +759,24 @@ func _Scs_SetDifference_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Scs_SetContains_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSetContainsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SetContains(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/SetContains",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SetContains(ctx, req.(*XSetContainsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Scs_ListPushFront_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(XListPushFrontRequest)
 	if err := dec(in); err != nil {
@@ -911,6 +957,24 @@ func _Scs_ListConcatenateBack_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Scs_ListRetain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XListRetainRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).ListRetain(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cache_client.Scs/ListRetain",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).ListRetain(ctx, req.(*XListRetainRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Scs_SortedSetPut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(XSortedSetPutRequest)
 	if err := dec(in); err != nil {
@@ -1079,6 +1143,10 @@ var Scs_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Scs_SetDifference_Handler,
 		},
 		{
+			MethodName: "SetContains",
+			Handler:    _Scs_SetContains_Handler,
+		},
+		{
 			MethodName: "ListPushFront",
 			Handler:    _Scs_ListPushFront_Handler,
 		},
@@ -1117,6 +1185,10 @@ var Scs_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListConcatenateBack",
 			Handler:    _Scs_ListConcatenateBack_Handler,
+		},
+		{
+			MethodName: "ListRetain",
+			Handler:    _Scs_ListRetain_Handler,
 		},
 		{
 			MethodName: "SortedSetPut",

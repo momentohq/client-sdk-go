@@ -83,7 +83,7 @@ func convertSortedSetElementToGrpc(modelSetElements []*SortedSetPutElement) []*p
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
 		returnList = append(returnList, &pb.XSortedSetElement{
-			Name:  el.Value.asBytes(),
+			Value: el.Value.asBytes(),
 			Score: el.Score,
 		})
 	}

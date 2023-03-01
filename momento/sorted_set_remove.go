@@ -74,7 +74,7 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 		}
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: elemToRemove,
+				Values: elemToRemove,
 			},
 		}
 	case *RemoveSomeElements:
@@ -84,7 +84,7 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 		}
 		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 			Some: &pb.XSortedSetRemoveRequest_XSome{
-				ElementName: elemToRemove,
+				Values: elemToRemove,
 			},
 		}
 	default:
