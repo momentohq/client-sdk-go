@@ -25,7 +25,10 @@ func NewSharedContext() SharedContext {
 	shared := SharedContext{}
 
 	shared.Ctx = context.Background()
-	credentialProvider, _ := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
+	if err != nil {
+		panic(err)
+	}
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatest()
 	shared.DefaultTtl = 3 * time.Second
