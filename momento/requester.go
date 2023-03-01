@@ -187,7 +187,7 @@ func prepareElements(r hasElements) (map[string][]byte, error) {
 
 func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
 	ttl := r.ttl()
-	if *r.ttl() == time.Duration(0) {
+	if *r.ttl() == time.Duration(0) || r.ttl() == nil {
 		ttl = &defaultTtl
 	}
 	if *ttl <= time.Duration(0) {
