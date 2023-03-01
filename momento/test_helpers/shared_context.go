@@ -12,6 +12,7 @@ import (
 
 type SharedContext struct {
 	Client             momento.CacheClient
+	TopicClient        momento.TopicClient
 	CacheName          string
 	CollectionName     string
 	Ctx                context.Context
@@ -29,13 +30,21 @@ func NewSharedContext() SharedContext {
 	shared.Configuration = config.LatestLaptopConfig()
 	shared.DefaultTtl = 3 * time.Second
 
-	var err error
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
 	if err != nil {
 		panic(err)
 	}
 
+	topicClient, err := momento.NewTopicClient(&momento.TopicClientProps{
+		Configuration:      shared.Configuration,
+		CredentialProvider: shared.CredentialProvider,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	shared.Client = client
+	shared.TopicClient = topicClient
 
 	shared.CacheName = uuid.NewString()
 	shared.CollectionName = uuid.NewString()

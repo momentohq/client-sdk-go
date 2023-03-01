@@ -27,7 +27,7 @@ var _ = Describe("Pubsub", func() {
 	DescribeTable(`Validates the names`,
 		func(cacheName string, collectionName string, expectedError string) {
 			ctx := sharedContext.Ctx
-			client := sharedContext.Client
+			client := sharedContext.TopicClient
 			value := String("foo")
 
 			Expect(
@@ -55,7 +55,7 @@ var _ = Describe("Pubsub", func() {
 			Bytes([]byte{1, 2, 3}),
 		}
 
-		sub, err := sharedContext.Client.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+		sub, err := sharedContext.TopicClient.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
 			TopicName: sharedContext.CollectionName,
 		})
@@ -85,7 +85,7 @@ var _ = Describe("Pubsub", func() {
 
 		time.Sleep(time.Millisecond * 100)
 		for _, value := range publishedValues {
-			_, err := sharedContext.Client.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+			_, err := sharedContext.TopicClient.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
 				TopicName: sharedContext.CollectionName,
 				Value:     value,
@@ -102,7 +102,7 @@ var _ = Describe("Pubsub", func() {
 
 	It("returns an error when trying to publish a nil topic value", func() {
 		Expect(
-			sharedContext.Client.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+			sharedContext.TopicClient.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
 				TopicName: sharedContext.CollectionName,
 				Value:     nil,
@@ -113,7 +113,7 @@ var _ = Describe("Pubsub", func() {
 	Describe(`TopicSubscribe`, func() {
 		It(`Does not error on a non-existent topic`, func() {
 			Expect(
-				sharedContext.Client.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				sharedContext.TopicClient.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 					CacheName: sharedContext.CacheName,
 					TopicName: sharedContext.CollectionName,
 				}),
