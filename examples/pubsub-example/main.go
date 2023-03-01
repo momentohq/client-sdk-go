@@ -17,12 +17,13 @@ const (
 
 func main() {
 	// Initialization
-	client := getClient()
+	topicClient := getTopicClient()
+	cacheClient := getCacheClient()
 	ctx := context.Background()
-	setupCache(client, ctx)
+	setupCache(cacheClient, ctx)
 
 	// Instantiate subscriber
-	sub, err := client.TopicSubscribe(ctx, &momento.TopicSubscribeRequest{
+	sub, err := topicClient.Subscribe(ctx, &momento.TopicSubscribeRequest{
 		CacheName: cacheName,
 		TopicName: topicName,
 	})
@@ -35,7 +36,7 @@ func main() {
 	time.Sleep(time.Second)
 
 	// Publish messages for the subscriber
-	publishMessages(client, ctx)
+	publishMessages(topicClient, ctx)
 }
 
 func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
@@ -48,16 +49,35 @@ func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
 	}
 }
 
-func getClient() momento.CacheClient {
+func getTopicClient() momento.TopicClient {
 	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewCacheClient(config.LatestLaptopConfig(), credProvider, 60*time.Second)
+	topicClient, err := momento.NewTopicClient(
+		config.LatestLaptopConfig(),
+		credProvider,
+	)
 	if err != nil {
 		panic(err)
 	}
-	return client
+	return topicClient
+}
+
+func getCacheClient() momento.CacheClient {
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	if err != nil {
+		panic(err)
+	}
+	cacheClient, err := momento.NewCacheClient(
+		config.LatestLaptopConfig(),
+		credProvider,
+		time.Second*60,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return cacheClient
 }
 
 func setupCache(client momento.CacheClient, ctx context.Context) {
@@ -69,10 +89,10 @@ func setupCache(client momento.CacheClient, ctx context.Context) {
 	}
 }
 
-func publishMessages(client momento.CacheClient, ctx context.Context) {
+func publishMessages(client momento.TopicClient, ctx context.Context) {
 	for i := 0; i < 10; i++ {
 		fmt.Printf("publishing message %d\n", i)
-		_, err := client.TopicPublish(ctx, &momento.TopicPublishRequest{
+		_, err := client.Publish(ctx, &momento.TopicPublishRequest{
 			CacheName: cacheName,
 			TopicName: topicName,
 			Value:     momento.String(fmt.Sprintf("hello %d", i)),
