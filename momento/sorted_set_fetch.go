@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
@@ -53,10 +52,9 @@ type FetchLimitedElements struct {
 func (FetchLimitedElements) isSortedSetFetchNumResults() {}
 
 type SortedSetFetchRequest struct {
-	CacheName       string
-	SetName         string
-	Order           SortedSetOrder
-	NumberOfResults SortedSetFetchNumResults
+	CacheName string
+	SetName   string
+	Order     SortedSetOrder
 
 	grpcRequest  *pb.XSortedSetFetchRequest
 	grpcResponse *pb.XSortedSetFetchResponse
@@ -75,31 +73,15 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	grpcReq := &pb.XSortedSetFetchRequest{
-		SetName: []byte(r.SetName),
-		Order:   pb.XSortedSetFetchRequest_Order(r.Order),
-	}
-
-	switch numResults := r.NumberOfResults.(type) {
-	case *FetchAllElements:
-		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
-	case FetchAllElements:
-		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
-	case nil:
-		grpcReq.NumResults = &pb.XSortedSetFetchRequest_All{}
-	case *FetchLimitedElements:
-		grpcReq.NumResults = &pb.XSortedSetFetchRequest_Limit{
-			Limit: &pb.XSortedSetFetchRequest_XLimit{
-				Limit: numResults.Limit,
+		SetName:    []byte(r.SetName),
+		Order:      pb.XSortedSetFetchRequest_Order(r.Order),
+		WithScores: true,
+		Range: &pb.XSortedSetFetchRequest_ByIndex{
+			ByIndex: &pb.XSortedSetFetchRequest_XByIndex{
+				Start: &pb.XSortedSetFetchRequest_XByIndex_UnboundedStart{},
+				End:   &pb.XSortedSetFetchRequest_XByIndex_UnboundedEnd{},
 			},
-		}
-	case FetchLimitedElements:
-		grpcReq.NumResults = &pb.XSortedSetFetchRequest_Limit{
-			Limit: &pb.XSortedSetFetchRequest_XLimit{
-				Limit: numResults.Limit,
-			},
-		}
-	default:
-		return fmt.Errorf("unexpected fetch results type %T", r.NumberOfResults)
+		},
 	}
 
 	r.grpcRequest = grpcReq
@@ -121,7 +103,7 @@ func (r *SortedSetFetchRequest) interpretGrpcResponse() error {
 	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetFetchResponse_Found:
 		r.response = &SortedSetFetchHit{
-			Elements: sortedSetGrpcElementToModel(grpcResp.Found.GetElements()),
+			Elements: sortedSetGrpcElementToModel(grpcResp.Found.GetValuesWithScores().Elements),
 		}
 	case *pb.XSortedSetFetchResponse_Missing:
 		r.response = &SortedSetFetchMiss{}
@@ -135,7 +117,7 @@ func sortedSetGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []*Sor
 	var returnList []*SortedSetElement
 	for _, element := range grpcSetElements {
 		returnList = append(returnList, &SortedSetElement{
-			Value: element.Name,
+			Value: element.Value,
 			Score: element.Score,
 		})
 	}

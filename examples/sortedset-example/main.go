@@ -98,7 +98,7 @@ func displayElements(setName string, resp momento.SortedSetFetchResponse) {
 	switch r := resp.(type) {
 	case *momento.SortedSetFetchHit:
 		for _, e := range r.Elements {
-			fmt.Printf("setName: %s, elementName: %s, score: %f\n", setName, e.Value, e.Score)
+			fmt.Printf("setName: %s, value: %s, score: %f\n", setName, e.Value, e.Score)
 		}
 		fmt.Println("")
 	case *momento.SortedSetFetchMiss:

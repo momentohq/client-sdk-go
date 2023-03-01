@@ -15,6 +15,8 @@ service ScsControl {
   rpc CreateSigningKey (_CreateSigningKeyRequest) returns (_CreateSigningKeyResponse) {}
   rpc RevokeSigningKey (_RevokeSigningKeyRequest) returns (_RevokeSigningKeyResponse) {}
   rpc ListSigningKeys (_ListSigningKeysRequest) returns (_ListSigningKeysResponse) {}
+  // api for programatically generating api and refresh tokens
+  rpc GenerateToken(_GenerateTokenRequest) returns (_GenerateTokenResponse) {}
 }
 
 message _DeleteCacheRequest {
@@ -82,4 +84,21 @@ message _FlushCacheRequest {
 
 message _FlushCacheResponse {
 
+}
+
+message _GenerateTokenRequest {
+  // how many seconds do you want the api token to be valid for?
+  uint32 valid_for_seconds = 1;
+}
+
+message _GenerateTokenResponse {
+  // the token that will be used to make requests against Momento backend
+  string api_token = 1;
+  // the token that will allow the api token to be refreshed, which will
+  // give you back a new refresh and api token
+  string refresh_token = 2;
+  // the Momento endpoint that this token is allowed to make requests against
+  string endpoint = 3;
+  // epoch seconds when the api token expires
+  uint64 valid_until = 4;
 }
