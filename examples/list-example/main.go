@@ -23,14 +23,14 @@ var (
 	client momento.CacheClient
 )
 
-func pushFrontToList(value string) {
+func pushFrontToList(value momento.Value) {
 	fmt.Printf("\npushing '%s' to front of list\n", value)
 	resp, err := client.ListPushFront(ctx, &momento.ListPushFrontRequest{
 		CacheName:          cacheName,
 		ListName:           listName,
-		Value:              momento.String(value),
+		Value:              value,
 		TruncateBackToSize: 0,
-		CollectionTtl: utils.CollectionTtl{
+		Ttl: utils.CollectionTtl{
 			Ttl:        5 * time.Second,
 			RefreshTtl: true,
 		},
@@ -45,14 +45,14 @@ func pushFrontToList(value string) {
 	}
 }
 
-func pushBackToList(value string) {
+func pushBackToList(value momento.Value) {
 	fmt.Printf("\npushing '%s' to back of list\n", value)
 	resp, err := client.ListPushBack(ctx, &momento.ListPushBackRequest{
 		CacheName:           cacheName,
 		ListName:            listName,
-		Value:               momento.String(value),
+		Value:               value,
 		TruncateFrontToSize: 0,
-		CollectionTtl: utils.CollectionTtl{
+		Ttl: utils.CollectionTtl{
 			Ttl:        5 * time.Second,
 			RefreshTtl: true,
 		},
@@ -149,11 +149,11 @@ func main() {
 	}
 
 	// Initializes Momento
-	client, err = momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
-		Configuration:      config.LatestLaptopConfig(),
-		CredentialProvider: credentialProvider,
-		DefaultTTL:         itemDefaultTTLSeconds * time.Second,
-	})
+	client, err = momento.NewCacheClient(
+		config.LatestLaptopConfig(),
+		credentialProvider,
+		itemDefaultTTLSeconds*time.Second,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -169,7 +169,8 @@ func main() {
 	printListLength()
 
 	for i := 0; i < 5; i++ {
-		pushFrontToList(fmt.Sprintf("hello #%d", i+1))
+		stringValue := fmt.Sprintf("hello #%d", i+1)
+		pushFrontToList(momento.String(stringValue))
 	}
 
 	printListLength()
@@ -178,7 +179,8 @@ func main() {
 	time.Sleep(time.Second * 5)
 
 	for i := 0; i < 5; i++ {
-		pushBackToList(fmt.Sprintf("hello #%d", i+1))
+		stringValue := fmt.Sprintf("hello #%d", i+1)
+		pushBackToList(momento.String(stringValue))
 	}
 
 	printListLength()
@@ -190,7 +192,8 @@ func main() {
 	printList()
 
 	for i := 0; i < 5; i++ {
-		pushFrontToList(fmt.Sprintf("hello #%d", i+1))
+		stringValue := fmt.Sprintf("hello #%d", i+1)
+		pushFrontToList(momento.String(stringValue))
 	}
 	for i := 0; i < 5; i++ {
 		resp, err := client.ListPopFront(ctx, &momento.ListPopFrontRequest{
@@ -209,7 +212,7 @@ func main() {
 	}
 	printListLength()
 
-	pushFrontToList("list seed")
+	pushFrontToList(momento.String("list seed"))
 
 	var values []momento.Value
 	for i := 0; i < 5; i++ {
@@ -235,9 +238,9 @@ func main() {
 
 	for i := 1; i < 11; i++ {
 		if i%2 != 0 {
-			pushBackToList("odd")
+			pushBackToList(momento.String("odd"))
 		} else {
-			pushBackToList("even")
+			pushBackToList(momento.String("even"))
 		}
 	}
 	printList()
