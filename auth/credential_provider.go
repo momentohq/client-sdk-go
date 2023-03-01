@@ -10,11 +10,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
 
-type ResolveRequest struct {
-	AuthToken        string
-	EndpointOverride string
-}
-
 type Endpoints struct {
 	ControlEndpoint string
 	CacheEndpoint   string
@@ -24,28 +19,58 @@ type CredentialProvider interface {
 	GetAuthToken() string
 	GetControlEndpoint() string
 	GetCacheEndpoint() string
+	WithEndpoints(endpoints *Endpoints) (CredentialProvider, error)
 }
 
-type DefaultCredentialProvider struct {
+type defaultCredentialProvider struct {
 	authToken       string
 	controlEndpoint string
 	cacheEndpoint   string
 }
 
-func (credentialProvider DefaultCredentialProvider) GetAuthToken() string {
+func (credentialProvider defaultCredentialProvider) GetAuthToken() string {
 	return credentialProvider.authToken
 }
 
-func (credentialProvider DefaultCredentialProvider) GetControlEndpoint() string {
+func (credentialProvider defaultCredentialProvider) GetControlEndpoint() string {
 	return credentialProvider.controlEndpoint
 }
 
-func (credentialProvider DefaultCredentialProvider) GetCacheEndpoint() string {
+func (credentialProvider defaultCredentialProvider) GetCacheEndpoint() string {
 	return credentialProvider.cacheEndpoint
 }
 
-// NewEnvMomentoTokenProvider
-// TODO: add overrides for endpoints
+func FromEnvironmentVariable(envVar string) (CredentialProvider, error) {
+	credentialProvider, err := NewEnvMomentoTokenProvider(envVar)
+	if err != nil {
+		return nil, err
+	}
+	return credentialProvider, nil
+}
+
+func FromString(authToken string) (CredentialProvider, error) {
+	credentialProvider, err := NewStringMomentoTokenProvider(authToken)
+	if err != nil {
+		return nil, err
+	}
+	return credentialProvider, nil
+}
+
+func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints *Endpoints) (CredentialProvider, error) {
+	if endpoints == nil {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"endpoints cannot be nil",
+			errors.New("invalid argument"),
+		)
+	}
+	credentialProvider.cacheEndpoint = endpoints.CacheEndpoint
+	credentialProvider.controlEndpoint = endpoints.ControlEndpoint
+	return credentialProvider, nil
+}
+
+// NewEnvMomentoTokenProvider constructor for a CredentialProvider using an environment variable to store an
+// authentication token
 func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, error) {
 	var authToken = os.Getenv(envVariableName)
 	if authToken == "" {
@@ -58,38 +83,19 @@ func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, err
 	return NewStringMomentoTokenProvider(authToken)
 }
 
-// NewStringMomentoTokenProvider
-// TODO: add overrides for endpoints
+// NewStringMomentoTokenProvider constructor for a CredentialProvider using a string containing an
+// authentication token
 func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error) {
-	endpoints, err := resolve(&ResolveRequest{
-		AuthToken: authToken,
-	})
+	endpoints, err := getEndpointsFromToken(authToken)
 	if err != nil {
 		return nil, err
 	}
-	provider := DefaultCredentialProvider{
+	provider := defaultCredentialProvider{
 		authToken:       authToken,
 		controlEndpoint: endpoints.ControlEndpoint,
 		cacheEndpoint:   endpoints.CacheEndpoint,
 	}
 	return provider, nil
-}
-
-const (
-	momentoControlEndpointPrefix = "control."
-	momentoCacheEndpointPrefix   = "cache."
-	controlEndpointClaimID       = "cp"
-	cacheEndpointClaimID         = "c"
-)
-
-func resolve(request *ResolveRequest) (*Endpoints, momentoerrors.MomentoSvcErr) {
-	if request.EndpointOverride != "" {
-		return &Endpoints{
-			ControlEndpoint: momentoControlEndpointPrefix + request.EndpointOverride,
-			CacheEndpoint:   momentoCacheEndpointPrefix + request.EndpointOverride,
-		}, nil
-	}
-	return getEndpointsFromToken(request.AuthToken)
 }
 
 func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoSvcErr) {
@@ -103,8 +109,8 @@ func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoS
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		return &Endpoints{
-			ControlEndpoint: reflect.ValueOf(claims[controlEndpointClaimID]).String(),
-			CacheEndpoint:   reflect.ValueOf(claims[cacheEndpointClaimID]).String(),
+			ControlEndpoint: reflect.ValueOf(claims["cp"]).String(),
+			CacheEndpoint:   reflect.ValueOf(claims["c"]).String(),
 		}, nil
 	}
 	return nil, momentoerrors.NewMomentoSvcErr(
