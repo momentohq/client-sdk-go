@@ -38,13 +38,9 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 			case *pb.XSubscriptionItem_Item:
 				switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 				case *pb.XTopicValue_Text:
-					return &TopicValueString{
-						Text: subscriptionItem.Text,
-					}, nil
+					return String(subscriptionItem.Text), nil
 				case *pb.XTopicValue_Binary:
-					return &TopicValueBytes{
-						Bytes: subscriptionItem.Binary,
-					}, nil
+					return Bytes(subscriptionItem.Binary), nil
 				}
 			case *pb.XSubscriptionItem_Heartbeat:
 				// FIXME add warning logging here
