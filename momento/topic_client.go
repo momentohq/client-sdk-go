@@ -5,20 +5,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/services"
-
-	"github.com/momentohq/client-sdk-go/auth"
-	"github.com/momentohq/client-sdk-go/config"
 )
 
 type TopicClient interface {
-	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
-	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
-	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
-
 	Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
 	Publish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error)
 
@@ -28,7 +22,6 @@ type TopicClient interface {
 // defaultScsClient represents all information needed for momento client to enable cache control and data operations.
 type defaultTopicClient struct {
 	credentialProvider auth.CredentialProvider
-	controlClient      *services.ScsControlClient
 	pubSubClient       *pubSubClient
 }
 
@@ -46,14 +39,6 @@ func NewTopicClient(props *TopicClientProps) (TopicClient, error) {
 		credentialProvider: props.CredentialProvider,
 	}
 
-	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
-		CredentialProvider: props.CredentialProvider,
-		Configuration:      props.Configuration,
-	})
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
-	}
-
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
@@ -62,55 +47,9 @@ func NewTopicClient(props *TopicClientProps) (TopicClient, error) {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
-	client.controlClient = controlClient
 	client.pubSubClient = pubSubClient
 
 	return client, nil
-}
-
-func (c defaultTopicClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error) {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return nil, err
-	}
-	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
-		CacheName: request.CacheName,
-	})
-	if err != nil {
-		if err.Code() == AlreadyExistsError {
-			return &CreateCacheAlreadyExists{}, nil
-		}
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	return &CreateCacheSuccess{}, nil
-}
-
-func (c defaultTopicClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error) {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return nil, err
-	}
-	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
-		CacheName: request.CacheName,
-	})
-	if err != nil {
-		if err.Code() == NotFoundError {
-			return &DeleteCacheSuccess{}, nil
-		}
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	return &DeleteCacheSuccess{}, nil
-}
-
-func (c defaultTopicClient) ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error) {
-	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
-		NextToken: request.NextToken,
-	})
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
-	}
-	return &ListCachesSuccess{
-		nextToken: rsp.NextToken,
-		caches:    convertCacheInfo(rsp.Caches),
-	}, nil
 }
 
 func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
@@ -185,6 +124,5 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 	return &TopicPublishSuccess{}, err
 }
 func (c defaultTopicClient) Close() {
-	defer c.controlClient.Close()
 	defer c.pubSubClient.Close()
 }
