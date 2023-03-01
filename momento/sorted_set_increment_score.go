@@ -50,7 +50,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 	}
 
 	var ttlMillis uint64
-	if ttlMillis, err = prepareTTL(r, client.defaultTtl); err != nil {
+	if ttlMillis, err = prepareTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 

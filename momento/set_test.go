@@ -331,7 +331,7 @@ var _ = Describe("Set methods", func() {
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(1))
 
-				time.Sleep(sharedContext.DefaultTTL)
+				time.Sleep(sharedContext.DefaultTtl)
 
 				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
@@ -365,7 +365,7 @@ var _ = Describe("Set methods", func() {
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						Ttl: utils.CollectionTtl{
-							Ttl:        sharedContext.DefaultTTL + time.Second*60,
+							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: true,
 						},
 					}),
@@ -378,7 +378,7 @@ var _ = Describe("Set methods", func() {
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(2))
 
-				time.Sleep(sharedContext.DefaultTTL)
+				time.Sleep(sharedContext.DefaultTtl)
 
 				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
@@ -395,7 +395,7 @@ var _ = Describe("Set methods", func() {
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						Ttl: utils.CollectionTtl{
-							Ttl:        sharedContext.DefaultTTL + 1*time.Second,
+							Ttl:        sharedContext.DefaultTtl + 1*time.Second,
 							RefreshTtl: false,
 						},
 					}),
@@ -408,7 +408,7 @@ var _ = Describe("Set methods", func() {
 					}),
 				).To(HaveSetLength(2))
 
-				time.Sleep(sharedContext.DefaultTTL + 500*time.Millisecond)
+				time.Sleep(sharedContext.DefaultTtl + 500*time.Millisecond)
 
 				Expect(
 					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
@@ -438,7 +438,7 @@ var _ = Describe("Set methods", func() {
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(2))
 
-				time.Sleep(sharedContext.DefaultTTL / 2)
+				time.Sleep(sharedContext.DefaultTtl / 2)
 
 				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,

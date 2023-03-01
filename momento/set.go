@@ -28,7 +28,7 @@ type SetRequest struct {
 	Value Value
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
-	TTL time.Duration
+	Ttl time.Duration
 
 	grpcRequest  *pb.XSetRequest
 	grpcResponse *pb.XSetResponse
@@ -41,7 +41,7 @@ func (r *SetRequest) key() Key { return r.Key }
 
 func (r *SetRequest) value() Value { return r.Value }
 
-func (r *SetRequest) ttl() time.Duration { return r.TTL }
+func (r *SetRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetRequest) requestName() string { return "Set" }
 
@@ -59,7 +59,7 @@ func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 	}
 
 	var ttl uint64
-	if ttl, err = prepareTTL(r, client.defaultTtl); err != nil {
+	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
