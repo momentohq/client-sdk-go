@@ -8,6 +8,7 @@ package momento
 import (
 	"context"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/utils"
 	"strings"
 	"time"
 
@@ -67,11 +68,12 @@ type hasElements interface {
 }
 
 type hasTtl interface {
-	ttl() *time.Duration
+	ttl() time.Duration
 }
 
-type hasRefreshTtl interface {
-	refreshTtl() *bool
+type hasCollectionTtl interface {
+	collectionTtl() *utils.CollectionTtl
+	ttl() time.Duration
 }
 
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {
@@ -185,25 +187,39 @@ func prepareElements(r hasElements) (map[string][]byte, error) {
 	return retMap, nil
 }
 
-func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
-	ttl := r.ttl()
-	if *r.ttl() == time.Duration(0) || r.ttl() == nil {
-		ttl = &defaultTtl
+func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) (*utils.CollectionTtl, error) {
+	if r.collectionTtl() == nil {
+		return &utils.CollectionTtl{
+			Ttl:        defaultTtl,
+			RefreshTtl: true,
+		}, nil
 	}
-	if *ttl <= time.Duration(0) {
+	var ttl time.Duration
+	var err error
+	if ttl, err = prepareTtl(r, defaultTtl); err != nil {
+		return nil, err
+	}
+	return &utils.CollectionTtl{
+		Ttl:        ttl,
+		RefreshTtl: true,
+	}, nil
+}
+
+func prepareTtl(r hasTtl, defaultTtl time.Duration) (time.Duration, error) {
+	ttl := r.ttl()
+	if r.ttl() == time.Duration(0) {
+		ttl = defaultTtl
+	}
+	if ttl <= time.Duration(0) {
 		return 0, buildError(
 			momentoerrors.InvalidArgumentError, "ttl must be a non-zero positive value", nil,
 		)
 	}
-	return uint64(ttl.Milliseconds()), nil
+	return ttl, nil
 }
 
-func prepareRefreshTtl(r hasRefreshTtl) *bool {
-	if r.refreshTtl() == nil {
-		t := true
-		return &t
-	}
-	return r.refreshTtl()
+func convertTimeToMillisecond(time time.Duration) uint64 {
+	return uint64(time.Milliseconds())
 }
 
 func momentoValuesToPrimitiveByteList(i []Value) ([][]byte, momentoerrors.MomentoSvcErr) {

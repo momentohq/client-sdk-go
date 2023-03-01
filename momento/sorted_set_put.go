@@ -40,9 +40,9 @@ func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetPutRequest) requestName() string { return "Sorted set put" }
 
-func (r *SortedSetPutRequest) ttl() *time.Duration { return r.Ttl.Ttl }
+func (r *SortedSetPutRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
-func (r *SortedSetPutRequest) refreshTtl() *bool { return r.Ttl.RefreshTtl }
+func (r *SortedSetPutRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
 func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
@@ -51,8 +51,8 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	var ttlMills uint64
-	if ttlMills, err = prepareTtl(r, client.defaultTtl); err != nil {
+	var collectionTtl *utils.CollectionTtl
+	if collectionTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -61,8 +61,8 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	r.grpcRequest = &pb.XSortedSetPutRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
-		TtlMilliseconds: ttlMills,
-		RefreshTtl:      *prepareRefreshTtl(r),
+		TtlMilliseconds: convertTimeToMillisecond(collectionTtl.Ttl),
+		RefreshTtl:      collectionTtl.RefreshTtl,
 	}
 	return nil
 }

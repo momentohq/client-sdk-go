@@ -30,11 +30,7 @@ func setup() {
 	}
 
 	// Initializes Momento
-	client, err = momento.NewCacheClient(&momento.CacheClientProps{
-		Configuration:      config.LatestLaptopConfig(),
-		CredentialProvider: credentialProvider,
-		DefaultTTL:         itemDefaultTTLSeconds * time.Second,
-	})
+	client, err = momento.NewCacheClient(config.LatestLaptopConfig(), credentialProvider, 60*time.Second)
 	if err != nil {
 		panic(err)
 	}
