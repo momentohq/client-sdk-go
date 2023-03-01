@@ -32,6 +32,7 @@ service Scs {
   rpc SetFetch (_SetFetchRequest) returns (_SetFetchResponse) {}
   rpc SetUnion (_SetUnionRequest) returns (_SetUnionResponse) {}
   rpc SetDifference (_SetDifferenceRequest) returns (_SetDifferenceResponse) {}
+  rpc SetContains (_SetContainsRequest) returns (_SetContainsResponse) {}
 
   rpc ListPushFront(_ListPushFrontRequest) returns (_ListPushFrontResponse) {}
   rpc ListPushBack(_ListPushBackRequest) returns (_ListPushBackResponse) {}
@@ -43,6 +44,7 @@ service Scs {
   rpc ListLength(_ListLengthRequest) returns (_ListLengthResponse) {}
   rpc ListConcatenateFront(_ListConcatenateFrontRequest) returns (_ListConcatenateFrontResponse) {}
   rpc ListConcatenateBack(_ListConcatenateBackRequest) returns (_ListConcatenateBackResponse) {}
+  rpc ListRetain(_ListRetainRequest) returns (_ListRetainResponse) {}
 
   // Sorted Set Operations
   // A sorted set is a collection of elements ordered by their score.
@@ -273,6 +275,26 @@ message _SetDifferenceResponse {
   }
 }
 
+message _SetContainsRequest {
+  bytes set_name = 1;
+  repeated bytes elements = 2;
+}
+
+message _SetContainsResponse {
+  message _Found {
+    // This will be the same length as the elements passed in the request.
+    // It represents whether each element is a member of the set, with indices corresponding to the request elements.
+    repeated bool contains = 1;
+  }
+
+  message _Missing {}
+
+  oneof set {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
 message _ListConcatenateFrontRequest {
   bytes list_name = 1;
   repeated bytes values = 2;
@@ -401,9 +423,125 @@ message _ListRemoveRequest {
 
 message _ListRemoveResponse {}
 
+/*
+  # ListFetch and ListRetain documentation and examples
+
+  # start and end are zero-based indexes, both are optional
+
+  # start is inclusive
+  # If start is not set, then the default is Unbounded, which is treated as 0
+  # Unbounded == 0,
+  # this field has a explicit presence for future compatibility to support reverse order and controlling our stride
+
+  # end is exclusive
+  # If end is not set, then the default is Unbounded which becomes (list.len)
+
+  # start and end can be negative numbers, negative indicates offsets starting at the end of the list.
+  # For example, -1 is the last element of the list, -2 the penultimate, etc
+  # list:                     [  a,  b,  c,  d,  e,  f,  g,  h,  i,  j]
+  # positive index positions:    0,  1,  2,  3,  4,  5,  6,  7,  8,  9
+  # negative index positions:  -10, -9, -8, -7, -6, -5, -4, -3, -2, -1
+
+  list_ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  # Using the slice notation:
+  # start:end
+
+  # start=0, end=Unbounded
+  list_[0:] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+  # start=5, end=Unbounded
+  list_[5:] == [5, 6, 7, 8, 9]
+
+  # start=5, end=0
+  list_[5:0] == []
+
+  # start=-5, end=Unbounded
+  list_[-5:] == [5, 6, 7, 8, 9]
+
+  # start=-5, end=0
+  list_[-5:0] == []
+
+  # start=0, end=5
+  list_[0:5] == [0, 1, 2, 3]
+
+  # start=Unbounded, end=5
+  list_[0:5] == [0, 1, 2, 3]
+
+  # start=0, end=-5
+  list_[0:-5] == [0, 1, 2, 3, 4]
+
+  # start=Unbounded, end=-5
+  list_[0:-5] == [0, 1, 2, 3, 4]
+
+  # start=2, end=6
+  list_[2:6] == [2, 3, 4, 5]
+
+  # start=2, end=-6
+  list_[2:-6] == [2, 3]
+
+  # start=-7, end=-2
+  list_[-7:-2] == [3, 4, 5, 6, 7]
+
+  // if using ListRetain, this will remove all elements in the list
+  # start=-2, end=-6
+  list_[-2:-6] == []
+
+  # empty list
+  list_[0:0] == []
+
+  # List of length one special cases
+  list_size_one_ = ['a']
+
+  # start=-1, end=1
+  list_size_one_[-1:1] == ['a']
+
+  # start=1, end=-1
+  list_size_one_[1:-1] == []
+
+  # start=0, end=0
+  list_size_one_[0:0] == []
+
+  # start=0, end=-1
+  list_size_one_[0:-1] == []
+ */
+
+message _Unbounded { }
+
 message _ListFetchRequest {
   bytes list_name = 1;
+  // Inclusive.
+  // If unbounded, 0 (start of list) by default
+  // A negative index counts from the end of the list
+  oneof start_index {
+    _Unbounded unbounded_start = 2;
+    sint32 inclusive_start = 3;
+  }
+  // Exclusive.
+  // If unbounded, this effectively means list.length()
+  // If end_index is > the number of elements to return, return as much as you can
+  // A negative index counts from the end of the list
+  oneof end_index {
+    _Unbounded unbounded_end = 4;
+    sint32 exclusive_end = 5;
+  }
 }
+
+message _ListRetainRequest {
+  bytes list_name = 1;
+  oneof start_index {
+    _Unbounded unbounded_start = 2;
+    sint32 inclusive_start = 3;
+  }
+  oneof end_index {
+    _Unbounded unbounded_end = 4;
+    sint32 exclusive_end = 5;
+  }
+  uint64 ttl_milliseconds = 6;
+  bool refresh_ttl = 7;
+}
+
+message _ListRetainResponse {}
 
 message _ListFetchResponse {
   message _Found {
@@ -436,7 +574,7 @@ message _ListLengthResponse {
 }
 
 message _SortedSetElement {
-  bytes name = 1;
+  bytes value = 1;
   double score = 2;
 }
 
@@ -455,54 +593,73 @@ message _SortedSetFetchRequest {
     DESCENDING = 1;
   }
 
-  // num_results fields
-  message _All {}
+  message _ByIndex {
+    // Start and end are zero-based indexes, with 0 being the first element.
+    // A negative index indicates offsets from the end of the sorted set, with
+    // -1 being the last element.
 
-  message _Limit {
-    uint32 limit = 1;
+    // Start is inclusive.
+    // Unbounded is treated as 0.
+    oneof start {
+      _Unbounded unbounded_start = 1;
+      sint32 inclusive_start_index = 2;
+    }
+    // End is exclusive.
+    // Unbounded is treated as the number of elements in the sorted set.
+    oneof end {
+      _Unbounded unbounded_end = 3;
+      sint32 exclusive_end_index = 4;
+    }
   }
 
-  // range fields
-  message _ByIndex {}
-
   message _ByScore {
-    message _Endpoint {
-      message _Score {
-        double score = 1;
-        bool open = 2; // if true, the endpoint is open (exclusive); false, closed (inclusive)
-      }
-
-      message _Inf {}
-
-      oneof kind {
-        _Score score = 1;
-        _Inf inf = 2;
-      }
+    message _Score {
+      double score = 1;
+      bool exclusive = 2;
     }
 
-    _Endpoint start = 1;
-    _Endpoint stop = 2;
+    oneof min {
+      _Unbounded unbounded_min = 1;
+      _Score min_score = 2;
+    }
+    oneof max {
+      _Unbounded unbounded_max = 3;
+      _Score max_score = 4;
+    }
+    // Offset and count are used to only get a range of the matching elements,
+    // similar to "SELECT LIMIT offset, count" in SQL.
+    // A negative count returns all elements from the offset.
+    // Use (0, -1) to return all matching elements.
+    uint32 offset = 5;
+    sint32 count = 6;
   }
 
   bytes set_name = 1;
   Order order = 2;
-  oneof num_results {
-    _All all = 3;
-    _Limit limit = 4;
-  }
+  bool with_scores = 3;
   oneof range {
-    _ByIndex by_index = 5;
-    _ByScore by_score = 6;
+    _ByIndex by_index = 4;
+    _ByScore by_score = 5;
   }
 }
 
 message _SortedSetFetchResponse {
   message _Found {
-    repeated _SortedSetElement elements = 1;
+    message _ValuesWithScores {
+      repeated _SortedSetElement elements = 1;
+    }
+
+    message _Values {
+      repeated bytes values = 1;
+    }
+
+    oneof elements {
+      _ValuesWithScores values_with_scores = 1;
+      _Values values = 2;
+    }
   }
 
-  message _Missing {
-  }
+  message _Missing {}
 
   oneof sorted_set {
     _Found found = 1;
@@ -512,7 +669,7 @@ message _SortedSetFetchResponse {
 
 message _SortedSetGetScoreRequest {
   bytes set_name = 1;
-  repeated bytes element_name = 2;
+  repeated bytes values = 2;
 }
 
 message _SortedSetGetScoreResponse {
@@ -538,7 +695,7 @@ message _SortedSetRemoveRequest {
   bytes set_name = 1;
   message _All {}
   message _Some {
-    repeated bytes element_name = 1;
+    repeated bytes values = 1;
   }
   oneof remove_elements {
     _All all = 2;
@@ -550,25 +707,42 @@ message _SortedSetRemoveResponse {}
 
 message _SortedSetIncrementRequest {
   bytes set_name = 1;
-  bytes element_name = 2;
+  bytes value = 2;
   double amount = 3;
   uint64 ttl_milliseconds = 4;
   bool refresh_ttl = 5;
 }
 
 message _SortedSetIncrementResponse {
-  // The value stored after the increment operation.
-  double value = 1;
+  // The updated score stored after the increment operation.
+  double score = 1;
 }
 
 message _SortedSetGetRankRequest {
+  enum Order {
+    ASCENDING = 0;
+    DESCENDING = 1;
+  }
+
   bytes set_name = 1;
-  bytes element_name = 2;
+  bytes value = 2;
+  // The order in which sorted set will be sorted to determine the rank.
+  //
+  // When Order.ASCENDING is specified, will return the rank of the value
+  // when sorted set scores are ordered from low to high. This is the default
+  // when no Order is specified.
+  //
+  // When Order.DESCENDING is specified, will return the rank of the value
+  // when sorted set scores are ordered from high to low.
+  Order order = 3;
 }
 
 message _SortedSetGetRankResponse {
   message _RankResponsePart {
     ECacheResult result = 1;
+    // Rank is 0-based i.e. when sort order is descending the rank of the
+    // value with the highest score will be 0. Similarly for ascending order,
+    // value with the lowest score will have rank 0.
     uint64 rank = 2;
   }
 

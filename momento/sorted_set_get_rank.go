@@ -27,9 +27,9 @@ func (SortedSetGetRankHit) isSortedSetGetRankResponse() {}
 ///////// Request
 
 type SortedSetGetRankRequest struct {
-	CacheName   string
-	SetName     string
-	ElementName Value
+	CacheName    string
+	SetName      string
+	ElementValue Value
 
 	grpcRequest  *pb.XSortedSetGetRankRequest
 	grpcResponse *pb.XSortedSetGetRankResponse
@@ -47,14 +47,14 @@ func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	var elementName []byte
-	if elementName, err = prepareElementName(r.ElementName); err != nil {
+	var value []byte
+	if value, err = prepareElementValue(r.ElementValue); err != nil {
 		return err
 	}
 
 	resp := &pb.XSortedSetGetRankRequest{
-		SetName:     []byte(r.SetName),
-		ElementName: elementName,
+		SetName: []byte(r.SetName),
+		Value:   value,
 	}
 
 	r.grpcRequest = resp

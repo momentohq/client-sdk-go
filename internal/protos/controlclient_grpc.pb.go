@@ -30,6 +30,8 @@ type ScsControlClient interface {
 	CreateSigningKey(ctx context.Context, in *XCreateSigningKeyRequest, opts ...grpc.CallOption) (*XCreateSigningKeyResponse, error)
 	RevokeSigningKey(ctx context.Context, in *XRevokeSigningKeyRequest, opts ...grpc.CallOption) (*XRevokeSigningKeyResponse, error)
 	ListSigningKeys(ctx context.Context, in *XListSigningKeysRequest, opts ...grpc.CallOption) (*XListSigningKeysResponse, error)
+	// api for programatically generating api and refresh tokens
+	GenerateToken(ctx context.Context, in *XGenerateTokenRequest, opts ...grpc.CallOption) (*XGenerateTokenResponse, error)
 }
 
 type scsControlClient struct {
@@ -103,6 +105,15 @@ func (c *scsControlClient) ListSigningKeys(ctx context.Context, in *XListSigning
 	return out, nil
 }
 
+func (c *scsControlClient) GenerateToken(ctx context.Context, in *XGenerateTokenRequest, opts ...grpc.CallOption) (*XGenerateTokenResponse, error) {
+	out := new(XGenerateTokenResponse)
+	err := c.cc.Invoke(ctx, "/control_client.ScsControl/GenerateToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScsControlServer is the server API for ScsControl service.
 // All implementations must embed UnimplementedScsControlServer
 // for forward compatibility
@@ -114,6 +125,8 @@ type ScsControlServer interface {
 	CreateSigningKey(context.Context, *XCreateSigningKeyRequest) (*XCreateSigningKeyResponse, error)
 	RevokeSigningKey(context.Context, *XRevokeSigningKeyRequest) (*XRevokeSigningKeyResponse, error)
 	ListSigningKeys(context.Context, *XListSigningKeysRequest) (*XListSigningKeysResponse, error)
+	// api for programatically generating api and refresh tokens
+	GenerateToken(context.Context, *XGenerateTokenRequest) (*XGenerateTokenResponse, error)
 	mustEmbedUnimplementedScsControlServer()
 }
 
@@ -141,6 +154,9 @@ func (UnimplementedScsControlServer) RevokeSigningKey(context.Context, *XRevokeS
 }
 func (UnimplementedScsControlServer) ListSigningKeys(context.Context, *XListSigningKeysRequest) (*XListSigningKeysResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSigningKeys not implemented")
+}
+func (UnimplementedScsControlServer) GenerateToken(context.Context, *XGenerateTokenRequest) (*XGenerateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateToken not implemented")
 }
 func (UnimplementedScsControlServer) mustEmbedUnimplementedScsControlServer() {}
 
@@ -281,6 +297,24 @@ func _ScsControl_ListSigningKeys_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ScsControl_GenerateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XGenerateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsControlServer).GenerateToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/control_client.ScsControl/GenerateToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsControlServer).GenerateToken(ctx, req.(*XGenerateTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ScsControl_ServiceDesc is the grpc.ServiceDesc for ScsControl service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -315,6 +349,10 @@ var ScsControl_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListSigningKeys",
 			Handler:    _ScsControl_ListSigningKeys_Handler,
+		},
+		{
+			MethodName: "GenerateToken",
+			Handler:    _ScsControl_GenerateToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
