@@ -28,7 +28,7 @@ var _ = Describe("Pubsub", func() {
 		func(cacheName string, collectionName string, expectedError string) {
 			ctx := sharedContext.Ctx
 			client := sharedContext.Client
-			value := &TopicValueString{Text: "foo"}
+			value := String("foo")
 
 			Expect(
 				client.TopicSubscribe(ctx, &TopicSubscribeRequest{
@@ -51,8 +51,8 @@ var _ = Describe("Pubsub", func() {
 
 	It(`Publishes and receives`, func() {
 		publishedValues := []TopicValue{
-			&TopicValueString{Text: "aaa"},
-			&TopicValueBytes{Bytes: []byte{1, 2, 3}},
+			String("aaa"),
+			Bytes([]byte{1, 2, 3}),
 		}
 
 		sub, err := sharedContext.Client.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
