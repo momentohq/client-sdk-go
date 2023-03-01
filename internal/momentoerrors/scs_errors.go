@@ -1,6 +1,7 @@
 package momentoerrors
 
 import (
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -36,38 +37,38 @@ const (
 
 func ConvertSvcErr(err error) MomentoSvcErr {
 	if grpcStatus, ok := status.FromError(err); ok {
-		switch grpcStatus.Code().String() {
-		case "InvalidArgument":
+		switch grpcStatus.Code() {
+		case codes.InvalidArgument:
 			return NewMomentoSvcErr(InvalidArgumentError, grpcStatus.Message(), err)
-		case "Unimplemented":
+		case codes.Unimplemented:
 			return NewMomentoSvcErr(BadRequestError, grpcStatus.Message(), err)
-		case "OutOfRange":
+		case codes.OutOfRange:
 			return NewMomentoSvcErr(BadRequestError, grpcStatus.Message(), err)
-		case "FailedPrecondition":
+		case codes.FailedPrecondition:
 			return NewMomentoSvcErr(FailedPreconditionError, grpcStatus.Message(), err)
-		case "Canceled":
+		case codes.Canceled:
 			return NewMomentoSvcErr(CanceledError, grpcStatus.Message(), err)
-		case "DeadlineExceeded":
+		case codes.DeadlineExceeded:
 			return NewMomentoSvcErr(TimeoutError, grpcStatus.Message(), err)
-		case "PermissionDenied":
+		case codes.PermissionDenied:
 			return NewMomentoSvcErr(PermissionError, grpcStatus.Message(), err)
-		case "Unauthenticated":
+		case codes.Unauthenticated:
 			return NewMomentoSvcErr(AuthenticationError, grpcStatus.Message(), err)
-		case "ResourceExhausted":
+		case codes.ResourceExhausted:
 			return NewMomentoSvcErr(LimitExceededError, grpcStatus.Message(), err)
-		case "NotFound":
+		case codes.NotFound:
 			return NewMomentoSvcErr(NotFoundError, grpcStatus.Message(), err)
-		case "AlreadyExists":
+		case codes.AlreadyExists:
 			return NewMomentoSvcErr(AlreadyExistsError, grpcStatus.Message(), err)
-		case "Unknown":
+		case codes.Unknown:
 			return NewMomentoSvcErr(UnknownServiceError, grpcStatus.Message(), err)
-		case "Aborted":
+		case codes.Aborted:
 			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
-		case "Internal":
+		case codes.Internal:
 			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
-		case "Unavailable":
+		case codes.Unavailable:
 			return NewMomentoSvcErr(ServerUnavailableError, grpcStatus.Message(), err)
-		case "DataLoss":
+		case codes.DataLoss:
 			return NewMomentoSvcErr(InternalServerError, grpcStatus.Message(), err)
 		default:
 			return NewMomentoSvcErr(UnknownServiceError, InternalServerErrorMessage, err)
