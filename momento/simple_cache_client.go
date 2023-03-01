@@ -77,11 +77,11 @@ type CacheClientProps struct {
 }
 
 // NewCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments.
-func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration) (CacheClient, error) {
+func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, ttl time.Duration) (CacheClient, error) {
 	props := CacheClientProps{
 		Configuration:      configuration,
 		CredentialProvider: credentialProvider,
-		DefaultTtl:         defaultTtl,
+		DefaultTtl:         ttl,
 	}
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
