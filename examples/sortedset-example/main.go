@@ -53,14 +53,13 @@ func main() {
 
 	displayElements(setName, fetchResp)
 
-	// Fetch top 5 elements in descending order (high -> low)
+	// Fetch elements in descending order (high -> low)
 	fmt.Println("\n\nFetching Top 5 elements from sorted set:")
 	fmt.Println("--------------")
 	top5Rsp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
-		CacheName:       cacheName,
-		SetName:         setName,
-		NumberOfResults: momento.FetchLimitedElements{Limit: 5},
-		Order:           momento.DESCENDING,
+		CacheName: cacheName,
+		SetName:   setName,
+		Order:     momento.DESCENDING,
 	})
 	if err != nil {
 		panic(err)
@@ -74,11 +73,11 @@ func getClient() momento.CacheClient {
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
-		Configuration:      config.LatestLaptopConfig(),
-		CredentialProvider: credProvider,
-		DefaultTTL:         60 * time.Second,
-	})
+	client, err := momento.NewCacheClient(
+		config.LatestLaptopConfig(),
+		credProvider,
+		60*time.Second,
+	)
 	if err != nil {
 		panic(err)
 	}
