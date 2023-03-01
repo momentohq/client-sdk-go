@@ -212,11 +212,7 @@ func (c defaultScsClient) TopicSubscribe(ctx context.Context, request *TopicSubs
 	rawMsg := new(pb.XSubscriptionItem)
 	err = clientStream.RecvMsg(rawMsg)
 	if err != nil {
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.NotFoundError,
-			fmt.Sprintf("Did not get a heartbeat from topic %v in cache %v", request.TopicName, request.CacheName),
-			err,
-		)
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	switch rawMsg.Kind.(type) {
 	case *pb.XSubscriptionItem_Heartbeat:
