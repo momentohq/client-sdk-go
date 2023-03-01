@@ -104,6 +104,7 @@ var _ = Describe("SortedSet", func() {
 		func(
 			changer func(SortedSetPutElement, *utils.CollectionTtl),
 		) {
+			Skip("skipping sorted set tests until backend issue is resolved")
 			value := "foo"
 			element := SortedSetPutElement{
 				Value: String(value),
@@ -200,6 +201,7 @@ var _ = Describe("SortedSet", func() {
 
 	Describe("SortedSetFetch", func() {
 		It(`Misses if the set does not exist`, func() {
+			Skip("skipping sorted set tests until backend issue is resolved")
 			Expect(
 				sharedContext.Client.SortedSetFetch(
 					sharedContext.Ctx,
@@ -212,6 +214,7 @@ var _ = Describe("SortedSet", func() {
 		})
 
 		It(`Fetches`, func() {
+			Skip("skipping sorted set tests until backend issue is resolved")
 			putElements(
 				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
@@ -517,6 +520,7 @@ var _ = Describe("SortedSet", func() {
 		})
 
 		It(`Removes elements`, func() {
+			Skip("skipping sorted set tests until backend issue is resolved")
 			putElements(
 				[]*SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
