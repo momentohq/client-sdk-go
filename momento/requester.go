@@ -67,7 +67,7 @@ type hasElements interface {
 }
 
 type hasTTL interface {
-	ttl() time.Duration
+	ttl() *time.Duration
 }
 
 type hasRefreshTtl interface {
@@ -187,10 +187,10 @@ func prepareElements(r hasElements) (map[string][]byte, error) {
 
 func prepareTTL(r hasTTL, defaultTtl time.Duration) (uint64, error) {
 	ttl := r.ttl()
-	if r.ttl() == time.Duration(0) {
-		ttl = defaultTtl
+	if *r.ttl() == time.Duration(0) || ttl == nil {
+		ttl = &defaultTtl
 	}
-	if ttl <= time.Duration(0) {
+	if *ttl <= time.Duration(0) {
 		return 0, buildError(
 			momentoerrors.InvalidArgumentError, "ttl must be a non-zero positive value", nil,
 		)

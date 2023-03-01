@@ -3,7 +3,7 @@ package utils
 import "time"
 
 type CollectionTtl struct {
-	Ttl        time.Duration
+	Ttl        *time.Duration
 	RefreshTtl *bool
 }
 
@@ -13,13 +13,13 @@ func FromCacheTtl() CollectionTtl {
 }
 
 func Of(ttl time.Duration) CollectionTtl {
-	return CollectionTtl{Ttl: ttl}
+	return CollectionTtl{Ttl: &ttl}
 }
 
 func RefreshTtlIfProvided(ttl ...time.Duration) CollectionTtl {
 	if len(ttl) > 0 {
 		t := true
-		return CollectionTtl{Ttl: ttl[0], RefreshTtl: &t}
+		return CollectionTtl{Ttl: &ttl[0], RefreshTtl: &t}
 	}
 	f := false
 	return CollectionTtl{RefreshTtl: &f}

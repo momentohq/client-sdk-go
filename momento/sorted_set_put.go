@@ -40,7 +40,7 @@ func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetPutRequest) requestName() string { return "Sorted set put" }
 
-func (r *SortedSetPutRequest) ttl() time.Duration { return r.Ttl.Ttl }
+func (r *SortedSetPutRequest) ttl() *time.Duration { return r.Ttl.Ttl }
 
 func (r *SortedSetPutRequest) refreshTtl() *bool { return r.Ttl.RefreshTtl }
 
