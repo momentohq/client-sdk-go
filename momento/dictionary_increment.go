@@ -34,7 +34,7 @@ type DictionaryIncrementRequest struct {
 	DictionaryName string
 	Field          Value
 	Amount         int64
-	Ttl            utils.CollectionTtl
+	Ttl            *utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionaryIncrementRequest
 	grpcResponse *pb.XDictionaryIncrementResponse
@@ -46,6 +46,8 @@ func (r *DictionaryIncrementRequest) cacheName() string { return r.CacheName }
 func (r *DictionaryIncrementRequest) field() Value { return r.Field }
 
 func (r *DictionaryIncrementRequest) ttl() time.Duration { return r.Ttl.Ttl }
+
+func (r *DictionaryIncrementRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
 func (r *DictionaryIncrementRequest) requestName() string { return "DictionaryFetch" }
 
@@ -61,8 +63,9 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error
 		return err
 	}
 
+	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
 	var ttl uint64
-	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
+	if ttl, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -79,7 +82,7 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error
 		Field:           field,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttl,
-		RefreshTtl:      r.Ttl.RefreshTtl,
+		RefreshTtl:      collectionTtl.RefreshTtl,
 	}
 
 	return nil

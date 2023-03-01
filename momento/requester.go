@@ -8,9 +8,10 @@ package momento
 import (
 	"context"
 	"fmt"
-	"github.com/momentohq/client-sdk-go/utils"
 	"strings"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
@@ -73,7 +74,6 @@ type hasTtl interface {
 
 type hasCollectionTtl interface {
 	collectionTtl() *utils.CollectionTtl
-	ttl() time.Duration
 }
 
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {
@@ -187,25 +187,29 @@ func prepareElements(r hasElements) (map[string][]byte, error) {
 	return retMap, nil
 }
 
-func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) (*utils.CollectionTtl, error) {
+func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) *utils.CollectionTtl {
 	if r.collectionTtl() == nil {
 		return &utils.CollectionTtl{
 			Ttl:        defaultTtl,
 			RefreshTtl: true,
-		}, nil
+		}
 	}
-	var ttl time.Duration
-	var err error
-	if ttl, err = prepareTtl(r, defaultTtl); err != nil {
-		return nil, err
-	}
-	return &utils.CollectionTtl{
-		Ttl:        ttl,
-		RefreshTtl: true,
-	}, nil
+	return r.collectionTtl()
 }
 
-func prepareTtl(r hasTtl, defaultTtl time.Duration) (time.Duration, error) {
+func prepareCollectionTtlTtl(ttl time.Duration, defaultTtl time.Duration) (uint64, error) {
+	if ttl == time.Duration(0) {
+		ttl = defaultTtl
+	}
+	if ttl <= time.Duration(0) {
+		return 0, buildError(
+			momentoerrors.InvalidArgumentError, "ttl must be a non-zero positive value", nil,
+		)
+	}
+	return uint64(ttl.Milliseconds()), nil
+}
+
+func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
 	ttl := r.ttl()
 	if r.ttl() == time.Duration(0) {
 		ttl = defaultTtl
@@ -215,11 +219,7 @@ func prepareTtl(r hasTtl, defaultTtl time.Duration) (time.Duration, error) {
 			momentoerrors.InvalidArgumentError, "ttl must be a non-zero positive value", nil,
 		)
 	}
-	return ttl, nil
-}
-
-func convertTimeToMillisecond(time time.Duration) uint64 {
-	return uint64(time.Milliseconds())
+	return uint64(ttl.Milliseconds()), nil
 }
 
 func momentoValuesToPrimitiveByteList(i []Value) ([][]byte, momentoerrors.MomentoSvcErr) {

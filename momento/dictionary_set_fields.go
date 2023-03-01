@@ -25,7 +25,7 @@ type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
 	Elements       map[string]Value
-	Ttl            utils.CollectionTtl
+	Ttl            *utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionarySetRequest
 	grpcResponse *pb.XDictionarySetResponse
@@ -37,6 +37,8 @@ func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
 func (r *DictionarySetFieldsRequest) elements() map[string]Value { return r.Elements }
 
 func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.Ttl.Ttl }
+
+func (r *DictionarySetFieldsRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
 func (r *DictionarySetFieldsRequest) requestName() string { return "DictionarySetFields" }
 
@@ -60,8 +62,9 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		})
 	}
 
+	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
 	var ttl uint64
-	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
+	if ttl, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -69,7 +72,7 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		DictionaryName:  []byte(r.DictionaryName),
 		Items:           pbElements,
 		TtlMilliseconds: ttl,
-		RefreshTtl:      r.Ttl.RefreshTtl,
+		RefreshTtl:      collectionTtl.RefreshTtl,
 	}
 
 	return nil

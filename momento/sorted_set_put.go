@@ -51,8 +51,9 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	var collectionTtl *utils.CollectionTtl
-	if collectionTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
+	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
+	var ttlMills uint64
+	if ttlMills, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -61,7 +62,7 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	r.grpcRequest = &pb.XSortedSetPutRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
-		TtlMilliseconds: convertTimeToMillisecond(collectionTtl.Ttl),
+		TtlMilliseconds: ttlMills,
 		RefreshTtl:      collectionTtl.RefreshTtl,
 	}
 	return nil

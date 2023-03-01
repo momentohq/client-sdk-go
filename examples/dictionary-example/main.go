@@ -31,11 +31,7 @@ func setup() {
 	}
 
 	// Initializes Momento
-	client, err = momento.NewCacheClient(&momento.CacheClientProps{
-		Configuration:      config.LatestLaptopConfig(),
-		CredentialProvider: credentialProvider,
-		DefaultTTL:         itemDefaultTTLSeconds * time.Second,
-	})
+	client, err = momento.NewCacheClient(config.LatestLaptopConfig(), credentialProvider, itemDefaultTTLSeconds*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +140,7 @@ func incrementField(counterField momento.Value, amount int64) {
 		DictionaryName: dictionaryName,
 		Field:          counterField,
 		Amount:         amount,
-		Ttl: utils.CollectionTtl{
+		Ttl: &utils.CollectionTtl{
 			Ttl:        time.Second * 30,
 			RefreshTtl: true,
 		},

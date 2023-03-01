@@ -29,7 +29,7 @@ type SortedSetIncrementScoreRequest struct {
 	SetName     string
 	ElementName Value
 	Amount      float64
-	Ttl         utils.CollectionTtl
+	Ttl         *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetIncrementRequest
 	grpcResponse *pb.XSortedSetIncrementResponse
@@ -42,6 +42,8 @@ func (r *SortedSetIncrementScoreRequest) requestName() string { return "Sorted s
 
 func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
+func (r *SortedSetIncrementScoreRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
+
 func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
@@ -49,8 +51,9 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		return err
 	}
 
+	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
 	var ttlMillis uint64
-	if ttlMillis, err = prepareTtl(r, client.defaultTtl); err != nil {
+	if ttlMillis, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -72,7 +75,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		ElementName:     elementName,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMillis,
-		RefreshTtl:      r.Ttl.RefreshTtl,
+		RefreshTtl:      collectionTtl.RefreshTtl,
 	}
 	return nil
 }
