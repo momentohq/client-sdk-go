@@ -59,7 +59,7 @@ func (r *ListConcatenateFrontRequest) initGrpcRequest(client scsDataClient) erro
 	}
 
 	var ttl uint64
-	if ttl, err = prepareTTL(r, client.defaultTtl); err != nil {
+	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 

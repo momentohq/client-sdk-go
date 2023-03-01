@@ -183,7 +183,7 @@ var _ = Describe("Scalar methods", func() {
 					CacheName: sharedContext.CacheName,
 					Key:       key,
 					Value:     value,
-					TTL:       sharedContext.DefaultTtl * 2,
+					Ttl:       sharedContext.DefaultTtl * 2,
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 

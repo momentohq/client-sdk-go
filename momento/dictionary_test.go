@@ -708,7 +708,7 @@ var _ = Describe("Dictionary methods", func() {
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
 						Ttl: utils.CollectionTtl{
-							Ttl:        sharedContext.DefaultTTL + time.Second*60,
+							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: false,
 						},
 					}),
@@ -732,7 +732,7 @@ var _ = Describe("Dictionary methods", func() {
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
 						Ttl: utils.CollectionTtl{
-							Ttl:        sharedContext.DefaultTTL + time.Second*60,
+							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: true,
 						},
 					}),

@@ -365,7 +365,7 @@ var _ = Describe("Set methods", func() {
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						Ttl: utils.CollectionTtl{
-							Ttl:        sharedContext.DefaultTTL + time.Second*60,
+							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: true,
 						},
 					}),
@@ -395,7 +395,7 @@ var _ = Describe("Set methods", func() {
 						SetName:   sharedContext.CollectionName,
 						Element:   String("hello"),
 						Ttl: utils.CollectionTtl{
-							Ttl:        sharedContext.DefaultTTL + 1*time.Second,
+							Ttl:        sharedContext.DefaultTtl + 1*time.Second,
 							RefreshTtl: false,
 						},
 					}),
