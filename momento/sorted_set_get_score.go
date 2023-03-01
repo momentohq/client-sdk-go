@@ -45,9 +45,9 @@ func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
 ///////// Request
 
 type SortedSetGetScoreRequest struct {
-	CacheName    string
-	SetName      string
-	ElementNames []Value
+	CacheName     string
+	SetName       string
+	ElementValues []Value
 
 	grpcRequest  *pb.XSortedSetGetScoreRequest
 	grpcResponse *pb.XSortedSetGetScoreResponse
@@ -65,14 +65,14 @@ func (r *SortedSetGetScoreRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	elementNames, err := momentoValuesToPrimitiveByteList(r.ElementNames)
+	values, err := momentoValuesToPrimitiveByteList(r.ElementValues)
 	if err != nil {
 		return err
 	}
 
 	resp := &pb.XSortedSetGetScoreRequest{
-		SetName:     []byte(r.SetName),
-		ElementName: elementNames,
+		SetName: []byte(r.SetName),
+		Values:  values,
 	}
 
 	r.grpcRequest = resp
