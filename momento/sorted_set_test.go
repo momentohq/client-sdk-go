@@ -128,11 +128,12 @@ var _ = Describe("SortedSet", func() {
 
 			// It does nothing without refresh TTL set.
 			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			f := false
 			changer(
 				element,
 				&utils.CollectionTtl{
 					Ttl:        5 * time.Hour,
-					RefreshTtl: false,
+					RefreshTtl: &f,
 				},
 			)
 
@@ -144,11 +145,12 @@ var _ = Describe("SortedSet", func() {
 
 			// It does nothing without refresh TTL set.
 			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			t := true
 			changer(
 				element,
 				&utils.CollectionTtl{
 					Ttl:        sharedContext.DefaultTTL + 1*time.Second,
-					RefreshTtl: true,
+					RefreshTtl: &t,
 				},
 			)
 
@@ -188,7 +190,7 @@ var _ = Describe("SortedSet", func() {
 					Elements:  []*SortedSetPutElement{&element},
 				}
 				if ttl != nil {
-					request.Ttl = *ttl
+					request.Ttl = ttl
 				}
 
 				Expect(

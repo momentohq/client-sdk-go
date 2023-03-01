@@ -29,7 +29,7 @@ type SortedSetPutRequest struct {
 	CacheName string
 	SetName   string
 	Elements  []*SortedSetPutElement
-	Ttl       utils.CollectionTtl
+	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetPutRequest
 	grpcResponse *pb.XSortedSetPutResponse
@@ -41,6 +41,8 @@ func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
 func (r *SortedSetPutRequest) requestName() string { return "Sorted set put" }
 
 func (r *SortedSetPutRequest) ttl() time.Duration { return r.Ttl.Ttl }
+
+func (r *SortedSetPutRequest) refreshTtl() *bool { return r.Ttl.RefreshTtl }
 
 func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
@@ -60,7 +62,7 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
 		TtlMilliseconds: ttlMills,
-		RefreshTtl:      r.Ttl.RefreshTtl,
+		RefreshTtl:      *prepareRefreshTtl(r),
 	}
 	return nil
 }

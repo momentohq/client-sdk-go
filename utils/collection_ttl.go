@@ -4,11 +4,12 @@ import "time"
 
 type CollectionTtl struct {
 	Ttl        time.Duration
-	RefreshTtl bool
+	RefreshTtl *bool
 }
 
 func FromCacheTtl() CollectionTtl {
-	return CollectionTtl{RefreshTtl: true}
+	t := true
+	return CollectionTtl{RefreshTtl: &t}
 }
 
 func Of(ttl time.Duration) CollectionTtl {
@@ -17,21 +18,25 @@ func Of(ttl time.Duration) CollectionTtl {
 
 func RefreshTtlIfProvided(ttl ...time.Duration) CollectionTtl {
 	if len(ttl) > 0 {
-		return CollectionTtl{Ttl: ttl[0], RefreshTtl: true}
+		t := true
+		return CollectionTtl{Ttl: ttl[0], RefreshTtl: &t}
 	}
-	return CollectionTtl{RefreshTtl: false}
+	f := false
+	return CollectionTtl{RefreshTtl: &f}
 }
 
 func WithRefreshTtlOnUpdates(currentTtl CollectionTtl) CollectionTtl {
+	t := true
 	return CollectionTtl{
 		Ttl:        currentTtl.Ttl,
-		RefreshTtl: true,
+		RefreshTtl: &t,
 	}
 }
 
 func WithNoRefreshTtlOnUpdates(currentTtl CollectionTtl) CollectionTtl {
+	f := false
 	return CollectionTtl{
 		Ttl:        currentTtl.Ttl,
-		RefreshTtl: false,
+		RefreshTtl: &f,
 	}
 }

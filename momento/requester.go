@@ -70,6 +70,10 @@ type hasTTL interface {
 	ttl() time.Duration
 }
 
+type hasRefreshTtl interface {
+	refreshTtl() *bool
+}
+
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {
 	return convertMomentoSvcErrorToCustomerError(
 		momentoerrors.NewMomentoSvcErr(errorCode, errorMessage, originalError),
@@ -192,6 +196,14 @@ func prepareTTL(r hasTTL, defaultTtl time.Duration) (uint64, error) {
 		)
 	}
 	return uint64(ttl.Milliseconds()), nil
+}
+
+func prepareRefreshTtl(r hasRefreshTtl) *bool {
+	if r.refreshTtl() == nil {
+		t := true
+		return &t
+	}
+	return r.refreshTtl()
 }
 
 func momentoValuesToPrimitiveByteList(i []Value) ([][]byte, momentoerrors.MomentoSvcErr) {
