@@ -35,10 +35,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
-	topicClient, err := momento.NewTopicClient(&momento.TopicClientProps{
-		Configuration:      shared.Configuration,
-		CredentialProvider: shared.CredentialProvider,
-	})
+	topicClient, err := momento.NewTopicClient(shared.Configuration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}

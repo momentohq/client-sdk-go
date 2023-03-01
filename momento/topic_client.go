@@ -25,23 +25,18 @@ type defaultTopicClient struct {
 	pubSubClient       *pubSubClient
 }
 
-type TopicClientProps struct {
-	Configuration      config.Configuration
-	CredentialProvider auth.CredentialProvider
-}
-
 // NewTopicClient returns a new TopicClient with provided authToken, DefaultTTLSeconds, and opts arguments.
-func NewTopicClient(props *TopicClientProps) (TopicClient, error) {
-	if props.Configuration.GetClientSideTimeout() < 1 {
+func NewTopicClient(configuration config.Configuration, credentialProvider auth.CredentialProvider) (TopicClient, error) {
+	if configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
 	}
 	client := &defaultTopicClient{
-		credentialProvider: props.CredentialProvider,
+		credentialProvider: credentialProvider,
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
-		CredentialProvider: props.CredentialProvider,
-		Configuration:      props.Configuration,
+		CredentialProvider: credentialProvider,
+		Configuration:      configuration,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
