@@ -106,15 +106,13 @@ func prepareCacheName(r hasCacheName) (string, error) {
 }
 
 func prepareKey(r hasKey) ([]byte, error) {
-	err := buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
-
 	if r.key() == nil {
-		return nil, err
+		return nil, buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
 	}
 
 	key := r.key().asBytes()
 	if len(key) == 0 {
-		return nil, err
+		return nil, buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
 	}
 	return key, nil
 }
@@ -133,18 +131,17 @@ func prepareField(r hasField) ([]byte, error) {
 }
 
 func prepareFields(r hasFields) ([][]byte, error) {
-	err := buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
 	if r.fields() == nil {
-		return nil, err
+		return nil, buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
 	}
 	var fields [][]byte
 	for _, valueField := range r.fields() {
 		if valueField == nil {
-			return nil, err
+			return nil, buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
 		}
 		field := valueField.asBytes()
 		if err := validateNotEmpty(field, "field"); err != nil {
-			return nil, err
+			return nil, buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
 		}
 		fields = append(fields, field)
 	}
@@ -198,14 +195,13 @@ func prepareTTL(r hasTTL, defaultTtl time.Duration) (uint64, error) {
 }
 
 func momentoValuesToPrimitiveByteList(i []Value) ([][]byte, momentoerrors.MomentoSvcErr) {
-	err := buildError(momentoerrors.InvalidArgumentError, "values may not be nil", nil)
 	if i == nil {
-		return [][]byte{}, err
+		return [][]byte{}, buildError(momentoerrors.InvalidArgumentError, "values may not be nil", nil)
 	}
 	var rList [][]byte
 	for _, mb := range i {
 		if mb == nil {
-			return [][]byte{}, err
+			return [][]byte{}, buildError(momentoerrors.InvalidArgumentError, "values may not be nil", nil)
 		}
 		rList = append(rList, mb.asBytes())
 	}
