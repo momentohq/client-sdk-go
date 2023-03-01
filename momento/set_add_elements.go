@@ -47,7 +47,7 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 	}
 
 	var ttl uint64
-	if ttl, err = prepareTTL(r, client.defaultTtl); err != nil {
+	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
