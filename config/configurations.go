@@ -10,11 +10,6 @@ type Laptop struct {
 	Configuration
 }
 
-const defaultMaxSessionMemoryMb = 256
-
-// 4 minutes.  We want to remain comfortably underneath the idle timeout for AWS NLB, which is 350s.
-const defaultMaxIdle = 4 * time.Minute
-
 func LatestLaptopConfig(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
 	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
 	if len(loggerFactory) != 0 {
@@ -25,10 +20,8 @@ func LatestLaptopConfig(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
 			LoggerFactory: defaultLoggerFactory,
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-					deadline:           5 * time.Second,
-					maxSessionMemoryMb: defaultMaxSessionMemoryMb,
+					deadline: 5 * time.Second,
 				}),
-				MaxIdle: defaultMaxIdle,
 			}),
 		}),
 	}
@@ -48,10 +41,8 @@ func LatestInRegionConfig(loggerFactory ...logger.MomentoLoggerFactory) *InRegio
 			LoggerFactory: defaultLoggerFactory,
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-					deadline:           1100 * time.Millisecond,
-					maxSessionMemoryMb: defaultMaxSessionMemoryMb,
+					deadline: 1100 * time.Millisecond,
 				}),
-				MaxIdle: defaultMaxIdle,
 			}),
 		}),
 	}
