@@ -31,13 +31,13 @@ var _ = Describe("Pubsub", func() {
 			value := String("foo")
 
 			Expect(
-				client.TopicSubscribe(ctx, &TopicSubscribeRequest{
+				client.Subscribe(ctx, &TopicSubscribeRequest{
 					CacheName: cacheName, TopicName: collectionName,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
-				client.TopicPublish(ctx, &TopicPublishRequest{
+				client.Publish(ctx, &TopicPublishRequest{
 					CacheName: cacheName, TopicName: collectionName, Value: value,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
@@ -55,7 +55,7 @@ var _ = Describe("Pubsub", func() {
 			Bytes([]byte{1, 2, 3}),
 		}
 
-		sub, err := sharedContext.TopicClient.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+		sub, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
 			TopicName: sharedContext.CollectionName,
 		})
@@ -85,7 +85,7 @@ var _ = Describe("Pubsub", func() {
 
 		time.Sleep(time.Millisecond * 100)
 		for _, value := range publishedValues {
-			_, err := sharedContext.TopicClient.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+			_, err := sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
 				TopicName: sharedContext.CollectionName,
 				Value:     value,
@@ -102,7 +102,7 @@ var _ = Describe("Pubsub", func() {
 
 	It("returns an error when trying to publish a nil topic value", func() {
 		Expect(
-			sharedContext.TopicClient.TopicPublish(sharedContext.Ctx, &TopicPublishRequest{
+			sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
 				TopicName: sharedContext.CollectionName,
 				Value:     nil,
@@ -110,10 +110,10 @@ var _ = Describe("Pubsub", func() {
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
-	Describe(`TopicSubscribe`, func() {
+	Describe(`Subscribe`, func() {
 		It(`Does not error on a non-existent topic`, func() {
 			Expect(
-				sharedContext.TopicClient.TopicSubscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 					CacheName: sharedContext.CacheName,
 					TopicName: sharedContext.CollectionName,
 				}),

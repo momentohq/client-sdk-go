@@ -19,8 +19,8 @@ type TopicClient interface {
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
 	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
 
-	TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
-	TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error)
+	Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
+	Publish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error)
 
 	Close()
 }
@@ -113,7 +113,7 @@ func (c defaultTopicClient) ListCaches(ctx context.Context, request *ListCachesR
 	}, nil
 }
 
-func (c defaultTopicClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
+func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (c defaultTopicClient) TopicSubscribe(ctx context.Context, request *TopicSu
 	}, nil
 }
 
-func (c defaultTopicClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
+func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
