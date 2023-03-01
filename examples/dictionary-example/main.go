@@ -144,7 +144,7 @@ func incrementField(counterField momento.Value, amount int64) {
 		DictionaryName: dictionaryName,
 		Field:          counterField,
 		Amount:         amount,
-		CollectionTtl: utils.CollectionTtl{
+		Ttl: utils.CollectionTtl{
 			Ttl:        time.Second * 30,
 			RefreshTtl: true,
 		},

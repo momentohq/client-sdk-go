@@ -53,7 +53,7 @@ func getClient() momento.CacheClient {
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
+	client, err := momento.NewCacheClient(&momento.CacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credProvider,
 		DefaultTTL:         60 * time.Second,

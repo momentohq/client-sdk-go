@@ -25,7 +25,7 @@ func main() {
 	)
 
 	// Initializes Momento
-	client, err := momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
+	client, err := momento.NewCacheClient(&momento.CacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
 		DefaultTTL:         itemDefaultTTLSeconds * time.Second,

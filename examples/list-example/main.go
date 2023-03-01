@@ -30,7 +30,7 @@ func pushFrontToList(value string) {
 		ListName:           listName,
 		Value:              momento.String(value),
 		TruncateBackToSize: 0,
-		CollectionTtl: utils.CollectionTtl{
+		Ttl: utils.CollectionTtl{
 			Ttl:        5 * time.Second,
 			RefreshTtl: true,
 		},
@@ -52,7 +52,7 @@ func pushBackToList(value string) {
 		ListName:            listName,
 		Value:               momento.String(value),
 		TruncateFrontToSize: 0,
-		CollectionTtl: utils.CollectionTtl{
+		Ttl: utils.CollectionTtl{
 			Ttl:        5 * time.Second,
 			RefreshTtl: true,
 		},
@@ -149,7 +149,7 @@ func main() {
 	}
 
 	// Initializes Momento
-	client, err = momento.NewSimpleCacheClient(&momento.SimpleCacheClientProps{
+	client, err = momento.NewCacheClient(&momento.CacheClientProps{
 		Configuration:      config.LatestLaptopConfig(),
 		CredentialProvider: credentialProvider,
 		DefaultTTL:         itemDefaultTTLSeconds * time.Second,
