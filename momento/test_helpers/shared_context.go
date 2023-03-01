@@ -11,12 +11,11 @@ import (
 )
 
 type SharedContext struct {
-	ClientProps        *momento.CacheClientProps
 	Client             momento.CacheClient
 	CacheName          string
 	CollectionName     string
 	Ctx                context.Context
-	DefaultTTL         time.Duration
+	DefaultTtl         time.Duration
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
 }
@@ -28,16 +27,10 @@ func NewSharedContext() SharedContext {
 	credentialProvider, _ := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LatestLaptopConfig()
-	shared.DefaultTTL = 3 * time.Second
-
-	shared.ClientProps = &momento.CacheClientProps{
-		CredentialProvider: shared.CredentialProvider,
-		Configuration:      shared.Configuration,
-		DefaultTTL:         shared.DefaultTTL,
-	}
+	shared.DefaultTtl = 3 * time.Second
 
 	var err error
-	client, err := momento.NewCacheClient(shared.ClientProps)
+	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
 	if err != nil {
 		panic(err)
 	}

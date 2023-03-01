@@ -52,7 +52,7 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	}
 
 	var ttlMills uint64
-	if ttlMills, err = prepareTTL(r, client.defaultTtl); err != nil {
+	if ttlMills, err = prepareTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
