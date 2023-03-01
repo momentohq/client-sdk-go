@@ -66,6 +66,7 @@ var _ = Describe("CredentialProvider", func() {
 				CacheEndpoint:   cacheEndpoint,
 			},
 		)
+		Expect(err).To(BeNil())
 		Expect(credentialProvider.GetControlEndpoint()).To(Equal(controlEndpoint))
 		Expect(credentialProvider.GetCacheEndpoint()).To(Equal(cacheEndpoint))
 	})
