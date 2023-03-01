@@ -25,7 +25,7 @@ type defaultTopicClient struct {
 	pubSubClient       *pubSubClient
 }
 
-// NewTopicClient returns a new TopicClient with provided authToken, DefaultTTLSeconds, and opts arguments.
+// NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
 func NewTopicClient(configuration config.Configuration, credentialProvider auth.CredentialProvider) (TopicClient, error) {
 	if configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
