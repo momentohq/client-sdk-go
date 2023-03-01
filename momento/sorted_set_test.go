@@ -326,7 +326,7 @@ var _ = Describe("SortedSet", func() {
 			).To(Equal(&SortedSetGetRankHit{Rank: 0}))
 		})
 
-		It(`returns an error for a nil element name`, func() {
+		It(`returns an error for a nil element value`, func() {
 			Expect(
 				sharedContext.Client.SortedSetGetRank(
 					sharedContext.Ctx,
@@ -385,7 +385,7 @@ var _ = Describe("SortedSet", func() {
 			))
 		})
 
-		It(`returns an error when element names are nil`, func() {
+		It(`returns an error when element values are nil`, func() {
 			Expect(
 				sharedContext.Client.SortedSetGetScore(
 					sharedContext.Ctx,
@@ -486,7 +486,7 @@ var _ = Describe("SortedSet", func() {
 			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 50}))
 		})
 
-		It("returns an error when element name is nil", func() {
+		It("returns an error when element value is nil", func() {
 			Expect(
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,

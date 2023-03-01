@@ -87,13 +87,13 @@ func prepareName(name string, label string) (string, error) {
 func prepareElementValue(name Value) ([]byte, error) {
 	if name == nil {
 		return nil, buildError(
-			momentoerrors.InvalidArgumentError, "element name cannot be nil or empty", nil,
+			momentoerrors.InvalidArgumentError, "element value cannot be nil or empty", nil,
 		)
 	}
 
 	// just validate not empty using prepareName
 	nameBytes := name.asBytes()
-	_, err := prepareName(string(nameBytes), "element name")
+	_, err := prepareName(string(nameBytes), "element value")
 	if err != nil {
 		return nil, err
 	}
