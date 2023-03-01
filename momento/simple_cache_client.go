@@ -246,6 +246,14 @@ func (c defaultScsClient) TopicPublish(ctx context.Context, request *TopicPublis
 		return nil, err
 	}
 
+	if request.Value == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "value cannot be nil", nil,
+			),
+		)
+	}
+
 	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,

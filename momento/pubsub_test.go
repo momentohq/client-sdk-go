@@ -64,7 +64,7 @@ var _ = Describe("Pubsub", func() {
 		}
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
-		receivedValues := []TopicValue{}
+		var receivedValues []TopicValue
 		ready := make(chan int, 1)
 		go func() {
 			ready <- 1
