@@ -56,6 +56,8 @@ func FromString(authToken string) (CredentialProvider, error) {
 	return credentialProvider, nil
 }
 
+// WithEndpoints overrides the cache and control endpoint URIs with those provided by the supplied Endpoints struct
+// and returns a CredentialProvider with the new endpoint values
 func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints *Endpoints) (CredentialProvider, error) {
 	if endpoints == nil {
 		return nil, momentoerrors.NewMomentoSvcErr(

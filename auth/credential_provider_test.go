@@ -49,9 +49,7 @@ var _ = Describe("CredentialProvider", func() {
 	})
 
 	It("overrides endpoints", func() {
-		var err error
-		var credentialProvider auth.CredentialProvider
-		credentialProvider, err = auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
+		credentialProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
 		Expect(err).To(BeNil())
 		controlEndpoint := credentialProvider.GetControlEndpoint()
 		cacheEndpoint := credentialProvider.GetCacheEndpoint()
