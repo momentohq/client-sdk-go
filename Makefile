@@ -1,3 +1,5 @@
+LINTER_ARGS=./... ./examples/...
+
 .PHONY: install-devtools
 install-devtools:
 	go install golang.org/x/tools/cmd/goimports@latest
@@ -18,11 +20,11 @@ tidy:
 
 .PHONY: vet
 vet:
-	go vet ./...
+	go vet $(LINTER_ARGS)
 
 .PHONY: staticcheck
 staticcheck:
-	staticcheck ./...
+	staticcheck $(LINTER_ARGS)
 
 .PHONY: lint
 lint: format imports tidy vet staticcheck
