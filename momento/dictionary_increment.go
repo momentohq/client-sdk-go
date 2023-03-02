@@ -63,9 +63,9 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error
 		return err
 	}
 
-	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
-	var ttl uint64
-	if ttl, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -81,8 +81,8 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error
 		DictionaryName:  []byte(r.DictionaryName),
 		Field:           field,
 		Amount:          r.Amount,
-		TtlMilliseconds: ttl,
-		RefreshTtl:      collectionTtl.RefreshTtl,
+		TtlMilliseconds: ttlMilliseconds,
+		RefreshTtl:      refreshTtl,
 	}
 
 	return nil

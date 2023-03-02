@@ -62,17 +62,17 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		})
 	}
 
-	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
-	var ttl uint64
-	if ttl, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
 	r.grpcRequest = &pb.XDictionarySetRequest{
 		DictionaryName:  []byte(r.DictionaryName),
 		Items:           pbElements,
-		TtlMilliseconds: ttl,
-		RefreshTtl:      collectionTtl.RefreshTtl,
+		TtlMilliseconds: ttlMilliseconds,
+		RefreshTtl:      refreshTtl,
 	}
 
 	return nil

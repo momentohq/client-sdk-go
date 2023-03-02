@@ -48,9 +48,9 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
-	var ttl uint64
-	if ttl, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -62,8 +62,8 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 	r.grpcRequest = &pb.XSetUnionRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
-		TtlMilliseconds: ttl,
-		RefreshTtl:      collectionTtl.RefreshTtl,
+		TtlMilliseconds: ttlMilliseconds,
+		RefreshTtl:      refreshTtl,
 	}
 
 	return nil

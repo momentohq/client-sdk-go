@@ -146,7 +146,7 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("both nil", nil, nil),
 	)
 
-	It("try using negative ttl for set", func() {
+	It("errors with a negative ttl for set", func() {
 		Expect(
 			sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 				CacheName:      sharedContext.CacheName,
