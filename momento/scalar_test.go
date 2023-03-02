@@ -3,6 +3,8 @@ package momento_test
 import (
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -49,7 +51,7 @@ var _ = Describe("Scalar methods", func() {
 					CacheName: sharedContext.CacheName,
 					Key:       key,
 				}),
-			).To(BeAssignableToTypeOf(&DeleteSuccess{}))
+			).To(BeAssignableToTypeOf(&responses.DeleteSuccess{}))
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{

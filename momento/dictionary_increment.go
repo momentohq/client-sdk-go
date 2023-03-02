@@ -6,28 +6,11 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// DictionaryIncrementResponse
-
-type DictionaryIncrementResponse interface {
-	isDictionaryIncrementResponse()
-}
-
-type DictionaryIncrementSuccess struct {
-	value int64
-}
-
-func (DictionaryIncrementSuccess) isDictionaryIncrementResponse() {}
-
-func (resp DictionaryIncrementSuccess) Value() int64 {
-	return resp.value
-}
-
-// DictionaryIncrementRequest
 
 type DictionaryIncrementRequest struct {
 	CacheName      string
@@ -38,7 +21,7 @@ type DictionaryIncrementRequest struct {
 
 	grpcRequest  *pb.XDictionaryIncrementRequest
 	grpcResponse *pb.XDictionaryIncrementResponse
-	response     DictionaryIncrementResponse
+	response     responses.DictionaryIncrementResponse
 }
 
 func (r *DictionaryIncrementRequest) cacheName() string { return r.CacheName }
@@ -98,6 +81,6 @@ func (r *DictionaryIncrementRequest) makeGrpcRequest(metadata context.Context, c
 }
 
 func (r *DictionaryIncrementRequest) interpretGrpcResponse() error {
-	r.response = &DictionaryIncrementSuccess{value: r.grpcResponse.Value}
+	r.response = responses.NewDictionaryIncrementSuccess(r.grpcResponse.Value)
 	return nil
 }

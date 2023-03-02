@@ -12,16 +12,17 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type CacheClient interface {
-	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
-	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
+	CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error)
+	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error)
 	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
 
 	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
-	Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error)
+	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error)
 	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error)
@@ -46,14 +47,14 @@ type CacheClient interface {
 	ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error)
 	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error)
 
-	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error)
-	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error)
-	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (DictionaryFetchResponse, error)
-	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error)
-	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (DictionaryGetFieldsResponse, error)
-	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (DictionaryIncrementResponse, error)
-	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error)
-	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error)
+	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error)
+	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
+	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error)
+	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error)
+	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error)
+	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error)
+	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error)
+	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error)
 
 	Close()
 }
@@ -116,7 +117,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 	return client, nil
 }
 
-func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error) {
+func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -125,14 +126,14 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 	})
 	if err != nil {
 		if err.Code() == AlreadyExistsError {
-			return &CreateCacheAlreadyExists{}, nil
+			return &responses.CreateCacheAlreadyExists{}, nil
 		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &CreateCacheSuccess{}, nil
+	return &responses.CreateCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error) {
+func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -141,11 +142,11 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	})
 	if err != nil {
 		if err.Code() == NotFoundError {
-			return &DeleteCacheSuccess{}, nil
+			return &responses.DeleteCacheSuccess{}, nil
 		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &DeleteCacheSuccess{}, nil
+	return &responses.DeleteCacheSuccess{}, nil
 }
 
 func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error) {
@@ -175,7 +176,7 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, 
 	return r.response, nil
 }
 
-func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error) {
+func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -340,7 +341,7 @@ func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValu
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
+func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error) {
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
@@ -360,24 +361,24 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &DictionarySetFieldSuccess{}, nil
+	return &responses.DictionarySetFieldSuccess{}, nil
 }
 
-func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error) {
+func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (DictionaryFetchResponse, error) {
+func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error) {
+func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error) {
 	newRequest := &DictionaryGetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
@@ -387,17 +388,14 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 		return nil, err
 	}
 	switch rtype := newRequest.response.(type) {
-	case *DictionaryGetFieldsMiss:
-		return &DictionaryGetFieldMiss{}, nil
-	case *DictionaryGetFieldsHit:
-		switch rtype.responses[0].(type) {
-		case *DictionaryGetFieldHit:
-			return &DictionaryGetFieldHit{
-				field: rtype.fields[0],
-				body:  rtype.elements[0].CacheBody,
-			}, nil
-		case *DictionaryGetFieldMiss:
-			return &DictionaryGetFieldMiss{}, nil
+	case *responses.DictionaryGetFieldsMiss:
+		return &responses.DictionaryGetFieldMiss{}, nil
+	case *responses.DictionaryGetFieldsHit:
+		switch rtype.Responses()[0].(type) {
+		case *responses.DictionaryGetFieldHit:
+			return responses.NewDictionaryGetFieldHitFromFieldsHit(rtype), nil
+		case *responses.DictionaryGetFieldMiss:
+			return &responses.DictionaryGetFieldMiss{}, nil
 		default:
 			return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 		}
@@ -406,21 +404,21 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 	}
 }
 
-func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (DictionaryGetFieldsResponse, error) {
+func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (DictionaryIncrementResponse, error) {
+func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error) {
+func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error) {
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
@@ -436,10 +434,10 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &DictionaryRemoveFieldSuccess{}, nil
+	return &responses.DictionaryRemoveFieldSuccess{}, nil
 }
 
-func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error) {
+func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}

@@ -3,6 +3,8 @@ package momento_test
 import (
 	"errors"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -34,11 +36,11 @@ var _ = Describe("Control ops", func() {
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
+				).To(BeAssignableToTypeOf(&responses.CreateCacheSuccess{}))
 
 				Expect(
 					sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&CreateCacheAlreadyExists{}))
+				).To(BeAssignableToTypeOf(&responses.CreateCacheAlreadyExists{}))
 			}
 
 			resp, err := sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
@@ -58,7 +60,7 @@ var _ = Describe("Control ops", func() {
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
+				).To(BeAssignableToTypeOf(&responses.DeleteCacheSuccess{}))
 			}
 			resp, err = sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
@@ -96,7 +98,7 @@ var _ = Describe("Control ops", func() {
 		It(`succeeds even if the cache does not exist`, func() {
 			Expect(
 				sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),
-			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
+			).To(BeAssignableToTypeOf(&responses.DeleteCacheSuccess{}))
 		})
 	})
 })

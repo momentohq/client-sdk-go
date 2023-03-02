@@ -3,56 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// DictionaryGetFieldsResponse
-
-type DictionaryGetFieldsResponse interface {
-	isDictionaryGetFieldsResponse()
-}
-
-type DictionaryGetFieldsHit struct {
-	elements  []*pb.XDictionaryGetResponse_XDictionaryGetResponsePart
-	fields    [][]byte
-	responses []DictionaryGetFieldResponse
-}
-
-func (DictionaryGetFieldsHit) isDictionaryGetFieldsResponse() {}
-
-func (resp DictionaryGetFieldsHit) ValueMap() map[string]string {
-	return resp.ValueMapStringString()
-}
-
-func (resp DictionaryGetFieldsHit) ValueMapStringString() map[string]string {
-	ret := make(map[string]string)
-	for idx, element := range resp.elements {
-		if element.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx])] = string(element.CacheBody)
-		}
-	}
-	return ret
-}
-
-func (resp DictionaryGetFieldsHit) ValueMapStringBytes() map[string][]byte {
-	ret := make(map[string][]byte)
-	for idx, element := range resp.elements {
-		if element.Result == pb.ECacheResult_Hit {
-			ret[string(resp.fields[idx])] = element.CacheBody
-		}
-	}
-	return ret
-}
-
-func (resp DictionaryGetFieldsHit) Responses() []DictionaryGetFieldResponse {
-	return resp.responses
-}
-
-type DictionaryGetFieldsMiss struct{}
-
-func (DictionaryGetFieldsMiss) isDictionaryGetFieldsResponse() {}
-
-// DictionaryGetFieldsRequest
 
 type DictionaryGetFieldsRequest struct {
 	CacheName      string
@@ -61,7 +15,7 @@ type DictionaryGetFieldsRequest struct {
 
 	grpcRequest  *pb.XDictionaryGetRequest
 	grpcResponse *pb.XDictionaryGetResponse
-	response     DictionaryGetFieldsResponse
+	response     responses.DictionaryGetFieldsResponse
 }
 
 func (r *DictionaryGetFieldsRequest) cacheName() string { return r.CacheName }
@@ -102,22 +56,22 @@ func (r *DictionaryGetFieldsRequest) makeGrpcRequest(metadata context.Context, c
 func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryGetResponse_Missing:
-		r.response = &DictionaryGetFieldsMiss{}
+		r.response = &responses.DictionaryGetFieldsMiss{}
 	case *pb.XDictionaryGetResponse_Found:
-		var responses []DictionaryGetFieldResponse
+		var responsesToReturn []responses.DictionaryGetFieldResponse
 		var fields [][]byte
 		for idx, val := range rtype.Found.Items {
 			field := r.Fields[idx].asBytes()
 			if val.Result == pb.ECacheResult_Hit {
-				responses = append(responses, &DictionaryGetFieldHit{field: field, body: val.CacheBody})
+				responsesToReturn = append(responsesToReturn, responses.NewDictionaryGetFieldHit(field, val.CacheBody))
 			} else if val.Result == pb.ECacheResult_Miss {
-				responses = append(responses, &DictionaryGetFieldMiss{field: field})
+				responsesToReturn = append(responsesToReturn, responses.NewDictionaryGetFieldMiss(field))
 			} else {
-				responses = append(responses, nil)
+				responsesToReturn = append(responsesToReturn, nil)
 			}
 			fields = append(fields, field)
 		}
-		r.response = &DictionaryGetFieldsHit{fields: fields, elements: rtype.Found.Items, responses: responses}
+		r.response = responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn)
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
