@@ -30,39 +30,39 @@ type Configuration interface {
 	WithClientTimeout(clientTimeout time.Duration) Configuration
 }
 
-type SimpleCacheConfiguration struct {
+type cacheConfiguration struct {
 	loggerFactory     logger.MomentoLoggerFactory
 	transportStrategy TransportStrategy
 }
 
-func (s *SimpleCacheConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
+func (s *cacheConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
 	return s.loggerFactory
 }
 
-func (s *SimpleCacheConfiguration) GetClientSideTimeout() time.Duration {
+func (s *cacheConfiguration) GetClientSideTimeout() time.Duration {
 	return s.transportStrategy.GetClientSideTimeout()
 }
 
-func NewSimpleCacheConfiguration(props *ConfigurationProps) Configuration {
-	return &SimpleCacheConfiguration{
+func NewCacheConfiguration(props *ConfigurationProps) Configuration {
+	return &cacheConfiguration{
 		loggerFactory:     props.LoggerFactory,
 		transportStrategy: props.TransportStrategy,
 	}
 }
 
-func (s *SimpleCacheConfiguration) GetTransportStrategy() TransportStrategy {
+func (s *cacheConfiguration) GetTransportStrategy() TransportStrategy {
 	return s.transportStrategy
 }
 
-func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {
-	return &SimpleCacheConfiguration{
+func (s *cacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {
+	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: transportStrategy,
 	}
 }
 
-func (s *SimpleCacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
-	return &SimpleCacheConfiguration{
+func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
+	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithClientTimeout(clientTimeout),
 	}
