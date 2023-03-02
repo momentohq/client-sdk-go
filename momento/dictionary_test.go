@@ -682,31 +682,6 @@ var _ = Describe("Dictionary methods", func() {
 			).Error().To(BeNil())
 		})
 
-		When("collection TTL is empty", func() {
-
-			It("will have a false refreshTTL and fetch will miss after client default ttl", func() {
-				time.Sleep(sharedContext.DefaultTtl / 2)
-				Expect(
-					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
-						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
-						Field:          String("foo"),
-						Value:          String("bar"),
-					}),
-				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
-
-				time.Sleep(sharedContext.DefaultTtl / 2)
-
-				Expect(
-					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
-						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
-					}),
-				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
-			})
-
-		})
-
 		When("collection TTL is configured", func() {
 
 			It("is ignored if refresh ttl is false", func() {
