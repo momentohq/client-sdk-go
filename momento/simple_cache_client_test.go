@@ -33,7 +33,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`errors on invalid timeout`, func() {
 		badRequestTimeout := 0 * time.Second
-		sharedContext.Configuration = config.LatestLaptopConfig().WithClientTimeout(badRequestTimeout)
+		sharedContext.Configuration = config.LaptopLatest().WithClientTimeout(badRequestTimeout)
 		Expect(
 			NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
