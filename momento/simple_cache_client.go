@@ -12,7 +12,6 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
-	"github.com/momentohq/client-sdk-go/utils"
 )
 
 type CacheClient interface {
@@ -240,15 +239,11 @@ func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsR
 }
 
 func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error) {
-	ttl := r.Ttl
-	if r.Ttl == nil {
-		ttl = assignDefaultCollectionTtl(c.dataClient.defaultTtl)
-	}
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
 		Elements:  []Value{r.Element},
-		Ttl:       ttl,
+		Ttl:       r.Ttl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
@@ -353,17 +348,14 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 			),
 		)
 	}
-	ttl := r.Ttl
-	if r.Ttl == nil {
-		ttl = assignDefaultCollectionTtl(c.dataClient.defaultTtl)
-	}
+
 	elements := make(map[string]Value)
 	elements[string(r.Field.asBytes())] = r.Value
 	newRequest := &DictionarySetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
 		Elements:       elements,
-		Ttl:            ttl,
+		Ttl:            r.Ttl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
@@ -481,11 +473,4 @@ func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Cache name cannot be empty", nil)
 	}
 	return nil
-}
-
-func assignDefaultCollectionTtl(defaultTtl time.Duration) *utils.CollectionTtl {
-	return &utils.CollectionTtl{
-		Ttl:        defaultTtl,
-		RefreshTtl: true,
-	}
 }

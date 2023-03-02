@@ -51,9 +51,9 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		return err
 	}
 
-	collectionTtl := prepareCollectionTtl(r, client.defaultTtl)
-	var ttlMillis uint64
-	if ttlMillis, err = prepareCollectionTtlTtl(collectionTtl.Ttl, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -74,8 +74,8 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		SetName:         []byte(r.SetName),
 		Value:           value,
 		Amount:          r.Amount,
-		TtlMilliseconds: ttlMillis,
-		RefreshTtl:      collectionTtl.RefreshTtl,
+		TtlMilliseconds: ttlMilliseconds,
+		RefreshTtl:      refreshTtl,
 	}
 	return nil
 }
