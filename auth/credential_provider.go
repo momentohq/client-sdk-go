@@ -19,7 +19,7 @@ type CredentialProvider interface {
 	GetAuthToken() string
 	GetControlEndpoint() string
 	GetCacheEndpoint() string
-	WithEndpoints(endpoints *Endpoints) (CredentialProvider, error)
+	WithEndpoints(endpoints Endpoints) (CredentialProvider, error)
 }
 
 type defaultCredentialProvider struct {
@@ -58,14 +58,7 @@ func FromString(authToken string) (CredentialProvider, error) {
 
 // WithEndpoints overrides the cache and control endpoint URIs with those provided by the supplied Endpoints struct
 // and returns a CredentialProvider with the new endpoint values
-func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints *Endpoints) (CredentialProvider, error) {
-	if endpoints == nil {
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"endpoints cannot be nil",
-			errors.New("invalid argument"),
-		)
-	}
+func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints Endpoints) (CredentialProvider, error) {
 	credentialProvider.cacheEndpoint = endpoints.CacheEndpoint
 	credentialProvider.controlEndpoint = endpoints.ControlEndpoint
 	return credentialProvider, nil

@@ -59,7 +59,7 @@ var _ = Describe("CredentialProvider", func() {
 		controlEndpoint = fmt.Sprintf("%s-overridden", controlEndpoint)
 		cacheEndpoint = fmt.Sprintf("%s-overridden", cacheEndpoint)
 		credentialProvider, err = credentialProvider.WithEndpoints(
-			&auth.Endpoints{
+			auth.Endpoints{
 				ControlEndpoint: controlEndpoint,
 				CacheEndpoint:   cacheEndpoint,
 			},
