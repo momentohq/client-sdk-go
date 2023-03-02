@@ -74,8 +74,7 @@ var _ = Describe("Dictionary methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
-			var f Field
-			f = String("hi")
+			var f Field = String("hi")
 			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      cacheName,
@@ -147,7 +146,7 @@ var _ = Describe("Dictionary methods", func() {
 	//	Entry("nil value", String("field"), nil),
 	//	Entry("both nil", nil, nil),
 	//)
-    //
+	//
 	//It("errors with a negative ttl for set", func() {
 	//	Expect(
 	//		sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
