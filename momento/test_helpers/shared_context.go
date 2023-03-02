@@ -45,7 +45,6 @@ func NewSharedContext() SharedContext {
 
 	shared.Client = client
 	shared.TopicClient = topicClient
-
 	shared.CacheName = uuid.NewString()
 	shared.CollectionName = uuid.NewString()
 

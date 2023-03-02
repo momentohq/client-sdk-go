@@ -24,7 +24,7 @@ func (DictionarySetFieldsSuccess) isDictionarySetFieldsResponse() {}
 type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
-	Elements       map[string]Value
+	Elements       map[Value]Value
 	Ttl            utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionarySetRequest
@@ -34,7 +34,7 @@ type DictionarySetFieldsRequest struct {
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionarySetFieldsRequest) elements() map[string]Value { return r.Elements }
+func (r *DictionarySetFieldsRequest) elements() map[Value]Value { return r.Elements }
 
 func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
