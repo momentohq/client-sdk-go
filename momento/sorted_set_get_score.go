@@ -75,7 +75,7 @@ func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreRespon
 	for _, element := range grpcSetElements {
 		switch element.Result {
 		case pb.ECacheResult_Hit:
-			rList = append(rList, &responses.SortedSetScoreHit{Score: element.Score})
+			rList = append(rList, responses.SortedSetScore(element.Score))
 		case pb.ECacheResult_Miss:
 			rList = append(rList, &responses.SortedSetScoreMiss{})
 		default:
