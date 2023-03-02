@@ -80,7 +80,6 @@ var _ = Describe("Dictionary methods", func() {
 					DictionaryName: dictionaryName,
 					Field:          String("hi"),
 					Value:          String("hi"),
-					Ttl:            &utils.CollectionTtl{},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
@@ -89,7 +88,6 @@ var _ = Describe("Dictionary methods", func() {
 					CacheName:      cacheName,
 					DictionaryName: dictionaryName,
 					Elements:       nil,
-					Ttl:            &utils.CollectionTtl{},
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
@@ -147,6 +145,18 @@ var _ = Describe("Dictionary methods", func() {
 		Entry("nil value", String("field"), nil),
 		Entry("both nil", nil, nil),
 	)
+
+	It("try using negative ttl for set", func() {
+		Expect(
+			sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+				CacheName:      sharedContext.CacheName,
+				DictionaryName: sharedContext.CollectionName,
+				Field:          String("myField"),
+				Value:          String("myValue"),
+				Ttl:            &utils.CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
 		func(elements map[string]Value, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
@@ -682,7 +692,6 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("foo"),
 						Value:          String("bar"),
-						Ttl:            &utils.CollectionTtl{},
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
