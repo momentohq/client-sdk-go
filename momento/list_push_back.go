@@ -32,7 +32,7 @@ type ListPushBackRequest struct {
 	ListName            string
 	Value               Value
 	TruncateFrontToSize uint32
-	Ttl                 utils.CollectionTtl
+	Ttl                 *utils.CollectionTtl
 
 	grpcRequest  *pb.XListPushBackRequest
 	grpcResponse *pb.XListPushBackResponse
@@ -44,6 +44,8 @@ func (r *ListPushBackRequest) cacheName() string { return r.CacheName }
 func (r *ListPushBackRequest) value() Value { return r.Value }
 
 func (r *ListPushBackRequest) ttl() time.Duration { return r.Ttl.Ttl }
+
+func (r *ListPushBackRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
 func (r *ListPushBackRequest) requestName() string { return "ListPushBack" }
 
@@ -59,16 +61,17 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	var ttl uint64
-	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
 	r.grpcRequest = &pb.XListPushBackRequest{
 		ListName:            []byte(r.ListName),
 		Value:               value,
-		TtlMilliseconds:     ttl,
-		RefreshTtl:          r.Ttl.RefreshTtl,
+		TtlMilliseconds:     ttlMilliseconds,
+		RefreshTtl:          refreshTtl,
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 

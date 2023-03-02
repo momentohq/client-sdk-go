@@ -20,5 +20,5 @@ type SetAddElementRequest struct {
 	CacheName string
 	SetName   string
 	Element   Value
-	Ttl       utils.CollectionTtl
+	Ttl       *utils.CollectionTtl
 }
