@@ -57,10 +57,15 @@ func FromString(authToken string) (CredentialProvider, error) {
 }
 
 // WithEndpoints overrides the cache and control endpoint URIs with those provided by the supplied Endpoints struct
-// and returns a CredentialProvider with the new endpoint values
+// and returns a CredentialProvider with the new endpoint values. An endpoint supplied as an empty string is ignored
+// and the existing value for that endpoint is retained.
 func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints Endpoints) (CredentialProvider, error) {
-	credentialProvider.cacheEndpoint = endpoints.CacheEndpoint
-	credentialProvider.controlEndpoint = endpoints.ControlEndpoint
+	if credentialProvider.cacheEndpoint != "" {
+		credentialProvider.cacheEndpoint = endpoints.CacheEndpoint
+	}
+	if credentialProvider.controlEndpoint != "" {
+		credentialProvider.controlEndpoint = endpoints.ControlEndpoint
+	}
 	return credentialProvider, nil
 }
 
