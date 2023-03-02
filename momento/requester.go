@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/utils"
+
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
 
@@ -68,6 +70,10 @@ type hasElements interface {
 
 type hasTtl interface {
 	ttl() time.Duration
+}
+
+type hasCollectionTtl interface {
+	collectionTtl() *utils.CollectionTtl
 }
 
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {
@@ -180,6 +186,19 @@ func prepareElements(r hasElements) (map[string][]byte, error) {
 		retMap[key.asString()] = v.asBytes()
 	}
 	return retMap, nil
+}
+
+func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) (uint64, bool, error) {
+	if r.collectionTtl() == nil {
+		return uint64(defaultTtl.Milliseconds()), true, nil
+	} else if r.collectionTtl().Ttl == time.Duration(0) {
+		return uint64(defaultTtl.Milliseconds()), r.collectionTtl().RefreshTtl, nil
+	} else if r.collectionTtl().Ttl <= time.Duration(0) {
+		return 0, false, buildError(
+			momentoerrors.InvalidArgumentError, "ttl must be a non-zero positive value", nil,
+		)
+	}
+	return uint64(r.collectionTtl().Ttl.Milliseconds()), r.collectionTtl().RefreshTtl, nil
 }
 
 func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {

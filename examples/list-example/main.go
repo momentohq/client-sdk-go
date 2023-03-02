@@ -30,7 +30,7 @@ func pushFrontToList(value momento.Value) {
 		ListName:           listName,
 		Value:              value,
 		TruncateBackToSize: 0,
-		Ttl: utils.CollectionTtl{
+		Ttl: &utils.CollectionTtl{
 			Ttl:        5 * time.Second,
 			RefreshTtl: true,
 		},
@@ -52,7 +52,7 @@ func pushBackToList(value momento.Value) {
 		ListName:            listName,
 		Value:               value,
 		TruncateFrontToSize: 0,
-		Ttl: utils.CollectionTtl{
+		Ttl: &utils.CollectionTtl{
 			Ttl:        5 * time.Second,
 			RefreshTtl: true,
 		},

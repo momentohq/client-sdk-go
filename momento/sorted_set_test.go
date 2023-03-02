@@ -172,7 +172,7 @@ var _ = Describe("SortedSet", func() {
 					Amount:       element.Score,
 				}
 				if ttl != nil {
-					request.Ttl = *ttl
+					request.Ttl = ttl
 				}
 
 				Expect(
@@ -188,7 +188,7 @@ var _ = Describe("SortedSet", func() {
 					Elements:  []*SortedSetPutElement{&element},
 				}
 				if ttl != nil {
-					request.Ttl = *ttl
+					request.Ttl = ttl
 				}
 
 				Expect(
