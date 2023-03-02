@@ -77,11 +77,13 @@ var _ = Describe("Dictionary methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
+			var f Field
+			f = String("hi")
 			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      cacheName,
 					DictionaryName: dictionaryName,
-					Field:          String("hi"),
+					Field:          &f,
 					Value:          String("hi"),
 					Ttl:            utils.CollectionTtl{},
 				}),
@@ -109,7 +111,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Field:          field,
+					Field:          &field,
 					Value:          value,
 				}),
 			).Error().To(BeNil())

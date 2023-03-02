@@ -348,8 +348,8 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 			),
 		)
 	}
-	elements := make(map[string]Value)
-	elements[r.Field.asString()] = r.Value
+	elements := make(map[*Field]Value)
+	elements[r.Field] = r.Value
 	newRequest := &DictionarySetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,

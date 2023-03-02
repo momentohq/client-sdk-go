@@ -19,7 +19,7 @@ func (DictionarySetFieldSuccess) isDictionarySetFieldResponse() {}
 type DictionarySetFieldRequest struct {
 	CacheName      string
 	DictionaryName string
-	Field          Value
+	Field          *Field
 	Value          Value
 	Ttl            utils.CollectionTtl
 }

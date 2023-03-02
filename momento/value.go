@@ -9,7 +9,12 @@ type Value interface {
 }
 
 // Type alias to future proof passing in keys.
+// [momento.Value]
 type Key = Value
+
+// Type alias to future proof passing in fields.
+// [momento.Value]
+type Field = Value
 
 // Bytes plain old []byte
 type Bytes []byte

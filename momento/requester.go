@@ -63,7 +63,7 @@ type hasFields interface {
 }
 
 type hasElements interface {
-	elements() map[Value]Value
+	elements() map[*Field]Value
 }
 
 type hasTtl interface {
@@ -173,10 +173,11 @@ func prepareElements(r hasElements) (map[string][]byte, error) {
 				momentoerrors.InvalidArgumentError, "item values may not be nil", nil,
 			)
 		}
-		if err := validateNotEmpty(k.asBytes(), "item keys"); err != nil {
+		key := *k
+		if err := validateNotEmpty(key.asBytes(), "item keys"); err != nil {
 			return nil, err
 		}
-		retMap[k.asString()] = v.asBytes()
+		retMap[key.asString()] = v.asBytes()
 	}
 	return retMap, nil
 }
