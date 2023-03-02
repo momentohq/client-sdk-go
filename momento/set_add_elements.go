@@ -24,7 +24,7 @@ type SetAddElementsRequest struct {
 	CacheName string
 	SetName   string
 	Elements  []Value
-	Ttl       utils.CollectionTtl
+	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSetUnionRequest
 	grpcResponse *pb.XSetUnionResponse
@@ -37,6 +37,8 @@ func (r *SetAddElementsRequest) ttl() time.Duration {
 	return r.Ttl.Ttl
 }
 
+func (r *SetAddElementsRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
+
 func (r *SetAddElementsRequest) requestName() string { return "SetAddElements" }
 
 func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
@@ -46,8 +48,9 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	var ttl uint64
-	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
@@ -59,8 +62,8 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 	r.grpcRequest = &pb.XSetUnionRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
-		TtlMilliseconds: ttl,
-		RefreshTtl:      r.Ttl.RefreshTtl,
+		TtlMilliseconds: ttlMilliseconds,
+		RefreshTtl:      refreshTtl,
 	}
 
 	return nil
