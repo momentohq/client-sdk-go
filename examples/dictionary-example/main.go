@@ -108,7 +108,7 @@ func setElements(elements map[string]momento.Value) {
 	resp, err := client.DictionarySetFields(ctx, &momento.DictionarySetFieldsRequest{
 		CacheName:      cacheName,
 		DictionaryName: dictionaryName,
-		Elements:       elements,
+		Elements:       momento.ElementsFromMapStringValue(elements),
 	})
 	if err != nil {
 		panic(err)
