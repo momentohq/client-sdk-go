@@ -12,48 +12,49 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type CacheClient interface {
-	CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error)
-	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error)
-	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
+	CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error)
+	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error)
+	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
-	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
+	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
-	Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error)
+	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 
-	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error)
-	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error)
-	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error)
-	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error)
-	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
-	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error)
+	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
+	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error)
+	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error)
+	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (responses.SortedSetRemoveResponse, error)
+	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
+	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
 
-	SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error)
-	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error)
-	SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error)
-	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error)
-	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error)
+	SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error)
+	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error)
+	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
+	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)
+	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error)
 
-	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error)
-	ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error)
-	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error)
-	ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error)
-	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error)
-	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error)
-	ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error)
-	ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error)
-	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error)
+	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
+	ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error)
+	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error)
+	ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error)
+	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error)
+	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error)
+	ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error)
+	ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error)
+	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error)
 
-	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error)
-	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error)
-	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (DictionaryFetchResponse, error)
-	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error)
-	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (DictionaryGetFieldsResponse, error)
-	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (DictionaryIncrementResponse, error)
-	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error)
-	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error)
+	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error)
+	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
+	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error)
+	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error)
+	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error)
+	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error)
+	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error)
+	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error)
 
 	Close()
 }
@@ -116,7 +117,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 	return client, nil
 }
 
-func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (CreateCacheResponse, error) {
+func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -125,14 +126,14 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 	})
 	if err != nil {
 		if err.Code() == AlreadyExistsError {
-			return &CreateCacheAlreadyExists{}, nil
+			return &responses.CreateCacheAlreadyExists{}, nil
 		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &CreateCacheSuccess{}, nil
+	return &responses.CreateCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (DeleteCacheResponse, error) {
+func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -141,27 +142,24 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	})
 	if err != nil {
 		if err.Code() == NotFoundError {
-			return &DeleteCacheSuccess{}, nil
+			return &responses.DeleteCacheSuccess{}, nil
 		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &DeleteCacheSuccess{}, nil
+	return &responses.DeleteCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error) {
+func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &ListCachesSuccess{
-		nextToken: rsp.NextToken,
-		caches:    convertCacheInfo(rsp.Caches),
-	}, nil
+	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
 }
 
-func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
+func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -175,35 +173,35 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, 
 	return r.response, nil
 }
 
-func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (DeleteResponse, error) {
+func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (SortedSetFetchResponse, error) {
+func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (SortedSetPutResponse, error) {
+func (c defaultScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (SortedSetGetScoreResponse, error) {
+func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (SortedSetRemoveResponse, error) {
+func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (responses.SortedSetRemoveResponse, error) {
 	if r.ElementsToRemove == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
@@ -217,28 +215,28 @@ func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemov
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error) {
+func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error) {
+func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error) {
+func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error) {
+func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error) {
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -248,24 +246,24 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &SetAddElementSuccess{}, nil
+	return &responses.SetAddElementSuccess{}, nil
 }
 
-func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error) {
+func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error) {
+func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error) {
+func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error) {
 	newRequest := &SetRemoveElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -274,73 +272,73 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &SetRemoveElementSuccess{}, nil
+	return &responses.SetRemoveElementSuccess{}, nil
 }
 
-func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error) {
+func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error) {
+func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error) {
+func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error) {
+func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error) {
+func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error) {
+func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error) {
+func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error) {
+func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error) {
+func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (DictionarySetFieldResponse, error) {
+func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error) {
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
@@ -360,24 +358,24 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &DictionarySetFieldSuccess{}, nil
+	return &responses.DictionarySetFieldSuccess{}, nil
 }
 
-func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (DictionarySetFieldsResponse, error) {
+func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (DictionaryFetchResponse, error) {
+func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (DictionaryGetFieldResponse, error) {
+func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error) {
 	newRequest := &DictionaryGetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
@@ -387,17 +385,14 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 		return nil, err
 	}
 	switch rtype := newRequest.response.(type) {
-	case *DictionaryGetFieldsMiss:
-		return &DictionaryGetFieldMiss{}, nil
-	case *DictionaryGetFieldsHit:
-		switch rtype.responses[0].(type) {
-		case *DictionaryGetFieldHit:
-			return &DictionaryGetFieldHit{
-				field: rtype.fields[0],
-				body:  rtype.elements[0].CacheBody,
-			}, nil
-		case *DictionaryGetFieldMiss:
-			return &DictionaryGetFieldMiss{}, nil
+	case *responses.DictionaryGetFieldsMiss:
+		return &responses.DictionaryGetFieldMiss{}, nil
+	case *responses.DictionaryGetFieldsHit:
+		switch rtype.Responses()[0].(type) {
+		case *responses.DictionaryGetFieldHit:
+			return responses.NewDictionaryGetFieldHitFromFieldsHit(rtype), nil
+		case *responses.DictionaryGetFieldMiss:
+			return &responses.DictionaryGetFieldMiss{}, nil
 		default:
 			return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 		}
@@ -406,21 +401,21 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 	}
 }
 
-func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (DictionaryGetFieldsResponse, error) {
+func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (DictionaryIncrementResponse, error) {
+func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (DictionaryRemoveFieldResponse, error) {
+func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error) {
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
 			momentoerrors.NewMomentoSvcErr(
@@ -436,10 +431,10 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &DictionaryRemoveFieldSuccess{}, nil
+	return &responses.DictionaryRemoveFieldSuccess{}, nil
 }
 
-func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (DictionaryRemoveFieldsResponse, error) {
+func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -456,16 +451,6 @@ func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) Moment
 		return nil
 	}
 	return NewMomentoError(e.Code(), e.Message(), e.OriginalErr())
-}
-
-func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
-	var convertedList []CacheInfo
-	for _, c := range i {
-		convertedList = append(convertedList, CacheInfo{
-			name: c.Name,
-		})
-	}
-	return convertedList
 }
 
 func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {

@@ -3,46 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-////////// Response
-
-type SortedSetScoreElement interface {
-	isSortedSetScoreElement()
-}
-
-type SortedSetGetScoreResponse interface {
-	isSortedSetGetScoreResponse()
-}
-
-// SortedSetGetScoreMiss Miss Response to a cache SortedSetScore api request.
-type SortedSetGetScoreMiss struct{}
-
-func (SortedSetGetScoreMiss) isSortedSetGetScoreResponse() {}
-
-// SortedSetGetScoreHit Hit Response to a cache SortedSetScore api request.
-type SortedSetGetScoreHit struct {
-	Elements []SortedSetScoreElement
-}
-
-func (SortedSetGetScoreHit) isSortedSetGetScoreResponse() {}
-
-type SortedSetScoreHit struct {
-	Score float64
-}
-
-func (SortedSetScoreHit) isSortedSetScoreElement() {}
-
-type SortedSetScoreMiss struct{}
-
-func (SortedSetScoreMiss) isSortedSetScoreElement() {}
-
-type SortedSetScoreInvalid struct{}
-
-func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
-
-///////// Request
 
 type SortedSetGetScoreRequest struct {
 	CacheName     string
@@ -51,7 +15,7 @@ type SortedSetGetScoreRequest struct {
 
 	grpcRequest  *pb.XSortedSetGetScoreRequest
 	grpcResponse *pb.XSortedSetGetScoreResponse
-	response     SortedSetGetScoreResponse
+	response     responses.SortedSetGetScoreResponse
 }
 
 func (r *SortedSetGetScoreRequest) cacheName() string { return r.CacheName }
@@ -94,11 +58,11 @@ func (r *SortedSetGetScoreRequest) makeGrpcRequest(metadata context.Context, cli
 func (r *SortedSetGetScoreRequest) interpretGrpcResponse() error {
 	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
-		r.response = &SortedSetGetScoreHit{
+		r.response = &responses.SortedSetGetScoreHit{
 			Elements: convertSortedSetScoreElement(grpcResp.Found.GetElements()),
 		}
 	case *pb.XSortedSetGetScoreResponse_Missing:
-		r.response = &SortedSetGetScoreMiss{}
+		r.response = &responses.SortedSetGetScoreMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
@@ -106,16 +70,16 @@ func (r *SortedSetGetScoreRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []SortedSetScoreElement {
-	var rList []SortedSetScoreElement
+func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []responses.SortedSetScoreElement {
+	var rList []responses.SortedSetScoreElement
 	for _, element := range grpcSetElements {
 		switch element.Result {
 		case pb.ECacheResult_Hit:
-			rList = append(rList, &SortedSetScoreHit{Score: element.Score})
+			rList = append(rList, &responses.SortedSetScoreHit{Score: element.Score})
 		case pb.ECacheResult_Miss:
-			rList = append(rList, &SortedSetScoreMiss{})
+			rList = append(rList, &responses.SortedSetScoreMiss{})
 		default:
-			rList = append(rList, &SortedSetScoreInvalid{})
+			rList = append(rList, &responses.SortedSetScoreInvalid{})
 		}
 	}
 	return rList

@@ -3,20 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// DictionaryRemoveFieldsResponse
-
-type DictionaryRemoveFieldsResponse interface {
-	isDictionaryRemoveFieldsResponse()
-}
-
-type DictionaryRemoveFieldsSuccess struct{}
-
-func (DictionaryRemoveFieldsSuccess) isDictionaryRemoveFieldsResponse() {}
-
-// DictionaryRemoveFieldsRequest
 
 type DictionaryRemoveFieldsRequest struct {
 	CacheName      string
@@ -25,7 +15,7 @@ type DictionaryRemoveFieldsRequest struct {
 
 	grpcRequest  *pb.XDictionaryDeleteRequest
 	grpcResponse *pb.XDictionaryDeleteResponse
-	response     DictionaryRemoveFieldsResponse
+	response     responses.DictionaryRemoveFieldsResponse
 }
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }
@@ -63,6 +53,6 @@ func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(metadata context.Context
 }
 
 func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse() error {
-	r.response = &DictionaryRemoveFieldsSuccess{}
+	r.response = &responses.DictionaryRemoveFieldsSuccess{}
 	return nil
 }

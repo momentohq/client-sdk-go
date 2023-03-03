@@ -3,45 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// DictionaryFetchResponse
-
-type DictionaryFetchResponse interface {
-	isDictionaryFetchResponse()
-}
-
-type DictionaryFetchHit struct {
-	elementsStringByte   map[string][]byte
-	elementsStringString map[string]string
-}
-
-func (DictionaryFetchHit) isDictionaryFetchResponse() {}
-
-func (resp DictionaryFetchHit) ValueMap() map[string]string {
-	return resp.ValueMapStringString()
-}
-
-func (resp DictionaryFetchHit) ValueMapStringString() map[string]string {
-	if resp.elementsStringString == nil {
-		resp.elementsStringString = make(map[string]string)
-		for k, v := range resp.elementsStringByte {
-			resp.elementsStringString[k] = string(v)
-		}
-	}
-	return resp.elementsStringString
-}
-
-func (resp DictionaryFetchHit) ValueMapStringByte() map[string][]byte {
-	return resp.elementsStringByte
-}
-
-type DictionaryFetchMiss struct{}
-
-func (DictionaryFetchMiss) isDictionaryFetchResponse() {}
-
-// DictionaryFetchRequest
 
 type DictionaryFetchRequest struct {
 	CacheName      string
@@ -49,7 +14,7 @@ type DictionaryFetchRequest struct {
 
 	grpcRequest  *pb.XDictionaryFetchRequest
 	grpcResponse *pb.XDictionaryFetchResponse
-	response     DictionaryFetchResponse
+	response     responses.DictionaryFetchResponse
 }
 
 func (r *DictionaryFetchRequest) cacheName() string { return r.CacheName }
@@ -84,9 +49,9 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse() error {
 		for _, i := range rtype.Found.Items {
 			elements[(string(i.Field))] = i.Value
 		}
-		r.response = &DictionaryFetchHit{elementsStringByte: elements}
+		r.response = responses.NewDictionaryFetchHit(elements)
 	case *pb.XDictionaryFetchResponse_Missing:
-		r.response = &DictionaryFetchMiss{}
+		r.response = &responses.DictionaryFetchMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}

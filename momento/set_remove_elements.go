@@ -3,20 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// SetRemoveElementsResponse
-
-type SetRemoveElementsResponse interface {
-	isSetRemoveElementsResponse()
-}
-
-type SetRemoveElementsSuccess struct{}
-
-func (SetRemoveElementsSuccess) isSetRemoveElementsResponse() {}
-
-// SetRemoveElementsRequest
 
 type SetRemoveElementsRequest struct {
 	CacheName string
@@ -25,7 +15,7 @@ type SetRemoveElementsRequest struct {
 
 	grpcRequest  *pb.XSetDifferenceRequest
 	grpcResponse *pb.XSetDifferenceResponse
-	response     SetRemoveElementsResponse
+	response     responses.SetRemoveElementsResponse
 }
 
 func (r *SetRemoveElementsRequest) cacheName() string { return r.CacheName }
@@ -70,6 +60,6 @@ func (r *SetRemoveElementsRequest) makeGrpcRequest(metadata context.Context, cli
 }
 
 func (r *SetRemoveElementsRequest) interpretGrpcResponse() error {
-	r.response = &SetRemoveElementsSuccess{}
+	r.response = &responses.SetRemoveElementsSuccess{}
 	return nil
 }

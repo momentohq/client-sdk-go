@@ -6,7 +6,8 @@ import (
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
-	"github.com/momentohq/client-sdk-go/utils"
+	. "github.com/momentohq/client-sdk-go/responses"
+	. "github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -153,7 +154,7 @@ var _ = Describe("Dictionary methods", func() {
 				DictionaryName: sharedContext.CollectionName,
 				Field:          String("myField"),
 				Value:          String("myValue"),
-				Ttl:            &utils.CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
+				Ttl:            &CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
@@ -716,7 +717,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						Ttl: &utils.CollectionTtl{
+						Ttl: &CollectionTtl{
 							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: false,
 						},
@@ -740,7 +741,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						Ttl: &utils.CollectionTtl{
+						Ttl: &CollectionTtl{
 							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: true,
 						},

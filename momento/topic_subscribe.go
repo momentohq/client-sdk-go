@@ -6,5 +6,3 @@ type TopicSubscribeRequest struct {
 }
 
 func (r TopicSubscribeRequest) cacheName() string { return r.CacheName }
-
-type TopicSubscribeResponse struct{}

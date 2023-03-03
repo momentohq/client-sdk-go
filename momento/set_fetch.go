@@ -3,40 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// SetFetchResponse
-
-type SetFetchResponse interface {
-	isSetFetchResponse()
-}
-
-type SetFetchHit struct {
-	elements       [][]byte
-	elementsString []string
-}
-
-func (SetFetchHit) isSetFetchResponse() {}
-
-func (resp SetFetchHit) ValueString() []string {
-	if resp.elementsString == nil {
-		for _, value := range resp.elements {
-			resp.elementsString = append(resp.elementsString, string(value))
-		}
-	}
-	return resp.elementsString
-}
-
-func (resp SetFetchHit) ValueByte() [][]byte {
-	return resp.elements
-}
-
-type SetFetchMiss struct{}
-
-func (SetFetchMiss) isSetFetchResponse() {}
-
-// SetFetchRequest
 
 type SetFetchRequest struct {
 	CacheName string
@@ -44,7 +14,7 @@ type SetFetchRequest struct {
 
 	grpcRequest  *pb.XSetFetchRequest
 	grpcResponse *pb.XSetFetchResponse
-	response     SetFetchResponse
+	response     responses.SetFetchResponse
 }
 
 func (r *SetFetchRequest) cacheName() string { return r.CacheName }
@@ -75,11 +45,9 @@ func (r *SetFetchRequest) makeGrpcRequest(metadata context.Context, client scsDa
 func (r *SetFetchRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.Set.(type) {
 	case *pb.XSetFetchResponse_Found:
-		r.response = &SetFetchHit{
-			elements: rtype.Found.Elements,
-		}
+		r.response = responses.NewSetFetchHit(rtype.Found.Elements)
 	case *pb.XSetFetchResponse_Missing:
-		r.response = &SetFetchMiss{}
+		r.response = &responses.SetFetchMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}

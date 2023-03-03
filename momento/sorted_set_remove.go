@@ -4,20 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-/////////// Response
-
-type SortedSetRemoveResponse interface {
-	isSortedSetRemoveResponse()
-}
-
-type SortedSetRemoveSuccess struct{}
-
-func (SortedSetRemoveSuccess) isSortedSetRemoveResponse() {}
-
-////////// Request
 
 type SortedSetRemoveRequest struct {
 	CacheName        string
@@ -26,7 +16,7 @@ type SortedSetRemoveRequest struct {
 
 	grpcRequest  *pb.XSortedSetRemoveRequest
 	grpcResponse *pb.XSortedSetRemoveResponse
-	response     SortedSetRemoveResponse
+	response     responses.SortedSetRemoveResponse
 }
 
 type SortedSetRemoveRequestElement struct {
@@ -108,6 +98,6 @@ func (r *SortedSetRemoveRequest) makeGrpcRequest(metadata context.Context, clien
 }
 
 func (r *SortedSetRemoveRequest) interpretGrpcResponse() error {
-	r.response = &SortedSetRemoveSuccess{}
+	r.response = &responses.SortedSetRemoveSuccess{}
 	return nil
 }
