@@ -19,8 +19,8 @@ func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 5 * time.Second,
 			}),
-			RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
 		}),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
 	})
 }
 
