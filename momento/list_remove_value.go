@@ -3,18 +3,12 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
 // ListRemoveValueResponse
-
-type ListRemoveValueResponse interface {
-	isListRemoveValueResponse()
-}
-
-type ListRemoveValueSuccess struct{}
-
-func (ListRemoveValueSuccess) isListRemoveValueResponse() {}
 
 // ListRemoveValueRequest
 
@@ -25,7 +19,7 @@ type ListRemoveValueRequest struct {
 
 	grpcRequest  *pb.XListRemoveRequest
 	grpcResponse *pb.XListRemoveResponse
-	response     ListRemoveValueResponse
+	response     responses.ListRemoveValueResponse
 }
 
 func (r *ListRemoveValueRequest) cacheName() string { return r.CacheName }
@@ -64,6 +58,6 @@ func (r *ListRemoveValueRequest) makeGrpcRequest(metadata context.Context, clien
 }
 
 func (r *ListRemoveValueRequest) interpretGrpcResponse() error {
-	r.response = &ListRemoveValueSuccess{}
+	r.response = &responses.ListRemoveValueSuccess{}
 	return nil
 }

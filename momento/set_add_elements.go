@@ -4,21 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
 )
-
-// SetAddElementsResponse
-
-type SetAddElementsResponse interface {
-	isSetAddElementResponse()
-}
-
-type SetAddElementsSuccess struct{}
-
-func (SetAddElementsSuccess) isSetAddElementResponse() {}
-
-// SetAddElementRequest
 
 type SetAddElementsRequest struct {
 	CacheName string
@@ -28,7 +18,7 @@ type SetAddElementsRequest struct {
 
 	grpcRequest  *pb.XSetUnionRequest
 	grpcResponse *pb.XSetUnionResponse
-	response     SetAddElementsResponse
+	response     responses.SetAddElementsResponse
 }
 
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }
@@ -79,6 +69,6 @@ func (r *SetAddElementsRequest) makeGrpcRequest(metadata context.Context, client
 }
 
 func (r *SetAddElementsRequest) interpretGrpcResponse() error {
-	r.response = &SetAddElementsSuccess{}
+	r.response = &responses.SetAddElementsSuccess{}
 	return nil
 }

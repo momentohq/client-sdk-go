@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
@@ -30,9 +31,9 @@ func HaveMomentoErrorCode(code string) types.GomegaMatcher {
 
 func HaveSetLength(length int) types.GomegaMatcher {
 	return WithTransform(
-		func(fetchResp momento.SetFetchResponse) (int, error) {
+		func(fetchResp responses.SetFetchResponse) (int, error) {
 			switch rtype := fetchResp.(type) {
-			case *momento.SetFetchHit:
+			case *responses.SetFetchHit:
 				return len(rtype.ValueString()), nil
 			default:
 				return 0, fmt.Errorf("expected set fetch hit but got %T", fetchResp)
@@ -43,9 +44,9 @@ func HaveSetLength(length int) types.GomegaMatcher {
 
 func HaveListLength(length int) types.GomegaMatcher {
 	return WithTransform(
-		func(fetchResp momento.ListFetchResponse) (int, error) {
+		func(fetchResp responses.ListFetchResponse) (int, error) {
 			switch rtype := fetchResp.(type) {
-			case *momento.ListFetchHit:
+			case *responses.ListFetchHit:
 				return len(rtype.ValueList()), nil
 			default:
 				return 0, fmt.Errorf("expected list fetch hit but got %T", fetchResp)

@@ -4,28 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// ListPushBackResponse
-
-type ListPushBackResponse interface {
-	isListPushBackResponse()
-}
-
-type ListPushBackSuccess struct {
-	value uint32
-}
-
-func (ListPushBackSuccess) isListPushBackResponse() {}
-
-func (resp ListPushBackSuccess) ListLength() uint32 {
-	return resp.value
-}
-
-// ListPushBackRequest
 
 type ListPushBackRequest struct {
 	CacheName           string
@@ -36,7 +19,7 @@ type ListPushBackRequest struct {
 
 	grpcRequest  *pb.XListPushBackRequest
 	grpcResponse *pb.XListPushBackResponse
-	response     ListPushBackResponse
+	response     responses.ListPushBackResponse
 }
 
 func (r *ListPushBackRequest) cacheName() string { return r.CacheName }
@@ -89,6 +72,6 @@ func (r *ListPushBackRequest) makeGrpcRequest(metadata context.Context, client s
 
 func (r *ListPushBackRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
-	r.response = &ListPushBackSuccess{value: resp.ListLength}
+	r.response = responses.NewListPushBackSuccess(resp.ListLength)
 	return nil
 }

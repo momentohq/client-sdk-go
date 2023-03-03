@@ -9,6 +9,7 @@ import (
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	. "github.com/momentohq/client-sdk-go/responses"
 )
 
 var _ = Describe("Scalar methods", func() {

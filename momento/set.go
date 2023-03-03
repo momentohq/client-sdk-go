@@ -4,20 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-//////////// SetResponse /////////////
-
-type SetResponse interface {
-	isSetResponse()
-}
-
-type SetSuccess struct{}
-
-func (SetSuccess) isSetResponse() {}
-
-///////////// SetRequest /////////////
 
 type SetRequest struct {
 	// Name of the cache to store the item in.
@@ -32,7 +22,7 @@ type SetRequest struct {
 
 	grpcRequest  *pb.XSetRequest
 	grpcResponse *pb.XSetResponse
-	response     SetResponse
+	response     responses.SetResponse
 }
 
 func (r *SetRequest) cacheName() string { return r.CacheName }
@@ -82,6 +72,6 @@ func (r *SetRequest) makeGrpcRequest(metadata context.Context, client scsDataCli
 }
 
 func (r *SetRequest) interpretGrpcResponse() error {
-	r.response = &SetSuccess{}
+	r.response = &responses.SetSuccess{}
 	return nil
 }

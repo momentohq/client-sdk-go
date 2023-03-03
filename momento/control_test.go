@@ -9,6 +9,7 @@ import (
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	. "github.com/momentohq/client-sdk-go/responses"
 )
 
 var _ = Describe("Control ops", func() {
@@ -44,7 +45,7 @@ var _ = Describe("Control ops", func() {
 			resp, err := sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
 
-			listedCaches := []string{}
+			var listedCaches []string
 			switch r := resp.(type) {
 			case *ListCachesSuccess:
 				for _, info := range r.Caches() {
@@ -52,7 +53,7 @@ var _ = Describe("Control ops", func() {
 				}
 				Expect(listedCaches).To(ContainElements(cacheNames))
 			default:
-				Fail("Unexpected repsonse type")
+				Fail("Unexpected response type")
 			}
 
 			for _, cacheName := range cacheNames {
@@ -67,7 +68,7 @@ var _ = Describe("Control ops", func() {
 			case *ListCachesSuccess:
 				Expect(r.Caches()).To(Not(ContainElements(cacheNames)))
 			default:
-				Fail("Unexpected repsonse type")
+				Fail("Unexpected response type")
 			}
 		})
 	})

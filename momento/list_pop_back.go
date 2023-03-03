@@ -3,34 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// ListPopBackResponse
-
-type ListPopBackResponse interface {
-	isListPopBackResponse()
-}
-
-type ListPopBackHit struct {
-	value Value
-}
-
-func (ListPopBackHit) isListPopBackResponse() {}
-
-func (resp ListPopBackHit) ValueByte() []byte {
-	return resp.value.asBytes()
-}
-
-func (resp ListPopBackHit) ValueString() string {
-	return string(resp.value.asBytes())
-}
-
-type ListPopBackMiss struct{}
-
-func (ListPopBackMiss) isListPopBackResponse() {}
-
-// ListPopBackRequest
 
 type ListPopBackRequest struct {
 	CacheName string
@@ -38,7 +14,7 @@ type ListPopBackRequest struct {
 
 	grpcRequest  *pb.XListPopBackRequest
 	grpcResponse *pb.XListPopBackResponse
-	response     ListPopBackResponse
+	response     responses.ListPopBackResponse
 }
 
 func (r *ListPopBackRequest) cacheName() string { return r.CacheName }
@@ -67,9 +43,9 @@ func (r *ListPopBackRequest) makeGrpcRequest(metadata context.Context, client sc
 func (r *ListPopBackRequest) interpretGrpcResponse() error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListPopBackResponse_Found:
-		r.response = &ListPopBackHit{value: Bytes(rtype.Found.Back)}
+		r.response = responses.NewListPopBackHit(rtype.Found.Back)
 	case *pb.XListPopBackResponse_Missing:
-		r.response = &ListPopBackMiss{}
+		r.response = &responses.ListPopBackMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}

@@ -5,24 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
 	"github.com/momentohq/client-sdk-go/utils"
 )
-
-//////// Response
-
-type SortedSetIncrementScoreResponse interface {
-	isSortedSetIncrementResponse()
-}
-type SortedSetIncrementScoreSuccess struct {
-	Value float64
-}
-
-func (SortedSetIncrementScoreSuccess) isSortedSetIncrementResponse() {}
-
-////// Request
 
 type SortedSetIncrementScoreRequest struct {
 	CacheName    string
@@ -33,7 +22,7 @@ type SortedSetIncrementScoreRequest struct {
 
 	grpcRequest  *pb.XSortedSetIncrementRequest
 	grpcResponse *pb.XSortedSetIncrementResponse
-	response     SortedSetIncrementScoreResponse
+	response     responses.SortedSetIncrementScoreResponse
 }
 
 func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }
@@ -90,7 +79,7 @@ func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(metadata context.Contex
 }
 
 func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
-	r.response = &SortedSetIncrementScoreSuccess{
+	r.response = &responses.SortedSetIncrementScoreSuccess{
 		Value: r.grpcResponse.Score,
 	}
 	return nil

@@ -4,22 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// DictionarySetFieldsResponse
-
-type DictionarySetFieldsResponse interface {
-	isDictionarySetFieldsResponse()
-}
-
-type DictionarySetFieldsSuccess struct{}
-
-func (DictionarySetFieldsSuccess) isDictionarySetFieldsResponse() {}
-
-// DictionarySetFieldsRequest
 
 type DictionarySetFieldsRequest struct {
 	CacheName      string
@@ -29,7 +18,7 @@ type DictionarySetFieldsRequest struct {
 
 	grpcRequest  *pb.XDictionarySetRequest
 	grpcResponse *pb.XDictionarySetResponse
-	response     DictionarySetFieldsResponse
+	response     responses.DictionarySetFieldsResponse
 }
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
@@ -88,6 +77,6 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(metadata context.Context, c
 }
 
 func (r *DictionarySetFieldsRequest) interpretGrpcResponse() error {
-	r.response = &DictionarySetFieldsSuccess{}
+	r.response = &responses.DictionarySetFieldsSuccess{}
 	return nil
 }

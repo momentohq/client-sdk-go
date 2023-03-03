@@ -3,20 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-////// DeleteResponse //////
-
-type DeleteResponse interface {
-	isDeleteResponse()
-}
-
-type DeleteSuccess struct{}
-
-func (DeleteSuccess) isDeleteResponse() {}
-
-////// DeleteRequest //////
 
 type DeleteRequest struct {
 	// Name of the cache to get the item from to be deleted
@@ -26,7 +16,7 @@ type DeleteRequest struct {
 
 	grpcRequest  *pb.XDeleteRequest
 	grpcResponse *pb.XDeleteResponse
-	response     DeleteResponse
+	response     responses.DeleteResponse
 }
 
 func (r *DeleteRequest) cacheName() string { return r.CacheName }
@@ -60,6 +50,6 @@ func (r *DeleteRequest) makeGrpcRequest(metadata context.Context, client scsData
 }
 
 func (r *DeleteRequest) interpretGrpcResponse() error {
-	r.response = &DeleteSuccess{}
+	r.response = &responses.DeleteSuccess{}
 	return nil
 }
