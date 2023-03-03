@@ -20,11 +20,9 @@ type SortedSetGetScoreHit struct {
 
 func (SortedSetGetScoreHit) isSortedSetGetScoreResponse() {}
 
-type SortedSetScoreHit struct {
-	Score float64
-}
+type SortedSetScore float64
 
-func (SortedSetScoreHit) isSortedSetScoreElement() {}
+func (SortedSetScore) isSortedSetScoreElement() {}
 
 type SortedSetScoreMiss struct{}
 

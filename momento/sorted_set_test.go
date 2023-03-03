@@ -378,8 +378,8 @@ var _ = Describe("SortedSet", func() {
 			).To(Equal(
 				&SortedSetGetScoreHit{
 					Elements: []SortedSetScoreElement{
-						&SortedSetScoreHit{Score: 9999},
-						&SortedSetScoreHit{Score: -9999},
+						SortedSetScore(9999),
+						SortedSetScore(-9999),
 						&SortedSetScoreMiss{},
 					},
 				},
