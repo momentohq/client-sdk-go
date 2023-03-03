@@ -114,6 +114,15 @@ var _ = Describe("Scalar methods", func() {
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
+	It("returns a miss when the key doesn't exist", func() {
+		Expect(
+			sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       String(uuid.NewString()),
+			}),
+		).To(BeAssignableToTypeOf(&GetMiss{}))
+	})
+
 	DescribeTable(`invalid cache names and keys`,
 		func(cacheName string, key Key, value Key) {
 			getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
