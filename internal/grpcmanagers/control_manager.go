@@ -27,7 +27,6 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy)),
 		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
 	)
 	if err != nil {
