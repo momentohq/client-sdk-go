@@ -31,7 +31,7 @@ type ListConcatenateFrontRequest struct {
 	ListName           string
 	Values             []Value
 	TruncateBackToSize uint32
-	Ttl                utils.CollectionTtl
+	Ttl                *utils.CollectionTtl
 
 	grpcRequest  *pb.XListConcatenateFrontRequest
 	grpcResponse *pb.XListConcatenateFrontResponse
@@ -43,6 +43,8 @@ func (r *ListConcatenateFrontRequest) cacheName() string { return r.CacheName }
 func (r *ListConcatenateFrontRequest) values() []Value { return r.Values }
 
 func (r *ListConcatenateFrontRequest) ttl() time.Duration { return r.Ttl.Ttl }
+
+func (r *ListConcatenateFrontRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
 func (r *ListConcatenateFrontRequest) requestName() string { return "ListConcatenateFront" }
 
@@ -58,16 +60,17 @@ func (r *ListConcatenateFrontRequest) initGrpcRequest(client scsDataClient) erro
 		return err
 	}
 
-	var ttl uint64
-	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
+	var ttlMilliseconds uint64
+	var refreshTtl bool
+	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
 
 	r.grpcRequest = &pb.XListConcatenateFrontRequest{
 		ListName:           []byte(r.ListName),
 		Values:             values,
-		TtlMilliseconds:    ttl,
-		RefreshTtl:         r.Ttl.RefreshTtl,
+		TtlMilliseconds:    ttlMilliseconds,
+		RefreshTtl:         refreshTtl,
 		TruncateBackToSize: r.TruncateBackToSize,
 	}
 
