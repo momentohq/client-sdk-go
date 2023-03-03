@@ -3,38 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-///// GetResponse ///////
-
-type GetResponse interface {
-	isGetResponse()
-}
-
-// GetMiss Miss response to a cache Get api request.
-type GetMiss struct{}
-
-func (GetMiss) isGetResponse() {}
-
-// GetHit Hit response to a cache Get api request.
-type GetHit struct {
-	value []byte
-}
-
-func (GetHit) isGetResponse() {}
-
-// ValueString Returns value stored in cache as string if there was Hit. Returns an empty string otherwise.
-func (resp GetHit) ValueString() string {
-	return string(resp.value)
-}
-
-// ValueByte Returns value stored in cache as bytes if there was Hit. Returns nil otherwise.
-func (resp GetHit) ValueByte() []byte {
-	return resp.value
-}
-
-///// GetRequest ///////
 
 type GetRequest struct {
 	// Name of the cache to get the item from
@@ -44,7 +16,7 @@ type GetRequest struct {
 
 	grpcRequest  *pb.XGetRequest
 	grpcResponse *pb.XGetResponse
-	response     GetResponse
+	response     responses.GetResponse
 }
 
 func (r *GetRequest) cacheName() string { return r.CacheName }
@@ -83,10 +55,10 @@ func (r *GetRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
 
 	if resp.Result == pb.ECacheResult_Hit {
-		r.response = &GetHit{value: resp.CacheBody}
+		r.response = responses.NewGetHit(resp.CacheBody)
 		return nil
 	} else if resp.Result == pb.ECacheResult_Miss {
-		r.response = &GetMiss{}
+		r.response = &responses.GetMiss{}
 		return nil
 	} else {
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
