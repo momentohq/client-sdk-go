@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 const (
@@ -74,7 +75,7 @@ func getClient() momento.CacheClient {
 		panic(err)
 	}
 	client, err := momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credProvider,
 		60*time.Second,
 	)
@@ -93,14 +94,14 @@ func setupCache(client momento.CacheClient, ctx context.Context) {
 	}
 }
 
-func displayElements(setName string, resp momento.SortedSetFetchResponse) {
+func displayElements(setName string, resp responses.SortedSetFetchResponse) {
 	switch r := resp.(type) {
-	case *momento.SortedSetFetchHit:
+	case *responses.SortedSetFetchHit:
 		for _, e := range r.Elements {
 			fmt.Printf("setName: %s, value: %s, score: %f\n", setName, e.Value, e.Score)
 		}
 		fmt.Println("")
-	case *momento.SortedSetFetchMiss:
+	case *responses.SortedSetFetchMiss:
 		fmt.Println("we regret to inform you there is no such set")
 		os.Exit(1)
 	}

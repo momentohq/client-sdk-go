@@ -67,7 +67,7 @@ var _ = Describe("SortedSet", func() {
 
 			elements := []Value{element}
 			Expect(
-				client.SortedSetGetScore(ctx, &SortedSetGetScoreRequest{
+				client.SortedSetGetScores(ctx, &SortedSetGetScoresRequest{
 					CacheName: cacheName, SetName: collectionName, ElementValues: elements,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
@@ -341,18 +341,18 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
-	Describe(`SortedSetGetScore`, func() {
+	Describe(`SortedSetGetScores`, func() {
 		It(`Misses when the element does not exist`, func() {
 			Expect(
-				sharedContext.Client.SortedSetGetScore(
+				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
-					&SortedSetGetScoreRequest{
+					&SortedSetGetScoresRequest{
 						CacheName:     sharedContext.CacheName,
 						SetName:       sharedContext.CollectionName,
 						ElementValues: []Value{String("foo")},
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetGetScoreMiss{}))
+			).To(BeAssignableToTypeOf(&SortedSetGetScoresMiss{}))
 		})
 
 		It(`Gets the score`, func() {
@@ -365,9 +365,9 @@ var _ = Describe("SortedSet", func() {
 			)
 
 			Expect(
-				sharedContext.Client.SortedSetGetScore(
+				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
-					&SortedSetGetScoreRequest{
+					&SortedSetGetScoresRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						ElementValues: []Value{
@@ -376,7 +376,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetGetScoreHit{
+				&SortedSetGetScoresHit{
 					Elements: []SortedSetScoreElement{
 						SortedSetScore(9999),
 						SortedSetScore(-9999),
@@ -388,9 +388,9 @@ var _ = Describe("SortedSet", func() {
 
 		It(`returns an error when element values are nil`, func() {
 			Expect(
-				sharedContext.Client.SortedSetGetScore(
+				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
-					&SortedSetGetScoreRequest{
+					&SortedSetGetScoresRequest{
 						CacheName:     sharedContext.CacheName,
 						SetName:       sharedContext.CollectionName,
 						ElementValues: nil,
@@ -399,9 +399,9 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
 			Expect(
-				sharedContext.Client.SortedSetGetScore(
+				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
-					&SortedSetGetScoreRequest{
+					&SortedSetGetScoresRequest{
 						CacheName:     sharedContext.CacheName,
 						SetName:       sharedContext.CollectionName,
 						ElementValues: []Value{nil, String("aValue"), nil},
