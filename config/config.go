@@ -66,27 +66,27 @@ func (s *cacheConfiguration) GetTransportStrategy() TransportStrategy {
 	return s.transportStrategy
 }
 
-func (s *SimpleCacheConfiguration) GetRetryStrategy() retry.Strategy {
+func (s *cacheConfiguration) GetRetryStrategy() retry.Strategy {
 	return s.retryStrategy
 }
 
-func (s *SimpleCacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
-	return &SimpleCacheConfiguration{
+func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
+	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithClientTimeout(clientTimeout),
 		retryStrategy:     s.retryStrategy,
 	}
 }
 
-func (s *SimpleCacheConfiguration) WithRetryStrategy(strategy retry.Strategy) Configuration {
-	return &SimpleCacheConfiguration{
+func (s *cacheConfiguration) WithRetryStrategy(strategy retry.Strategy) Configuration {
+	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy,
 		retryStrategy:     strategy,
 	}
 }
-func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {
-	return &SimpleCacheConfiguration{
+func (s *cacheConfiguration) WithTransportStrategy(transportStrategy TransportStrategy) Configuration {
+	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: transportStrategy,
 		retryStrategy:     s.retryStrategy,
