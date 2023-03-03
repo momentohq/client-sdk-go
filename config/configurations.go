@@ -3,6 +3,8 @@ package config
 import (
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal/retry"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
@@ -23,6 +25,7 @@ func LatestLaptopConfig(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
 					deadline: 5 * time.Second,
 				}),
 			}),
+			RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
 		}),
 	}
 }
@@ -44,6 +47,7 @@ func LatestInRegionConfig(loggerFactory ...logger.MomentoLoggerFactory) *InRegio
 					deadline: 1100 * time.Millisecond,
 				}),
 			}),
+			RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
 		}),
 	}
 }

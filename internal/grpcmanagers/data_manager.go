@@ -28,8 +28,8 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithDisableRetry(),
 		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
+		grpc.WithUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy)),
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -37,7 +37,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	return &DataGrpcManager{Conn: conn}, nil
 }
 
-func NewStreamDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
