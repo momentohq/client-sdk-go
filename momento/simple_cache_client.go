@@ -21,7 +21,7 @@ type CacheClient interface {
 	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
-	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
+	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
@@ -166,7 +166,7 @@ func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.Set
 	return r.response, nil
 }
 
-func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (GetResponse, error) {
+func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
