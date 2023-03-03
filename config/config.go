@@ -89,5 +89,6 @@ func (s *SimpleCacheConfiguration) WithTransportStrategy(transportStrategy Trans
 	return &SimpleCacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: transportStrategy,
+		retryStrategy:     s.retryStrategy,
 	}
 }
