@@ -8,39 +8,29 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-type Laptop struct {
-	Configuration
-}
-
-func LatestLaptopConfig(loggerFactory ...logger.MomentoLoggerFactory) *Laptop {
+func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
 	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
 	if len(loggerFactory) != 0 {
 		defaultLoggerFactory = loggerFactory[0]
 	}
-	return &Laptop{
-		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
-			LoggerFactory: defaultLoggerFactory,
-			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
-				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-					deadline: 5 * time.Second,
-				}),
+	return NewCacheConfiguration(&ConfigurationProps{
+		LoggerFactory: defaultLoggerFactory,
+		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
+			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
+				deadline: 5 * time.Second,
 			}),
 			RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
 		}),
-	}
+	})
 }
 
-type InRegion struct {
-	Configuration
-}
-
-func LatestInRegionConfig(loggerFactory ...logger.MomentoLoggerFactory) *InRegion {
+func InRegionLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
 	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
 	if len(loggerFactory) != 0 {
 		defaultLoggerFactory = loggerFactory[0]
 	}
-	return &InRegion{
-		Configuration: NewSimpleCacheConfiguration(&ConfigurationProps{
+	return NewCacheConfiguration(
+		&ConfigurationProps{
 			LoggerFactory: defaultLoggerFactory,
 			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
