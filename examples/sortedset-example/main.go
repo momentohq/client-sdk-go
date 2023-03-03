@@ -55,9 +55,9 @@ func main() {
 	displayElements(setName, fetchResp)
 
 	// Fetch elements in descending order (high -> low)
-	fmt.Println("\n\nFetching Top 5 elements from sorted set:")
+	fmt.Println("\n\nFetching all elements from sorted set in descending order:")
 	fmt.Println("--------------")
-	top5Rsp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
+	descendingResp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
 		CacheName: cacheName,
 		SetName:   setName,
 		Order:     momento.DESCENDING,
@@ -66,7 +66,7 @@ func main() {
 		panic(err)
 	}
 
-	displayElements(setName, top5Rsp)
+	displayElements(setName, descendingResp)
 }
 
 func getClient() momento.CacheClient {
