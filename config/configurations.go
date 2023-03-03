@@ -29,15 +29,13 @@ func InRegionLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration 
 	if len(loggerFactory) != 0 {
 		defaultLoggerFactory = loggerFactory[0]
 	}
-	return NewCacheConfiguration(
-		&ConfigurationProps{
-			LoggerFactory: defaultLoggerFactory,
-			TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
-				GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-					deadline: 1100 * time.Millisecond,
-				}),
+	return NewCacheConfiguration(&ConfigurationProps{
+		LoggerFactory: defaultLoggerFactory,
+		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
+			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
+				deadline: 1100 * time.Millisecond,
 			}),
-			RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
 		}),
-	}
+		RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
+	})
 }
