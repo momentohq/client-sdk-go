@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/google/uuid"
 	. "github.com/momentohq/client-sdk-go/momento"
@@ -148,12 +149,23 @@ var _ = Describe("List methods", func() {
 
 			It("pushes strings and bytes on the happy path", func() {
 				numItems := 10
-				expected := populateList(sharedContext, numItems)
+				values, expected := getValueAndExpectedValueLists(numItems)
+				sort.Sort(sort.Reverse(sort.StringSlice(expected)))
+				for _, value := range values {
+					Expect(
+						sharedContext.Client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
+							CacheName: sharedContext.CacheName,
+							ListName:  sharedContext.CollectionName,
+							Value:     value,
+						}),
+					).To(BeAssignableToTypeOf(&ListPushFrontSuccess{}))
+				}
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
 					ListName:  sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
+				Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
 				Expect(fetchResp).To(HaveListLength(numItems))
 				switch result := fetchResp.(type) {
 				case *ListFetchHit:
