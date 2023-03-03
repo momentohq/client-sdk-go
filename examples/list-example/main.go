@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
@@ -40,7 +41,7 @@ func pushFrontToList(value momento.Value) {
 	}
 
 	switch r := resp.(type) {
-	case *momento.ListPushFrontSuccess:
+	case *responses.ListPushFrontSuccess:
 		fmt.Printf("pushed with 5 sec TTL to front of list whose length is now %d\n", r.ListLength())
 	}
 }
@@ -62,7 +63,7 @@ func pushBackToList(value momento.Value) {
 	}
 
 	switch r := resp.(type) {
-	case *momento.ListPushBackSuccess:
+	case *responses.ListPushBackSuccess:
 		fmt.Printf("pushed with 5 sec TTL to back of list whose length is now %d\n", r.ListLength())
 	}
 }
@@ -77,9 +78,9 @@ func printList() {
 	}
 
 	switch r := resp.(type) {
-	case *momento.ListFetchHit:
+	case *responses.ListFetchHit:
 		fmt.Printf("\nlist fetch returned:\n\n\t%s\n", strings.Join(r.ValueListString(), "\n\t"))
-	case *momento.ListFetchMiss:
+	case *responses.ListFetchMiss:
 		fmt.Println("\nlist fetch returned a MISS")
 	}
 }
@@ -93,9 +94,9 @@ func printListLength() {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case *momento.ListLengthMiss:
+	case *responses.ListLengthMiss:
 		fmt.Println("\nlist length returned a MISS")
-	case *momento.ListLengthHit:
+	case *responses.ListLengthHit:
 		fmt.Printf("\ngot list length: %d", r.Length())
 	}
 }
@@ -110,7 +111,7 @@ func concatFront(values []momento.Value) {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case *momento.ListConcatenateFrontSuccess:
+	case *responses.ListConcatenateFrontSuccess:
 		fmt.Printf("\nconcatenated values to front. list is now length %d\n", r.ListLength())
 	}
 }
@@ -125,7 +126,7 @@ func concatBack(values []momento.Value) {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case *momento.ListConcatenateBackSuccess:
+	case *responses.ListConcatenateBackSuccess:
 		fmt.Printf("\nconcatenated values to back. list is now length %d\n", r.ListLength())
 	}
 }
@@ -150,7 +151,7 @@ func main() {
 
 	// Initializes Momento
 	client, err = momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credentialProvider,
 		itemDefaultTTLSeconds*time.Second,
 	)
@@ -204,9 +205,9 @@ func main() {
 			panic(err)
 		}
 		switch r := resp.(type) {
-		case *momento.ListPopFrontHit:
+		case *responses.ListPopFrontHit:
 			fmt.Printf("\npopped value '%s'\n", r.ValueString())
-		case *momento.ListPopFrontMiss:
+		case *responses.ListPopFrontMiss:
 			fmt.Println("\npop from front returned MISS")
 		}
 	}
