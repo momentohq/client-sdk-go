@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -46,7 +47,7 @@ func NewSharedContext() SharedContext {
 	shared.Client = client
 	shared.TopicClient = topicClient
 
-	shared.CacheName = uuid.NewString()
+	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 	shared.CollectionName = uuid.NewString()
 
 	return shared
