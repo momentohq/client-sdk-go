@@ -44,13 +44,3 @@ func (ci CacheInfo) Name() string {
 func NewCacheInfo(name string) CacheInfo {
 	return CacheInfo{name: name}
 }
-
-//func convertCacheInfo(i []CacheInfo) []CacheInfo {
-//	var convertedList []CacheInfo
-//	for _, c := range i {
-//		convertedList = append(convertedList, CacheInfo{
-//			name: c.Name,
-//		})
-//	}
-//	return convertedList
-//}
