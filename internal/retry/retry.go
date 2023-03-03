@@ -1,9 +1,10 @@
 package retry
 
 import (
+	"strconv"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"google.golang.org/grpc/codes"
-	"strconv"
 )
 
 type StrategyProps struct {
