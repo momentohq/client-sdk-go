@@ -3,15 +3,23 @@ package models
 import (
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal/retry"
+
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 )
 
 type ControlGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	RetryStrategy      retry.Strategy
 }
 
 type DataGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+	RetryStrategy      retry.Strategy
+}
+
+type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 }
 
