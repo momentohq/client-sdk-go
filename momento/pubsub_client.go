@@ -20,7 +20,7 @@ type pubSubClient struct {
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
-	streamDataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataGrpcManagerRequest{
+	streamDataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataStreamGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 	})
 	if err != nil {
@@ -28,6 +28,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 	unaryDataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
+		RetryStrategy:      request.Configuration.GetRetryStrategy(),
 	})
 	if err != nil {
 		return nil, err

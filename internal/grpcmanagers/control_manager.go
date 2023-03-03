@@ -24,7 +24,11 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	}
 	authToken := request.CredentialProvider.GetAuthToken()
 	endpoint := fmt.Sprint(request.CredentialProvider.GetControlEndpoint(), ControlPort)
-	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(credentials.NewTLS(config)), grpc.WithDisableRetry(), grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)))
+	conn, err := grpc.Dial(
+		endpoint,
+		grpc.WithTransportCredentials(credentials.NewTLS(config)),
+		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
+	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
