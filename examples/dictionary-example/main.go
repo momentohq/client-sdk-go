@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
@@ -32,7 +33,7 @@ func setup() {
 
 	// Initializes Momento
 	client, err = momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credentialProvider,
 		itemDefaultTTLSeconds*time.Second,
 	)
@@ -60,9 +61,9 @@ func printField(field momento.Value) {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case *momento.DictionaryGetFieldHit:
+	case *responses.DictionaryGetFieldHit:
 		fmt.Printf("field %s = '%s'\n", r.FieldString(), r.ValueString())
-	case *momento.DictionaryGetFieldMiss:
+	case *responses.DictionaryGetFieldMiss:
 		fmt.Println("get field returned MISS")
 	}
 }
@@ -78,11 +79,11 @@ func printFields(fields []momento.Value) {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case *momento.DictionaryGetFieldsHit:
+	case *responses.DictionaryGetFieldsHit:
 		for k, v := range r.ValueMap() {
 			fmt.Printf("%s = %s\n", k, v)
 		}
-	case *momento.DictionaryGetFieldsMiss:
+	case *responses.DictionaryGetFieldsMiss:
 		fmt.Println("dictionary get fields returned MISS")
 	}
 }
@@ -98,7 +99,7 @@ func setField(field momento.Value, value momento.Value) {
 		panic(err)
 	}
 	switch resp.(type) {
-	case *momento.DictionarySetFieldSuccess:
+	case *responses.DictionarySetFieldSuccess:
 		fmt.Printf("\ndictionary field '%s' set to '%s'\n", field, value)
 	}
 }
@@ -113,7 +114,7 @@ func setElements(elements map[string]momento.Value) {
 		panic(err)
 	}
 	switch resp.(type) {
-	case *momento.DictionarySetFieldsSuccess:
+	case *responses.DictionarySetFieldsSuccess:
 		fmt.Println("\ndictionary fields set")
 	}
 }
@@ -127,12 +128,12 @@ func printDict() {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case *momento.DictionaryFetchHit:
+	case *responses.DictionaryFetchHit:
 		fmt.Println("\nprinting dictionary contents:")
 		for k, v := range r.ValueMapStringString() {
 			fmt.Printf("%s = %s\n", k, v)
 		}
-	case *momento.DictionaryFetchMiss:
+	case *responses.DictionaryFetchMiss:
 		fmt.Println("\ndictionary fetch returned MISS")
 	}
 }
@@ -161,7 +162,7 @@ func incrementField(counterField momento.Value, amount int64) {
 	}
 
 	switch r := resp.(type) {
-	case *momento.DictionaryIncrementSuccess:
+	case *responses.DictionaryIncrementSuccess:
 		fmt.Printf("\nincremented counter field to: %d\n", r.Value())
 	}
 }
