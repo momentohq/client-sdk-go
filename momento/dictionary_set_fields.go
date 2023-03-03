@@ -13,7 +13,7 @@ import (
 type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
-	Elements       map[string]Value
+	Elements       []Element
 	Ttl            *utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionarySetRequest
@@ -23,7 +23,7 @@ type DictionarySetFieldsRequest struct {
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
 
-func (r *DictionarySetFieldsRequest) elements() map[string]Value { return r.Elements }
+func (r *DictionarySetFieldsRequest) elements() []Element { return r.Elements }
 
 func (r *DictionarySetFieldsRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
@@ -38,16 +38,16 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		return err
 	}
 
-	var elements map[string][]byte
+	var elements []Element
 	if elements, err = prepareElements(r); err != nil {
 		return err
 	}
 
 	var pbElements []*pb.XDictionaryFieldValuePair
-	for k, v := range elements {
+	for _, v := range elements {
 		pbElements = append(pbElements, &pb.XDictionaryFieldValuePair{
-			Field: []byte(k),
-			Value: v,
+			Field: v.ElemField.asBytes(),
+			Value: v.ElemValue.asBytes(),
 		})
 	}
 
