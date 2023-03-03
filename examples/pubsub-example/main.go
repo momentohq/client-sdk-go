@@ -55,7 +55,7 @@ func getTopicClient() momento.TopicClient {
 		panic(err)
 	}
 	topicClient, err := momento.NewTopicClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credProvider,
 	)
 	if err != nil {
@@ -70,7 +70,7 @@ func getCacheClient() momento.CacheClient {
 		panic(err)
 	}
 	cacheClient, err := momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credProvider,
 		time.Second*60,
 	)
