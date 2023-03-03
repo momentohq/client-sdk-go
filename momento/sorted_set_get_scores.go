@@ -8,21 +8,21 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-type SortedSetGetScoreRequest struct {
+type SortedSetGetScoresRequest struct {
 	CacheName     string
 	SetName       string
 	ElementValues []Value
 
 	grpcRequest  *pb.XSortedSetGetScoreRequest
 	grpcResponse *pb.XSortedSetGetScoreResponse
-	response     responses.SortedSetGetScoreResponse
+	response     responses.SortedSetGetScoresResponse
 }
 
-func (r *SortedSetGetScoreRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetGetScoresRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetGetScoreRequest) requestName() string { return "Sorted set get score" }
+func (r *SortedSetGetScoresRequest) requestName() string { return "Sorted set get score" }
 
-func (r *SortedSetGetScoreRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetGetScoresRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
@@ -44,7 +44,7 @@ func (r *SortedSetGetScoreRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetGetScoreRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+func (r *SortedSetGetScoresRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetGetScore(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
@@ -55,14 +55,14 @@ func (r *SortedSetGetScoreRequest) makeGrpcRequest(metadata context.Context, cli
 	return resp, nil
 }
 
-func (r *SortedSetGetScoreRequest) interpretGrpcResponse() error {
+func (r *SortedSetGetScoresRequest) interpretGrpcResponse() error {
 	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
-		r.response = &responses.SortedSetGetScoreHit{
+		r.response = &responses.SortedSetGetScoresHit{
 			Elements: convertSortedSetScoreElement(grpcResp.Found.GetElements()),
 		}
 	case *pb.XSortedSetGetScoreResponse_Missing:
-		r.response = &responses.SortedSetGetScoreMiss{}
+		r.response = &responses.SortedSetGetScoresMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
