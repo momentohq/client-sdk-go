@@ -26,7 +26,7 @@ func main() {
 
 	// Initializes Momento
 	client, err := momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credentialProvider,
 		itemDefaultTTLSeconds*time.Second,
 	)
