@@ -20,7 +20,7 @@ type CacheClient interface {
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error)
 	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
-	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
+	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 
@@ -31,11 +31,11 @@ type CacheClient interface {
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (SortedSetGetRankResponse, error)
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (SortedSetIncrementScoreResponse, error)
 
-	SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error)
-	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error)
-	SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error)
-	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error)
-	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error)
+	SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error)
+	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error)
+	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
+	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)
+	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error)
 
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error)
@@ -159,7 +159,7 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
 }
 
-func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
+func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -229,14 +229,14 @@ func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *Sorted
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (SetAddElementsResponse, error) {
+func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (SetAddElementResponse, error) {
+func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error) {
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -246,24 +246,24 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &SetAddElementSuccess{}, nil
+	return &responses.SetAddElementSuccess{}, nil
 }
 
-func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (SetFetchResponse, error) {
+func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error) {
+func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error) {
+func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error) {
 	newRequest := &SetRemoveElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -272,7 +272,7 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return &SetRemoveElementSuccess{}, nil
+	return &responses.SetRemoveElementSuccess{}, nil
 }
 
 func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error) {

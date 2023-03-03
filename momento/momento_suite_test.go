@@ -31,9 +31,9 @@ func HaveMomentoErrorCode(code string) types.GomegaMatcher {
 
 func HaveSetLength(length int) types.GomegaMatcher {
 	return WithTransform(
-		func(fetchResp momento.SetFetchResponse) (int, error) {
+		func(fetchResp responses.SetFetchResponse) (int, error) {
 			switch rtype := fetchResp.(type) {
-			case *momento.SetFetchHit:
+			case *responses.SetFetchHit:
 				return len(rtype.ValueString()), nil
 			default:
 				return 0, fmt.Errorf("expected set fetch hit but got %T", fetchResp)
