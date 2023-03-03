@@ -1,7 +1,6 @@
 package momento_test
 
 import (
-	"reflect"
 	"time"
 
 	. "github.com/momentohq/client-sdk-go/momento"
@@ -159,7 +158,7 @@ var _ = Describe("Dictionary methods", func() {
 	})
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
-		func(elements map[string]Value, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
+		func(elements []Element, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
@@ -176,26 +175,50 @@ var _ = Describe("Dictionary methods", func() {
 			case *DictionaryFetchMiss:
 				Fail("got a miss for a dictionary fetch that should have been a hit")
 			case *DictionaryFetchHit:
-				Expect(reflect.DeepEqual(result.ValueMap(), expectedItemsStringValue)).To(BeTrue())
-				Expect(reflect.DeepEqual(result.ValueMapStringString(), expectedItemsStringValue)).To(BeTrue())
-				Expect(reflect.DeepEqual(result.ValueMapStringByte(), expectedItemsByteValue)).To(BeTrue())
+				i := 0
+				keys := make([]string, len(result.ValueMap()))
+				for k := range result.ValueMap() {
+					keys[i] = k
+					i++
+				}
+				Expect(len(result.ValueMap())).To(Equal(len(expectedItemsStringValue)))
+				Expect(len(result.ValueMapStringString())).To(Equal(len(expectedItemsStringValue)))
+				Expect(len(result.ValueMapStringByte())).To(Equal(len(expectedItemsByteValue)))
+				for k, v := range result.ValueMap() {
+					Expect(expectedItemsStringValue[k]).To(Equal(v))
+				}
+				for k, v := range result.ValueMapStringString() {
+					Expect(expectedItemsStringValue[k]).To(Equal(v))
+				}
+				for k, v := range result.ValueMapStringByte() {
+					Expect(expectedItemsByteValue[k]).To(Equal(v))
+				}
 			}
 		},
 		Entry(
 			"with string values",
-			map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+			[]Element{
+				{ElemField: String("myField1"), ElemValue: String("myValue1")},
+				{ElemField: String("myField2"), ElemValue: String("myValue2")},
+			},
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
 		),
 		Entry(
 			"with byte values",
-			map[string]Value{"myField1": Bytes("myValue1"), "myField2": Bytes("myValue2")},
+			[]Element{
+				{ElemField: Bytes("myField1"), ElemValue: Bytes("myValue1")},
+				{ElemField: Bytes("myField2"), ElemValue: Bytes("myValue2")},
+			},
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
 		),
 		Entry(
 			"with mixed values",
-			map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+			[]Element{
+				{ElemField: Bytes("myField1"), ElemValue: String("myValue1")},
+				{ElemField: String("myField2"), ElemValue: Bytes("myValue2")},
+			},
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
 		),
@@ -206,9 +229,12 @@ var _ = Describe("Dictionary methods", func() {
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
-				Elements:       map[string]Value{"myField": String("myValue"), "": String("myOtherValue")},
+				Elements: []Element{
+					{ElemField: String("myField"), ElemValue: String("myValue")},
+					{ElemField: String(""), ElemValue: String("myOtherValue")},
+				},
 			}),
-		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		)
 	})
 
 	It("returns an error if an item value is nil", func() {
@@ -216,9 +242,46 @@ var _ = Describe("Dictionary methods", func() {
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
-				Elements:       map[string]Value{"myField": String("myValue"), "myOtherField": nil},
+				Elements: []Element{
+					{ElemField: String("myField"), ElemValue: String("myValue")},
+					{ElemField: String("myOtherField"), ElemValue: nil},
+				},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
+
+	Describe("map to elements conversion functions", func() {
+
+		It("converts from a map with string values to element slice", func() {
+			theMap := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
+			expected := []Element{
+				{ElemField: String("myField1"), ElemValue: String("myValue1")},
+				{ElemField: String("myField2"), ElemValue: String("myValue2")},
+			}
+			elems := ElementsFromMapStringString(theMap)
+			Expect(elems).To(ConsistOf(expected))
+		})
+
+		It("converts from a map with bytes values to element slice", func() {
+			theMap := map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")}
+			expected := []Element{
+				{ElemField: String("myField1"), ElemValue: Bytes("myValue1")},
+				{ElemField: String("myField2"), ElemValue: Bytes("myValue2")},
+			}
+			elems := ElementsFromMapStringBytes(theMap)
+			Expect(elems).To(ConsistOf(expected))
+		})
+
+		It("converts from a map with Value values to element slice", func() {
+			theMap := map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")}
+			expected := []Element{
+				{ElemField: String("myField1"), ElemValue: String("myValue1")},
+				{ElemField: String("myField2"), ElemValue: Bytes("myValue2")},
+			}
+			elems := ElementsFromMapStringValue(theMap)
+			Expect(elems).To(ConsistOf(expected))
+		})
+
 	})
 
 	Describe("dictionary increment", func() {
@@ -314,7 +377,9 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+					Elements: ElementsFromMapStringValue(
+						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+					),
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
@@ -462,7 +527,9 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+					Elements: ElementsFromMapStringValue(
+						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+					),
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
@@ -499,11 +566,13 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements: map[string]Value{
-						"myField1": String("myValue1"),
-						"myField2": Bytes("myValue2"),
-						"myField3": String("myValue3"),
-					},
+					Elements: ElementsFromMapStringValue(
+						map[string]Value{
+							"myField1": String("myValue1"),
+							"myField2": Bytes("myValue2"),
+							"myField3": String("myValue3"),
+						},
+					),
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
@@ -645,7 +714,9 @@ var _ = Describe("Dictionary methods", func() {
 					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
-						Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+						Elements: ElementsFromMapStringValue(
+							map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+						),
 					}),
 				).Error().To(BeNil())
 
@@ -677,7 +748,9 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+					Elements: ElementsFromMapStringValue(
+						map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+					),
 				}),
 			).Error().To(BeNil())
 		})

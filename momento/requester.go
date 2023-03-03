@@ -65,7 +65,7 @@ type hasFields interface {
 }
 
 type hasElements interface {
-	elements() map[string]Value
+	elements() []Element
 }
 
 type hasTtl interface {
@@ -171,20 +171,18 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareElements(r hasElements) (map[string][]byte, error) {
-	retMap := make(map[string][]byte)
-	for k, v := range r.elements() {
-		if v == nil {
-			return map[string][]byte{}, buildError(
-				momentoerrors.InvalidArgumentError, "item values may not be nil", nil,
+func prepareElements(r hasElements) ([]Element, error) {
+	for _, v := range r.elements() {
+		if v.ElemValue == nil || v.ElemField == nil {
+			return nil, buildError(
+				momentoerrors.InvalidArgumentError, "element fields and values may not be nil", nil,
 			)
 		}
-		if err := validateNotEmpty([]byte(k), "item keys"); err != nil {
+		if err := validateNotEmpty(v.ElemField.asBytes(), "element field"); err != nil {
 			return nil, err
 		}
-		retMap[k] = v.asBytes()
 	}
-	return retMap, nil
+	return r.elements(), nil
 }
 
 func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) (uint64, bool, error) {
@@ -234,4 +232,37 @@ func validateNotEmpty(field []byte, label string) error {
 		)
 	}
 	return nil
+}
+
+func ElementsFromMapStringString(theMap map[string]string) []Element {
+	var elements []Element
+	for k, v := range theMap {
+		elements = append(elements, Element{
+			ElemField: String(k),
+			ElemValue: String(v),
+		})
+	}
+	return elements
+}
+
+func ElementsFromMapStringBytes(theMap map[string][]byte) []Element {
+	var elements []Element
+	for k, v := range theMap {
+		elements = append(elements, Element{
+			ElemField: String(k),
+			ElemValue: Bytes(v),
+		})
+	}
+	return elements
+}
+
+func ElementsFromMapStringValue(theMap map[string]Value) []Element {
+	var elements []Element
+	for k, v := range theMap {
+		elements = append(elements, Element{
+			ElemField: String(k),
+			ElemValue: v,
+		})
+	}
+	return elements
 }

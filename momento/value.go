@@ -1,6 +1,6 @@
 package momento
 
-// Interface to help users deal with passing us values as strings or bytes.
+// Value Interface to help users deal with passing us values as strings or bytes.
 // Value: momento.Bytes([]bytes("abc"))
 // Value: momento.String("abc")
 type Value interface {
@@ -8,7 +8,7 @@ type Value interface {
 	asString() string
 }
 
-// Type alias to future proof passing in keys.
+// Key Type alias to future proof passing in keys.
 type Key = Value
 
 // Bytes plain old []byte
@@ -29,4 +29,8 @@ func (v String) asBytes() []byte {
 
 func (v String) asString() string {
 	return string(v)
+}
+
+type Element struct {
+	ElemField, ElemValue Value
 }
