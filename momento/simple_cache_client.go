@@ -18,7 +18,7 @@ import (
 type CacheClient interface {
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error)
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error)
-	ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error)
+	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
 	Set(ctx context.Context, r *SetRequest) (SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (GetResponse, error)
@@ -37,15 +37,15 @@ type CacheClient interface {
 	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (SetRemoveElementResponse, error)
 	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (SetRemoveElementsResponse, error)
 
-	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error)
-	ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error)
-	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error)
-	ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error)
-	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error)
-	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error)
-	ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error)
-	ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error)
-	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error)
+	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
+	ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error)
+	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error)
+	ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error)
+	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error)
+	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error)
+	ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error)
+	ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error)
+	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error)
 
 	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error)
 	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
@@ -149,17 +149,14 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	return &responses.DeleteCacheSuccess{}, nil
 }
 
-func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (ListCachesResponse, error) {
+func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return &ListCachesSuccess{
-		nextToken: rsp.NextToken,
-		caches:    convertCacheInfo(rsp.Caches),
-	}, nil
+	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
 }
 
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (SetResponse, error) {
@@ -278,63 +275,63 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 	return &SetRemoveElementSuccess{}, nil
 }
 
-func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (ListPushFrontResponse, error) {
+func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (ListPushBackResponse, error) {
+func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (ListPopFrontResponse, error) {
+func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (ListPopBackResponse, error) {
+func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (ListConcatenateFrontResponse, error) {
+func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (ListConcatenateBackResponse, error) {
+func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (ListFetchResponse, error) {
+func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (ListLengthResponse, error) {
+func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (ListRemoveValueResponse, error) {
+func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -454,16 +451,6 @@ func convertMomentoSvcErrorToCustomerError(e momentoerrors.MomentoSvcErr) Moment
 		return nil
 	}
 	return NewMomentoError(e.Code(), e.Message(), e.OriginalErr())
-}
-
-func convertCacheInfo(i []models.CacheInfo) []CacheInfo {
-	var convertedList []CacheInfo
-	for _, c := range i {
-		convertedList = append(convertedList, CacheInfo{
-			name: c.Name,
-		})
-	}
-	return convertedList
 }
 
 func isCacheNameValid(cacheName string) momentoerrors.MomentoSvcErr {

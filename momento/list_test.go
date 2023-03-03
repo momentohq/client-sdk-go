@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	. "github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

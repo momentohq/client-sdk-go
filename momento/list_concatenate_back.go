@@ -4,27 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
 )
-
-// ListConcatenateFrontResponse
-
-type ListConcatenateBackResponse interface {
-	isListConcatenateBackResponse()
-}
-
-type ListConcatenateBackSuccess struct {
-	listLength uint32
-}
-
-func (ListConcatenateBackSuccess) isListConcatenateBackResponse() {}
-
-func (resp ListConcatenateBackSuccess) ListLength() uint32 {
-	return resp.listLength
-}
-
-// ListConcatenateBackRequest
 
 type ListConcatenateBackRequest struct {
 	CacheName           string
@@ -35,7 +19,7 @@ type ListConcatenateBackRequest struct {
 
 	grpcRequest  *pb.XListConcatenateBackRequest
 	grpcResponse *pb.XListConcatenateBackResponse
-	response     ListConcatenateBackResponse
+	response     responses.ListConcatenateBackResponse
 }
 
 func (r *ListConcatenateBackRequest) cacheName() string { return r.CacheName }
@@ -88,6 +72,6 @@ func (r *ListConcatenateBackRequest) makeGrpcRequest(metadata context.Context, c
 
 func (r *ListConcatenateBackRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
-	r.response = &ListConcatenateBackSuccess{listLength: resp.ListLength}
+	r.response = responses.NewListConcatenateBackSuccess(resp.ListLength)
 	return nil
 }

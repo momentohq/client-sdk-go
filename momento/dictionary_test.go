@@ -6,8 +6,8 @@ import (
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
-	"github.com/momentohq/client-sdk-go/responses"
-	"github.com/momentohq/client-sdk-go/utils"
+	. "github.com/momentohq/client-sdk-go/responses"
+	. "github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -115,9 +115,9 @@ var _ = Describe("Dictionary methods", func() {
 				Field:          field,
 			})
 			Expect(err).To(BeNil())
-			Expect(getFieldResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldHit{}))
+			Expect(getFieldResp).To(BeAssignableToTypeOf(&DictionaryGetFieldHit{}))
 			switch result := getFieldResp.(type) {
-			case *responses.DictionaryGetFieldHit:
+			case *DictionaryGetFieldHit:
 				Expect(result.FieldString()).To(Equal(expectedFieldString))
 				Expect(result.FieldByte()).To(Equal(expectedFieldBytes))
 				Expect(result.ValueString()).To(Equal(expectedValueString))
@@ -154,7 +154,7 @@ var _ = Describe("Dictionary methods", func() {
 				DictionaryName: sharedContext.CollectionName,
 				Field:          String("myField"),
 				Value:          String("myValue"),
-				Ttl:            &utils.CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
+				Ttl:            &CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
@@ -167,16 +167,16 @@ var _ = Describe("Dictionary methods", func() {
 					DictionaryName: sharedContext.CollectionName,
 					Elements:       elements,
 				}),
-			).To(BeAssignableToTypeOf(&responses.DictionarySetFieldsSuccess{}))
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			fetchResp, err := sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
 			})
 			Expect(err).To(BeNil())
 			switch result := fetchResp.(type) {
-			case *responses.DictionaryFetchMiss:
+			case *DictionaryFetchMiss:
 				Fail("got a miss for a dictionary fetch that should have been a hit")
-			case *responses.DictionaryFetchHit:
+			case *DictionaryFetchHit:
 				Expect(reflect.DeepEqual(result.ValueMap(), expectedItemsStringValue)).To(BeTrue())
 				Expect(reflect.DeepEqual(result.ValueMapStringString(), expectedItemsStringValue)).To(BeTrue())
 				Expect(reflect.DeepEqual(result.ValueMapStringByte(), expectedItemsByteValue)).To(BeTrue())
@@ -232,9 +232,9 @@ var _ = Describe("Dictionary methods", func() {
 				Amount:         3,
 			})
 			Expect(err).To(BeNil())
-			Expect(incrResp).To(BeAssignableToTypeOf(&responses.DictionaryIncrementSuccess{}))
+			Expect(incrResp).To(BeAssignableToTypeOf(&DictionaryIncrementSuccess{}))
 			switch result := incrResp.(type) {
-			case *responses.DictionaryIncrementSuccess:
+			case *DictionaryIncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(3)))
 			}
 		})
@@ -247,7 +247,7 @@ var _ = Describe("Dictionary methods", func() {
 					Field:          String("notacounter"),
 					Value:          String("notanumber"),
 				}),
-			).To(BeAssignableToTypeOf(&responses.DictionarySetFieldSuccess{}))
+			).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
 			Expect(
 				sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
@@ -279,7 +279,7 @@ var _ = Describe("Dictionary methods", func() {
 						Field:          field,
 						Amount:         1,
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryIncrementSuccess{}))
+				).To(BeAssignableToTypeOf(&DictionaryIncrementSuccess{}))
 			}
 			fetchResp, err := sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 				CacheName:      sharedContext.CacheName,
@@ -287,9 +287,9 @@ var _ = Describe("Dictionary methods", func() {
 				Field:          field,
 			})
 			Expect(err).To(BeNil())
-			Expect(fetchResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldHit{}))
+			Expect(fetchResp).To(BeAssignableToTypeOf(&DictionaryGetFieldHit{}))
 			switch result := fetchResp.(type) {
-			case *responses.DictionaryGetFieldHit:
+			case *DictionaryGetFieldHit:
 				Expect(result.ValueString()).To(Equal("10"))
 			default:
 				Fail("expected a hit for get field but got a miss")
@@ -317,7 +317,7 @@ var _ = Describe("Dictionary methods", func() {
 					DictionaryName: sharedContext.CollectionName,
 					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 				}),
-			).To(BeAssignableToTypeOf(&responses.DictionarySetFieldsSuccess{}))
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
 
 		When("getting single field", func() {
@@ -332,9 +332,9 @@ var _ = Describe("Dictionary methods", func() {
 						Field:          String(fieldName),
 					})
 					Expect(err).To(BeNil())
-					Expect(getResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldHit{}))
+					Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldHit{}))
 					switch result := getResp.(type) {
-					case *responses.DictionaryGetFieldHit:
+					case *DictionaryGetFieldHit:
 						Expect(result.FieldString()).To(Equal(fieldName))
 						Expect(result.FieldByte()).To(Equal([]byte(fieldName)))
 						Expect(result.ValueString()).To(Equal(valueStr))
@@ -352,7 +352,7 @@ var _ = Describe("Dictionary methods", func() {
 					Field:          String("idontexist"),
 				})
 				Expect(err).To(BeNil())
-				Expect(getResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldMiss{}))
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldMiss{}))
 			})
 
 			It("returns a miss for a nonexistent dictionary", func() {
@@ -362,7 +362,7 @@ var _ = Describe("Dictionary methods", func() {
 					Field:          String("idontexist"),
 				})
 				Expect(err).To(BeNil())
-				Expect(getResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldMiss{}))
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldMiss{}))
 			})
 
 			It("returns an error for a nil field", func() {
@@ -386,12 +386,12 @@ var _ = Describe("Dictionary methods", func() {
 					Fields:         []Value{String("myField1"), String("myField2")},
 				})
 				Expect(err).To(BeNil())
-				Expect(getResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldsHit{}))
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldsHit{}))
 
 				expectedStrings := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
 				expectedBytes := map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")}
 				switch result := getResp.(type) {
-				case *responses.DictionaryGetFieldsHit:
+				case *DictionaryGetFieldsHit:
 					Expect(result.ValueMapStringString()).To(Equal(expectedStrings))
 					Expect(result.ValueMap()).To(Equal(expectedStrings))
 					Expect(result.ValueMapStringBytes()).To(Equal(expectedBytes))
@@ -405,7 +405,7 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: uuid.NewString(),
 						Fields:         []Value{String("myField1")},
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldsMiss{}))
+				).To(BeAssignableToTypeOf(&DictionaryGetFieldsMiss{}))
 			})
 
 			It("returns misses for nonexistent fields", func() {
@@ -415,13 +415,13 @@ var _ = Describe("Dictionary methods", func() {
 					Fields:         []Value{String("bogusField1"), String("bogusField2")},
 				})
 				Expect(err).To(BeNil())
-				Expect(getResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldsHit{}))
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldsHit{}))
 				switch result := getResp.(type) {
-				case *responses.DictionaryGetFieldsHit:
+				case *DictionaryGetFieldsHit:
 					Expect(result.ValueMap()).To(BeEmpty())
 					for _, value := range result.Responses() {
 						switch value.(type) {
-						case *responses.DictionaryGetFieldHit:
+						case *DictionaryGetFieldHit:
 							Fail("got a hit response for a field that should return a miss")
 						}
 					}
@@ -435,9 +435,9 @@ var _ = Describe("Dictionary methods", func() {
 					Fields:         []Value{String("bogusField1"), String("myField2")},
 				})
 				Expect(err).To(BeNil())
-				Expect(getResp).To(BeAssignableToTypeOf(&responses.DictionaryGetFieldsHit{}))
+				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldsHit{}))
 				switch result := getResp.(type) {
-				case *responses.DictionaryGetFieldsHit:
+				case *DictionaryGetFieldsHit:
 					Expect(result.ValueMap()).To(Equal(map[string]string{"myField2": "myValue2"}))
 					Expect(len(result.Responses())).To(Equal(2))
 				}
@@ -465,7 +465,7 @@ var _ = Describe("Dictionary methods", func() {
 					DictionaryName: sharedContext.CollectionName,
 					Elements:       map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 				}),
-			).To(BeAssignableToTypeOf(&responses.DictionarySetFieldsSuccess{}))
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
 
 		It("fetches on the happy path", func() {
@@ -475,9 +475,9 @@ var _ = Describe("Dictionary methods", func() {
 				DictionaryName: sharedContext.CollectionName,
 			})
 			Expect(err).To(BeNil())
-			Expect(fetchResp).To(BeAssignableToTypeOf(&responses.DictionaryFetchHit{}))
+			Expect(fetchResp).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 			switch result := fetchResp.(type) {
-			case *responses.DictionaryFetchHit:
+			case *DictionaryFetchHit:
 				Expect(result.ValueMap()).To(Equal(expected))
 			}
 		})
@@ -488,7 +488,7 @@ var _ = Describe("Dictionary methods", func() {
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: uuid.NewString(),
 				}),
-			).To(BeAssignableToTypeOf(&responses.DictionaryFetchMiss{}))
+			).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
 		})
 
 	})
@@ -506,7 +506,7 @@ var _ = Describe("Dictionary methods", func() {
 						"myField3": String("myValue3"),
 					},
 				}),
-			).To(BeAssignableToTypeOf(&responses.DictionarySetFieldsSuccess{}))
+			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 		})
 
 		When("removing a single field", func() {
@@ -518,7 +518,7 @@ var _ = Describe("Dictionary methods", func() {
 					Field:          String("myField1"),
 				})
 				Expect(err).To(BeNil())
-				Expect(removeResp).To(BeAssignableToTypeOf(&responses.DictionaryRemoveFieldSuccess{}))
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
 
 				fetchResp, err := sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 					CacheName:      sharedContext.CacheName,
@@ -526,7 +526,7 @@ var _ = Describe("Dictionary methods", func() {
 				})
 				Expect(err).To(BeNil())
 				switch result := fetchResp.(type) {
-				case *responses.DictionaryFetchHit:
+				case *DictionaryFetchHit:
 					Expect(result.ValueMap()).To(Equal(map[string]string{
 						"myField2": "myValue2",
 						"myField3": "myValue3",
@@ -543,7 +543,7 @@ var _ = Describe("Dictionary methods", func() {
 					Field:          String("bogusField1"),
 				})
 				Expect(err).To(BeNil())
-				Expect(removeResp).To(BeAssignableToTypeOf(&responses.DictionaryRemoveFieldSuccess{}))
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
 			})
 
 			It("no-ops when using a nonexistent dictionary", func() {
@@ -553,7 +553,7 @@ var _ = Describe("Dictionary methods", func() {
 					Field:          String("bogusField1"),
 				})
 				Expect(err).To(BeNil())
-				Expect(removeResp).To(BeAssignableToTypeOf(&responses.DictionaryRemoveFieldSuccess{}))
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
 			})
 
 			It("returns an error when trying to remove a nil field", func() {
@@ -577,7 +577,7 @@ var _ = Describe("Dictionary methods", func() {
 					Fields:         []Value{String("myField1"), Bytes("myField2")},
 				})
 				Expect(err).To(BeNil())
-				Expect(removeResp).To(BeAssignableToTypeOf(&responses.DictionaryRemoveFieldsSuccess{}))
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
 
 				fetchResp, err := sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 					CacheName:      sharedContext.CacheName,
@@ -585,7 +585,7 @@ var _ = Describe("Dictionary methods", func() {
 				})
 				Expect(err).To(BeNil())
 				switch result := fetchResp.(type) {
-				case *responses.DictionaryFetchHit:
+				case *DictionaryFetchHit:
 					Expect(result.ValueMap()).To(Equal(map[string]string{
 						"myField3": "myValue3",
 					}))
@@ -601,7 +601,7 @@ var _ = Describe("Dictionary methods", func() {
 					Fields:         []Value{String("bogusField1"), Bytes("bogusField2")},
 				})
 				Expect(err).To(BeNil())
-				Expect(removeResp).To(BeAssignableToTypeOf(&responses.DictionaryRemoveFieldsSuccess{}))
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
 			})
 
 			It("no-ops when using a nonexistent dictionary", func() {
@@ -611,7 +611,7 @@ var _ = Describe("Dictionary methods", func() {
 					Fields:         []Value{String("bogusField1"), Bytes("bogusField2")},
 				})
 				Expect(err).To(BeNil())
-				Expect(removeResp).To(BeAssignableToTypeOf(&responses.DictionaryRemoveFieldsSuccess{}))
+				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
 			})
 
 			It("returns an error when Fields is nil", func() {
@@ -655,7 +655,7 @@ var _ = Describe("Dictionary methods", func() {
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryFetchHit{}))
+				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 
 				time.Sleep(sharedContext.DefaultTtl)
 
@@ -664,7 +664,7 @@ var _ = Describe("Dictionary methods", func() {
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryFetchMiss{}))
+				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
 			})
 
 		})
@@ -694,7 +694,7 @@ var _ = Describe("Dictionary methods", func() {
 						Field:          String("foo"),
 						Value:          String("bar"),
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionarySetFieldSuccess{}))
+				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
 				time.Sleep(sharedContext.DefaultTtl / 2)
 
@@ -703,7 +703,7 @@ var _ = Describe("Dictionary methods", func() {
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryFetchHit{}))
+				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 			})
 
 		})
@@ -717,12 +717,12 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						Ttl: &utils.CollectionTtl{
+						Ttl: &CollectionTtl{
 							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: false,
 						},
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionarySetFieldSuccess{}))
+				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
 				time.Sleep(sharedContext.DefaultTtl)
 
@@ -731,7 +731,7 @@ var _ = Describe("Dictionary methods", func() {
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryFetchMiss{}))
+				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
 			})
 
 			It("is respected if refresh TTL is true", func() {
@@ -741,12 +741,12 @@ var _ = Describe("Dictionary methods", func() {
 						DictionaryName: sharedContext.CollectionName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
-						Ttl: &utils.CollectionTtl{
+						Ttl: &CollectionTtl{
 							Ttl:        sharedContext.DefaultTtl + time.Second*60,
 							RefreshTtl: true,
 						},
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionarySetFieldSuccess{}))
+				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
 				time.Sleep(sharedContext.DefaultTtl)
 
@@ -755,7 +755,7 @@ var _ = Describe("Dictionary methods", func() {
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
 					}),
-				).To(BeAssignableToTypeOf(&responses.DictionaryFetchHit{}))
+				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 			})
 
 		})

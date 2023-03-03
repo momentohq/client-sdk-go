@@ -3,14 +3,13 @@ package momento_test
 import (
 	"errors"
 
-	"github.com/momentohq/client-sdk-go/responses"
-
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 var _ = Describe("Control ops", func() {
@@ -46,15 +45,15 @@ var _ = Describe("Control ops", func() {
 			resp, err := sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
 
-			listedCaches := []string{}
+			var listedCaches []string
 			switch r := resp.(type) {
-			case *ListCachesSuccess:
+			case *responses.ListCachesSuccess:
 				for _, info := range r.Caches() {
 					listedCaches = append(listedCaches, info.Name())
 				}
 				Expect(listedCaches).To(ContainElements(cacheNames))
 			default:
-				Fail("Unexpected repsonse type")
+				Fail("Unexpected response type")
 			}
 
 			for _, cacheName := range cacheNames {
@@ -64,12 +63,12 @@ var _ = Describe("Control ops", func() {
 			}
 			resp, err = sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
-			Expect(resp).To(BeAssignableToTypeOf(&ListCachesSuccess{}))
+			Expect(resp).To(BeAssignableToTypeOf(&responses.ListCachesSuccess{}))
 			switch r := resp.(type) {
-			case *ListCachesSuccess:
+			case *responses.ListCachesSuccess:
 				Expect(r.Caches()).To(Not(ContainElements(cacheNames)))
 			default:
-				Fail("Unexpected repsonse type")
+				Fail("Unexpected response type")
 			}
 		})
 	})

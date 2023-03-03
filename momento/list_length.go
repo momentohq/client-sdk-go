@@ -3,30 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-// ListLengthResponse
-
-type ListLengthResponse interface {
-	isListLengthResponse()
-}
-
-type ListLengthHit struct {
-	value uint32
-}
-
-func (ListLengthHit) isListLengthResponse() {}
-
-func (resp ListLengthHit) Length() uint32 {
-	return resp.value
-}
-
-type ListLengthMiss struct{}
-
-func (ListLengthMiss) isListLengthResponse() {}
-
-// ListLengthRequest
 
 type ListLengthRequest struct {
 	CacheName string
@@ -34,7 +14,7 @@ type ListLengthRequest struct {
 
 	grpcRequest  *pb.XListLengthRequest
 	grpcResponse *pb.XListLengthResponse
-	response     ListLengthResponse
+	response     responses.ListLengthResponse
 }
 
 func (r *ListLengthRequest) cacheName() string { return r.CacheName }
@@ -66,9 +46,9 @@ func (r *ListLengthRequest) interpretGrpcResponse() error {
 	resp := r.grpcResponse
 	switch rtype := resp.List.(type) {
 	case *pb.XListLengthResponse_Found:
-		r.response = &ListLengthHit{value: rtype.Found.Length}
+		r.response = responses.NewListLengthHit(rtype.Found.Length)
 	case *pb.XListLengthResponse_Missing:
-		r.response = &ListLengthMiss{}
+		r.response = &responses.ListLengthMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
