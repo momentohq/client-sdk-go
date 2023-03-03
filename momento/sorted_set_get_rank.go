@@ -3,28 +3,10 @@ package momento
 import (
 	"context"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
-
-///////// Response
-
-type SortedSetGetRankResponse interface {
-	isSortedSetGetRankResponse()
-}
-
-// SortedSetGetRankMiss Miss Response to a cache SortedSetGetRank api request.
-type SortedSetGetRankMiss struct{}
-
-func (SortedSetGetRankMiss) isSortedSetGetRankResponse() {}
-
-// SortedSetGetRankHit Hit Response to a cache SortedSetGetRank api request.
-type SortedSetGetRankHit struct {
-	Rank uint64
-}
-
-func (SortedSetGetRankHit) isSortedSetGetRankResponse() {}
-
-///////// Request
 
 type SortedSetGetRankRequest struct {
 	CacheName    string
@@ -33,7 +15,7 @@ type SortedSetGetRankRequest struct {
 
 	grpcRequest  *pb.XSortedSetGetRankRequest
 	grpcResponse *pb.XSortedSetGetRankResponse
-	response     SortedSetGetRankResponse
+	response     responses.SortedSetGetRankResponse
 }
 
 func (r *SortedSetGetRankRequest) cacheName() string { return r.CacheName }
@@ -76,14 +58,14 @@ func (r *SortedSetGetRankRequest) makeGrpcRequest(metadata context.Context, clie
 func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
 	grpcResp := r.grpcResponse
 
-	var resp SortedSetGetRankResponse
+	var resp responses.SortedSetGetRankResponse
 	switch rank := grpcResp.Rank.(type) {
 	case *pb.XSortedSetGetRankResponse_ElementRank:
-		resp = &SortedSetGetRankHit{
+		resp = &responses.SortedSetGetRankHit{
 			Rank: rank.ElementRank.Rank,
 		}
 	case *pb.XSortedSetGetRankResponse_Missing:
-		resp = &SortedSetGetRankMiss{}
+		resp = &responses.SortedSetGetRankMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}

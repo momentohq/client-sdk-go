@@ -10,11 +10,12 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type TopicClient interface {
 	Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
-	Publish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error)
+	Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error)
 
 	Close()
 }
@@ -89,7 +90,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	}, nil
 }
 
-func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRequest) (TopicPublishResponse, error) {
+func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	return &TopicPublishSuccess{}, err
+	return &responses.TopicPublishSuccess{}, err
 }
 func (c defaultTopicClient) Close() {
 	defer c.pubSubClient.Close()

@@ -9,7 +9,7 @@ import (
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
-	"github.com/momentohq/client-sdk-go/responses"
+	. "github.com/momentohq/client-sdk-go/responses"
 )
 
 var _ = Describe("Control ops", func() {
@@ -35,11 +35,11 @@ var _ = Describe("Control ops", func() {
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&responses.CreateCacheSuccess{}))
+				).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
 
 				Expect(
 					sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&responses.CreateCacheAlreadyExists{}))
+				).To(BeAssignableToTypeOf(&CreateCacheAlreadyExists{}))
 			}
 
 			resp, err := sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
@@ -47,7 +47,7 @@ var _ = Describe("Control ops", func() {
 
 			var listedCaches []string
 			switch r := resp.(type) {
-			case *responses.ListCachesSuccess:
+			case *ListCachesSuccess:
 				for _, info := range r.Caches() {
 					listedCaches = append(listedCaches, info.Name())
 				}
@@ -59,13 +59,13 @@ var _ = Describe("Control ops", func() {
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&responses.DeleteCacheSuccess{}))
+				).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 			}
 			resp, err = sharedContext.Client.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
-			Expect(resp).To(BeAssignableToTypeOf(&responses.ListCachesSuccess{}))
+			Expect(resp).To(BeAssignableToTypeOf(&ListCachesSuccess{}))
 			switch r := resp.(type) {
-			case *responses.ListCachesSuccess:
+			case *ListCachesSuccess:
 				Expect(r.Caches()).To(Not(ContainElements(cacheNames)))
 			default:
 				Fail("Unexpected response type")
@@ -97,7 +97,7 @@ var _ = Describe("Control ops", func() {
 		It(`succeeds even if the cache does not exist`, func() {
 			Expect(
 				sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),
-			).To(BeAssignableToTypeOf(&responses.DeleteCacheSuccess{}))
+			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
 	})
 })

@@ -4,21 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/responses"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
 )
-
-///////// Response
-
-type SortedSetPutResponse interface {
-	isSortedSetPutResponse()
-}
-
-type SortedSetPutSuccess struct{}
-
-func (SortedSetPutSuccess) isSortedSetPutResponse() {}
-
-///////// Request
 
 type SortedSetPutElement struct {
 	Value Value
@@ -33,7 +23,7 @@ type SortedSetPutRequest struct {
 
 	grpcRequest  *pb.XSortedSetPutRequest
 	grpcResponse *pb.XSortedSetPutResponse
-	response     SortedSetPutResponse
+	response     responses.SortedSetPutResponse
 }
 
 func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
@@ -78,7 +68,7 @@ func (r *SortedSetPutRequest) makeGrpcRequest(metadata context.Context, client s
 }
 
 func (r *SortedSetPutRequest) interpretGrpcResponse() error {
-	r.response = &SortedSetPutSuccess{}
+	r.response = &responses.SortedSetPutSuccess{}
 	return nil
 }
 
