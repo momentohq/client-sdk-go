@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
@@ -21,6 +22,7 @@ type topicSubscription struct {
 	momentoTopicClient *pubSubClient
 	cacheName          string
 	topicName          string
+	log                logger.MomentoLogger
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -46,9 +48,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 				// FIXME add warning logging here
 				continue
 			default:
-				// FIXME add warning logging here
-				// Ignore unknown responses, so we don't stop polling if we add a new message.
-				// For example, we wouldn't want to stop because of an unknown heartbeat response.
+				s.log.Warn("Ignoring unknown responses to keep polling in case we add a new message in addition to the existing ones.")
 				continue
 			}
 		}
