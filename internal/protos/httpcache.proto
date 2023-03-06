@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "grpc.cache_client";
+
+package cache_client;
+
+import "cacheclient.proto";
+import "google/api/httpbody.proto";
+import "google/api/annotations.proto";
+
+message _HttpGetRequest {
+  string cache_name = 1;
+  string cache_key = 2;
+  string token = 3;
+}
+
+message _HttpSetRequest {
+  string cache_name = 1;
+  string cache_key = 2;
+  uint64 ttl_milliseconds = 3;
+  string token = 4;
+  google.api.HttpBody cache_body = 5;
+}
+
+service HttpCache {
+  rpc Get (_HttpGetRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      // Other fields are set via query parameter
+      get: "/cache/get/{cache_name}/{cache_key}"
+    };
+  }
+  rpc Set (_HttpSetRequest) returns (_SetResponse) {
+    option (google.api.http) = {
+      // Other fields are set via query parameter
+      post: "/cache/set/{cache_name}/{cache_key}"
+      body: "cache_body"
+    };
+  }
+  rpc SetButItsAPut (_HttpSetRequest) returns (_SetResponse) {
+    option (google.api.http) = {
+      // Other fields are set via query parameter
+      put: "/cache/set/{cache_name}/{cache_key}"
+      body: "cache_body"
+    };
+  }
+}
