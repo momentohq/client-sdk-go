@@ -8,6 +8,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +27,7 @@ func main() {
 
 	// Initializes Momento
 	client, err := momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credentialProvider,
 		itemDefaultTTLSeconds*time.Second,
 	)
@@ -65,9 +66,9 @@ func main() {
 	}
 
 	switch r := resp.(type) {
-	case *momento.GetHit:
+	case *responses.GetHit:
 		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
-	case *momento.GetMiss:
+	case *responses.GetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
 

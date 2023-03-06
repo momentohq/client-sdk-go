@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 const (
@@ -31,7 +32,7 @@ func setup() {
 
 	// Initializes Momento
 	client, err = momento.NewCacheClient(
-		config.LatestLaptopConfig(),
+		config.LaptopLatest(),
 		credentialProvider,
 		itemDefaultTTLSeconds*time.Second,
 	)
@@ -105,9 +106,9 @@ func printSet() {
 		panic(err)
 	}
 	switch r := resp.(type) {
-	case momento.SetFetchHit:
+	case *responses.SetFetchHit:
 		fmt.Printf("\nprinting set elements:\n\t%s\n", strings.Join(r.ValueString(), "\n\t"))
-	case momento.SetFetchMiss:
+	case *responses.SetFetchMiss:
 		fmt.Println("set fetch returned a MISS")
 	}
 }
