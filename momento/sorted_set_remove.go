@@ -22,6 +22,8 @@ func (r *SortedSetRemoveRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetRemoveRequest) requestName() string { return "Sorted set remove" }
 
+func (r *SortedSetRemoveRequest) values() []Value { return r.Values }
+
 func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
@@ -29,18 +31,17 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
+	var valuesToRemove [][]byte
+	if valuesToRemove, err = prepareValues(r); err != nil {
+		return err
+	}
+
 	grpcReq := &pb.XSortedSetRemoveRequest{
 		SetName: []byte(r.SetName),
 	}
 
-	valuesToRemove, err := momentoValuesToPrimitiveByteList(r.Values)
-	if err != nil {
-		return err
-	}
 	grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
-		Some: &pb.XSortedSetRemoveRequest_XSome{
-			Values: valuesToRemove,
-		},
+		Some: &pb.XSortedSetRemoveRequest_XSome{Values: valuesToRemove},
 	}
 
 	r.grpcRequest = grpcReq
