@@ -14,11 +14,11 @@ import (
 )
 
 type SortedSetIncrementScoreRequest struct {
-	CacheName    string
-	SetName      string
-	ElementValue Value
-	Amount       float64
-	Ttl          *utils.CollectionTtl
+	CacheName string
+	SetName   string
+	Value     Value
+	Amount    float64
+	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetIncrementRequest
 	grpcResponse *pb.XSortedSetIncrementResponse
@@ -47,7 +47,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 	}
 
 	var value []byte
-	if value, err = prepareElementValue(r.ElementValue); err != nil {
+	if value, err = prepareElementValue(r.Value); err != nil {
 		return err
 	}
 

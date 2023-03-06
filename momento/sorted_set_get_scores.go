@@ -9,9 +9,9 @@ import (
 )
 
 type SortedSetGetScoresRequest struct {
-	CacheName     string
-	SetName       string
-	ElementValues []Value
+	CacheName string
+	SetName   string
+	Values    []Value
 
 	grpcRequest  *pb.XSortedSetGetScoreRequest
 	grpcResponse *pb.XSortedSetGetScoreResponse
@@ -29,7 +29,7 @@ func (r *SortedSetGetScoresRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	values, err := momentoValuesToPrimitiveByteList(r.ElementValues)
+	values, err := momentoValuesToPrimitiveByteList(r.Values)
 	if err != nil {
 		return err
 	}

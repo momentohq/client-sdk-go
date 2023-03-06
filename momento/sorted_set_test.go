@@ -62,20 +62,20 @@ var _ = Describe("SortedSet", func() {
 
 			Expect(
 				client.SortedSetGetRank(ctx, &SortedSetGetRankRequest{
-					CacheName: cacheName, SetName: collectionName, ElementValue: element,
+					CacheName: cacheName, SetName: collectionName, Value: element,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			elements := []Value{element}
 			Expect(
 				client.SortedSetGetScores(ctx, &SortedSetGetScoresRequest{
-					CacheName: cacheName, SetName: collectionName, ElementValues: elements,
+					CacheName: cacheName, SetName: collectionName, Values: elements,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
 				client.SortedSetIncrementScore(ctx, &SortedSetIncrementScoreRequest{
-					CacheName: cacheName, SetName: collectionName, ElementValue: element, Amount: 1,
+					CacheName: cacheName, SetName: collectionName, Value: element, Amount: 1,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
@@ -168,10 +168,10 @@ var _ = Describe("SortedSet", func() {
 			`SortedSetIncrementScore`,
 			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetIncrementScoreRequest{
-					CacheName:    sharedContext.CacheName,
-					SetName:      sharedContext.CollectionName,
-					ElementValue: element.Value,
-					Amount:       element.Score,
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     element.Value,
+					Amount:    element.Score,
 				}
 				if ttl != nil {
 					request.Ttl = ttl
@@ -288,9 +288,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetGetRank(
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("foo"),
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("foo"),
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetGetRankMiss{}))
@@ -308,16 +308,16 @@ var _ = Describe("SortedSet", func() {
 			resp, err := sharedContext.Client.SortedSetGetRank(
 				sharedContext.Ctx,
 				&SortedSetGetRankRequest{
-					CacheName:    sharedContext.CacheName,
-					SetName:      sharedContext.CollectionName,
-					ElementValue: String("first"),
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("first"),
 				},
 			)
 			Expect(err).To(BeNil())
 			Expect(resp).To(Equal(SortedSetGetRankHit(2)))
 			switch r := resp.(type) {
 			case SortedSetGetRankHit:
-				Expect(r.Rank()).To(Equal(2))
+				Expect(r.Rank()).To(Equal(uint64(2)))
 			default:
 				Fail(fmt.Sprintf("Wrong type: %T", r))
 			}
@@ -326,9 +326,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetGetRank(
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("last"),
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("last"),
 					},
 				),
 			).To(Equal(SortedSetGetRankHit(0)))
@@ -339,9 +339,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetGetRank(
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: nil,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     nil,
 					},
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -354,9 +354,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
-						CacheName:     sharedContext.CacheName,
-						SetName:       sharedContext.CollectionName,
-						ElementValues: []Value{String("foo")},
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Values:    []Value{String("foo")},
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetGetScoresMiss{}))
@@ -377,7 +377,7 @@ var _ = Describe("SortedSet", func() {
 					&SortedSetGetScoresRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
-						ElementValues: []Value{
+						Values: []Value{
 							String("first"), String("last"), String("dne"),
 						},
 					},
@@ -398,9 +398,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
-						CacheName:     sharedContext.CacheName,
-						SetName:       sharedContext.CollectionName,
-						ElementValues: nil,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Values:    nil,
 					},
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -409,9 +409,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetGetScores(
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
-						CacheName:     sharedContext.CacheName,
-						SetName:       sharedContext.CollectionName,
-						ElementValues: []Value{nil, String("aValue"), nil},
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Values:    []Value{nil, String("aValue"), nil},
 					},
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -424,10 +424,10 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("dne"),
-						Amount:       99,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("dne"),
+						Amount:    99,
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 99}))
@@ -438,10 +438,10 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("dne"),
-						Amount:       0,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("dne"),
+						Amount:    0,
 					},
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -452,9 +452,9 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("dne"),
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("dne"),
 					},
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -473,10 +473,10 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("middle"),
-						Amount:       42,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("middle"),
+						Amount:    42,
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 92}))
@@ -485,10 +485,10 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("middle"),
-						Amount:       -42,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("middle"),
+						Amount:    -42,
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 50}))
@@ -499,10 +499,10 @@ var _ = Describe("SortedSet", func() {
 				sharedContext.Client.SortedSetIncrementScore(
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: nil,
-						Amount:       42,
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     nil,
+						Amount:    42,
 					},
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
