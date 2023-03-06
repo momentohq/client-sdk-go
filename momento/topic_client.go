@@ -25,7 +25,7 @@ type TopicClient interface {
 type defaultTopicClient struct {
 	credentialProvider auth.CredentialProvider
 	pubSubClient       *pubSubClient
-	log                logger.MomentoLoggerFactory
+	log                logger.MomentoLogger
 }
 
 // NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
@@ -35,6 +35,7 @@ func NewTopicClient(configuration config.Configuration, credentialProvider auth.
 	}
 	client := &defaultTopicClient{
 		credentialProvider: credentialProvider,
+		log:                configuration.GetLoggerFactory().GetLogger("topic-client", logger.TRACE),
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
@@ -89,7 +90,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
-		log:                c.log.GetLogger("topic-subscription", logger.TRACE),
+		log:                c.log,
 	}, nil
 }
 
