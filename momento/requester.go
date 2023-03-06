@@ -90,21 +90,20 @@ func prepareName(name string, label string) (string, error) {
 	return name, nil
 }
 
-func prepareElementValue(name Value) ([]byte, error) {
-	if name == nil {
+func prepareElementValue(value Value) ([]byte, error) {
+	if value == nil {
 		return nil, buildError(
 			momentoerrors.InvalidArgumentError, "element value cannot be nil or empty", nil,
 		)
 	}
 
 	// just validate not empty using prepareName
-	nameBytes := name.asBytes()
-	_, err := prepareName(string(nameBytes), "element value")
+	_, err := prepareName(value.asString(), "element value")
 	if err != nil {
 		return nil, err
 	}
 
-	return nameBytes, nil
+	return value.asBytes(), nil
 }
 
 func prepareCacheName(r hasCacheName) (string, error) {
