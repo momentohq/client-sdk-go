@@ -43,9 +43,9 @@ func (l *BuiltinMomentoLogger) Error(message string, args ...string) {
 
 func momentoLog(level loggerLevel, loggerName string, message string, args ...string) {
 	if len(args) > 0 {
-		log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, level, loggerName, message, strings.Join(args, ", "))
+		log.Printf("[%s] %d (%s): %s, %s\n", time.RFC3339, level, loggerName, message, strings.Join(args, ", "))
 	} else {
-		log.Printf("[%s] %s (%s): %s\n", time.RFC3339, level, loggerName, message)
+		log.Printf("[%s] %d (%s): %s\n", time.RFC3339, level, loggerName, message)
 	}
 }
 
