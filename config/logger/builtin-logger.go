@@ -13,60 +13,40 @@ type BuiltinMomentoLogger struct {
 
 func (l *BuiltinMomentoLogger) Info(message string, args ...string) {
 	if l.level == INFO {
-		if len(args) != 0 {
-			logWithArgs(l.level, l.loggerName, message, args...)
-		} else {
-			logWithoutArgs(l.level, l.loggerName, message)
-		}
+		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Debug(message string, args ...string) {
 	if l.level == DEBUG {
-		if len(args) != 0 {
-			logWithArgs(l.level, l.loggerName, message, args...)
-		} else {
-			logWithoutArgs(l.level, l.loggerName, message)
-		}
+		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Warn(message string, args ...string) {
 	if l.level == WARN {
-		if len(args) != 0 {
-			logWithArgs(l.level, l.loggerName, message, args...)
-		} else {
-			logWithoutArgs(l.level, l.loggerName, message)
-		}
+		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Error(message string, args ...string) {
 	if l.level == ERROR {
-		if len(args) != 0 {
-			logWithArgs(l.level, l.loggerName, message, args...)
-		} else {
-			logWithoutArgs(l.level, l.loggerName, message)
-		}
+		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Trace(message string, args ...string) {
 	if l.level == TRACE {
-		if len(args) != 0 {
-			logWithArgs(l.level, l.loggerName, message, args...)
-		} else {
-			logWithoutArgs(l.level, l.loggerName, message)
-		}
+		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
-func logWithArgs(level loggerLevel, loggerName string, message string, args ...string) {
-	log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, level, loggerName, message, strings.Join(args, ", "))
-}
-
-func logWithoutArgs(level loggerLevel, loggerName string, message string) {
-	log.Printf("[%s] %s (%s): %s\n", time.RFC3339, level, loggerName, message)
+func momentoLog(level loggerLevel, loggerName string, message string, args ...string) {
+	if len(args) > 0 {
+		log.Printf("[%s] %s (%s): %s, %s\n", time.RFC3339, level, loggerName, message, strings.Join(args, ", "))
+	} else {
+		log.Printf("[%s] %s (%s): %s\n", time.RFC3339, level, loggerName, message)
+	}
 }
 
 type BuiltinMomentoLoggerFactory struct {
