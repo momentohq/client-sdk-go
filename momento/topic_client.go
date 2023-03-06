@@ -119,6 +119,7 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 
 	return &responses.TopicPublishSuccess{}, err
 }
+
 func (c defaultTopicClient) Close() {
 	defer c.pubSubClient.Close()
 }

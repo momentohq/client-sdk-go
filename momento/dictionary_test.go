@@ -485,10 +485,7 @@ var _ = Describe("Dictionary methods", func() {
 				case *DictionaryGetFieldsHit:
 					Expect(result.ValueMap()).To(BeEmpty())
 					for _, value := range result.Responses() {
-						switch value.(type) {
-						case *DictionaryGetFieldHit:
-							Fail("got a hit response for a field that should return a miss")
-						}
+						Expect(value).To(BeAssignableToTypeOf(&DictionaryGetFieldMiss{}))
 					}
 				}
 			})
