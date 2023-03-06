@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/momentohq/client-sdk-go/responses"
 
@@ -10,32 +9,14 @@ import (
 )
 
 type SortedSetRemoveRequest struct {
-	CacheName        string
-	SetName          string
-	ElementsToRemove SortedSetRemoveNumElements
+	CacheName string
+	SetName   string
+	Values    []Value
 
 	grpcRequest  *pb.XSortedSetRemoveRequest
 	grpcResponse *pb.XSortedSetRemoveResponse
 	response     responses.SortedSetRemoveResponse
 }
-
-type SortedSetRemoveRequestElement struct {
-	Name Value
-}
-
-type SortedSetRemoveNumElements interface {
-	isSortedSetRemoveNumElement()
-}
-
-type RemoveAllElements struct{}
-
-func (RemoveAllElements) isSortedSetRemoveNumElement() {}
-
-type RemoveSomeElements struct {
-	Elements []Value
-}
-
-func (RemoveSomeElements) isSortedSetRemoveNumElement() {}
 
 func (r *SortedSetRemoveRequest) cacheName() string { return r.CacheName }
 
@@ -52,33 +33,14 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 		SetName: []byte(r.SetName),
 	}
 
-	switch toRemove := r.ElementsToRemove.(type) {
-	case RemoveAllElements:
-		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
-	case *RemoveAllElements:
-		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_All{}
-	case RemoveSomeElements:
-		elemToRemove, err := momentoValuesToPrimitiveByteList(toRemove.Elements)
-		if err != nil {
-			return err
-		}
-		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
-			Some: &pb.XSortedSetRemoveRequest_XSome{
-				Values: elemToRemove,
-			},
-		}
-	case *RemoveSomeElements:
-		elemToRemove, err := momentoValuesToPrimitiveByteList(toRemove.Elements)
-		if err != nil {
-			return err
-		}
-		grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
-			Some: &pb.XSortedSetRemoveRequest_XSome{
-				Values: elemToRemove,
-			},
-		}
-	default:
-		return fmt.Errorf("%T is an unrecognized type for ElementsToRemove", r.ElementsToRemove)
+	valuesToRemove, err := momentoValuesToPrimitiveByteList(r.Values)
+	if err != nil {
+		return err
+	}
+	grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
+		Some: &pb.XSortedSetRemoveRequest_XSome{
+			Values: valuesToRemove,
+		},
 	}
 
 	r.grpcRequest = grpcReq
