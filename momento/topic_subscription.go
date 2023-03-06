@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -45,10 +46,10 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 					return Bytes(subscriptionItem.Binary), nil
 				}
 			case *pb.XSubscriptionItem_Heartbeat:
-				// FIXME add warning logging here
 				continue
 			default:
-				s.log.Warn("Ignoring unknown responses to keep polling in case we add a new message in addition to the existing ones.")
+				s.log.Trace("Unrecognized response detected.",
+					"response", fmt.Sprint(typedMsg))
 				continue
 			}
 		}

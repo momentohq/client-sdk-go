@@ -19,6 +19,10 @@ func (*NoopMomentoLogger) Error(message string, args ...string) {
 	// no-op
 }
 
+func (*NoopMomentoLogger) Trace(message string, args ...string) {
+	// no-op
+}
+
 type NoopMomentoLoggerFactory struct {
 }
 

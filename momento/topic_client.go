@@ -89,7 +89,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
-		log:                c.log.GetLogger("topic-subscription"),
+		log:                c.log.GetLogger("topic-subscription", logger.TRACE),
 	}, nil
 }
 
