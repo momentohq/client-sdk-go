@@ -79,8 +79,7 @@ func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(metadata context.Contex
 }
 
 func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
-	r.response = &responses.SortedSetIncrementScoreSuccess{
-		Value: r.grpcResponse.Score,
-	}
+	r.response = responses.SortedSetIncrementScoreSuccess(r.grpcResponse.Score)
+
 	return nil
 }

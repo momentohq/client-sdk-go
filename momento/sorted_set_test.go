@@ -179,7 +179,7 @@ var _ = Describe("SortedSet", func() {
 
 				Expect(
 					sharedContext.Client.SortedSetIncrementScore(sharedContext.Ctx, request),
-				).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{}))
+				).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(0)))
 			},
 		),
 		Entry(`SortedSetPut`,
@@ -430,7 +430,7 @@ var _ = Describe("SortedSet", func() {
 						Amount:    99,
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 99}))
+			).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(99)))
 		})
 
 		It(`Is invalid to increment by 0`, func() {
@@ -469,17 +469,23 @@ var _ = Describe("SortedSet", func() {
 				},
 			)
 
-			Expect(
-				sharedContext.Client.SortedSetIncrementScore(
-					sharedContext.Ctx,
-					&SortedSetIncrementScoreRequest{
-						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
-						Value:     String("middle"),
-						Amount:    42,
-					},
-				),
-			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 92}))
+			resp, err := sharedContext.Client.SortedSetIncrementScore(
+				sharedContext.Ctx,
+				&SortedSetIncrementScoreRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("middle"),
+					Amount:    42,
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(92)))
+			switch r := resp.(type) {
+			case SortedSetIncrementScoreSuccess:
+				Expect(r.Score()).To(Equal(float64(92)))
+			default:
+				Fail(fmt.Sprintf("Unexpected response type %T", r))
+			}
 
 			Expect(
 				sharedContext.Client.SortedSetIncrementScore(
@@ -491,7 +497,7 @@ var _ = Describe("SortedSet", func() {
 						Amount:    -42,
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetIncrementScoreSuccess{Value: 50}))
+			).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(50)))
 		})
 
 		It("returns an error when element value is nil", func() {
