@@ -11,32 +11,32 @@ type BuiltinMomentoLogger struct {
 	level      loggerLevel
 }
 
-func (l *BuiltinMomentoLogger) Info(message string, args ...string) {
-	if l.level == INFO {
+func (l *BuiltinMomentoLogger) Trace(message string, args ...string) {
+	if l.level >= TRACE {
 		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Debug(message string, args ...string) {
-	if l.level == DEBUG {
+	if l.level >= DEBUG {
+		momentoLog(l.level, l.loggerName, message, args...)
+	}
+}
+
+func (l *BuiltinMomentoLogger) Info(message string, args ...string) {
+	if l.level >= INFO {
 		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Warn(message string, args ...string) {
-	if l.level == WARN {
+	if l.level >= WARN {
 		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
 
 func (l *BuiltinMomentoLogger) Error(message string, args ...string) {
-	if l.level == ERROR {
-		momentoLog(l.level, l.loggerName, message, args...)
-	}
-}
-
-func (l *BuiltinMomentoLogger) Trace(message string, args ...string) {
-	if l.level == TRACE {
+	if l.level >= ERROR {
 		momentoLog(l.level, l.loggerName, message, args...)
 	}
 }
