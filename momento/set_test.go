@@ -111,6 +111,15 @@ var _ = Describe("Set methods", func() {
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
+	It("gets a miss trying to fetch a nonexistent set", func() {
+		Expect(
+			sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   uuid.NewString(),
+			}),
+		).To(BeAssignableToTypeOf(&SetFetchMiss{}))
+	})
+
 	Describe("add", func() {
 		DescribeTable("add string and byte single elements happy path",
 			func(element Value, expectedStrings []string, expectedBytes [][]byte) {
