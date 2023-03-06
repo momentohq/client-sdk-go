@@ -30,6 +30,6 @@ func NewNoopMomentoLoggerFactory() MomentoLoggerFactory {
 	return &NoopMomentoLoggerFactory{}
 }
 
-func (*NoopMomentoLoggerFactory) GetLogger(loggerName string) MomentoLogger {
+func (*NoopMomentoLoggerFactory) GetLogger(loggerName string, logLevel loggerLevel) MomentoLogger {
 	return &NoopMomentoLogger{}
 }
