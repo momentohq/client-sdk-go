@@ -1,6 +1,7 @@
 package momento_test
 
 import (
+	"fmt"
 	"time"
 
 	. "github.com/momentohq/client-sdk-go/momento"
@@ -304,16 +305,22 @@ var _ = Describe("SortedSet", func() {
 				},
 			)
 
-			Expect(
-				sharedContext.Client.SortedSetGetRank(
-					sharedContext.Ctx,
-					&SortedSetGetRankRequest{
-						CacheName:    sharedContext.CacheName,
-						SetName:      sharedContext.CollectionName,
-						ElementValue: String("first"),
-					},
-				),
-			).To(Equal(&SortedSetGetRankHit{Rank: 2}))
+			resp, err := sharedContext.Client.SortedSetGetRank(
+				sharedContext.Ctx,
+				&SortedSetGetRankRequest{
+					CacheName:    sharedContext.CacheName,
+					SetName:      sharedContext.CollectionName,
+					ElementValue: String("first"),
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(resp).To(Equal(SortedSetGetRankHit(2)))
+			switch r := resp.(type) {
+			case SortedSetGetRankHit:
+				Expect(r.Rank()).To(Equal(2))
+			default:
+				Fail(fmt.Sprintf("Wrong type: %T", r))
+			}
 
 			Expect(
 				sharedContext.Client.SortedSetGetRank(
@@ -324,7 +331,7 @@ var _ = Describe("SortedSet", func() {
 						ElementValue: String("last"),
 					},
 				),
-			).To(Equal(&SortedSetGetRankHit{Rank: 0}))
+			).To(Equal(SortedSetGetRankHit(0)))
 		})
 
 		It(`returns an error for a nil element value`, func() {

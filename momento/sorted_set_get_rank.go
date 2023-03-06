@@ -61,9 +61,7 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
 	var resp responses.SortedSetGetRankResponse
 	switch rank := grpcResp.Rank.(type) {
 	case *pb.XSortedSetGetRankResponse_ElementRank:
-		resp = &responses.SortedSetGetRankHit{
-			Rank: rank.ElementRank.Rank,
-		}
+		resp = responses.SortedSetGetRankHit(rank.ElementRank.Rank)
 	case *pb.XSortedSetGetRankResponse_Missing:
 		resp = &responses.SortedSetGetRankMiss{}
 	default:
