@@ -18,7 +18,7 @@ any of the operational overhead required by traditional caching solutions!
 
 ### Requirements
 
-- [Go version 1.19](https://go.dev/dl/) or newer.
+- [Go language](https://go.dev/dl/)
 - A Momento Auth Token is required, you can generate one using
   the [Momento CLI](https://github.com/momentohq/momento-cli)
 
