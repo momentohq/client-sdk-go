@@ -9,9 +9,9 @@ import (
 )
 
 type SortedSetGetRankRequest struct {
-	CacheName    string
-	SetName      string
-	ElementValue Value
+	CacheName string
+	SetName   string
+	Value     Value
 
 	grpcRequest  *pb.XSortedSetGetRankRequest
 	grpcResponse *pb.XSortedSetGetRankResponse
@@ -30,7 +30,7 @@ func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	var value []byte
-	if value, err = prepareElementValue(r.ElementValue); err != nil {
+	if value, err = prepareElementValue(r.Value); err != nil {
 		return err
 	}
 
@@ -61,9 +61,7 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
 	var resp responses.SortedSetGetRankResponse
 	switch rank := grpcResp.Rank.(type) {
 	case *pb.XSortedSetGetRankResponse_ElementRank:
-		resp = &responses.SortedSetGetRankHit{
-			Rank: rank.ElementRank.Rank,
-		}
+		resp = responses.SortedSetGetRankHit(rank.ElementRank.Rank)
 	case *pb.XSortedSetGetRankResponse_Missing:
 		resp = &responses.SortedSetGetRankMiss{}
 	default:
