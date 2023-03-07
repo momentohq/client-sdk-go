@@ -371,26 +371,27 @@ var _ = Describe("SortedSet", func() {
 				},
 			)
 
-			Expect(
-				sharedContext.Client.SortedSetGetScores(
-					sharedContext.Ctx,
-					&SortedSetGetScoresRequest{
-						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
-						Values: []Value{
-							String("first"), String("last"), String("dne"),
-						},
+			getResp, err := sharedContext.Client.SortedSetGetScores(
+				sharedContext.Ctx,
+				&SortedSetGetScoresRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Values: []Value{
+						String("first"), String("last"), String("dne"),
 					},
-				),
-			).To(Equal(
-				&SortedSetGetScoresHit{
-					Elements: []SortedSetScoreElement{
+				},
+			)
+			Expect(err).To(BeNil())
+			switch resp := getResp.(type) {
+			case *SortedSetGetScoresHit:
+				Expect(resp.Scores()).To(Equal(
+					[]SortedSetGetScore{
 						SortedSetScore(9999),
 						SortedSetScore(-9999),
 						&SortedSetScoreMiss{},
 					},
-				},
-			))
+				))
+			}
 		})
 
 		It(`returns an error when element values are nil`, func() {
