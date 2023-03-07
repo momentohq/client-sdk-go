@@ -332,6 +332,18 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(SortedSetGetRankHit(0)))
+
+			Expect(
+				sharedContext.Client.SortedSetGetRank(
+					sharedContext.Ctx,
+					&SortedSetGetRankRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Order:     DESCENDING,
+						Value:     String("last"),
+					},
+				),
+			).To(Equal(SortedSetGetRankHit(2)))
 		})
 
 		It(`returns an error for a nil element value`, func() {
