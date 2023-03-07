@@ -25,6 +25,7 @@ type CacheClient interface {
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 
 	SortedSetFetchByIndex(ctx context.Context, r *SortedSetFetchByIndexRequest) (responses.SortedSetFetchResponse, error)
+	SortedSetFetchByScore(ctx context.Context, r *SortedSetFetchByScoreRequest) (responses.SortedSetFetchResponse, error)
 	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error)
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
 	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (responses.SortedSetRemoveResponse, error)
@@ -196,6 +197,35 @@ func (c defaultScsClient) SortedSetFetchByIndex(ctx context.Context, r *SortedSe
 		ByIndex: &SortedSetFetchByIndex{
 			StartIndex: r.StartIndex,
 			EndIndex:   r.EndIndex,
+		},
+	}
+
+	if err := c.dataClient.makeRequest(ctx, &fetchReq); err != nil {
+		return nil, err
+	}
+	return fetchReq.response, nil
+}
+
+type SortedSetFetchByScoreRequest struct {
+	CacheName string
+	SetName   string
+	Order     SortedSetOrder
+	MinScore  *float64
+	MaxScore  *float64
+	Offset    *uint32
+	Count     *uint32
+}
+
+func (c defaultScsClient) SortedSetFetchByScore(ctx context.Context, r *SortedSetFetchByScoreRequest) (responses.SortedSetFetchResponse, error) {
+	fetchReq := SortedSetFetchRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Order:     r.Order,
+		ByScore: &SortedSetFetchByScore{
+			MinScore: r.MinScore,
+			MaxScore: r.MaxScore,
+			Offset:   r.Offset,
+			Count:    r.Count,
 		},
 	}
 
