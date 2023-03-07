@@ -46,7 +46,10 @@ jobs:
       - name: Verify no changes from goimports and go mod tidy
         run: |
           if [ -n "$(git status --porcelain)" ]; then
+            echo "running diff:"
             git diff
+            echo "running status:"
+            git status
             exit 1
           fi
 
