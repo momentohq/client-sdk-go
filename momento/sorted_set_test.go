@@ -284,7 +284,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByIndexHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("one"), Score: 9999},
 						{Value: []byte("two"), Score: 50},
@@ -310,7 +310,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByIndexHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
@@ -332,7 +332,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByIndexHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
@@ -355,7 +355,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByIndexHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("one"), Score: 9999},
 						{Value: []byte("two"), Score: 50},
@@ -390,7 +390,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByScoreHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("one"), Score: 9999},
 						{Value: []byte("two"), Score: 50},
@@ -418,7 +418,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByScoreHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
@@ -446,7 +446,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByScoreHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("three"), Score: 0},
 						{Value: []byte("four"), Score: -50},
@@ -735,7 +735,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(Equal(
-				&SortedSetFetchHit{
+				&SortedSetFetchByIndexHit{
 					Elements: []*SortedSetElement{
 						{Value: []byte("last"), Score: -9999},
 						{Value: []byte("middle"), Score: 50},
