@@ -102,7 +102,7 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 
 		grpcReq.Range = &by_score
 	} else {
-		// This is the default.
+		// This is the default: fetch everything in ascending order.
 		by_index := pb.XSortedSetFetchRequest_ByIndex{
 			ByIndex: &pb.XSortedSetFetchRequest_XByIndex{
 				Start: &pb.XSortedSetFetchRequest_XByIndex_UnboundedStart{},
@@ -110,15 +110,17 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 			},
 		}
 
-		if r.ByIndex.StartIndex != nil {
-			by_index.ByIndex.Start = &pb.XSortedSetFetchRequest_XByIndex_InclusiveStartIndex{
-				InclusiveStartIndex: *r.ByIndex.StartIndex,
+		if r.ByIndex != nil {
+			if r.ByIndex.StartIndex != nil {
+				by_index.ByIndex.Start = &pb.XSortedSetFetchRequest_XByIndex_InclusiveStartIndex{
+					InclusiveStartIndex: *r.ByIndex.StartIndex,
+				}
 			}
-		}
 
-		if r.ByIndex.EndIndex != nil {
-			by_index.ByIndex.End = &pb.XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex{
-				ExclusiveEndIndex: *r.ByIndex.EndIndex,
+			if r.ByIndex.EndIndex != nil {
+				by_index.ByIndex.End = &pb.XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex{
+					ExclusiveEndIndex: *r.ByIndex.EndIndex,
+				}
 			}
 		}
 
