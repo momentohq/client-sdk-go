@@ -67,6 +67,14 @@ var _ = Describe("Set methods", func() {
 				Element:   String("astring"),
 			}),
 		).Error().To(HaveMomentoErrorCode(NotFoundError))
+
+		Expect(
+			sharedContext.Client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
+				CacheName: cacheName,
+				SetName:   setName,
+				Elements:  []Value{String("hi")},
+			}),
+		).Error().To(HaveMomentoErrorCode(NotFoundError))
 	})
 
 	It("errors on invalid set name", func() {
@@ -109,6 +117,15 @@ var _ = Describe("Set methods", func() {
 				Elements:  nil,
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+		Expect(
+			sharedContext.Client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   setName,
+				Elements:  []Value{String("hi")},
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
 	})
 
 	It("gets a miss trying to fetch a nonexistent set", func() {
@@ -319,6 +336,49 @@ var _ = Describe("Set methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
+		})
+
+	})
+
+	Describe("contain elements", func() {
+		BeforeEach(func() {
+			elements := getElements(10)
+			Expect(
+				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  elements,
+				}),
+			).Error().To(BeNil())
+		})
+
+		DescribeTable("check for various mixes of hits and misses",
+			func(toCheck []Value, expected []bool) {
+				containsResp, err := sharedContext.Client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  toCheck,
+				})
+				Expect(err).To(BeNil())
+				Expect(containsResp).To(BeAssignableToTypeOf(&SetContainsElementsHit{}))
+				switch result := containsResp.(type) {
+				case *SetContainsElementsHit:
+					Expect(result.ContainsElements()).To(Equal(expected))
+				}
+			},
+			Entry("all hits", []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
+			Entry("all misses", []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
+			Entry("a mixture", []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
+		)
+
+		It("gets a miss on a nonexistent set", func() {
+			Expect(
+				sharedContext.Client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   uuid.NewString(),
+					Elements:  []Value{String("hi")},
+				}),
+			).To(BeAssignableToTypeOf(&SetContainsElementsMiss{}))
 		})
 
 	})
