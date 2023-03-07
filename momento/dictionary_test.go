@@ -634,8 +634,7 @@ var _ = Describe("Dictionary methods", func() {
 
 		})
 
-		When("removing multiple fields", func() {
-
+		Context("removing multiple fields", func() {
 			It("properly removes multiple fields", func() {
 				removeResp, err := sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 					CacheName:      sharedContext.CacheName,
