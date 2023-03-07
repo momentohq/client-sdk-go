@@ -22,6 +22,8 @@ func (r *SortedSetGetRankRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetGetRankRequest) requestName() string { return "Sorted set get rank" }
 
+func (r *SortedSetGetRankRequest) value() Value { return r.Value }
+
 func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
@@ -30,7 +32,7 @@ func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	var value []byte
-	if value, err = prepareElementValue(r.Value); err != nil {
+	if value, err = prepareValue(r); err != nil {
 		return err
 	}
 
