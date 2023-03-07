@@ -93,7 +93,7 @@ func prepareName(name string, label string) (string, error) {
 func prepareElementValue(value Value) ([]byte, error) {
 	if value == nil {
 		return nil, buildError(
-			momentoerrors.InvalidArgumentError, "element value cannot be nil or empty", nil,
+			momentoerrors.InvalidArgumentError, "element value cannot be nil", nil,
 		)
 	}
 
