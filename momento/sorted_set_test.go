@@ -112,17 +112,15 @@ var _ = Describe("SortedSet", func() {
 				Score: 99,
 			}
 
-			expectedFetchHit := &SortedSetFetchHit{
-				Elements: []*SortedSetElement{
-					{Value: []byte(value), Score: element.Score},
-				},
+			expectedElements := []*SortedSetElement{
+				{Value: []byte(value), Score: element.Score},
 			}
 
 			// It does nothing with no TTL
 			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
 			changer(element, nil)
 
-			Expect(fetch()).To(Equal(expectedFetchHit))
+			Expect(fetch()).To(HaveSortedSetElements(expectedElements))
 
 			time.Sleep(sharedContext.DefaultTtl)
 
@@ -138,7 +136,7 @@ var _ = Describe("SortedSet", func() {
 				},
 			)
 
-			Expect(fetch()).To(Equal(expectedFetchHit))
+			Expect(fetch()).To(HaveSortedSetElements(expectedElements))
 
 			time.Sleep(sharedContext.DefaultTtl)
 
@@ -154,11 +152,11 @@ var _ = Describe("SortedSet", func() {
 				},
 			)
 
-			Expect(fetch()).To(Equal(expectedFetchHit))
+			Expect(fetch()).To(HaveSortedSetElements(expectedElements))
 
 			time.Sleep(sharedContext.DefaultTtl)
 
-			Expect(fetch()).To(Equal(expectedFetchHit))
+			Expect(fetch()).To(HaveSortedSetElements(expectedElements))
 
 			time.Sleep(1 * time.Second)
 
@@ -214,38 +212,47 @@ var _ = Describe("SortedSet", func() {
 		})
 
 		Context(`With a populated SortedSet`, func() {
+			// We'll populate the SortedSet with these elements.
+			sortedSetElements := []*SortedSetPutElement{
+				{Value: String("one"), Score: 9999},
+				{Value: String("two"), Score: 50},
+				{Value: String("three"), Score: 0},
+				{Value: String("four"), Score: -50},
+				{Value: String("five"), Score: -500},
+				{Value: String("six"), Score: -1000},
+			}
+
 			BeforeEach(func() {
-				putElements(
-					[]*SortedSetPutElement{
-						{Value: String("one"), Score: 9999},
-						{Value: String("two"), Score: 50},
-						{Value: String("three"), Score: 0},
-						{Value: String("four"), Score: -50},
-						{Value: String("five"), Score: -500},
-						{Value: String("six"), Score: -1000},
-					},
-				)
+				putElements(sortedSetElements)
 			})
 
 			It(`With no extra args it fetches everything in ascending order`, func() {
-				Expect(
-					sharedContext.Client.SortedSetFetch(
-						sharedContext.Ctx,
-						&SortedSetFetchRequest{
-							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
-						},
-					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("six"), Score: -1000},
-							{Value: []byte("five"), Score: -500},
-							{Value: []byte("four"), Score: -50},
-							{Value: []byte("three"), Score: 0},
-							{Value: []byte("two"), Score: 50},
-							{Value: []byte("one"), Score: 9999},
-						},
+				resp, err := sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				)
+				Expect(err).To(BeNil())
+				Expect(resp).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("six"), Score: -1000},
+						{Value: []byte("five"), Score: -500},
+						{Value: []byte("four"), Score: -50},
+						{Value: []byte("three"), Score: 0},
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("one"), Score: 9999},
+					},
+				))
+				Expect(resp).To(HaveSortedSetStringElements(
+					[]*SortedSetStringElement{
+						{Value: "six", Score: -1000},
+						{Value: "five", Score: -500},
+						{Value: "four", Score: -50},
+						{Value: "three", Score: 0},
+						{Value: "two", Score: 50},
+						{Value: "one", Score: 9999},
 					},
 				))
 			})
@@ -274,16 +281,14 @@ var _ = Describe("SortedSet", func() {
 							Order:     DESCENDING,
 						},
 					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("one"), Score: 9999},
-							{Value: []byte("two"), Score: 50},
-							{Value: []byte("three"), Score: 0},
-							{Value: []byte("four"), Score: -50},
-							{Value: []byte("five"), Score: -500},
-							{Value: []byte("six"), Score: -1000},
-						},
+				).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("one"), Score: 9999},
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("three"), Score: 0},
+						{Value: []byte("four"), Score: -50},
+						{Value: []byte("five"), Score: -500},
+						{Value: []byte("six"), Score: -1000},
 					},
 				))
 			})
@@ -304,13 +309,11 @@ var _ = Describe("SortedSet", func() {
 							},
 						},
 					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("two"), Score: 50},
-							{Value: []byte("three"), Score: 0},
-							{Value: []byte("four"), Score: -50},
-						},
+				).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("three"), Score: 0},
+						{Value: []byte("four"), Score: -50},
 					},
 				))
 			})
@@ -329,13 +332,11 @@ var _ = Describe("SortedSet", func() {
 							},
 						},
 					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("four"), Score: -50},
-							{Value: []byte("five"), Score: -500},
-							{Value: []byte("six"), Score: -1000},
-						},
+				).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("four"), Score: -50},
+						{Value: []byte("five"), Score: -500},
+						{Value: []byte("six"), Score: -1000},
 					},
 				))
 			})
@@ -354,13 +355,11 @@ var _ = Describe("SortedSet", func() {
 							},
 						},
 					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("one"), Score: 9999},
-							{Value: []byte("two"), Score: 50},
-							{Value: []byte("three"), Score: 0},
-						},
+				).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("one"), Score: 9999},
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("three"), Score: 0},
 					},
 				))
 			})
@@ -381,12 +380,10 @@ var _ = Describe("SortedSet", func() {
 							},
 						},
 					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("two"), Score: 50},
-							{Value: []byte("three"), Score: 0},
-						},
+				).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("three"), Score: 0},
 					},
 				))
 			})
@@ -411,12 +408,10 @@ var _ = Describe("SortedSet", func() {
 							},
 						},
 					),
-				).To(Equal(
-					&SortedSetFetchHit{
-						Elements: []*SortedSetElement{
-							{Value: []byte("three"), Score: 0},
-							{Value: []byte("four"), Score: -50},
-						},
+				).To(HaveSortedSetElements(
+					[]*SortedSetElement{
+						{Value: []byte("three"), Score: 0},
+						{Value: []byte("four"), Score: -50},
 					},
 				))
 			})
@@ -701,12 +696,10 @@ var _ = Describe("SortedSet", func() {
 						SetName:   sharedContext.CollectionName,
 					},
 				),
-			).To(Equal(
-				&SortedSetFetchHit{
-					Elements: []*SortedSetElement{
-						{Value: []byte("last"), Score: -9999},
-						{Value: []byte("middle"), Score: 50},
-					},
+			).To(HaveSortedSetElements(
+				[]*SortedSetElement{
+					{Value: []byte("last"), Score: -9999},
+					{Value: []byte("middle"), Score: 50},
 				},
 			))
 		})

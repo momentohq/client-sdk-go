@@ -54,3 +54,29 @@ func HaveListLength(length int) types.GomegaMatcher {
 		}, Equal(length),
 	)
 }
+
+func HaveSortedSetElements(expected []*responses.SortedSetElement) types.GomegaMatcher {
+	return WithTransform(
+		func(fetchResp responses.SortedSetFetchResponse) ([]*responses.SortedSetElement, error) {
+			switch rtype := fetchResp.(type) {
+			case *responses.SortedSetFetchHit:
+				return rtype.ValueByteElements(), nil
+			default:
+				return nil, fmt.Errorf("expected SortedSetFetchHit, but got %T", fetchResp)
+			}
+		}, Equal(expected),
+	)
+}
+
+func HaveSortedSetStringElements(expected []*responses.SortedSetStringElement) types.GomegaMatcher {
+	return WithTransform(
+		func(fetchResp responses.SortedSetFetchResponse) ([]*responses.SortedSetStringElement, error) {
+			switch rtype := fetchResp.(type) {
+			case *responses.SortedSetFetchHit:
+				return rtype.ValueStringElements(), nil
+			default:
+				return nil, fmt.Errorf("expected SortedSetFetchHit, but got %T", fetchResp)
+			}
+		}, Equal(expected),
+	)
+}
