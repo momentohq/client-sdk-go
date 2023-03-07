@@ -2,7 +2,7 @@ module github.com/momentohq/go-example
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/momentohq/client-sdk-go v0.10.1
+	github.com/momentohq/client-sdk-go v0.11.0
 )
 
 require (
