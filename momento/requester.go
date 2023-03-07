@@ -48,6 +48,9 @@ type hasKey interface {
 	key() Key
 }
 
+type hasKeys interface {
+	keys() []Key
+}
 type hasValue interface {
 	value() Value
 }
@@ -100,6 +103,17 @@ func prepareKey(r hasKey) ([]byte, error) {
 	}
 
 	return r.key().asBytes(), nil
+}
+
+func prepareKeys(r hasKeys) ([][]byte, error) {
+	var keys [][]byte
+	for _, key := range r.keys() {
+		if key == nil || len(key.asBytes()) == 0 {
+			return nil, buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
+		}
+		keys = append(keys, key.asBytes())
+	}
+	return keys, nil
 }
 
 func prepareField(r hasField) ([]byte, error) {

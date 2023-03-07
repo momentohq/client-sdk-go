@@ -23,6 +23,7 @@ type CacheClient interface {
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
+	KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error)
 
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
 	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error)
@@ -175,6 +176,13 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.Get
 }
 
 func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
