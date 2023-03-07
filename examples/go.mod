@@ -1,7 +1,5 @@
 module github.com/momentohq/go-example
 
-go 1.19
-
 require (
 	github.com/google/uuid v1.3.0
 	github.com/momentohq/client-sdk-go v0.10.1
