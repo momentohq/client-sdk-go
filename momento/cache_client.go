@@ -36,6 +36,7 @@ type CacheClient interface {
 	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
 	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)
 	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error)
+	SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error)
 
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error)
@@ -266,6 +267,13 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 		return nil, err
 	}
 	return &responses.SetRemoveElementSuccess{}, nil
+}
+
+func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
 func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error) {

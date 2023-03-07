@@ -21,7 +21,9 @@ service Scs {
   rpc Set (_SetRequest) returns (_SetResponse) {}
   rpc SetIfNotExists (_SetIfNotExistsRequest) returns (_SetIfNotExistsResponse) {}
   rpc Delete (_DeleteRequest) returns (_DeleteResponse) {}
+  rpc KeysExist (_KeysExistRequest) returns (_KeysExistResponse) {}
   rpc Increment (_IncrementRequest) returns (_IncrementResponse) {}
+  rpc UpdateTtl (_UpdateTtlRequest) returns (_UpdateTtlResponse) {}
 
   rpc DictionaryGet (_DictionaryGetRequest) returns (_DictionaryGetResponse) {}
   rpc DictionaryFetch (_DictionaryFetchRequest) returns (_DictionaryFetchResponse) {}
@@ -117,6 +119,14 @@ message _SetIfNotExistsResponse {
   message _NotStored { }
 }
 
+message _KeysExistRequest {
+  repeated bytes cache_keys = 1;
+}
+
+message _KeysExistResponse {
+  repeated bool exists = 1;
+}
+
 message _IncrementRequest {
   bytes cache_key = 1;
   // Amount to add to the stored value.
@@ -128,6 +138,33 @@ message _IncrementRequest {
 message _IncrementResponse {
   // The value stored after the increment operation.
   int64 value = 1;
+}
+
+
+message _UpdateTtlRequest {
+  bytes cache_key = 1;
+  oneof update_ttl {
+    // Sets the ttl to this value only if it is an increase compared to the existing ttl
+    uint64 increase_to_milliseconds = 2;
+    // Sets the ttl to this value only if it is a decrease compared to the existing ttl
+    uint64 decrease_to_milliseconds = 3;
+    // Sets the ttl to this value unconditionally
+    uint64 overwrite_to_milliseconds = 4;
+  }
+}
+
+message _UpdateTtlResponse {
+  // Indicates that the ttl was applied.
+  message _Set{}
+  // Indicates that the ttl was not applied due to a failed condition.
+  message _NotSet{}
+  // Indicates that the key did not exist.
+  message _Missing{}
+  oneof result {
+    _Set set = 1;
+    _NotSet not_set = 2;
+    _Missing missing = 3;
+  }
 }
 
 message _DictionaryGetRequest {
