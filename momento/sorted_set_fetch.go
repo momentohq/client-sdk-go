@@ -15,24 +15,24 @@ const (
 	DESCENDING SortedSetOrder = 1
 )
 
-type SortedSetFetchNumResults interface {
-	isSortedSetFetchNumResults()
+type SortedSetFetchByIndex struct {
+	StartIndex *int32
+	EndIndex   *int32
 }
 
-type FetchAllElements struct{}
-
-func (FetchAllElements) isSortedSetFetchNumResults() {}
-
-type FetchLimitedElements struct {
-	Limit uint32
+type SortedSetFetchByScore struct {
+	MinScore *float64
+	MaxScore *float64
+	Offset   *uint32
+	Count    *uint32
 }
-
-func (FetchLimitedElements) isSortedSetFetchNumResults() {}
 
 type SortedSetFetchRequest struct {
 	CacheName string
 	SetName   string
 	Order     SortedSetOrder
+	ByIndex   *SortedSetFetchByIndex
+	ByScore   *SortedSetFetchByScore
 
 	grpcRequest  *pb.XSortedSetFetchRequest
 	grpcResponse *pb.XSortedSetFetchResponse
@@ -50,19 +50,83 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
+	if r.ByIndex != nil && r.ByScore != nil {
+		return NewMomentoError(
+			InvalidArgumentError,
+			"Only one of ByIndex or ByScore may be specified",
+			nil,
+		)
+	}
+
 	grpcReq := &pb.XSortedSetFetchRequest{
 		SetName:    []byte(r.SetName),
 		Order:      pb.XSortedSetFetchRequest_Order(r.Order),
 		WithScores: true,
-		Range: &pb.XSortedSetFetchRequest_ByIndex{
+	}
+
+	if r.ByScore != nil {
+		by_score := pb.XSortedSetFetchRequest_ByScore{
+			ByScore: &pb.XSortedSetFetchRequest_XByScore{
+				Min:    &pb.XSortedSetFetchRequest_XByScore_UnboundedMin{},
+				Max:    &pb.XSortedSetFetchRequest_XByScore_UnboundedMax{},
+				Offset: 0,
+				Count:  -1,
+			},
+		}
+
+		if r.ByScore.MinScore != nil {
+			by_score.ByScore.Min = &pb.XSortedSetFetchRequest_XByScore_MinScore{
+				MinScore: &pb.XSortedSetFetchRequest_XByScore_XScore{
+					Score:     float64(*r.ByScore.MinScore),
+					Exclusive: false,
+				},
+			}
+		}
+
+		if r.ByScore.MaxScore != nil {
+			by_score.ByScore.Max = &pb.XSortedSetFetchRequest_XByScore_MaxScore{
+				MaxScore: &pb.XSortedSetFetchRequest_XByScore_XScore{
+					Score:     float64(*r.ByScore.MaxScore),
+					Exclusive: false,
+				},
+			}
+		}
+
+		if r.ByScore.Offset != nil {
+			by_score.ByScore.Offset = *r.ByScore.Offset
+		}
+
+		if r.ByScore.Count != nil {
+			by_score.ByScore.Count = int32(*r.ByScore.Count)
+		}
+
+		grpcReq.Range = &by_score
+	} else {
+		// This is the default.
+		by_index := pb.XSortedSetFetchRequest_ByIndex{
 			ByIndex: &pb.XSortedSetFetchRequest_XByIndex{
 				Start: &pb.XSortedSetFetchRequest_XByIndex_UnboundedStart{},
 				End:   &pb.XSortedSetFetchRequest_XByIndex_UnboundedEnd{},
 			},
-		},
+		}
+
+		if r.ByIndex.StartIndex != nil {
+			by_index.ByIndex.Start = &pb.XSortedSetFetchRequest_XByIndex_InclusiveStartIndex{
+				InclusiveStartIndex: *r.ByIndex.StartIndex,
+			}
+		}
+
+		if r.ByIndex.EndIndex != nil {
+			by_index.ByIndex.End = &pb.XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex{
+				ExclusiveEndIndex: *r.ByIndex.EndIndex,
+			}
+		}
+
+		grpcReq.Range = &by_index
 	}
 
 	r.grpcRequest = grpcReq
+
 	return nil
 }
 

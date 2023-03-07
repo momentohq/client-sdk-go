@@ -24,7 +24,7 @@ type CacheClient interface {
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 
-	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
+	SortedSetFetchByIndex(ctx context.Context, r *SortedSetFetchByIndexRequest) (responses.SortedSetFetchResponse, error)
 	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error)
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
 	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (responses.SortedSetRemoveResponse, error)
@@ -180,11 +180,29 @@ func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (respons
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+type SortedSetFetchByIndexRequest struct {
+	CacheName  string
+	SetName    string
+	Order      SortedSetOrder
+	StartIndex *int32
+	EndIndex   *int32
+}
+
+func (c defaultScsClient) SortedSetFetchByIndex(ctx context.Context, r *SortedSetFetchByIndexRequest) (responses.SortedSetFetchResponse, error) {
+	fetchReq := SortedSetFetchRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Order:     r.Order,
+		ByIndex: &SortedSetFetchByIndex{
+			StartIndex: r.StartIndex,
+			EndIndex:   r.EndIndex,
+		},
+	}
+
+	if err := c.dataClient.makeRequest(ctx, &fetchReq); err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return fetchReq.response, nil
 }
 
 func (c defaultScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error) {
