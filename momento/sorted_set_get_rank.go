@@ -12,6 +12,7 @@ type SortedSetGetRankRequest struct {
 	CacheName string
 	SetName   string
 	Value     Value
+	Order     SortedSetOrder
 
 	grpcRequest  *pb.XSortedSetGetRankRequest
 	grpcResponse *pb.XSortedSetGetRankResponse
@@ -39,6 +40,7 @@ func (r *SortedSetGetRankRequest) initGrpcRequest(scsDataClient) error {
 	resp := &pb.XSortedSetGetRankRequest{
 		SetName: []byte(r.SetName),
 		Value:   value,
+		Order:   pb.XSortedSetGetRankRequest_Order(r.Order),
 	}
 
 	r.grpcRequest = resp
