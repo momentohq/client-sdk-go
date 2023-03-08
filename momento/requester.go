@@ -64,8 +64,8 @@ type hasFields interface {
 	fields() []Value
 }
 
-type hasElements interface {
-	elements() []Element
+type hasDictionaryElements interface {
+	dictionaryElements() []DictionaryElement
 }
 
 type hasTtl interface {
@@ -174,18 +174,18 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareElements(r hasElements) ([]Element, error) {
-	for _, v := range r.elements() {
-		if v.ElemValue == nil || v.ElemField == nil {
+func prepareDictionaryElements(r hasDictionaryElements) ([]DictionaryElement, error) {
+	for _, v := range r.dictionaryElements() {
+		if v.Value == nil || v.Field == nil {
 			return nil, buildError(
 				momentoerrors.InvalidArgumentError, "element fields and values may not be nil", nil,
 			)
 		}
-		if err := validateNotEmpty(v.ElemField.asBytes(), "element field"); err != nil {
+		if err := validateNotEmpty(v.Field.asBytes(), "element field"); err != nil {
 			return nil, err
 		}
 	}
-	return r.elements(), nil
+	return r.dictionaryElements(), nil
 }
 
 func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) (uint64, bool, error) {
@@ -244,34 +244,34 @@ func validateNotEmpty(field []byte, label string) error {
 	return nil
 }
 
-func ElementsFromMapStringString(theMap map[string]string) []Element {
-	var elements []Element
+func ElementsFromMapStringString(theMap map[string]string) []DictionaryElement {
+	var elements []DictionaryElement
 	for k, v := range theMap {
-		elements = append(elements, Element{
-			ElemField: String(k),
-			ElemValue: String(v),
+		elements = append(elements, DictionaryElement{
+			Field: String(k),
+			Value: String(v),
 		})
 	}
 	return elements
 }
 
-func ElementsFromMapStringBytes(theMap map[string][]byte) []Element {
-	var elements []Element
+func ElementsFromMapStringBytes(theMap map[string][]byte) []DictionaryElement {
+	var elements []DictionaryElement
 	for k, v := range theMap {
-		elements = append(elements, Element{
-			ElemField: String(k),
-			ElemValue: Bytes(v),
+		elements = append(elements, DictionaryElement{
+			Field: String(k),
+			Value: Bytes(v),
 		})
 	}
 	return elements
 }
 
-func ElementsFromMapStringValue(theMap map[string]Value) []Element {
-	var elements []Element
+func ElementsFromMapStringValue(theMap map[string]Value) []DictionaryElement {
+	var elements []DictionaryElement
 	for k, v := range theMap {
-		elements = append(elements, Element{
-			ElemField: String(k),
-			ElemValue: v,
+		elements = append(elements, DictionaryElement{
+			Field: String(k),
+			Value: v,
 		})
 	}
 	return elements

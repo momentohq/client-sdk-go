@@ -58,9 +58,9 @@ func (r *SortedSetGetScoresRequest) makeGrpcRequest(metadata context.Context, cl
 func (r *SortedSetGetScoresRequest) interpretGrpcResponse() error {
 	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
-		r.response = &responses.SortedSetGetScoresHit{
-			Elements: convertSortedSetScoreElement(grpcResp.Found.GetElements()),
-		}
+		r.response = responses.NewSortedSetGetScoresHit(
+			convertSortedSetScoreElement(grpcResp.Found.GetElements()),
+		)
 	case *pb.XSortedSetGetScoreResponse_Missing:
 		r.response = &responses.SortedSetGetScoresMiss{}
 	default:
@@ -70,8 +70,8 @@ func (r *SortedSetGetScoresRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []responses.SortedSetScoreElement {
-	var rList []responses.SortedSetScoreElement
+func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []responses.SortedSetGetScore {
+	var rList []responses.SortedSetGetScore
 	for _, element := range grpcSetElements {
 		switch element.Result {
 		case pb.ECacheResult_Hit:
