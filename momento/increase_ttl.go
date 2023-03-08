@@ -8,12 +8,12 @@ import (
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
-type UpdateTtlRequest struct {
+type IncreaseTtlRequest struct {
 	// Name of the cache to get the item from to be deleted
 	CacheName string
 	// string or byte key to be used to store item.
 	Key Key
-	// Time to live that you want to update in cache in seconds.
+	// Time to live that you want to increase in cache in seconds.
 	Ttl time.Duration
 
 	grpcRequest  *pb.XUpdateTtlRequest
@@ -21,15 +21,15 @@ type UpdateTtlRequest struct {
 	response     responses.UpdateTtlResponse
 }
 
-func (r *UpdateTtlRequest) cacheName() string { return r.CacheName }
+func (r *IncreaseTtlRequest) cacheName() string { return r.CacheName }
 
-func (r *UpdateTtlRequest) key() Key { return r.Key }
+func (r *IncreaseTtlRequest) key() Key { return r.Key }
 
-func (r *UpdateTtlRequest) updateTtl() time.Duration { return r.Ttl }
+func (r *IncreaseTtlRequest) updateTtl() time.Duration { return r.Ttl }
 
-func (r *UpdateTtlRequest) requestName() string { return "UpdateTtl" }
+func (r *IncreaseTtlRequest) requestName() string { return "UpdateTtl" }
 
-func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) error {
+func (r *IncreaseTtlRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 	var ttl uint64
 
@@ -41,12 +41,12 @@ func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) error {
 	if ttl, err = prepareUpdateTtl(r); err != nil {
 		return err
 	}
-	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_OverwriteToMilliseconds{OverwriteToMilliseconds: ttl}}
+	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_IncreaseToMilliseconds{IncreaseToMilliseconds: ttl}}
 
 	return nil
 }
 
-func (r *UpdateTtlRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+func (r *IncreaseTtlRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.UpdateTtl(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
@@ -57,15 +57,17 @@ func (r *UpdateTtlRequest) makeGrpcRequest(metadata context.Context, client scsD
 	return resp, nil
 }
 
-func (r *UpdateTtlRequest) interpretGrpcResponse() error {
+func (r *IncreaseTtlRequest) interpretGrpcResponse() error {
 	grpcResp := r.grpcResponse
 
 	var resp responses.UpdateTtlResponse
 	switch grpcResp.Result.(type) {
+	case *pb.XUpdateTtlResponse_NotSet:
+		resp = &responses.IncreaseTtlNotSet{}
 	case *pb.XUpdateTtlResponse_Missing:
-		resp = &responses.UpdateTtlMiss{}
+		resp = &responses.IncreaseTtlMiss{}
 	case *pb.XUpdateTtlResponse_Set:
-		resp = &responses.UpdateTtlSet{}
+		resp = &responses.IncreaseTtlSet{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}

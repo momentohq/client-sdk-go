@@ -238,7 +238,7 @@ var _ = Describe("Scalar methods", func() {
 	})
 
 	Describe(`UpdateTtl`, func() {
-		It(`Increases TTL with UpdateTtl`, func() {
+		It(`Overwrites TTL`, func() {
 			key := String("key")
 			value := String("value")
 
