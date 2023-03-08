@@ -259,15 +259,13 @@ var _ = Describe("Scalar methods", func() {
 					CacheName: sharedContext.CacheName,
 					Keys:      toCheck,
 				})
-				Expect(resp).To(BeNil())
-				Expect(err).To(HaveMomentoErrorCode(BadRequestError))
-				//Expect(err).To(BeNil())
-				//switch result := resp.(type) {
-				//case *KeysExistSuccess:
-				//	Expect(result.Exists()).To(Equal(expected))
-				//default:
-				//	Fail(fmt.Sprintf("expected keys exist success but got %s", result))
-				//}
+				Expect(err).To(BeNil())
+				switch result := resp.(type) {
+				case *KeysExistSuccess:
+					Expect(result.Exists()).To(Equal(expected))
+				default:
+					Fail(fmt.Sprintf("expected keys exist success but got %s", result))
+				}
 			},
 			Entry("all hits", []Key{String("#1"), String("#2")}, []bool{true, true}),
 			Entry("all misses", []Key{String("nope"), String("stillnope")}, []bool{false, false}),
