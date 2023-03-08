@@ -1,8 +1,6 @@
 package responses
 
-type SortedSetScoreElement interface {
-	isSortedSetScoreElement()
-}
+// High level responses.
 
 type SortedSetGetScoresResponse interface {
 	isSortedSetGetScoresResponse()
@@ -15,10 +13,24 @@ func (SortedSetGetScoresMiss) isSortedSetGetScoresResponse() {}
 
 // SortedSetGetScoresHit Hit Response to a cache SortedSetScore api request.
 type SortedSetGetScoresHit struct {
-	Elements []SortedSetScoreElement
+	scores []SortedSetGetScore
 }
 
 func (SortedSetGetScoresHit) isSortedSetGetScoresResponse() {}
+
+func NewSortedSetGetScoresHit(scores []SortedSetGetScore) *SortedSetGetScoresHit {
+	return &SortedSetGetScoresHit{scores: scores}
+}
+
+func (r SortedSetGetScoresHit) Scores() []SortedSetGetScore {
+	return r.scores
+}
+
+// Responses for individual scores.
+
+type SortedSetGetScore interface {
+	isSortedSetScoreElement()
+}
 
 type SortedSetScore float64
 
