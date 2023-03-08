@@ -14,7 +14,7 @@ If you want to submit a change, please [submit a pull request to our project](ht
 
 ## Minimum Go version
 
-Our minimum supported Go version is currently `1.19`. You can download it from [go.dev](https://go.dev/).
+Our minimum supported Go version is currently `1.18`. You can download it from [go.dev](https://go.dev/).
 
 ## Requirements
 
