@@ -57,6 +57,8 @@ type CacheClient interface {
 	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error)
 	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error)
 
+	Ping(ctx context.Context) (responses.PingResponse, error)
+
 	Close()
 }
 
@@ -65,6 +67,7 @@ type defaultScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
+	pingClient         *services.ScsPingClient
 }
 
 type CacheClientProps struct {
@@ -112,8 +115,17 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
+	pingClient, err := services.NewScsPingClient(&models.PingClientRequest{
+		Configuration:      props.Configuration,
+		CredentialProvider: props.CredentialProvider,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
 	client.dataClient = dataClient
 	client.controlClient = controlClient
+	client.pingClient = pingClient
 
 	return client, nil
 }
@@ -443,6 +455,13 @@ func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *Diction
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c defaultScsClient) Ping(ctx context.Context) (responses.PingResponse, error) {
+	if err := c.pingClient.Ping(ctx); err != nil {
+		return nil, err
+	}
+	return &responses.PingSuccess{}, nil
 }
 
 func (c defaultScsClient) Close() {

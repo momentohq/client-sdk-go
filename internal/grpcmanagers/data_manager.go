@@ -66,6 +66,7 @@ func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*Data
 	}
 	return &DataGrpcManager{Conn: conn}, nil
 }
+
 func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 	return momentoerrors.ConvertSvcErr(dataManager.Conn.Close())
 }
