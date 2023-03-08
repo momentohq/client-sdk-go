@@ -482,6 +482,23 @@ var _ = Describe("SortedSet", func() {
 				),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
+
+		It(`accepts an empty value`, func() {
+			putElements([]*SortedSetPutElement{
+				{Value: String(""), Score: 0},
+			})
+
+			Expect(
+				sharedContext.Client.SortedSetGetRank(
+					sharedContext.Ctx,
+					&SortedSetGetRankRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String(""),
+					},
+				),
+			).To(Equal(SortedSetGetRankHit(0)))
+		})
 	})
 
 	Describe(`SortedSetGetScores`, func() {
@@ -651,6 +668,23 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 
+		It(`accepts an empty value`, func() {
+			putElements([]*SortedSetPutElement{
+				{Value: String(""), Score: 50},
+			})
+
+			resp, err := sharedContext.Client.SortedSetIncrementScore(
+				sharedContext.Ctx,
+				&SortedSetIncrementScoreRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String(""),
+					Amount:    10,
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(60)))
+		})
 	})
 
 	Describe(`SortedSetRemove`, func() {
