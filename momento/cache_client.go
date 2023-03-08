@@ -84,7 +84,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		DefaultTtl:         defaultTtl,
 	}
 	if props.Configuration.GetClientSideTimeout() < 1 {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultScsClient{
 		credentialProvider: props.CredentialProvider,
