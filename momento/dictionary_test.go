@@ -199,8 +199,8 @@ var _ = Describe("Dictionary methods", func() {
 		Entry(
 			"with string values",
 			[]Element{
-				{ElemField: String("myField1"), ElemValue: String("myValue1")},
-				{ElemField: String("myField2"), ElemValue: String("myValue2")},
+				{Field: String("myField1"), Value: String("myValue1")},
+				{Field: String("myField2"), Value: String("myValue2")},
 			},
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
@@ -208,8 +208,8 @@ var _ = Describe("Dictionary methods", func() {
 		Entry(
 			"with byte values",
 			[]Element{
-				{ElemField: Bytes("myField1"), ElemValue: Bytes("myValue1")},
-				{ElemField: Bytes("myField2"), ElemValue: Bytes("myValue2")},
+				{Field: Bytes("myField1"), Value: Bytes("myValue1")},
+				{Field: Bytes("myField2"), Value: Bytes("myValue2")},
 			},
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
@@ -217,8 +217,8 @@ var _ = Describe("Dictionary methods", func() {
 		Entry(
 			"with mixed values",
 			[]Element{
-				{ElemField: Bytes("myField1"), ElemValue: String("myValue1")},
-				{ElemField: String("myField2"), ElemValue: Bytes("myValue2")},
+				{Field: Bytes("myField1"), Value: String("myValue1")},
+				{Field: String("myField2"), Value: Bytes("myValue2")},
 			},
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
@@ -231,8 +231,8 @@ var _ = Describe("Dictionary methods", func() {
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
 				Elements: []Element{
-					{ElemField: String("myField"), ElemValue: String("myValue")},
-					{ElemField: String(""), ElemValue: String("myOtherValue")},
+					{Field: String("myField"), Value: String("myValue")},
+					{Field: String(""), Value: String("myOtherValue")},
 				},
 			}),
 		)
@@ -244,8 +244,8 @@ var _ = Describe("Dictionary methods", func() {
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
 				Elements: []Element{
-					{ElemField: String("myField"), ElemValue: String("myValue")},
-					{ElemField: String("myOtherField"), ElemValue: nil},
+					{Field: String("myField"), Value: String("myValue")},
+					{Field: String("myOtherField"), Value: nil},
 				},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -256,8 +256,8 @@ var _ = Describe("Dictionary methods", func() {
 		It("converts from a map with string values to element slice", func() {
 			theMap := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
 			expected := []Element{
-				{ElemField: String("myField1"), ElemValue: String("myValue1")},
-				{ElemField: String("myField2"), ElemValue: String("myValue2")},
+				{Field: String("myField1"), Value: String("myValue1")},
+				{Field: String("myField2"), Value: String("myValue2")},
 			}
 			elems := ElementsFromMapStringString(theMap)
 			Expect(elems).To(ConsistOf(expected))
@@ -266,8 +266,8 @@ var _ = Describe("Dictionary methods", func() {
 		It("converts from a map with bytes values to element slice", func() {
 			theMap := map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")}
 			expected := []Element{
-				{ElemField: String("myField1"), ElemValue: Bytes("myValue1")},
-				{ElemField: String("myField2"), ElemValue: Bytes("myValue2")},
+				{Field: String("myField1"), Value: Bytes("myValue1")},
+				{Field: String("myField2"), Value: Bytes("myValue2")},
 			}
 			elems := ElementsFromMapStringBytes(theMap)
 			Expect(elems).To(ConsistOf(expected))
@@ -276,8 +276,8 @@ var _ = Describe("Dictionary methods", func() {
 		It("converts from a map with Value values to element slice", func() {
 			theMap := map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")}
 			expected := []Element{
-				{ElemField: String("myField1"), ElemValue: String("myValue1")},
-				{ElemField: String("myField2"), ElemValue: Bytes("myValue2")},
+				{Field: String("myField1"), Value: String("myValue1")},
+				{Field: String("myField2"), Value: Bytes("myValue2")},
 			}
 			elems := ElementsFromMapStringValue(theMap)
 			Expect(elems).To(ConsistOf(expected))

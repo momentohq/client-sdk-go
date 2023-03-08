@@ -172,12 +172,12 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 
 func prepareElements(r hasElements) ([]Element, error) {
 	for _, v := range r.elements() {
-		if v.ElemValue == nil || v.ElemField == nil {
+		if v.Value == nil || v.Field == nil {
 			return nil, buildError(
 				momentoerrors.InvalidArgumentError, "element fields and values may not be nil", nil,
 			)
 		}
-		if err := validateNotEmpty(v.ElemField.asBytes(), "element field"); err != nil {
+		if err := validateNotEmpty(v.Field.asBytes(), "element field"); err != nil {
 			return nil, err
 		}
 	}
@@ -237,8 +237,8 @@ func ElementsFromMapStringString(theMap map[string]string) []Element {
 	var elements []Element
 	for k, v := range theMap {
 		elements = append(elements, Element{
-			ElemField: String(k),
-			ElemValue: String(v),
+			Field: String(k),
+			Value: String(v),
 		})
 	}
 	return elements
@@ -248,8 +248,8 @@ func ElementsFromMapStringBytes(theMap map[string][]byte) []Element {
 	var elements []Element
 	for k, v := range theMap {
 		elements = append(elements, Element{
-			ElemField: String(k),
-			ElemValue: Bytes(v),
+			Field: String(k),
+			Value: Bytes(v),
 		})
 	}
 	return elements
@@ -259,8 +259,8 @@ func ElementsFromMapStringValue(theMap map[string]Value) []Element {
 	var elements []Element
 	for k, v := range theMap {
 		elements = append(elements, Element{
-			ElemField: String(k),
-			ElemValue: v,
+			Field: String(k),
+			Value: v,
 		})
 	}
 	return elements

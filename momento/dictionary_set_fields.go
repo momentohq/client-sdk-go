@@ -46,8 +46,8 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 	var pbElements []*pb.XDictionaryFieldValuePair
 	for _, v := range elements {
 		pbElements = append(pbElements, &pb.XDictionaryFieldValuePair{
-			Field: v.ElemField.asBytes(),
-			Value: v.ElemValue.asBytes(),
+			Field: v.Field.asBytes(),
+			Value: v.Value.asBytes(),
 		})
 	}
 
