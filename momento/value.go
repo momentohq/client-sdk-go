@@ -34,6 +34,6 @@ func (v String) asString() string {
 // Element Type to hold field/value pairs for use with the DictionarySetFields operation.
 // The Value type is used for Field and Value and allows  both strings and bytes
 // to be used for fields and values.
-type Element struct {
+type DictionaryElement struct {
 	Field, Value Value
 }

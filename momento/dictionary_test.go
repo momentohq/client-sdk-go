@@ -159,7 +159,7 @@ var _ = Describe("Dictionary methods", func() {
 	})
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
-		func(elements []Element, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
+		func(elements []DictionaryElement, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
@@ -198,7 +198,7 @@ var _ = Describe("Dictionary methods", func() {
 		},
 		Entry(
 			"with string values",
-			[]Element{
+			[]DictionaryElement{
 				{Field: String("myField1"), Value: String("myValue1")},
 				{Field: String("myField2"), Value: String("myValue2")},
 			},
@@ -207,7 +207,7 @@ var _ = Describe("Dictionary methods", func() {
 		),
 		Entry(
 			"with byte values",
-			[]Element{
+			[]DictionaryElement{
 				{Field: Bytes("myField1"), Value: Bytes("myValue1")},
 				{Field: Bytes("myField2"), Value: Bytes("myValue2")},
 			},
@@ -216,7 +216,7 @@ var _ = Describe("Dictionary methods", func() {
 		),
 		Entry(
 			"with mixed values",
-			[]Element{
+			[]DictionaryElement{
 				{Field: Bytes("myField1"), Value: String("myValue1")},
 				{Field: String("myField2"), Value: Bytes("myValue2")},
 			},
@@ -230,7 +230,7 @@ var _ = Describe("Dictionary methods", func() {
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
-				Elements: []Element{
+				Elements: []DictionaryElement{
 					{Field: String("myField"), Value: String("myValue")},
 					{Field: String(""), Value: String("myOtherValue")},
 				},
@@ -243,7 +243,7 @@ var _ = Describe("Dictionary methods", func() {
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
 				DictionaryName: sharedContext.CollectionName,
-				Elements: []Element{
+				Elements: []DictionaryElement{
 					{Field: String("myField"), Value: String("myValue")},
 					{Field: String("myOtherField"), Value: nil},
 				},
@@ -255,7 +255,7 @@ var _ = Describe("Dictionary methods", func() {
 
 		It("converts from a map with string values to element slice", func() {
 			theMap := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
-			expected := []Element{
+			expected := []DictionaryElement{
 				{Field: String("myField1"), Value: String("myValue1")},
 				{Field: String("myField2"), Value: String("myValue2")},
 			}
@@ -265,7 +265,7 @@ var _ = Describe("Dictionary methods", func() {
 
 		It("converts from a map with bytes values to element slice", func() {
 			theMap := map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")}
-			expected := []Element{
+			expected := []DictionaryElement{
 				{Field: String("myField1"), Value: Bytes("myValue1")},
 				{Field: String("myField2"), Value: Bytes("myValue2")},
 			}
@@ -275,7 +275,7 @@ var _ = Describe("Dictionary methods", func() {
 
 		It("converts from a map with Value values to element slice", func() {
 			theMap := map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")}
-			expected := []Element{
+			expected := []DictionaryElement{
 				{Field: String("myField1"), Value: String("myValue1")},
 				{Field: String("myField2"), Value: Bytes("myValue2")},
 			}

@@ -348,8 +348,8 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 		)
 	}
 
-	var elements []Element
-	elements = append(elements, Element{
+	var elements []DictionaryElement
+	elements = append(elements, DictionaryElement{
 		Field: r.Field,
 		Value: r.Value,
 	})
