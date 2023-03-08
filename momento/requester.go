@@ -170,7 +170,7 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 	return values, nil
 }
 
-func prepareDictinoaryElements(r hasDictionaryElements) ([]DictionaryElement, error) {
+func prepareDictionaryElements(r hasDictionaryElements) ([]DictionaryElement, error) {
 	for _, v := range r.dictionaryElements() {
 		if v.Value == nil || v.Field == nil {
 			return nil, buildError(

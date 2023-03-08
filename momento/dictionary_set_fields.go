@@ -39,7 +39,7 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 	}
 
 	var elements []DictionaryElement
-	if elements, err = prepareDictinoaryElements(r); err != nil {
+	if elements, err = prepareDictionaryElements(r); err != nil {
 		return err
 	}
 
