@@ -223,6 +223,15 @@ var _ = Describe("Dictionary methods", func() {
 			map[string]string{"myField1": "myValue1", "myField2": "myValue2"},
 			map[string][]byte{"myField1": []byte("myValue1"), "myField2": []byte("myValue2")},
 		),
+		Entry(
+			"with empty values",
+			[]DictionaryElement{
+				{Field: Bytes("myField1"), Value: String("")},
+				{Field: String("myField2"), Value: Bytes("")},
+			},
+			map[string]string{"myField1": "", "myField2": ""},
+			map[string][]byte{"myField1": []byte(""), "myField2": []byte("")},
+		),
 	)
 
 	It("returns an error if an item field is empty", func() {
@@ -635,7 +644,6 @@ var _ = Describe("Dictionary methods", func() {
 		})
 
 		When("removing multiple fields", func() {
-
 			It("properly removes multiple fields", func() {
 				removeResp, err := sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 					CacheName:      sharedContext.CacheName,
