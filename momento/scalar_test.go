@@ -236,4 +236,125 @@ var _ = Describe("Scalar methods", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
+
+	Describe(`UpdateTtl`, func() {
+		It(`Increases TTL with UpdateTtl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					UpdateTtl: 6 * time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&UpdateTtlSet{}))
+
+			time.Sleep(sharedContext.DefaultTtl)
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+		})
+
+		It(`Decreases TTL with UpdateTtl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					UpdateTtl: time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&UpdateTtlSet{}))
+
+			time.Sleep(sharedContext.DefaultTtl / 2)
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		})
+
+		It(`Overrides TTL with UpdateTtl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					UpdateTtl: 3 * time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&UpdateTtlSet{}))
+
+			time.Sleep(sharedContext.DefaultTtl / 2)
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+		})
+
+		It(`Returns InvalidArgumentError with negative or zero UpdateTtl value`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					UpdateTtl: 0,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					UpdateTtl: -1,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+	})
 })
