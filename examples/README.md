@@ -2,7 +2,7 @@
 
 ## Requirements.
 
-- [Go version 1.19](https://go.dev/dl/) or newer.
+- [Go](https://go.dev/dl/)
 - A Momento Auth Token; you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli).
 - Run `go mod vendor` to install dependencies.
 
