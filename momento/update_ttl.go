@@ -32,7 +32,6 @@ func (r *UpdateTtlRequest) requestName() string { return "UpdateTtl" }
 func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 	var updateTtl uint64
-	defaultTtlMills := uint64(client.defaultTtl.Milliseconds())
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
@@ -42,15 +41,7 @@ func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) error {
 	if updateTtl, err = prepareUpdateTtl(r); err != nil {
 		return err
 	}
-	var request *pb.XUpdateTtlRequest
-	if updateTtl > defaultTtlMills {
-		request = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_IncreaseToMilliseconds{IncreaseToMilliseconds: updateTtl}}
-	} else if updateTtl < defaultTtlMills {
-		request = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_DecreaseToMilliseconds{DecreaseToMilliseconds: updateTtl}}
-	} else {
-		request = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_OverwriteToMilliseconds{OverwriteToMilliseconds: defaultTtlMills}}
-	}
-	r.grpcRequest = request
+	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_OverwriteToMilliseconds{OverwriteToMilliseconds: updateTtl}}
 
 	return nil
 }
@@ -71,8 +62,6 @@ func (r *UpdateTtlRequest) interpretGrpcResponse() error {
 
 	var resp responses.UpdateTtlResponse
 	switch grpcResp.Result.(type) {
-	case *pb.XUpdateTtlResponse_NotSet:
-		resp = &responses.UpdateTtlNotSet{}
 	case *pb.XUpdateTtlResponse_Missing:
 		resp = &responses.UpdateTtlMiss{}
 	case *pb.XUpdateTtlResponse_Set:
