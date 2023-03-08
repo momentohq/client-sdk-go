@@ -29,6 +29,8 @@ func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName
 
 func (r *SortedSetIncrementScoreRequest) requestName() string { return "Sorted set increment" }
 
+func (r *SortedSetIncrementScoreRequest) value() Value { return r.Value }
+
 func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
 func (r *SortedSetIncrementScoreRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
@@ -47,7 +49,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 	}
 
 	var value []byte
-	if value, err = prepareElementValue(r.Value); err != nil {
+	if value, err = prepareValue(r); err != nil {
 		return err
 	}
 

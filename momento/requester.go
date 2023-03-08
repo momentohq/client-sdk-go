@@ -88,26 +88,10 @@ func buildError(errorCode string, errorMessage string, originalError error) Mome
 
 func prepareName(name string, label string) (string, error) {
 	if len(strings.TrimSpace(name)) < 1 {
-		errStr := fmt.Sprintf("%v cannot be empty", label)
+		errStr := fmt.Sprintf("%v cannot be empty or blank", label)
 		return "", buildError(momentoerrors.InvalidArgumentError, errStr, nil)
 	}
 	return name, nil
-}
-
-func prepareElementValue(value Value) ([]byte, error) {
-	if value == nil {
-		return nil, buildError(
-			momentoerrors.InvalidArgumentError, "element value cannot be nil", nil,
-		)
-	}
-
-	// just validate not empty using prepareName
-	_, err := prepareName(value.asString(), "element value")
-	if err != nil {
-		return nil, err
-	}
-
-	return value.asBytes(), nil
 }
 
 func prepareCacheName(r hasCacheName) (string, error) {
@@ -115,58 +99,43 @@ func prepareCacheName(r hasCacheName) (string, error) {
 }
 
 func prepareKey(r hasKey) ([]byte, error) {
-	if r.key() == nil {
-		return nil, buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
+	if err := validateNotEmpty(r.key(), "key"); err != nil {
+		return nil, err
 	}
 
-	key := r.key().asBytes()
-	if len(key) == 0 {
-		return nil, buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
-	}
-	return key, nil
+	return r.key().asBytes(), nil
 }
 
 func prepareField(r hasField) ([]byte, error) {
-	if r.field() == nil {
-		return nil, buildError(
-			momentoerrors.InvalidArgumentError, "field cannot be nil or empty", nil,
-		)
-	}
-	field := r.field().asBytes()
-	if err := validateNotEmpty(field, "field"); err != nil {
+	if err := validateNotEmpty(r.field(), "field"); err != nil {
 		return nil, err
 	}
-	return field, nil
+	return r.field().asBytes(), nil
 }
 
 func prepareFields(r hasFields) ([][]byte, error) {
 	if r.fields() == nil {
-		return nil, buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
+		return nil, buildError(InvalidArgumentError, "fields cannot be nil", nil)
 	}
+
 	var fields [][]byte
-	for _, valueField := range r.fields() {
-		if valueField == nil {
-			return nil, buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
-		}
-		field := valueField.asBytes()
+	for _, field := range r.fields() {
 		if err := validateNotEmpty(field, "field"); err != nil {
-			return nil, buildError(momentoerrors.InvalidArgumentError, "fields cannot be nil or empty", nil)
+			return nil, err
 		}
-		fields = append(fields, field)
+		fields = append(fields, field.asBytes())
 	}
 	return fields, nil
 }
 
-func prepareValue(r hasValue) ([]byte, momentoerrors.MomentoSvcErr) {
-	if r.value() == nil {
-		return []byte{}, buildError(
-			momentoerrors.InvalidArgumentError, "value may not be nil", nil,
-		)
+func prepareValue(r hasValue) ([]byte, error) {
+	if err := validateNotNil(r.value(), "value"); err != nil {
+		return []byte{}, err
 	}
 	return r.value().asBytes(), nil
 }
 
-func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
+func prepareValues(r hasValues) ([][]byte, error) {
 	values, err := momentoValuesToPrimitiveByteList(r.values())
 	if err != nil {
 		return [][]byte{}, err
@@ -176,12 +145,10 @@ func prepareValues(r hasValues) ([][]byte, momentoerrors.MomentoSvcErr) {
 
 func prepareDictionaryElements(r hasDictionaryElements) ([]DictionaryElement, error) {
 	for _, v := range r.dictionaryElements() {
-		if v.Value == nil || v.Field == nil {
-			return nil, buildError(
-				momentoerrors.InvalidArgumentError, "element fields and values may not be nil", nil,
-			)
+		if err := validateNotNil(v.Value, "value"); err != nil {
+			return nil, err
 		}
-		if err := validateNotEmpty(v.Field.asBytes(), "element field"); err != nil {
+		if err := validateNotEmpty(v.Field, "element field"); err != nil {
 			return nil, err
 		}
 	}
@@ -221,26 +188,41 @@ func prepareUpdateTtl(r hasUpdateTtl) (uint64, error) {
 	return uint64(r.updateTtl().Milliseconds()), nil
 }
 
-func momentoValuesToPrimitiveByteList(i []Value) ([][]byte, momentoerrors.MomentoSvcErr) {
-	if i == nil {
-		return [][]byte{}, buildError(momentoerrors.InvalidArgumentError, "values may not be nil", nil)
+func momentoValuesToPrimitiveByteList(values []Value) ([][]byte, error) {
+	if values == nil {
+		return nil, buildError(momentoerrors.InvalidArgumentError, "values cannot be nil", nil)
 	}
+
 	var rList [][]byte
-	for _, mb := range i {
-		if mb == nil {
-			return [][]byte{}, buildError(momentoerrors.InvalidArgumentError, "values may not be nil", nil)
+	for _, mb := range values {
+		if err := validateNotNil(mb, "value"); err != nil {
+			return [][]byte{}, err
 		}
 		rList = append(rList, mb.asBytes())
 	}
 	return rList, nil
 }
 
-func validateNotEmpty(field []byte, label string) error {
-	if len(field) == 0 {
+func validateNotEmpty(thing Value, label string) error {
+	if err := validateNotNil(thing, label); err != nil {
+		return err
+	}
+
+	if len(thing.asBytes()) == 0 {
 		return buildError(
-			momentoerrors.InvalidArgumentError, fmt.Sprintf("%s cannot be empty", label), nil,
+			momentoerrors.InvalidArgumentError, fmt.Sprintf("%v cannot be empty", label), nil,
 		)
 	}
+	return nil
+}
+
+func validateNotNil(value Value, label string) error {
+	if value == nil {
+		return buildError(
+			momentoerrors.InvalidArgumentError, fmt.Sprintf("%v cannot be nil", label), nil,
+		)
+	}
+
 	return nil
 }
 
