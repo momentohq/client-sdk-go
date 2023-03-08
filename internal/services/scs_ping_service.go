@@ -10,11 +10,10 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-const PingCtxTimeout = 60 * time.Second
-
 type ScsPingClient struct {
-	grpcManager *grpcmanagers.PingGrpcManager
-	grpcClient  pb.PingClient
+	requestTimeout time.Duration
+	grpcManager    *grpcmanagers.PingGrpcManager
+	grpcClient     pb.PingClient
 }
 
 func NewScsPingClient(request *models.PingClientRequest) (*ScsPingClient, momentoerrors.MomentoSvcErr) {
@@ -25,8 +24,9 @@ func NewScsPingClient(request *models.PingClientRequest) (*ScsPingClient, moment
 		return nil, err
 	}
 	return &ScsPingClient{
-		grpcManager: pingManager,
-		grpcClient:  pb.NewPingClient(pingManager.Conn),
+		requestTimeout: request.Configuration.GetClientSideTimeout(),
+		grpcManager:    pingManager,
+		grpcClient:     pb.NewPingClient(pingManager.Conn),
 	}, nil
 }
 
@@ -35,7 +35,7 @@ func (client *ScsPingClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (client *ScsPingClient) Ping(ctx context.Context) momentoerrors.MomentoSvcErr {
-	ctx, cancel := context.WithTimeout(ctx, PingCtxTimeout)
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	_, err := client.grpcClient.Ping(ctx, &pb.XPingRequest{})
 	if err != nil {
