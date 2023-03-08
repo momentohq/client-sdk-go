@@ -203,6 +203,22 @@ var _ = Describe("List methods", func() {
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
+			It("accepts an empty value", func() {
+				Expect(
+					sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     String(""),
+					}),
+				).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(1))
+			})
 		})
 
 		When("pushing to the back of the list", func() {
@@ -262,6 +278,22 @@ var _ = Describe("List methods", func() {
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
+			It("accepts an empty value", func() {
+				Expect(
+					sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     String(""),
+					}),
+				).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(1))
+			})
 		})
 
 	})
@@ -336,6 +368,22 @@ var _ = Describe("List methods", func() {
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
+			It("accepts an empty value", func() {
+				Expect(
+					sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Values:    []Value{String("")},
+					}),
+				).To(BeAssignableToTypeOf(&ListConcatenateFrontSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(1))
+			})
 		})
 
 		When("concatenating to the back of the list", func() {
@@ -406,8 +454,23 @@ var _ = Describe("List methods", func() {
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
-		})
+			It("accepts an empty value", func() {
+				Expect(
+					sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Values:    []Value{String("")},
+					}),
+				).To(BeAssignableToTypeOf(&ListConcatenateBackSuccess{}))
 
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				Expect(fetchResp).To(HaveListLength(1))
+			})
+		})
 	})
 
 	Describe("list pop", func() {
@@ -546,6 +609,38 @@ var _ = Describe("List methods", func() {
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 			})
 
+			It("accepts an empty value", func() {
+				Expect(
+					sharedContext.Client.ListConcatenateFront(
+						sharedContext.Ctx,
+						&ListConcatenateFrontRequest{
+							CacheName: sharedContext.CacheName,
+							ListName:  sharedContext.CollectionName,
+							Values:    []Value{String("one"), String(""), String("three")},
+						},
+					),
+				).To(BeAssignableToTypeOf(&ListConcatenateFrontSuccess{}))
+
+				Expect(
+					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
+						CacheName: sharedContext.CacheName,
+						ListName:  sharedContext.CollectionName,
+						Value:     String(""),
+					}),
+				).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
+
+				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+					CacheName: sharedContext.CacheName,
+					ListName:  sharedContext.CollectionName,
+				})
+				Expect(err).To(BeNil())
+				switch result := fetchResp.(type) {
+				case *ListFetchHit:
+					Expect(
+						result.ValueListString(),
+					).To(Equal([]string{"one", "three"}))
+				}
+			})
 		})
 
 		When("removing a value that appears multiple times", func() {
