@@ -108,8 +108,8 @@ func prepareKey(r hasKey) ([]byte, error) {
 func prepareKeys(r hasKeys) ([][]byte, error) {
 	var keys [][]byte
 	for _, key := range r.keys() {
-		if key == nil || len(key.asBytes()) == 0 {
-			return nil, buildError(momentoerrors.InvalidArgumentError, "key cannot be nil or empty", nil)
+		if err := validateNotEmpty(key, "key"); err != nil {
+			return nil, err
 		}
 		keys = append(keys, key.asBytes())
 	}
