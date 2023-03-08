@@ -116,7 +116,7 @@ func (x XSortedSetFetchRequest_Order) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use XSortedSetFetchRequest_Order.Descriptor instead.
 func (XSortedSetFetchRequest_Order) EnumDescriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60, 0}
 }
 
 type XSortedSetGetRankRequest_Order int32
@@ -162,7 +162,7 @@ func (x XSortedSetGetRankRequest_Order) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use XSortedSetGetRankRequest_Order.Descriptor instead.
 func (XSortedSetGetRankRequest_Order) EnumDescriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{64, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{68, 0}
 }
 
 type XGetRequest struct {
@@ -622,6 +622,100 @@ func (*XSetIfNotExistsResponse_Stored) isXSetIfNotExistsResponse_Result() {}
 
 func (*XSetIfNotExistsResponse_NotStored) isXSetIfNotExistsResponse_Result() {}
 
+type XKeysExistRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	CacheKeys [][]byte `protobuf:"bytes,1,rep,name=cache_keys,json=cacheKeys,proto3" json:"cache_keys,omitempty"`
+}
+
+func (x *XKeysExistRequest) Reset() {
+	*x = XKeysExistRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XKeysExistRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XKeysExistRequest) ProtoMessage() {}
+
+func (x *XKeysExistRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XKeysExistRequest.ProtoReflect.Descriptor instead.
+func (*XKeysExistRequest) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *XKeysExistRequest) GetCacheKeys() [][]byte {
+	if x != nil {
+		return x.CacheKeys
+	}
+	return nil
+}
+
+type XKeysExistResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Exists []bool `protobuf:"varint,1,rep,packed,name=exists,proto3" json:"exists,omitempty"`
+}
+
+func (x *XKeysExistResponse) Reset() {
+	*x = XKeysExistResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XKeysExistResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XKeysExistResponse) ProtoMessage() {}
+
+func (x *XKeysExistResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XKeysExistResponse.ProtoReflect.Descriptor instead.
+func (*XKeysExistResponse) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *XKeysExistResponse) GetExists() []bool {
+	if x != nil {
+		return x.Exists
+	}
+	return nil
+}
+
 type XIncrementRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -637,7 +731,7 @@ type XIncrementRequest struct {
 func (x *XIncrementRequest) Reset() {
 	*x = XIncrementRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[8]
+		mi := &file_protos_cacheclient_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -650,7 +744,7 @@ func (x *XIncrementRequest) String() string {
 func (*XIncrementRequest) ProtoMessage() {}
 
 func (x *XIncrementRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[8]
+	mi := &file_protos_cacheclient_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -663,7 +757,7 @@ func (x *XIncrementRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XIncrementRequest.ProtoReflect.Descriptor instead.
 func (*XIncrementRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{8}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *XIncrementRequest) GetCacheKey() []byte {
@@ -699,7 +793,7 @@ type XIncrementResponse struct {
 func (x *XIncrementResponse) Reset() {
 	*x = XIncrementResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[9]
+		mi := &file_protos_cacheclient_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -712,7 +806,7 @@ func (x *XIncrementResponse) String() string {
 func (*XIncrementResponse) ProtoMessage() {}
 
 func (x *XIncrementResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[9]
+	mi := &file_protos_cacheclient_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -725,7 +819,7 @@ func (x *XIncrementResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XIncrementResponse.ProtoReflect.Descriptor instead.
 func (*XIncrementResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{9}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *XIncrementResponse) GetValue() int64 {
@@ -734,6 +828,207 @@ func (x *XIncrementResponse) GetValue() int64 {
 	}
 	return 0
 }
+
+type XUpdateTtlRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	CacheKey []byte `protobuf:"bytes,1,opt,name=cache_key,json=cacheKey,proto3" json:"cache_key,omitempty"`
+	// Types that are assignable to UpdateTtl:
+	//
+	//	*XUpdateTtlRequest_IncreaseToMilliseconds
+	//	*XUpdateTtlRequest_DecreaseToMilliseconds
+	//	*XUpdateTtlRequest_OverwriteToMilliseconds
+	UpdateTtl isXUpdateTtlRequest_UpdateTtl `protobuf_oneof:"update_ttl"`
+}
+
+func (x *XUpdateTtlRequest) Reset() {
+	*x = XUpdateTtlRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XUpdateTtlRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XUpdateTtlRequest) ProtoMessage() {}
+
+func (x *XUpdateTtlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XUpdateTtlRequest.ProtoReflect.Descriptor instead.
+func (*XUpdateTtlRequest) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *XUpdateTtlRequest) GetCacheKey() []byte {
+	if x != nil {
+		return x.CacheKey
+	}
+	return nil
+}
+
+func (m *XUpdateTtlRequest) GetUpdateTtl() isXUpdateTtlRequest_UpdateTtl {
+	if m != nil {
+		return m.UpdateTtl
+	}
+	return nil
+}
+
+func (x *XUpdateTtlRequest) GetIncreaseToMilliseconds() uint64 {
+	if x, ok := x.GetUpdateTtl().(*XUpdateTtlRequest_IncreaseToMilliseconds); ok {
+		return x.IncreaseToMilliseconds
+	}
+	return 0
+}
+
+func (x *XUpdateTtlRequest) GetDecreaseToMilliseconds() uint64 {
+	if x, ok := x.GetUpdateTtl().(*XUpdateTtlRequest_DecreaseToMilliseconds); ok {
+		return x.DecreaseToMilliseconds
+	}
+	return 0
+}
+
+func (x *XUpdateTtlRequest) GetOverwriteToMilliseconds() uint64 {
+	if x, ok := x.GetUpdateTtl().(*XUpdateTtlRequest_OverwriteToMilliseconds); ok {
+		return x.OverwriteToMilliseconds
+	}
+	return 0
+}
+
+type isXUpdateTtlRequest_UpdateTtl interface {
+	isXUpdateTtlRequest_UpdateTtl()
+}
+
+type XUpdateTtlRequest_IncreaseToMilliseconds struct {
+	// Sets the ttl to this value only if it is an increase compared to the existing ttl
+	IncreaseToMilliseconds uint64 `protobuf:"varint,2,opt,name=increase_to_milliseconds,json=increaseToMilliseconds,proto3,oneof"`
+}
+
+type XUpdateTtlRequest_DecreaseToMilliseconds struct {
+	// Sets the ttl to this value only if it is a decrease compared to the existing ttl
+	DecreaseToMilliseconds uint64 `protobuf:"varint,3,opt,name=decrease_to_milliseconds,json=decreaseToMilliseconds,proto3,oneof"`
+}
+
+type XUpdateTtlRequest_OverwriteToMilliseconds struct {
+	// Sets the ttl to this value unconditionally
+	OverwriteToMilliseconds uint64 `protobuf:"varint,4,opt,name=overwrite_to_milliseconds,json=overwriteToMilliseconds,proto3,oneof"`
+}
+
+func (*XUpdateTtlRequest_IncreaseToMilliseconds) isXUpdateTtlRequest_UpdateTtl() {}
+
+func (*XUpdateTtlRequest_DecreaseToMilliseconds) isXUpdateTtlRequest_UpdateTtl() {}
+
+func (*XUpdateTtlRequest_OverwriteToMilliseconds) isXUpdateTtlRequest_UpdateTtl() {}
+
+type XUpdateTtlResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Result:
+	//
+	//	*XUpdateTtlResponse_Set
+	//	*XUpdateTtlResponse_NotSet
+	//	*XUpdateTtlResponse_Missing
+	Result isXUpdateTtlResponse_Result `protobuf_oneof:"result"`
+}
+
+func (x *XUpdateTtlResponse) Reset() {
+	*x = XUpdateTtlResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XUpdateTtlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XUpdateTtlResponse) ProtoMessage() {}
+
+func (x *XUpdateTtlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XUpdateTtlResponse.ProtoReflect.Descriptor instead.
+func (*XUpdateTtlResponse) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{13}
+}
+
+func (m *XUpdateTtlResponse) GetResult() isXUpdateTtlResponse_Result {
+	if m != nil {
+		return m.Result
+	}
+	return nil
+}
+
+func (x *XUpdateTtlResponse) GetSet() *XUpdateTtlResponse_XSet {
+	if x, ok := x.GetResult().(*XUpdateTtlResponse_Set); ok {
+		return x.Set
+	}
+	return nil
+}
+
+func (x *XUpdateTtlResponse) GetNotSet() *XUpdateTtlResponse_XNotSet {
+	if x, ok := x.GetResult().(*XUpdateTtlResponse_NotSet); ok {
+		return x.NotSet
+	}
+	return nil
+}
+
+func (x *XUpdateTtlResponse) GetMissing() *XUpdateTtlResponse_XMissing {
+	if x, ok := x.GetResult().(*XUpdateTtlResponse_Missing); ok {
+		return x.Missing
+	}
+	return nil
+}
+
+type isXUpdateTtlResponse_Result interface {
+	isXUpdateTtlResponse_Result()
+}
+
+type XUpdateTtlResponse_Set struct {
+	Set *XUpdateTtlResponse_XSet `protobuf:"bytes,1,opt,name=set,proto3,oneof"`
+}
+
+type XUpdateTtlResponse_NotSet struct {
+	NotSet *XUpdateTtlResponse_XNotSet `protobuf:"bytes,2,opt,name=not_set,json=notSet,proto3,oneof"`
+}
+
+type XUpdateTtlResponse_Missing struct {
+	Missing *XUpdateTtlResponse_XMissing `protobuf:"bytes,3,opt,name=missing,proto3,oneof"`
+}
+
+func (*XUpdateTtlResponse_Set) isXUpdateTtlResponse_Result() {}
+
+func (*XUpdateTtlResponse_NotSet) isXUpdateTtlResponse_Result() {}
+
+func (*XUpdateTtlResponse_Missing) isXUpdateTtlResponse_Result() {}
 
 type XDictionaryGetRequest struct {
 	state         protoimpl.MessageState
@@ -747,7 +1042,7 @@ type XDictionaryGetRequest struct {
 func (x *XDictionaryGetRequest) Reset() {
 	*x = XDictionaryGetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[10]
+		mi := &file_protos_cacheclient_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -760,7 +1055,7 @@ func (x *XDictionaryGetRequest) String() string {
 func (*XDictionaryGetRequest) ProtoMessage() {}
 
 func (x *XDictionaryGetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[10]
+	mi := &file_protos_cacheclient_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -773,7 +1068,7 @@ func (x *XDictionaryGetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryGetRequest.ProtoReflect.Descriptor instead.
 func (*XDictionaryGetRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{10}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *XDictionaryGetRequest) GetDictionaryName() []byte {
@@ -805,7 +1100,7 @@ type XDictionaryGetResponse struct {
 func (x *XDictionaryGetResponse) Reset() {
 	*x = XDictionaryGetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[11]
+		mi := &file_protos_cacheclient_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -818,7 +1113,7 @@ func (x *XDictionaryGetResponse) String() string {
 func (*XDictionaryGetResponse) ProtoMessage() {}
 
 func (x *XDictionaryGetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[11]
+	mi := &file_protos_cacheclient_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -831,7 +1126,7 @@ func (x *XDictionaryGetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryGetResponse.ProtoReflect.Descriptor instead.
 func (*XDictionaryGetResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{11}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{15}
 }
 
 func (m *XDictionaryGetResponse) GetDictionary() isXDictionaryGetResponse_Dictionary {
@@ -882,7 +1177,7 @@ type XDictionaryFetchRequest struct {
 func (x *XDictionaryFetchRequest) Reset() {
 	*x = XDictionaryFetchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[12]
+		mi := &file_protos_cacheclient_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -895,7 +1190,7 @@ func (x *XDictionaryFetchRequest) String() string {
 func (*XDictionaryFetchRequest) ProtoMessage() {}
 
 func (x *XDictionaryFetchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[12]
+	mi := &file_protos_cacheclient_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -908,7 +1203,7 @@ func (x *XDictionaryFetchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryFetchRequest.ProtoReflect.Descriptor instead.
 func (*XDictionaryFetchRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{12}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *XDictionaryFetchRequest) GetDictionaryName() []byte {
@@ -930,7 +1225,7 @@ type XDictionaryFieldValuePair struct {
 func (x *XDictionaryFieldValuePair) Reset() {
 	*x = XDictionaryFieldValuePair{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[13]
+		mi := &file_protos_cacheclient_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -943,7 +1238,7 @@ func (x *XDictionaryFieldValuePair) String() string {
 func (*XDictionaryFieldValuePair) ProtoMessage() {}
 
 func (x *XDictionaryFieldValuePair) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[13]
+	mi := &file_protos_cacheclient_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -956,7 +1251,7 @@ func (x *XDictionaryFieldValuePair) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryFieldValuePair.ProtoReflect.Descriptor instead.
 func (*XDictionaryFieldValuePair) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{13}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *XDictionaryFieldValuePair) GetField() []byte {
@@ -988,7 +1283,7 @@ type XDictionaryFetchResponse struct {
 func (x *XDictionaryFetchResponse) Reset() {
 	*x = XDictionaryFetchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[14]
+		mi := &file_protos_cacheclient_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1001,7 +1296,7 @@ func (x *XDictionaryFetchResponse) String() string {
 func (*XDictionaryFetchResponse) ProtoMessage() {}
 
 func (x *XDictionaryFetchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[14]
+	mi := &file_protos_cacheclient_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1014,7 +1309,7 @@ func (x *XDictionaryFetchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryFetchResponse.ProtoReflect.Descriptor instead.
 func (*XDictionaryFetchResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{14}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{18}
 }
 
 func (m *XDictionaryFetchResponse) GetDictionary() isXDictionaryFetchResponse_Dictionary {
@@ -1068,7 +1363,7 @@ type XDictionarySetRequest struct {
 func (x *XDictionarySetRequest) Reset() {
 	*x = XDictionarySetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[15]
+		mi := &file_protos_cacheclient_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1081,7 +1376,7 @@ func (x *XDictionarySetRequest) String() string {
 func (*XDictionarySetRequest) ProtoMessage() {}
 
 func (x *XDictionarySetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[15]
+	mi := &file_protos_cacheclient_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1094,7 +1389,7 @@ func (x *XDictionarySetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionarySetRequest.ProtoReflect.Descriptor instead.
 func (*XDictionarySetRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{15}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *XDictionarySetRequest) GetDictionaryName() []byte {
@@ -1134,7 +1429,7 @@ type XDictionarySetResponse struct {
 func (x *XDictionarySetResponse) Reset() {
 	*x = XDictionarySetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[16]
+		mi := &file_protos_cacheclient_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1147,7 +1442,7 @@ func (x *XDictionarySetResponse) String() string {
 func (*XDictionarySetResponse) ProtoMessage() {}
 
 func (x *XDictionarySetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[16]
+	mi := &file_protos_cacheclient_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1160,7 +1455,7 @@ func (x *XDictionarySetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionarySetResponse.ProtoReflect.Descriptor instead.
 func (*XDictionarySetResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{16}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{20}
 }
 
 type XDictionaryIncrementRequest struct {
@@ -1178,7 +1473,7 @@ type XDictionaryIncrementRequest struct {
 func (x *XDictionaryIncrementRequest) Reset() {
 	*x = XDictionaryIncrementRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[17]
+		mi := &file_protos_cacheclient_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1191,7 +1486,7 @@ func (x *XDictionaryIncrementRequest) String() string {
 func (*XDictionaryIncrementRequest) ProtoMessage() {}
 
 func (x *XDictionaryIncrementRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[17]
+	mi := &file_protos_cacheclient_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1204,7 +1499,7 @@ func (x *XDictionaryIncrementRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryIncrementRequest.ProtoReflect.Descriptor instead.
 func (*XDictionaryIncrementRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{17}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *XDictionaryIncrementRequest) GetDictionaryName() []byte {
@@ -1253,7 +1548,7 @@ type XDictionaryIncrementResponse struct {
 func (x *XDictionaryIncrementResponse) Reset() {
 	*x = XDictionaryIncrementResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[18]
+		mi := &file_protos_cacheclient_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1266,7 +1561,7 @@ func (x *XDictionaryIncrementResponse) String() string {
 func (*XDictionaryIncrementResponse) ProtoMessage() {}
 
 func (x *XDictionaryIncrementResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[18]
+	mi := &file_protos_cacheclient_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1279,7 +1574,7 @@ func (x *XDictionaryIncrementResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryIncrementResponse.ProtoReflect.Descriptor instead.
 func (*XDictionaryIncrementResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{18}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *XDictionaryIncrementResponse) GetValue() int64 {
@@ -1305,7 +1600,7 @@ type XDictionaryDeleteRequest struct {
 func (x *XDictionaryDeleteRequest) Reset() {
 	*x = XDictionaryDeleteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[19]
+		mi := &file_protos_cacheclient_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1318,7 +1613,7 @@ func (x *XDictionaryDeleteRequest) String() string {
 func (*XDictionaryDeleteRequest) ProtoMessage() {}
 
 func (x *XDictionaryDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[19]
+	mi := &file_protos_cacheclient_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1331,7 +1626,7 @@ func (x *XDictionaryDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryDeleteRequest.ProtoReflect.Descriptor instead.
 func (*XDictionaryDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{19}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *XDictionaryDeleteRequest) GetDictionaryName() []byte {
@@ -1387,7 +1682,7 @@ type XDictionaryDeleteResponse struct {
 func (x *XDictionaryDeleteResponse) Reset() {
 	*x = XDictionaryDeleteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[20]
+		mi := &file_protos_cacheclient_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1400,7 +1695,7 @@ func (x *XDictionaryDeleteResponse) String() string {
 func (*XDictionaryDeleteResponse) ProtoMessage() {}
 
 func (x *XDictionaryDeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[20]
+	mi := &file_protos_cacheclient_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1413,7 +1708,7 @@ func (x *XDictionaryDeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryDeleteResponse.ProtoReflect.Descriptor instead.
 func (*XDictionaryDeleteResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{20}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{24}
 }
 
 type XSetFetchRequest struct {
@@ -1427,7 +1722,7 @@ type XSetFetchRequest struct {
 func (x *XSetFetchRequest) Reset() {
 	*x = XSetFetchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[21]
+		mi := &file_protos_cacheclient_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1440,7 +1735,7 @@ func (x *XSetFetchRequest) String() string {
 func (*XSetFetchRequest) ProtoMessage() {}
 
 func (x *XSetFetchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[21]
+	mi := &file_protos_cacheclient_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1453,7 +1748,7 @@ func (x *XSetFetchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetFetchRequest.ProtoReflect.Descriptor instead.
 func (*XSetFetchRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{21}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *XSetFetchRequest) GetSetName() []byte {
@@ -1478,7 +1773,7 @@ type XSetFetchResponse struct {
 func (x *XSetFetchResponse) Reset() {
 	*x = XSetFetchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[22]
+		mi := &file_protos_cacheclient_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1491,7 +1786,7 @@ func (x *XSetFetchResponse) String() string {
 func (*XSetFetchResponse) ProtoMessage() {}
 
 func (x *XSetFetchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[22]
+	mi := &file_protos_cacheclient_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1504,7 +1799,7 @@ func (x *XSetFetchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetFetchResponse.ProtoReflect.Descriptor instead.
 func (*XSetFetchResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{22}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{26}
 }
 
 func (m *XSetFetchResponse) GetSet() isXSetFetchResponse_Set {
@@ -1558,7 +1853,7 @@ type XSetUnionRequest struct {
 func (x *XSetUnionRequest) Reset() {
 	*x = XSetUnionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[23]
+		mi := &file_protos_cacheclient_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1571,7 +1866,7 @@ func (x *XSetUnionRequest) String() string {
 func (*XSetUnionRequest) ProtoMessage() {}
 
 func (x *XSetUnionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[23]
+	mi := &file_protos_cacheclient_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1584,7 +1879,7 @@ func (x *XSetUnionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetUnionRequest.ProtoReflect.Descriptor instead.
 func (*XSetUnionRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{23}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *XSetUnionRequest) GetSetName() []byte {
@@ -1624,7 +1919,7 @@ type XSetUnionResponse struct {
 func (x *XSetUnionResponse) Reset() {
 	*x = XSetUnionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[24]
+		mi := &file_protos_cacheclient_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1637,7 +1932,7 @@ func (x *XSetUnionResponse) String() string {
 func (*XSetUnionResponse) ProtoMessage() {}
 
 func (x *XSetUnionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[24]
+	mi := &file_protos_cacheclient_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1650,7 +1945,7 @@ func (x *XSetUnionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetUnionResponse.ProtoReflect.Descriptor instead.
 func (*XSetUnionResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{24}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{28}
 }
 
 type XSetDifferenceRequest struct {
@@ -1669,7 +1964,7 @@ type XSetDifferenceRequest struct {
 func (x *XSetDifferenceRequest) Reset() {
 	*x = XSetDifferenceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[25]
+		mi := &file_protos_cacheclient_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1682,7 +1977,7 @@ func (x *XSetDifferenceRequest) String() string {
 func (*XSetDifferenceRequest) ProtoMessage() {}
 
 func (x *XSetDifferenceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[25]
+	mi := &file_protos_cacheclient_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1695,7 +1990,7 @@ func (x *XSetDifferenceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetDifferenceRequest.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{25}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *XSetDifferenceRequest) GetSetName() []byte {
@@ -1757,7 +2052,7 @@ type XSetDifferenceResponse struct {
 func (x *XSetDifferenceResponse) Reset() {
 	*x = XSetDifferenceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[26]
+		mi := &file_protos_cacheclient_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1770,7 +2065,7 @@ func (x *XSetDifferenceResponse) String() string {
 func (*XSetDifferenceResponse) ProtoMessage() {}
 
 func (x *XSetDifferenceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[26]
+	mi := &file_protos_cacheclient_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1783,7 +2078,7 @@ func (x *XSetDifferenceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetDifferenceResponse.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{26}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{30}
 }
 
 func (m *XSetDifferenceResponse) GetSet() isXSetDifferenceResponse_Set {
@@ -1835,7 +2130,7 @@ type XSetContainsRequest struct {
 func (x *XSetContainsRequest) Reset() {
 	*x = XSetContainsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[27]
+		mi := &file_protos_cacheclient_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1848,7 +2143,7 @@ func (x *XSetContainsRequest) String() string {
 func (*XSetContainsRequest) ProtoMessage() {}
 
 func (x *XSetContainsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[27]
+	mi := &file_protos_cacheclient_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1861,7 +2156,7 @@ func (x *XSetContainsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetContainsRequest.ProtoReflect.Descriptor instead.
 func (*XSetContainsRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{27}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *XSetContainsRequest) GetSetName() []byte {
@@ -1893,7 +2188,7 @@ type XSetContainsResponse struct {
 func (x *XSetContainsResponse) Reset() {
 	*x = XSetContainsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[28]
+		mi := &file_protos_cacheclient_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1906,7 +2201,7 @@ func (x *XSetContainsResponse) String() string {
 func (*XSetContainsResponse) ProtoMessage() {}
 
 func (x *XSetContainsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[28]
+	mi := &file_protos_cacheclient_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1919,7 +2214,7 @@ func (x *XSetContainsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetContainsResponse.ProtoReflect.Descriptor instead.
 func (*XSetContainsResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{28}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{32}
 }
 
 func (m *XSetContainsResponse) GetSet() isXSetContainsResponse_Set {
@@ -1975,7 +2270,7 @@ type XListConcatenateFrontRequest struct {
 func (x *XListConcatenateFrontRequest) Reset() {
 	*x = XListConcatenateFrontRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[29]
+		mi := &file_protos_cacheclient_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1988,7 +2283,7 @@ func (x *XListConcatenateFrontRequest) String() string {
 func (*XListConcatenateFrontRequest) ProtoMessage() {}
 
 func (x *XListConcatenateFrontRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[29]
+	mi := &file_protos_cacheclient_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2001,7 +2296,7 @@ func (x *XListConcatenateFrontRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListConcatenateFrontRequest.ProtoReflect.Descriptor instead.
 func (*XListConcatenateFrontRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{29}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *XListConcatenateFrontRequest) GetListName() []byte {
@@ -2051,7 +2346,7 @@ type XListConcatenateFrontResponse struct {
 func (x *XListConcatenateFrontResponse) Reset() {
 	*x = XListConcatenateFrontResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[30]
+		mi := &file_protos_cacheclient_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2064,7 +2359,7 @@ func (x *XListConcatenateFrontResponse) String() string {
 func (*XListConcatenateFrontResponse) ProtoMessage() {}
 
 func (x *XListConcatenateFrontResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[30]
+	mi := &file_protos_cacheclient_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2077,7 +2372,7 @@ func (x *XListConcatenateFrontResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListConcatenateFrontResponse.ProtoReflect.Descriptor instead.
 func (*XListConcatenateFrontResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{30}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *XListConcatenateFrontResponse) GetListLength() uint32 {
@@ -2103,7 +2398,7 @@ type XListConcatenateBackRequest struct {
 func (x *XListConcatenateBackRequest) Reset() {
 	*x = XListConcatenateBackRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[31]
+		mi := &file_protos_cacheclient_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2116,7 +2411,7 @@ func (x *XListConcatenateBackRequest) String() string {
 func (*XListConcatenateBackRequest) ProtoMessage() {}
 
 func (x *XListConcatenateBackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[31]
+	mi := &file_protos_cacheclient_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2129,7 +2424,7 @@ func (x *XListConcatenateBackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListConcatenateBackRequest.ProtoReflect.Descriptor instead.
 func (*XListConcatenateBackRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{31}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *XListConcatenateBackRequest) GetListName() []byte {
@@ -2179,7 +2474,7 @@ type XListConcatenateBackResponse struct {
 func (x *XListConcatenateBackResponse) Reset() {
 	*x = XListConcatenateBackResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[32]
+		mi := &file_protos_cacheclient_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2192,7 +2487,7 @@ func (x *XListConcatenateBackResponse) String() string {
 func (*XListConcatenateBackResponse) ProtoMessage() {}
 
 func (x *XListConcatenateBackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[32]
+	mi := &file_protos_cacheclient_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2205,7 +2500,7 @@ func (x *XListConcatenateBackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListConcatenateBackResponse.ProtoReflect.Descriptor instead.
 func (*XListConcatenateBackResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{32}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *XListConcatenateBackResponse) GetListLength() uint32 {
@@ -2232,7 +2527,7 @@ type XListPushFrontRequest struct {
 func (x *XListPushFrontRequest) Reset() {
 	*x = XListPushFrontRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[33]
+		mi := &file_protos_cacheclient_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2245,7 +2540,7 @@ func (x *XListPushFrontRequest) String() string {
 func (*XListPushFrontRequest) ProtoMessage() {}
 
 func (x *XListPushFrontRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[33]
+	mi := &file_protos_cacheclient_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2258,7 +2553,7 @@ func (x *XListPushFrontRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPushFrontRequest.ProtoReflect.Descriptor instead.
 func (*XListPushFrontRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{33}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *XListPushFrontRequest) GetListName() []byte {
@@ -2308,7 +2603,7 @@ type XListPushFrontResponse struct {
 func (x *XListPushFrontResponse) Reset() {
 	*x = XListPushFrontResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[34]
+		mi := &file_protos_cacheclient_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2321,7 +2616,7 @@ func (x *XListPushFrontResponse) String() string {
 func (*XListPushFrontResponse) ProtoMessage() {}
 
 func (x *XListPushFrontResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[34]
+	mi := &file_protos_cacheclient_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2334,7 +2629,7 @@ func (x *XListPushFrontResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPushFrontResponse.ProtoReflect.Descriptor instead.
 func (*XListPushFrontResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{34}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *XListPushFrontResponse) GetListLength() uint32 {
@@ -2361,7 +2656,7 @@ type XListPushBackRequest struct {
 func (x *XListPushBackRequest) Reset() {
 	*x = XListPushBackRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[35]
+		mi := &file_protos_cacheclient_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2374,7 +2669,7 @@ func (x *XListPushBackRequest) String() string {
 func (*XListPushBackRequest) ProtoMessage() {}
 
 func (x *XListPushBackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[35]
+	mi := &file_protos_cacheclient_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2387,7 +2682,7 @@ func (x *XListPushBackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPushBackRequest.ProtoReflect.Descriptor instead.
 func (*XListPushBackRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{35}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *XListPushBackRequest) GetListName() []byte {
@@ -2437,7 +2732,7 @@ type XListPushBackResponse struct {
 func (x *XListPushBackResponse) Reset() {
 	*x = XListPushBackResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[36]
+		mi := &file_protos_cacheclient_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2450,7 +2745,7 @@ func (x *XListPushBackResponse) String() string {
 func (*XListPushBackResponse) ProtoMessage() {}
 
 func (x *XListPushBackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[36]
+	mi := &file_protos_cacheclient_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2463,7 +2758,7 @@ func (x *XListPushBackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPushBackResponse.ProtoReflect.Descriptor instead.
 func (*XListPushBackResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{36}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *XListPushBackResponse) GetListLength() uint32 {
@@ -2484,7 +2779,7 @@ type XListPopFrontRequest struct {
 func (x *XListPopFrontRequest) Reset() {
 	*x = XListPopFrontRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[37]
+		mi := &file_protos_cacheclient_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2497,7 +2792,7 @@ func (x *XListPopFrontRequest) String() string {
 func (*XListPopFrontRequest) ProtoMessage() {}
 
 func (x *XListPopFrontRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[37]
+	mi := &file_protos_cacheclient_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2510,7 +2805,7 @@ func (x *XListPopFrontRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopFrontRequest.ProtoReflect.Descriptor instead.
 func (*XListPopFrontRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{37}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *XListPopFrontRequest) GetListName() []byte {
@@ -2535,7 +2830,7 @@ type XListPopFrontResponse struct {
 func (x *XListPopFrontResponse) Reset() {
 	*x = XListPopFrontResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[38]
+		mi := &file_protos_cacheclient_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2548,7 +2843,7 @@ func (x *XListPopFrontResponse) String() string {
 func (*XListPopFrontResponse) ProtoMessage() {}
 
 func (x *XListPopFrontResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[38]
+	mi := &file_protos_cacheclient_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2561,7 +2856,7 @@ func (x *XListPopFrontResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopFrontResponse.ProtoReflect.Descriptor instead.
 func (*XListPopFrontResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{38}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{42}
 }
 
 func (m *XListPopFrontResponse) GetList() isXListPopFrontResponse_List {
@@ -2612,7 +2907,7 @@ type XListPopBackRequest struct {
 func (x *XListPopBackRequest) Reset() {
 	*x = XListPopBackRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[39]
+		mi := &file_protos_cacheclient_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2625,7 +2920,7 @@ func (x *XListPopBackRequest) String() string {
 func (*XListPopBackRequest) ProtoMessage() {}
 
 func (x *XListPopBackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[39]
+	mi := &file_protos_cacheclient_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2638,7 +2933,7 @@ func (x *XListPopBackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopBackRequest.ProtoReflect.Descriptor instead.
 func (*XListPopBackRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{39}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *XListPopBackRequest) GetListName() []byte {
@@ -2663,7 +2958,7 @@ type XListPopBackResponse struct {
 func (x *XListPopBackResponse) Reset() {
 	*x = XListPopBackResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[40]
+		mi := &file_protos_cacheclient_proto_msgTypes[44]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2676,7 +2971,7 @@ func (x *XListPopBackResponse) String() string {
 func (*XListPopBackResponse) ProtoMessage() {}
 
 func (x *XListPopBackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[40]
+	mi := &file_protos_cacheclient_proto_msgTypes[44]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2689,7 +2984,7 @@ func (x *XListPopBackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopBackResponse.ProtoReflect.Descriptor instead.
 func (*XListPopBackResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{40}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{44}
 }
 
 func (m *XListPopBackResponse) GetList() isXListPopBackResponse_List {
@@ -2741,7 +3036,7 @@ type XListRange struct {
 func (x *XListRange) Reset() {
 	*x = XListRange{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[41]
+		mi := &file_protos_cacheclient_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2754,7 +3049,7 @@ func (x *XListRange) String() string {
 func (*XListRange) ProtoMessage() {}
 
 func (x *XListRange) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[41]
+	mi := &file_protos_cacheclient_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2767,7 +3062,7 @@ func (x *XListRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListRange.ProtoReflect.Descriptor instead.
 func (*XListRange) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{41}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *XListRange) GetBeginIndex() uint32 {
@@ -2800,7 +3095,7 @@ type XListEraseRequest struct {
 func (x *XListEraseRequest) Reset() {
 	*x = XListEraseRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[42]
+		mi := &file_protos_cacheclient_proto_msgTypes[46]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2813,7 +3108,7 @@ func (x *XListEraseRequest) String() string {
 func (*XListEraseRequest) ProtoMessage() {}
 
 func (x *XListEraseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[42]
+	mi := &file_protos_cacheclient_proto_msgTypes[46]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2826,7 +3121,7 @@ func (x *XListEraseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListEraseRequest.ProtoReflect.Descriptor instead.
 func (*XListEraseRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{42}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *XListEraseRequest) GetListName() []byte {
@@ -2882,7 +3177,7 @@ type XListEraseResponse struct {
 func (x *XListEraseResponse) Reset() {
 	*x = XListEraseResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[43]
+		mi := &file_protos_cacheclient_proto_msgTypes[47]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2895,7 +3190,7 @@ func (x *XListEraseResponse) String() string {
 func (*XListEraseResponse) ProtoMessage() {}
 
 func (x *XListEraseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[43]
+	mi := &file_protos_cacheclient_proto_msgTypes[47]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2908,7 +3203,7 @@ func (x *XListEraseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListEraseResponse.ProtoReflect.Descriptor instead.
 func (*XListEraseResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{43}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{47}
 }
 
 type XListRemoveRequest struct {
@@ -2926,7 +3221,7 @@ type XListRemoveRequest struct {
 func (x *XListRemoveRequest) Reset() {
 	*x = XListRemoveRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[44]
+		mi := &file_protos_cacheclient_proto_msgTypes[48]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2939,7 +3234,7 @@ func (x *XListRemoveRequest) String() string {
 func (*XListRemoveRequest) ProtoMessage() {}
 
 func (x *XListRemoveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[44]
+	mi := &file_protos_cacheclient_proto_msgTypes[48]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2952,7 +3247,7 @@ func (x *XListRemoveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListRemoveRequest.ProtoReflect.Descriptor instead.
 func (*XListRemoveRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{44}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *XListRemoveRequest) GetListName() []byte {
@@ -2996,7 +3291,7 @@ type XListRemoveResponse struct {
 func (x *XListRemoveResponse) Reset() {
 	*x = XListRemoveResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[45]
+		mi := &file_protos_cacheclient_proto_msgTypes[49]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3009,7 +3304,7 @@ func (x *XListRemoveResponse) String() string {
 func (*XListRemoveResponse) ProtoMessage() {}
 
 func (x *XListRemoveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[45]
+	mi := &file_protos_cacheclient_proto_msgTypes[49]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3022,7 +3317,7 @@ func (x *XListRemoveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListRemoveResponse.ProtoReflect.Descriptor instead.
 func (*XListRemoveResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{45}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{49}
 }
 
 type XUnbounded struct {
@@ -3034,7 +3329,7 @@ type XUnbounded struct {
 func (x *XUnbounded) Reset() {
 	*x = XUnbounded{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[46]
+		mi := &file_protos_cacheclient_proto_msgTypes[50]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3047,7 +3342,7 @@ func (x *XUnbounded) String() string {
 func (*XUnbounded) ProtoMessage() {}
 
 func (x *XUnbounded) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[46]
+	mi := &file_protos_cacheclient_proto_msgTypes[50]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3060,7 +3355,7 @@ func (x *XUnbounded) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XUnbounded.ProtoReflect.Descriptor instead.
 func (*XUnbounded) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{46}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{50}
 }
 
 type XListFetchRequest struct {
@@ -3093,7 +3388,7 @@ type XListFetchRequest struct {
 func (x *XListFetchRequest) Reset() {
 	*x = XListFetchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[47]
+		mi := &file_protos_cacheclient_proto_msgTypes[51]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3106,7 +3401,7 @@ func (x *XListFetchRequest) String() string {
 func (*XListFetchRequest) ProtoMessage() {}
 
 func (x *XListFetchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[47]
+	mi := &file_protos_cacheclient_proto_msgTypes[51]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3119,7 +3414,7 @@ func (x *XListFetchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListFetchRequest.ProtoReflect.Descriptor instead.
 func (*XListFetchRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{47}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *XListFetchRequest) GetListName() []byte {
@@ -3226,7 +3521,7 @@ type XListRetainRequest struct {
 func (x *XListRetainRequest) Reset() {
 	*x = XListRetainRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[48]
+		mi := &file_protos_cacheclient_proto_msgTypes[52]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3239,7 +3534,7 @@ func (x *XListRetainRequest) String() string {
 func (*XListRetainRequest) ProtoMessage() {}
 
 func (x *XListRetainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[48]
+	mi := &file_protos_cacheclient_proto_msgTypes[52]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3252,7 +3547,7 @@ func (x *XListRetainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListRetainRequest.ProtoReflect.Descriptor instead.
 func (*XListRetainRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{48}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *XListRetainRequest) GetListName() []byte {
@@ -3359,7 +3654,7 @@ type XListRetainResponse struct {
 func (x *XListRetainResponse) Reset() {
 	*x = XListRetainResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[49]
+		mi := &file_protos_cacheclient_proto_msgTypes[53]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3372,7 +3667,7 @@ func (x *XListRetainResponse) String() string {
 func (*XListRetainResponse) ProtoMessage() {}
 
 func (x *XListRetainResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[49]
+	mi := &file_protos_cacheclient_proto_msgTypes[53]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3385,7 +3680,7 @@ func (x *XListRetainResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListRetainResponse.ProtoReflect.Descriptor instead.
 func (*XListRetainResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{49}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{53}
 }
 
 type XListFetchResponse struct {
@@ -3403,7 +3698,7 @@ type XListFetchResponse struct {
 func (x *XListFetchResponse) Reset() {
 	*x = XListFetchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[50]
+		mi := &file_protos_cacheclient_proto_msgTypes[54]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3416,7 +3711,7 @@ func (x *XListFetchResponse) String() string {
 func (*XListFetchResponse) ProtoMessage() {}
 
 func (x *XListFetchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[50]
+	mi := &file_protos_cacheclient_proto_msgTypes[54]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3429,7 +3724,7 @@ func (x *XListFetchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListFetchResponse.ProtoReflect.Descriptor instead.
 func (*XListFetchResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{50}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{54}
 }
 
 func (m *XListFetchResponse) GetList() isXListFetchResponse_List {
@@ -3480,7 +3775,7 @@ type XListLengthRequest struct {
 func (x *XListLengthRequest) Reset() {
 	*x = XListLengthRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[51]
+		mi := &file_protos_cacheclient_proto_msgTypes[55]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3493,7 +3788,7 @@ func (x *XListLengthRequest) String() string {
 func (*XListLengthRequest) ProtoMessage() {}
 
 func (x *XListLengthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[51]
+	mi := &file_protos_cacheclient_proto_msgTypes[55]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3506,7 +3801,7 @@ func (x *XListLengthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListLengthRequest.ProtoReflect.Descriptor instead.
 func (*XListLengthRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{51}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *XListLengthRequest) GetListName() []byte {
@@ -3531,7 +3826,7 @@ type XListLengthResponse struct {
 func (x *XListLengthResponse) Reset() {
 	*x = XListLengthResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[52]
+		mi := &file_protos_cacheclient_proto_msgTypes[56]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3544,7 +3839,7 @@ func (x *XListLengthResponse) String() string {
 func (*XListLengthResponse) ProtoMessage() {}
 
 func (x *XListLengthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[52]
+	mi := &file_protos_cacheclient_proto_msgTypes[56]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3557,7 +3852,7 @@ func (x *XListLengthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListLengthResponse.ProtoReflect.Descriptor instead.
 func (*XListLengthResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{52}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56}
 }
 
 func (m *XListLengthResponse) GetList() isXListLengthResponse_List {
@@ -3609,7 +3904,7 @@ type XSortedSetElement struct {
 func (x *XSortedSetElement) Reset() {
 	*x = XSortedSetElement{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[53]
+		mi := &file_protos_cacheclient_proto_msgTypes[57]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3622,7 +3917,7 @@ func (x *XSortedSetElement) String() string {
 func (*XSortedSetElement) ProtoMessage() {}
 
 func (x *XSortedSetElement) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[53]
+	mi := &file_protos_cacheclient_proto_msgTypes[57]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3635,7 +3930,7 @@ func (x *XSortedSetElement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetElement.ProtoReflect.Descriptor instead.
 func (*XSortedSetElement) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{53}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *XSortedSetElement) GetValue() []byte {
@@ -3666,7 +3961,7 @@ type XSortedSetPutRequest struct {
 func (x *XSortedSetPutRequest) Reset() {
 	*x = XSortedSetPutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[54]
+		mi := &file_protos_cacheclient_proto_msgTypes[58]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3679,7 +3974,7 @@ func (x *XSortedSetPutRequest) String() string {
 func (*XSortedSetPutRequest) ProtoMessage() {}
 
 func (x *XSortedSetPutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[54]
+	mi := &file_protos_cacheclient_proto_msgTypes[58]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3692,7 +3987,7 @@ func (x *XSortedSetPutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetPutRequest.ProtoReflect.Descriptor instead.
 func (*XSortedSetPutRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{54}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *XSortedSetPutRequest) GetSetName() []byte {
@@ -3732,7 +4027,7 @@ type XSortedSetPutResponse struct {
 func (x *XSortedSetPutResponse) Reset() {
 	*x = XSortedSetPutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[55]
+		mi := &file_protos_cacheclient_proto_msgTypes[59]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3745,7 +4040,7 @@ func (x *XSortedSetPutResponse) String() string {
 func (*XSortedSetPutResponse) ProtoMessage() {}
 
 func (x *XSortedSetPutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[55]
+	mi := &file_protos_cacheclient_proto_msgTypes[59]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3758,7 +4053,7 @@ func (x *XSortedSetPutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetPutResponse.ProtoReflect.Descriptor instead.
 func (*XSortedSetPutResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{55}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{59}
 }
 
 type XSortedSetFetchRequest struct {
@@ -3779,7 +4074,7 @@ type XSortedSetFetchRequest struct {
 func (x *XSortedSetFetchRequest) Reset() {
 	*x = XSortedSetFetchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[56]
+		mi := &file_protos_cacheclient_proto_msgTypes[60]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3792,7 +4087,7 @@ func (x *XSortedSetFetchRequest) String() string {
 func (*XSortedSetFetchRequest) ProtoMessage() {}
 
 func (x *XSortedSetFetchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[56]
+	mi := &file_protos_cacheclient_proto_msgTypes[60]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3805,7 +4100,7 @@ func (x *XSortedSetFetchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetFetchRequest.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *XSortedSetFetchRequest) GetSetName() []byte {
@@ -3881,7 +4176,7 @@ type XSortedSetFetchResponse struct {
 func (x *XSortedSetFetchResponse) Reset() {
 	*x = XSortedSetFetchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[57]
+		mi := &file_protos_cacheclient_proto_msgTypes[61]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3894,7 +4189,7 @@ func (x *XSortedSetFetchResponse) String() string {
 func (*XSortedSetFetchResponse) ProtoMessage() {}
 
 func (x *XSortedSetFetchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[57]
+	mi := &file_protos_cacheclient_proto_msgTypes[61]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3907,7 +4202,7 @@ func (x *XSortedSetFetchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetFetchResponse.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{57}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{61}
 }
 
 func (m *XSortedSetFetchResponse) GetSortedSet() isXSortedSetFetchResponse_SortedSet {
@@ -3959,7 +4254,7 @@ type XSortedSetGetScoreRequest struct {
 func (x *XSortedSetGetScoreRequest) Reset() {
 	*x = XSortedSetGetScoreRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[58]
+		mi := &file_protos_cacheclient_proto_msgTypes[62]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3972,7 +4267,7 @@ func (x *XSortedSetGetScoreRequest) String() string {
 func (*XSortedSetGetScoreRequest) ProtoMessage() {}
 
 func (x *XSortedSetGetScoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[58]
+	mi := &file_protos_cacheclient_proto_msgTypes[62]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3985,7 +4280,7 @@ func (x *XSortedSetGetScoreRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetGetScoreRequest.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetScoreRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{58}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *XSortedSetGetScoreRequest) GetSetName() []byte {
@@ -4017,7 +4312,7 @@ type XSortedSetGetScoreResponse struct {
 func (x *XSortedSetGetScoreResponse) Reset() {
 	*x = XSortedSetGetScoreResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[59]
+		mi := &file_protos_cacheclient_proto_msgTypes[63]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4030,7 +4325,7 @@ func (x *XSortedSetGetScoreResponse) String() string {
 func (*XSortedSetGetScoreResponse) ProtoMessage() {}
 
 func (x *XSortedSetGetScoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[59]
+	mi := &file_protos_cacheclient_proto_msgTypes[63]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4043,7 +4338,7 @@ func (x *XSortedSetGetScoreResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetGetScoreResponse.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetScoreResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{59}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{63}
 }
 
 func (m *XSortedSetGetScoreResponse) GetSortedSet() isXSortedSetGetScoreResponse_SortedSet {
@@ -4099,7 +4394,7 @@ type XSortedSetRemoveRequest struct {
 func (x *XSortedSetRemoveRequest) Reset() {
 	*x = XSortedSetRemoveRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[60]
+		mi := &file_protos_cacheclient_proto_msgTypes[64]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4112,7 +4407,7 @@ func (x *XSortedSetRemoveRequest) String() string {
 func (*XSortedSetRemoveRequest) ProtoMessage() {}
 
 func (x *XSortedSetRemoveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[60]
+	mi := &file_protos_cacheclient_proto_msgTypes[64]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4125,7 +4420,7 @@ func (x *XSortedSetRemoveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetRemoveRequest.ProtoReflect.Descriptor instead.
 func (*XSortedSetRemoveRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *XSortedSetRemoveRequest) GetSetName() []byte {
@@ -4181,7 +4476,7 @@ type XSortedSetRemoveResponse struct {
 func (x *XSortedSetRemoveResponse) Reset() {
 	*x = XSortedSetRemoveResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[61]
+		mi := &file_protos_cacheclient_proto_msgTypes[65]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4194,7 +4489,7 @@ func (x *XSortedSetRemoveResponse) String() string {
 func (*XSortedSetRemoveResponse) ProtoMessage() {}
 
 func (x *XSortedSetRemoveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[61]
+	mi := &file_protos_cacheclient_proto_msgTypes[65]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4207,7 +4502,7 @@ func (x *XSortedSetRemoveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetRemoveResponse.ProtoReflect.Descriptor instead.
 func (*XSortedSetRemoveResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{61}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{65}
 }
 
 type XSortedSetIncrementRequest struct {
@@ -4225,7 +4520,7 @@ type XSortedSetIncrementRequest struct {
 func (x *XSortedSetIncrementRequest) Reset() {
 	*x = XSortedSetIncrementRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[62]
+		mi := &file_protos_cacheclient_proto_msgTypes[66]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4238,7 +4533,7 @@ func (x *XSortedSetIncrementRequest) String() string {
 func (*XSortedSetIncrementRequest) ProtoMessage() {}
 
 func (x *XSortedSetIncrementRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[62]
+	mi := &file_protos_cacheclient_proto_msgTypes[66]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4251,7 +4546,7 @@ func (x *XSortedSetIncrementRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetIncrementRequest.ProtoReflect.Descriptor instead.
 func (*XSortedSetIncrementRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{62}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *XSortedSetIncrementRequest) GetSetName() []byte {
@@ -4301,7 +4596,7 @@ type XSortedSetIncrementResponse struct {
 func (x *XSortedSetIncrementResponse) Reset() {
 	*x = XSortedSetIncrementResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[63]
+		mi := &file_protos_cacheclient_proto_msgTypes[67]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4314,7 +4609,7 @@ func (x *XSortedSetIncrementResponse) String() string {
 func (*XSortedSetIncrementResponse) ProtoMessage() {}
 
 func (x *XSortedSetIncrementResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[63]
+	mi := &file_protos_cacheclient_proto_msgTypes[67]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4327,7 +4622,7 @@ func (x *XSortedSetIncrementResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetIncrementResponse.ProtoReflect.Descriptor instead.
 func (*XSortedSetIncrementResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{63}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *XSortedSetIncrementResponse) GetScore() float64 {
@@ -4358,7 +4653,7 @@ type XSortedSetGetRankRequest struct {
 func (x *XSortedSetGetRankRequest) Reset() {
 	*x = XSortedSetGetRankRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[64]
+		mi := &file_protos_cacheclient_proto_msgTypes[68]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4371,7 +4666,7 @@ func (x *XSortedSetGetRankRequest) String() string {
 func (*XSortedSetGetRankRequest) ProtoMessage() {}
 
 func (x *XSortedSetGetRankRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[64]
+	mi := &file_protos_cacheclient_proto_msgTypes[68]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4384,7 +4679,7 @@ func (x *XSortedSetGetRankRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetGetRankRequest.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetRankRequest) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{64}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *XSortedSetGetRankRequest) GetSetName() []byte {
@@ -4423,7 +4718,7 @@ type XSortedSetGetRankResponse struct {
 func (x *XSortedSetGetRankResponse) Reset() {
 	*x = XSortedSetGetRankResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[65]
+		mi := &file_protos_cacheclient_proto_msgTypes[69]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4436,7 +4731,7 @@ func (x *XSortedSetGetRankResponse) String() string {
 func (*XSortedSetGetRankResponse) ProtoMessage() {}
 
 func (x *XSortedSetGetRankResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[65]
+	mi := &file_protos_cacheclient_proto_msgTypes[69]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4449,7 +4744,7 @@ func (x *XSortedSetGetRankResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetGetRankResponse.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetRankResponse) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{65}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{69}
 }
 
 func (m *XSortedSetGetRankResponse) GetRank() isXSortedSetGetRankResponse_Rank {
@@ -4498,7 +4793,7 @@ type XSetIfNotExistsResponse_XStored struct {
 func (x *XSetIfNotExistsResponse_XStored) Reset() {
 	*x = XSetIfNotExistsResponse_XStored{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[66]
+		mi := &file_protos_cacheclient_proto_msgTypes[70]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4511,7 +4806,7 @@ func (x *XSetIfNotExistsResponse_XStored) String() string {
 func (*XSetIfNotExistsResponse_XStored) ProtoMessage() {}
 
 func (x *XSetIfNotExistsResponse_XStored) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[66]
+	mi := &file_protos_cacheclient_proto_msgTypes[70]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4536,7 +4831,7 @@ type XSetIfNotExistsResponse_XNotStored struct {
 func (x *XSetIfNotExistsResponse_XNotStored) Reset() {
 	*x = XSetIfNotExistsResponse_XNotStored{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[67]
+		mi := &file_protos_cacheclient_proto_msgTypes[71]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4549,7 +4844,7 @@ func (x *XSetIfNotExistsResponse_XNotStored) String() string {
 func (*XSetIfNotExistsResponse_XNotStored) ProtoMessage() {}
 
 func (x *XSetIfNotExistsResponse_XNotStored) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[67]
+	mi := &file_protos_cacheclient_proto_msgTypes[71]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4565,6 +4860,123 @@ func (*XSetIfNotExistsResponse_XNotStored) Descriptor() ([]byte, []int) {
 	return file_protos_cacheclient_proto_rawDescGZIP(), []int{7, 1}
 }
 
+// Indicates that the ttl was applied.
+type XUpdateTtlResponse_XSet struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *XUpdateTtlResponse_XSet) Reset() {
+	*x = XUpdateTtlResponse_XSet{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[72]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XUpdateTtlResponse_XSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XUpdateTtlResponse_XSet) ProtoMessage() {}
+
+func (x *XUpdateTtlResponse_XSet) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[72]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XUpdateTtlResponse_XSet.ProtoReflect.Descriptor instead.
+func (*XUpdateTtlResponse_XSet) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{13, 0}
+}
+
+// Indicates that the ttl was not applied due to a failed condition.
+type XUpdateTtlResponse_XNotSet struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *XUpdateTtlResponse_XNotSet) Reset() {
+	*x = XUpdateTtlResponse_XNotSet{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[73]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XUpdateTtlResponse_XNotSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XUpdateTtlResponse_XNotSet) ProtoMessage() {}
+
+func (x *XUpdateTtlResponse_XNotSet) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[73]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XUpdateTtlResponse_XNotSet.ProtoReflect.Descriptor instead.
+func (*XUpdateTtlResponse_XNotSet) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{13, 1}
+}
+
+// Indicates that the key did not exist.
+type XUpdateTtlResponse_XMissing struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *XUpdateTtlResponse_XMissing) Reset() {
+	*x = XUpdateTtlResponse_XMissing{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_cacheclient_proto_msgTypes[74]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *XUpdateTtlResponse_XMissing) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*XUpdateTtlResponse_XMissing) ProtoMessage() {}
+
+func (x *XUpdateTtlResponse_XMissing) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_cacheclient_proto_msgTypes[74]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use XUpdateTtlResponse_XMissing.ProtoReflect.Descriptor instead.
+func (*XUpdateTtlResponse_XMissing) Descriptor() ([]byte, []int) {
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{13, 2}
+}
+
 type XDictionaryGetResponse_XDictionaryGetResponsePart struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -4577,7 +4989,7 @@ type XDictionaryGetResponse_XDictionaryGetResponsePart struct {
 func (x *XDictionaryGetResponse_XDictionaryGetResponsePart) Reset() {
 	*x = XDictionaryGetResponse_XDictionaryGetResponsePart{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[68]
+		mi := &file_protos_cacheclient_proto_msgTypes[75]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4590,7 +5002,7 @@ func (x *XDictionaryGetResponse_XDictionaryGetResponsePart) String() string {
 func (*XDictionaryGetResponse_XDictionaryGetResponsePart) ProtoMessage() {}
 
 func (x *XDictionaryGetResponse_XDictionaryGetResponsePart) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[68]
+	mi := &file_protos_cacheclient_proto_msgTypes[75]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4603,7 +5015,7 @@ func (x *XDictionaryGetResponse_XDictionaryGetResponsePart) ProtoReflect() proto
 
 // Deprecated: Use XDictionaryGetResponse_XDictionaryGetResponsePart.ProtoReflect.Descriptor instead.
 func (*XDictionaryGetResponse_XDictionaryGetResponsePart) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{11, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{15, 0}
 }
 
 func (x *XDictionaryGetResponse_XDictionaryGetResponsePart) GetResult() ECacheResult {
@@ -4631,7 +5043,7 @@ type XDictionaryGetResponse_XFound struct {
 func (x *XDictionaryGetResponse_XFound) Reset() {
 	*x = XDictionaryGetResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[69]
+		mi := &file_protos_cacheclient_proto_msgTypes[76]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4644,7 +5056,7 @@ func (x *XDictionaryGetResponse_XFound) String() string {
 func (*XDictionaryGetResponse_XFound) ProtoMessage() {}
 
 func (x *XDictionaryGetResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[69]
+	mi := &file_protos_cacheclient_proto_msgTypes[76]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4657,7 +5069,7 @@ func (x *XDictionaryGetResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryGetResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XDictionaryGetResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{11, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{15, 1}
 }
 
 func (x *XDictionaryGetResponse_XFound) GetItems() []*XDictionaryGetResponse_XDictionaryGetResponsePart {
@@ -4676,7 +5088,7 @@ type XDictionaryGetResponse_XMissing struct {
 func (x *XDictionaryGetResponse_XMissing) Reset() {
 	*x = XDictionaryGetResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[70]
+		mi := &file_protos_cacheclient_proto_msgTypes[77]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4689,7 +5101,7 @@ func (x *XDictionaryGetResponse_XMissing) String() string {
 func (*XDictionaryGetResponse_XMissing) ProtoMessage() {}
 
 func (x *XDictionaryGetResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[70]
+	mi := &file_protos_cacheclient_proto_msgTypes[77]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4702,7 +5114,7 @@ func (x *XDictionaryGetResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryGetResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XDictionaryGetResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{11, 2}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{15, 2}
 }
 
 type XDictionaryFetchResponse_XFound struct {
@@ -4716,7 +5128,7 @@ type XDictionaryFetchResponse_XFound struct {
 func (x *XDictionaryFetchResponse_XFound) Reset() {
 	*x = XDictionaryFetchResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[71]
+		mi := &file_protos_cacheclient_proto_msgTypes[78]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4729,7 +5141,7 @@ func (x *XDictionaryFetchResponse_XFound) String() string {
 func (*XDictionaryFetchResponse_XFound) ProtoMessage() {}
 
 func (x *XDictionaryFetchResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[71]
+	mi := &file_protos_cacheclient_proto_msgTypes[78]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4742,7 +5154,7 @@ func (x *XDictionaryFetchResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryFetchResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XDictionaryFetchResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{14, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{18, 0}
 }
 
 func (x *XDictionaryFetchResponse_XFound) GetItems() []*XDictionaryFieldValuePair {
@@ -4761,7 +5173,7 @@ type XDictionaryFetchResponse_XMissing struct {
 func (x *XDictionaryFetchResponse_XMissing) Reset() {
 	*x = XDictionaryFetchResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[72]
+		mi := &file_protos_cacheclient_proto_msgTypes[79]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4774,7 +5186,7 @@ func (x *XDictionaryFetchResponse_XMissing) String() string {
 func (*XDictionaryFetchResponse_XMissing) ProtoMessage() {}
 
 func (x *XDictionaryFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[72]
+	mi := &file_protos_cacheclient_proto_msgTypes[79]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4787,7 +5199,7 @@ func (x *XDictionaryFetchResponse_XMissing) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use XDictionaryFetchResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XDictionaryFetchResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{14, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{18, 1}
 }
 
 type XDictionaryDeleteRequest_Some struct {
@@ -4801,7 +5213,7 @@ type XDictionaryDeleteRequest_Some struct {
 func (x *XDictionaryDeleteRequest_Some) Reset() {
 	*x = XDictionaryDeleteRequest_Some{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[73]
+		mi := &file_protos_cacheclient_proto_msgTypes[80]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4814,7 +5226,7 @@ func (x *XDictionaryDeleteRequest_Some) String() string {
 func (*XDictionaryDeleteRequest_Some) ProtoMessage() {}
 
 func (x *XDictionaryDeleteRequest_Some) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[73]
+	mi := &file_protos_cacheclient_proto_msgTypes[80]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4827,7 +5239,7 @@ func (x *XDictionaryDeleteRequest_Some) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryDeleteRequest_Some.ProtoReflect.Descriptor instead.
 func (*XDictionaryDeleteRequest_Some) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{19, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{23, 0}
 }
 
 func (x *XDictionaryDeleteRequest_Some) GetFields() [][]byte {
@@ -4846,7 +5258,7 @@ type XDictionaryDeleteRequest_All struct {
 func (x *XDictionaryDeleteRequest_All) Reset() {
 	*x = XDictionaryDeleteRequest_All{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[74]
+		mi := &file_protos_cacheclient_proto_msgTypes[81]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4859,7 +5271,7 @@ func (x *XDictionaryDeleteRequest_All) String() string {
 func (*XDictionaryDeleteRequest_All) ProtoMessage() {}
 
 func (x *XDictionaryDeleteRequest_All) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[74]
+	mi := &file_protos_cacheclient_proto_msgTypes[81]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4872,7 +5284,7 @@ func (x *XDictionaryDeleteRequest_All) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XDictionaryDeleteRequest_All.ProtoReflect.Descriptor instead.
 func (*XDictionaryDeleteRequest_All) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{19, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{23, 1}
 }
 
 type XSetFetchResponse_XFound struct {
@@ -4886,7 +5298,7 @@ type XSetFetchResponse_XFound struct {
 func (x *XSetFetchResponse_XFound) Reset() {
 	*x = XSetFetchResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[75]
+		mi := &file_protos_cacheclient_proto_msgTypes[82]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4899,7 +5311,7 @@ func (x *XSetFetchResponse_XFound) String() string {
 func (*XSetFetchResponse_XFound) ProtoMessage() {}
 
 func (x *XSetFetchResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[75]
+	mi := &file_protos_cacheclient_proto_msgTypes[82]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4912,7 +5324,7 @@ func (x *XSetFetchResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetFetchResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XSetFetchResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{22, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{26, 0}
 }
 
 func (x *XSetFetchResponse_XFound) GetElements() [][]byte {
@@ -4931,7 +5343,7 @@ type XSetFetchResponse_XMissing struct {
 func (x *XSetFetchResponse_XMissing) Reset() {
 	*x = XSetFetchResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[76]
+		mi := &file_protos_cacheclient_proto_msgTypes[83]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4944,7 +5356,7 @@ func (x *XSetFetchResponse_XMissing) String() string {
 func (*XSetFetchResponse_XMissing) ProtoMessage() {}
 
 func (x *XSetFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[76]
+	mi := &file_protos_cacheclient_proto_msgTypes[83]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4957,7 +5369,7 @@ func (x *XSetFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetFetchResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XSetFetchResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{22, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{26, 1}
 }
 
 // cache = request - stored
@@ -4972,7 +5384,7 @@ type XSetDifferenceRequest_XMinuend struct {
 func (x *XSetDifferenceRequest_XMinuend) Reset() {
 	*x = XSetDifferenceRequest_XMinuend{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[77]
+		mi := &file_protos_cacheclient_proto_msgTypes[84]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4985,7 +5397,7 @@ func (x *XSetDifferenceRequest_XMinuend) String() string {
 func (*XSetDifferenceRequest_XMinuend) ProtoMessage() {}
 
 func (x *XSetDifferenceRequest_XMinuend) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[77]
+	mi := &file_protos_cacheclient_proto_msgTypes[84]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4998,7 +5410,7 @@ func (x *XSetDifferenceRequest_XMinuend) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetDifferenceRequest_XMinuend.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceRequest_XMinuend) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{25, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{29, 0}
 }
 
 func (x *XSetDifferenceRequest_XMinuend) GetElements() [][]byte {
@@ -5024,7 +5436,7 @@ type XSetDifferenceRequest_XSubtrahend struct {
 func (x *XSetDifferenceRequest_XSubtrahend) Reset() {
 	*x = XSetDifferenceRequest_XSubtrahend{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[78]
+		mi := &file_protos_cacheclient_proto_msgTypes[85]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5037,7 +5449,7 @@ func (x *XSetDifferenceRequest_XSubtrahend) String() string {
 func (*XSetDifferenceRequest_XSubtrahend) ProtoMessage() {}
 
 func (x *XSetDifferenceRequest_XSubtrahend) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[78]
+	mi := &file_protos_cacheclient_proto_msgTypes[85]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5050,7 +5462,7 @@ func (x *XSetDifferenceRequest_XSubtrahend) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use XSetDifferenceRequest_XSubtrahend.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceRequest_XSubtrahend) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{25, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{29, 1}
 }
 
 func (m *XSetDifferenceRequest_XSubtrahend) GetSubtrahendSet() isXSetDifferenceRequest_XSubtrahend_SubtrahendSet {
@@ -5103,7 +5515,7 @@ type XSetDifferenceRequest_XSubtrahend_XSet struct {
 func (x *XSetDifferenceRequest_XSubtrahend_XSet) Reset() {
 	*x = XSetDifferenceRequest_XSubtrahend_XSet{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[79]
+		mi := &file_protos_cacheclient_proto_msgTypes[86]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5116,7 +5528,7 @@ func (x *XSetDifferenceRequest_XSubtrahend_XSet) String() string {
 func (*XSetDifferenceRequest_XSubtrahend_XSet) ProtoMessage() {}
 
 func (x *XSetDifferenceRequest_XSubtrahend_XSet) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[79]
+	mi := &file_protos_cacheclient_proto_msgTypes[86]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5129,7 +5541,7 @@ func (x *XSetDifferenceRequest_XSubtrahend_XSet) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use XSetDifferenceRequest_XSubtrahend_XSet.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceRequest_XSubtrahend_XSet) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{25, 1, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{29, 1, 0}
 }
 
 func (x *XSetDifferenceRequest_XSubtrahend_XSet) GetElements() [][]byte {
@@ -5149,7 +5561,7 @@ type XSetDifferenceRequest_XSubtrahend_XIdentity struct {
 func (x *XSetDifferenceRequest_XSubtrahend_XIdentity) Reset() {
 	*x = XSetDifferenceRequest_XSubtrahend_XIdentity{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[80]
+		mi := &file_protos_cacheclient_proto_msgTypes[87]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5162,7 +5574,7 @@ func (x *XSetDifferenceRequest_XSubtrahend_XIdentity) String() string {
 func (*XSetDifferenceRequest_XSubtrahend_XIdentity) ProtoMessage() {}
 
 func (x *XSetDifferenceRequest_XSubtrahend_XIdentity) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[80]
+	mi := &file_protos_cacheclient_proto_msgTypes[87]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5175,7 +5587,7 @@ func (x *XSetDifferenceRequest_XSubtrahend_XIdentity) ProtoReflect() protoreflec
 
 // Deprecated: Use XSetDifferenceRequest_XSubtrahend_XIdentity.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceRequest_XSubtrahend_XIdentity) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{25, 1, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{29, 1, 1}
 }
 
 type XSetDifferenceResponse_XFound struct {
@@ -5187,7 +5599,7 @@ type XSetDifferenceResponse_XFound struct {
 func (x *XSetDifferenceResponse_XFound) Reset() {
 	*x = XSetDifferenceResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[81]
+		mi := &file_protos_cacheclient_proto_msgTypes[88]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5200,7 +5612,7 @@ func (x *XSetDifferenceResponse_XFound) String() string {
 func (*XSetDifferenceResponse_XFound) ProtoMessage() {}
 
 func (x *XSetDifferenceResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[81]
+	mi := &file_protos_cacheclient_proto_msgTypes[88]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5213,7 +5625,7 @@ func (x *XSetDifferenceResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetDifferenceResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{26, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{30, 0}
 }
 
 type XSetDifferenceResponse_XMissing struct {
@@ -5225,7 +5637,7 @@ type XSetDifferenceResponse_XMissing struct {
 func (x *XSetDifferenceResponse_XMissing) Reset() {
 	*x = XSetDifferenceResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[82]
+		mi := &file_protos_cacheclient_proto_msgTypes[89]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5238,7 +5650,7 @@ func (x *XSetDifferenceResponse_XMissing) String() string {
 func (*XSetDifferenceResponse_XMissing) ProtoMessage() {}
 
 func (x *XSetDifferenceResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[82]
+	mi := &file_protos_cacheclient_proto_msgTypes[89]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5251,7 +5663,7 @@ func (x *XSetDifferenceResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetDifferenceResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XSetDifferenceResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{26, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{30, 1}
 }
 
 type XSetContainsResponse_XFound struct {
@@ -5267,7 +5679,7 @@ type XSetContainsResponse_XFound struct {
 func (x *XSetContainsResponse_XFound) Reset() {
 	*x = XSetContainsResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[83]
+		mi := &file_protos_cacheclient_proto_msgTypes[90]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5280,7 +5692,7 @@ func (x *XSetContainsResponse_XFound) String() string {
 func (*XSetContainsResponse_XFound) ProtoMessage() {}
 
 func (x *XSetContainsResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[83]
+	mi := &file_protos_cacheclient_proto_msgTypes[90]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5293,7 +5705,7 @@ func (x *XSetContainsResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetContainsResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XSetContainsResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{28, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{32, 0}
 }
 
 func (x *XSetContainsResponse_XFound) GetContains() []bool {
@@ -5312,7 +5724,7 @@ type XSetContainsResponse_XMissing struct {
 func (x *XSetContainsResponse_XMissing) Reset() {
 	*x = XSetContainsResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[84]
+		mi := &file_protos_cacheclient_proto_msgTypes[91]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5325,7 +5737,7 @@ func (x *XSetContainsResponse_XMissing) String() string {
 func (*XSetContainsResponse_XMissing) ProtoMessage() {}
 
 func (x *XSetContainsResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[84]
+	mi := &file_protos_cacheclient_proto_msgTypes[91]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5338,7 +5750,7 @@ func (x *XSetContainsResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSetContainsResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XSetContainsResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{28, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{32, 1}
 }
 
 type XListPopFrontResponse_XFound struct {
@@ -5352,7 +5764,7 @@ type XListPopFrontResponse_XFound struct {
 func (x *XListPopFrontResponse_XFound) Reset() {
 	*x = XListPopFrontResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[85]
+		mi := &file_protos_cacheclient_proto_msgTypes[92]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5365,7 +5777,7 @@ func (x *XListPopFrontResponse_XFound) String() string {
 func (*XListPopFrontResponse_XFound) ProtoMessage() {}
 
 func (x *XListPopFrontResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[85]
+	mi := &file_protos_cacheclient_proto_msgTypes[92]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5378,7 +5790,7 @@ func (x *XListPopFrontResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopFrontResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XListPopFrontResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{38, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{42, 0}
 }
 
 func (x *XListPopFrontResponse_XFound) GetFront() []byte {
@@ -5397,7 +5809,7 @@ type XListPopFrontResponse_XMissing struct {
 func (x *XListPopFrontResponse_XMissing) Reset() {
 	*x = XListPopFrontResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[86]
+		mi := &file_protos_cacheclient_proto_msgTypes[93]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5410,7 +5822,7 @@ func (x *XListPopFrontResponse_XMissing) String() string {
 func (*XListPopFrontResponse_XMissing) ProtoMessage() {}
 
 func (x *XListPopFrontResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[86]
+	mi := &file_protos_cacheclient_proto_msgTypes[93]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5423,7 +5835,7 @@ func (x *XListPopFrontResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopFrontResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XListPopFrontResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{38, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{42, 1}
 }
 
 type XListPopBackResponse_XFound struct {
@@ -5437,7 +5849,7 @@ type XListPopBackResponse_XFound struct {
 func (x *XListPopBackResponse_XFound) Reset() {
 	*x = XListPopBackResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[87]
+		mi := &file_protos_cacheclient_proto_msgTypes[94]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5450,7 +5862,7 @@ func (x *XListPopBackResponse_XFound) String() string {
 func (*XListPopBackResponse_XFound) ProtoMessage() {}
 
 func (x *XListPopBackResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[87]
+	mi := &file_protos_cacheclient_proto_msgTypes[94]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5463,7 +5875,7 @@ func (x *XListPopBackResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopBackResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XListPopBackResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{40, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{44, 0}
 }
 
 func (x *XListPopBackResponse_XFound) GetBack() []byte {
@@ -5482,7 +5894,7 @@ type XListPopBackResponse_XMissing struct {
 func (x *XListPopBackResponse_XMissing) Reset() {
 	*x = XListPopBackResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[88]
+		mi := &file_protos_cacheclient_proto_msgTypes[95]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5495,7 +5907,7 @@ func (x *XListPopBackResponse_XMissing) String() string {
 func (*XListPopBackResponse_XMissing) ProtoMessage() {}
 
 func (x *XListPopBackResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[88]
+	mi := &file_protos_cacheclient_proto_msgTypes[95]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5508,7 +5920,7 @@ func (x *XListPopBackResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListPopBackResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XListPopBackResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{40, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{44, 1}
 }
 
 type XListEraseRequest_XAll struct {
@@ -5520,7 +5932,7 @@ type XListEraseRequest_XAll struct {
 func (x *XListEraseRequest_XAll) Reset() {
 	*x = XListEraseRequest_XAll{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[89]
+		mi := &file_protos_cacheclient_proto_msgTypes[96]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5533,7 +5945,7 @@ func (x *XListEraseRequest_XAll) String() string {
 func (*XListEraseRequest_XAll) ProtoMessage() {}
 
 func (x *XListEraseRequest_XAll) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[89]
+	mi := &file_protos_cacheclient_proto_msgTypes[96]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5546,7 +5958,7 @@ func (x *XListEraseRequest_XAll) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListEraseRequest_XAll.ProtoReflect.Descriptor instead.
 func (*XListEraseRequest_XAll) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{42, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{46, 0}
 }
 
 type XListEraseRequest_XListRanges struct {
@@ -5560,7 +5972,7 @@ type XListEraseRequest_XListRanges struct {
 func (x *XListEraseRequest_XListRanges) Reset() {
 	*x = XListEraseRequest_XListRanges{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[90]
+		mi := &file_protos_cacheclient_proto_msgTypes[97]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5573,7 +5985,7 @@ func (x *XListEraseRequest_XListRanges) String() string {
 func (*XListEraseRequest_XListRanges) ProtoMessage() {}
 
 func (x *XListEraseRequest_XListRanges) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[90]
+	mi := &file_protos_cacheclient_proto_msgTypes[97]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5586,7 +5998,7 @@ func (x *XListEraseRequest_XListRanges) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListEraseRequest_XListRanges.ProtoReflect.Descriptor instead.
 func (*XListEraseRequest_XListRanges) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{42, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{46, 1}
 }
 
 func (x *XListEraseRequest_XListRanges) GetRanges() []*XListRange {
@@ -5607,7 +6019,7 @@ type XListFetchResponse_XFound struct {
 func (x *XListFetchResponse_XFound) Reset() {
 	*x = XListFetchResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[91]
+		mi := &file_protos_cacheclient_proto_msgTypes[98]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5620,7 +6032,7 @@ func (x *XListFetchResponse_XFound) String() string {
 func (*XListFetchResponse_XFound) ProtoMessage() {}
 
 func (x *XListFetchResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[91]
+	mi := &file_protos_cacheclient_proto_msgTypes[98]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5633,7 +6045,7 @@ func (x *XListFetchResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListFetchResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XListFetchResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{50, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{54, 0}
 }
 
 func (x *XListFetchResponse_XFound) GetValues() [][]byte {
@@ -5652,7 +6064,7 @@ type XListFetchResponse_XMissing struct {
 func (x *XListFetchResponse_XMissing) Reset() {
 	*x = XListFetchResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[92]
+		mi := &file_protos_cacheclient_proto_msgTypes[99]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5665,7 +6077,7 @@ func (x *XListFetchResponse_XMissing) String() string {
 func (*XListFetchResponse_XMissing) ProtoMessage() {}
 
 func (x *XListFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[92]
+	mi := &file_protos_cacheclient_proto_msgTypes[99]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5678,7 +6090,7 @@ func (x *XListFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListFetchResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XListFetchResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{50, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{54, 1}
 }
 
 type XListLengthResponse_XFound struct {
@@ -5692,7 +6104,7 @@ type XListLengthResponse_XFound struct {
 func (x *XListLengthResponse_XFound) Reset() {
 	*x = XListLengthResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[93]
+		mi := &file_protos_cacheclient_proto_msgTypes[100]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5705,7 +6117,7 @@ func (x *XListLengthResponse_XFound) String() string {
 func (*XListLengthResponse_XFound) ProtoMessage() {}
 
 func (x *XListLengthResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[93]
+	mi := &file_protos_cacheclient_proto_msgTypes[100]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5718,7 +6130,7 @@ func (x *XListLengthResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListLengthResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XListLengthResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{52, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56, 0}
 }
 
 func (x *XListLengthResponse_XFound) GetLength() uint32 {
@@ -5737,7 +6149,7 @@ type XListLengthResponse_XMissing struct {
 func (x *XListLengthResponse_XMissing) Reset() {
 	*x = XListLengthResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[94]
+		mi := &file_protos_cacheclient_proto_msgTypes[101]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5750,7 +6162,7 @@ func (x *XListLengthResponse_XMissing) String() string {
 func (*XListLengthResponse_XMissing) ProtoMessage() {}
 
 func (x *XListLengthResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[94]
+	mi := &file_protos_cacheclient_proto_msgTypes[101]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5763,7 +6175,7 @@ func (x *XListLengthResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XListLengthResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XListLengthResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{52, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56, 1}
 }
 
 type XSortedSetFetchRequest_XByIndex struct {
@@ -5792,7 +6204,7 @@ type XSortedSetFetchRequest_XByIndex struct {
 func (x *XSortedSetFetchRequest_XByIndex) Reset() {
 	*x = XSortedSetFetchRequest_XByIndex{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[95]
+		mi := &file_protos_cacheclient_proto_msgTypes[102]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5805,7 +6217,7 @@ func (x *XSortedSetFetchRequest_XByIndex) String() string {
 func (*XSortedSetFetchRequest_XByIndex) ProtoMessage() {}
 
 func (x *XSortedSetFetchRequest_XByIndex) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[95]
+	mi := &file_protos_cacheclient_proto_msgTypes[102]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5818,7 +6230,7 @@ func (x *XSortedSetFetchRequest_XByIndex) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetFetchRequest_XByIndex.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchRequest_XByIndex) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60, 0}
 }
 
 func (m *XSortedSetFetchRequest_XByIndex) GetStart() isXSortedSetFetchRequest_XByIndex_Start {
@@ -5922,7 +6334,7 @@ type XSortedSetFetchRequest_XByScore struct {
 func (x *XSortedSetFetchRequest_XByScore) Reset() {
 	*x = XSortedSetFetchRequest_XByScore{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[96]
+		mi := &file_protos_cacheclient_proto_msgTypes[103]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5935,7 +6347,7 @@ func (x *XSortedSetFetchRequest_XByScore) String() string {
 func (*XSortedSetFetchRequest_XByScore) ProtoMessage() {}
 
 func (x *XSortedSetFetchRequest_XByScore) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[96]
+	mi := &file_protos_cacheclient_proto_msgTypes[103]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5948,7 +6360,7 @@ func (x *XSortedSetFetchRequest_XByScore) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetFetchRequest_XByScore.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchRequest_XByScore) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60, 1}
 }
 
 func (m *XSortedSetFetchRequest_XByScore) GetMin() isXSortedSetFetchRequest_XByScore_Min {
@@ -6051,7 +6463,7 @@ type XSortedSetFetchRequest_XByScore_XScore struct {
 func (x *XSortedSetFetchRequest_XByScore_XScore) Reset() {
 	*x = XSortedSetFetchRequest_XByScore_XScore{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[97]
+		mi := &file_protos_cacheclient_proto_msgTypes[104]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6064,7 +6476,7 @@ func (x *XSortedSetFetchRequest_XByScore_XScore) String() string {
 func (*XSortedSetFetchRequest_XByScore_XScore) ProtoMessage() {}
 
 func (x *XSortedSetFetchRequest_XByScore_XScore) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[97]
+	mi := &file_protos_cacheclient_proto_msgTypes[104]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6077,7 +6489,7 @@ func (x *XSortedSetFetchRequest_XByScore_XScore) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use XSortedSetFetchRequest_XByScore_XScore.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchRequest_XByScore_XScore) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{56, 1, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60, 1, 0}
 }
 
 func (x *XSortedSetFetchRequest_XByScore_XScore) GetScore() float64 {
@@ -6109,7 +6521,7 @@ type XSortedSetFetchResponse_XFound struct {
 func (x *XSortedSetFetchResponse_XFound) Reset() {
 	*x = XSortedSetFetchResponse_XFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[98]
+		mi := &file_protos_cacheclient_proto_msgTypes[105]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6122,7 +6534,7 @@ func (x *XSortedSetFetchResponse_XFound) String() string {
 func (*XSortedSetFetchResponse_XFound) ProtoMessage() {}
 
 func (x *XSortedSetFetchResponse_XFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[98]
+	mi := &file_protos_cacheclient_proto_msgTypes[105]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6135,7 +6547,7 @@ func (x *XSortedSetFetchResponse_XFound) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetFetchResponse_XFound.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchResponse_XFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{57, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{61, 0}
 }
 
 func (m *XSortedSetFetchResponse_XFound) GetElements() isXSortedSetFetchResponse_XFound_Elements {
@@ -6184,7 +6596,7 @@ type XSortedSetFetchResponse_XMissing struct {
 func (x *XSortedSetFetchResponse_XMissing) Reset() {
 	*x = XSortedSetFetchResponse_XMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[99]
+		mi := &file_protos_cacheclient_proto_msgTypes[106]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6197,7 +6609,7 @@ func (x *XSortedSetFetchResponse_XMissing) String() string {
 func (*XSortedSetFetchResponse_XMissing) ProtoMessage() {}
 
 func (x *XSortedSetFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[99]
+	mi := &file_protos_cacheclient_proto_msgTypes[106]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6210,7 +6622,7 @@ func (x *XSortedSetFetchResponse_XMissing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetFetchResponse_XMissing.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchResponse_XMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{57, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{61, 1}
 }
 
 type XSortedSetFetchResponse_XFound_XValuesWithScores struct {
@@ -6224,7 +6636,7 @@ type XSortedSetFetchResponse_XFound_XValuesWithScores struct {
 func (x *XSortedSetFetchResponse_XFound_XValuesWithScores) Reset() {
 	*x = XSortedSetFetchResponse_XFound_XValuesWithScores{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[100]
+		mi := &file_protos_cacheclient_proto_msgTypes[107]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6237,7 +6649,7 @@ func (x *XSortedSetFetchResponse_XFound_XValuesWithScores) String() string {
 func (*XSortedSetFetchResponse_XFound_XValuesWithScores) ProtoMessage() {}
 
 func (x *XSortedSetFetchResponse_XFound_XValuesWithScores) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[100]
+	mi := &file_protos_cacheclient_proto_msgTypes[107]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6250,7 +6662,7 @@ func (x *XSortedSetFetchResponse_XFound_XValuesWithScores) ProtoReflect() protor
 
 // Deprecated: Use XSortedSetFetchResponse_XFound_XValuesWithScores.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchResponse_XFound_XValuesWithScores) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{57, 0, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{61, 0, 0}
 }
 
 func (x *XSortedSetFetchResponse_XFound_XValuesWithScores) GetElements() []*XSortedSetElement {
@@ -6271,7 +6683,7 @@ type XSortedSetFetchResponse_XFound_XValues struct {
 func (x *XSortedSetFetchResponse_XFound_XValues) Reset() {
 	*x = XSortedSetFetchResponse_XFound_XValues{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[101]
+		mi := &file_protos_cacheclient_proto_msgTypes[108]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6284,7 +6696,7 @@ func (x *XSortedSetFetchResponse_XFound_XValues) String() string {
 func (*XSortedSetFetchResponse_XFound_XValues) ProtoMessage() {}
 
 func (x *XSortedSetFetchResponse_XFound_XValues) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[101]
+	mi := &file_protos_cacheclient_proto_msgTypes[108]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6297,7 +6709,7 @@ func (x *XSortedSetFetchResponse_XFound_XValues) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use XSortedSetFetchResponse_XFound_XValues.ProtoReflect.Descriptor instead.
 func (*XSortedSetFetchResponse_XFound_XValues) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{57, 0, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{61, 0, 1}
 }
 
 func (x *XSortedSetFetchResponse_XFound_XValues) GetValues() [][]byte {
@@ -6319,7 +6731,7 @@ type XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart struct {
 func (x *XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) Reset() {
 	*x = XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[102]
+		mi := &file_protos_cacheclient_proto_msgTypes[109]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6332,7 +6744,7 @@ func (x *XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) String() str
 func (*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) ProtoMessage() {}
 
 func (x *XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[102]
+	mi := &file_protos_cacheclient_proto_msgTypes[109]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6345,7 +6757,7 @@ func (x *XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) ProtoReflect
 
 // Deprecated: Use XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{59, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{63, 0}
 }
 
 func (x *XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) GetResult() ECacheResult {
@@ -6373,7 +6785,7 @@ type XSortedSetGetScoreResponse_XSortedSetFound struct {
 func (x *XSortedSetGetScoreResponse_XSortedSetFound) Reset() {
 	*x = XSortedSetGetScoreResponse_XSortedSetFound{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[103]
+		mi := &file_protos_cacheclient_proto_msgTypes[110]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6386,7 +6798,7 @@ func (x *XSortedSetGetScoreResponse_XSortedSetFound) String() string {
 func (*XSortedSetGetScoreResponse_XSortedSetFound) ProtoMessage() {}
 
 func (x *XSortedSetGetScoreResponse_XSortedSetFound) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[103]
+	mi := &file_protos_cacheclient_proto_msgTypes[110]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6399,7 +6811,7 @@ func (x *XSortedSetGetScoreResponse_XSortedSetFound) ProtoReflect() protoreflect
 
 // Deprecated: Use XSortedSetGetScoreResponse_XSortedSetFound.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetScoreResponse_XSortedSetFound) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{59, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{63, 1}
 }
 
 func (x *XSortedSetGetScoreResponse_XSortedSetFound) GetElements() []*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart {
@@ -6418,7 +6830,7 @@ type XSortedSetGetScoreResponse_XSortedSetMissing struct {
 func (x *XSortedSetGetScoreResponse_XSortedSetMissing) Reset() {
 	*x = XSortedSetGetScoreResponse_XSortedSetMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[104]
+		mi := &file_protos_cacheclient_proto_msgTypes[111]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6431,7 +6843,7 @@ func (x *XSortedSetGetScoreResponse_XSortedSetMissing) String() string {
 func (*XSortedSetGetScoreResponse_XSortedSetMissing) ProtoMessage() {}
 
 func (x *XSortedSetGetScoreResponse_XSortedSetMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[104]
+	mi := &file_protos_cacheclient_proto_msgTypes[111]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6444,7 +6856,7 @@ func (x *XSortedSetGetScoreResponse_XSortedSetMissing) ProtoReflect() protorefle
 
 // Deprecated: Use XSortedSetGetScoreResponse_XSortedSetMissing.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetScoreResponse_XSortedSetMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{59, 2}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{63, 2}
 }
 
 type XSortedSetRemoveRequest_XAll struct {
@@ -6456,7 +6868,7 @@ type XSortedSetRemoveRequest_XAll struct {
 func (x *XSortedSetRemoveRequest_XAll) Reset() {
 	*x = XSortedSetRemoveRequest_XAll{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[105]
+		mi := &file_protos_cacheclient_proto_msgTypes[112]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6469,7 +6881,7 @@ func (x *XSortedSetRemoveRequest_XAll) String() string {
 func (*XSortedSetRemoveRequest_XAll) ProtoMessage() {}
 
 func (x *XSortedSetRemoveRequest_XAll) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[105]
+	mi := &file_protos_cacheclient_proto_msgTypes[112]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6482,7 +6894,7 @@ func (x *XSortedSetRemoveRequest_XAll) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetRemoveRequest_XAll.ProtoReflect.Descriptor instead.
 func (*XSortedSetRemoveRequest_XAll) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{64, 0}
 }
 
 type XSortedSetRemoveRequest_XSome struct {
@@ -6496,7 +6908,7 @@ type XSortedSetRemoveRequest_XSome struct {
 func (x *XSortedSetRemoveRequest_XSome) Reset() {
 	*x = XSortedSetRemoveRequest_XSome{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[106]
+		mi := &file_protos_cacheclient_proto_msgTypes[113]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6509,7 +6921,7 @@ func (x *XSortedSetRemoveRequest_XSome) String() string {
 func (*XSortedSetRemoveRequest_XSome) ProtoMessage() {}
 
 func (x *XSortedSetRemoveRequest_XSome) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[106]
+	mi := &file_protos_cacheclient_proto_msgTypes[113]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6522,7 +6934,7 @@ func (x *XSortedSetRemoveRequest_XSome) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use XSortedSetRemoveRequest_XSome.ProtoReflect.Descriptor instead.
 func (*XSortedSetRemoveRequest_XSome) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{60, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{64, 1}
 }
 
 func (x *XSortedSetRemoveRequest_XSome) GetValues() [][]byte {
@@ -6547,7 +6959,7 @@ type XSortedSetGetRankResponse_XRankResponsePart struct {
 func (x *XSortedSetGetRankResponse_XRankResponsePart) Reset() {
 	*x = XSortedSetGetRankResponse_XRankResponsePart{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[107]
+		mi := &file_protos_cacheclient_proto_msgTypes[114]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6560,7 +6972,7 @@ func (x *XSortedSetGetRankResponse_XRankResponsePart) String() string {
 func (*XSortedSetGetRankResponse_XRankResponsePart) ProtoMessage() {}
 
 func (x *XSortedSetGetRankResponse_XRankResponsePart) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[107]
+	mi := &file_protos_cacheclient_proto_msgTypes[114]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6573,7 +6985,7 @@ func (x *XSortedSetGetRankResponse_XRankResponsePart) ProtoReflect() protoreflec
 
 // Deprecated: Use XSortedSetGetRankResponse_XRankResponsePart.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetRankResponse_XRankResponsePart) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{65, 0}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{69, 0}
 }
 
 func (x *XSortedSetGetRankResponse_XRankResponsePart) GetResult() ECacheResult {
@@ -6599,7 +7011,7 @@ type XSortedSetGetRankResponse_XSortedSetMissing struct {
 func (x *XSortedSetGetRankResponse_XSortedSetMissing) Reset() {
 	*x = XSortedSetGetRankResponse_XSortedSetMissing{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protos_cacheclient_proto_msgTypes[108]
+		mi := &file_protos_cacheclient_proto_msgTypes[115]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6612,7 +7024,7 @@ func (x *XSortedSetGetRankResponse_XSortedSetMissing) String() string {
 func (*XSortedSetGetRankResponse_XSortedSetMissing) ProtoMessage() {}
 
 func (x *XSortedSetGetRankResponse_XSortedSetMissing) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_cacheclient_proto_msgTypes[108]
+	mi := &file_protos_cacheclient_proto_msgTypes[115]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6625,7 +7037,7 @@ func (x *XSortedSetGetRankResponse_XSortedSetMissing) ProtoReflect() protoreflec
 
 // Deprecated: Use XSortedSetGetRankResponse_XSortedSetMissing.ProtoReflect.Descriptor instead.
 func (*XSortedSetGetRankResponse_XSortedSetMissing) Descriptor() ([]byte, []int) {
-	return file_protos_cacheclient_proto_rawDescGZIP(), []int{65, 1}
+	return file_protos_cacheclient_proto_rawDescGZIP(), []int{69, 1}
 }
 
 var File_protos_cacheclient_proto protoreflect.FileDescriptor
@@ -6683,17 +7095,55 @@ var file_protos_cacheclient_proto_rawDesc = []byte{
 	0x72, 0x65, 0x64, 0x48, 0x00, 0x52, 0x09, 0x6e, 0x6f, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64,
 	0x1a, 0x09, 0x0a, 0x07, 0x5f, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x1a, 0x0c, 0x0a, 0x0a, 0x5f,
 	0x4e, 0x6f, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x42, 0x08, 0x0a, 0x06, 0x72, 0x65, 0x73,
-	0x75, 0x6c, 0x74, 0x22, 0x73, 0x0a, 0x11, 0x5f, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e,
-	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x63, 0x61, 0x63, 0x68,
-	0x65, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x63, 0x61, 0x63,
-	0x68, 0x65, 0x4b, 0x65, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x29, 0x0a,
-	0x10, 0x74, 0x74, 0x6c, 0x5f, 0x6d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64,
-	0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0f, 0x74, 0x74, 0x6c, 0x4d, 0x69, 0x6c, 0x6c,
-	0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x22, 0x2a, 0x0a, 0x12, 0x5f, 0x49, 0x6e, 0x63,
-	0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14,
-	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x22, 0x58, 0x0a, 0x15, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x75, 0x6c, 0x74, 0x22, 0x32, 0x0a, 0x11, 0x5f, 0x4b, 0x65, 0x79, 0x73, 0x45, 0x78, 0x69, 0x73,
+	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0c, 0x52, 0x09, 0x63, 0x61,
+	0x63, 0x68, 0x65, 0x4b, 0x65, 0x79, 0x73, 0x22, 0x2c, 0x0a, 0x12, 0x5f, 0x4b, 0x65, 0x79, 0x73,
+	0x45, 0x78, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a,
+	0x06, 0x65, 0x78, 0x69, 0x73, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x08, 0x52, 0x06, 0x65,
+	0x78, 0x69, 0x73, 0x74, 0x73, 0x22, 0x73, 0x0a, 0x11, 0x5f, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d,
+	0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x63, 0x61,
+	0x63, 0x68, 0x65, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x63,
+	0x61, 0x63, 0x68, 0x65, 0x4b, 0x65, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e,
+	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12,
+	0x29, 0x0a, 0x10, 0x74, 0x74, 0x6c, 0x5f, 0x6d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f,
+	0x6e, 0x64, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0f, 0x74, 0x74, 0x6c, 0x4d, 0x69,
+	0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x22, 0x2a, 0x0a, 0x12, 0x5f, 0x49,
+	0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0xf4, 0x01, 0x0a, 0x11, 0x5f, 0x55, 0x70, 0x64, 0x61,
+	0x74, 0x65, 0x54, 0x74, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09,
+	0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x08, 0x63, 0x61, 0x63, 0x68, 0x65, 0x4b, 0x65, 0x79, 0x12, 0x3a, 0x0a, 0x18, 0x69, 0x6e, 0x63,
+	0x72, 0x65, 0x61, 0x73, 0x65, 0x5f, 0x74, 0x6f, 0x5f, 0x6d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65,
+	0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x48, 0x00, 0x52, 0x16, 0x69,
+	0x6e, 0x63, 0x72, 0x65, 0x61, 0x73, 0x65, 0x54, 0x6f, 0x4d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65,
+	0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x3a, 0x0a, 0x18, 0x64, 0x65, 0x63, 0x72, 0x65, 0x61, 0x73,
+	0x65, 0x5f, 0x74, 0x6f, 0x5f, 0x6d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64,
+	0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x48, 0x00, 0x52, 0x16, 0x64, 0x65, 0x63, 0x72, 0x65,
+	0x61, 0x73, 0x65, 0x54, 0x6f, 0x4d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64,
+	0x73, 0x12, 0x3c, 0x0a, 0x19, 0x6f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x5f, 0x74,
+	0x6f, 0x5f, 0x6d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x04, 0x48, 0x00, 0x52, 0x17, 0x6f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74,
+	0x65, 0x54, 0x6f, 0x4d, 0x69, 0x6c, 0x6c, 0x69, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x42,
+	0x0c, 0x0a, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5f, 0x74, 0x74, 0x6c, 0x22, 0x84, 0x02,
+	0x0a, 0x12, 0x5f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x74, 0x6c, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x39, 0x0a, 0x03, 0x73, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x25, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
+	0x2e, 0x5f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x74, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x48, 0x00, 0x52, 0x03, 0x73, 0x65, 0x74, 0x12,
+	0x43, 0x0a, 0x07, 0x6e, 0x6f, 0x74, 0x5f, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x28, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
+	0x5f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x74, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x2e, 0x5f, 0x4e, 0x6f, 0x74, 0x53, 0x65, 0x74, 0x48, 0x00, 0x52, 0x06, 0x6e, 0x6f,
+	0x74, 0x53, 0x65, 0x74, 0x12, 0x45, 0x0a, 0x07, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
+	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x74, 0x6c, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x5f, 0x4d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67,
+	0x48, 0x00, 0x52, 0x07, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x1a, 0x06, 0x0a, 0x04, 0x5f,
+	0x53, 0x65, 0x74, 0x1a, 0x09, 0x0a, 0x07, 0x5f, 0x4e, 0x6f, 0x74, 0x53, 0x65, 0x74, 0x1a, 0x0a,
+	0x0a, 0x08, 0x5f, 0x4d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x42, 0x08, 0x0a, 0x06, 0x72, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x22, 0x58, 0x0a, 0x15, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e,
 	0x61, 0x72, 0x79, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a,
 	0x0f, 0x64, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0e, 0x64, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61,
@@ -7313,7 +7763,7 @@ var file_protos_cacheclient_proto_rawDesc = []byte{
 	0x6c, 0x74, 0x12, 0x0b, 0x0a, 0x07, 0x49, 0x6e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x10, 0x00, 0x12,
 	0x06, 0x0a, 0x02, 0x4f, 0x6b, 0x10, 0x01, 0x12, 0x07, 0x0a, 0x03, 0x48, 0x69, 0x74, 0x10, 0x02,
 	0x12, 0x08, 0x0a, 0x04, 0x4d, 0x69, 0x73, 0x73, 0x10, 0x03, 0x22, 0x04, 0x08, 0x04, 0x10, 0x06,
-	0x32, 0x9c, 0x16, 0x0a, 0x03, 0x53, 0x63, 0x73, 0x12, 0x3e, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12,
+	0x32, 0xc0, 0x17, 0x0a, 0x03, 0x53, 0x63, 0x73, 0x12, 0x3e, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12,
 	0x19, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
 	0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x63, 0x61, 0x63,
 	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x47, 0x65, 0x74, 0x52, 0x65,
@@ -7332,172 +7782,183 @@ var file_protos_cacheclient_proto_rawDesc = []byte{
 	0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
 	0x74, 0x1a, 0x1d, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
 	0x2e, 0x5f, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12,
+	0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x4b, 0x65, 0x79, 0x73, 0x45, 0x78, 0x69, 0x73, 0x74, 0x12,
 	0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
-	0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x4b, 0x65, 0x79, 0x73, 0x45, 0x78, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x1a, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
-	0x5f, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x0d, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61,
-	0x72, 0x79, 0x47, 0x65, 0x74, 0x12, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79,
-	0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x63, 0x61, 0x63,
-	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x61, 0x72, 0x79, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x62, 0x0a, 0x0f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79,
-	0x46, 0x65, 0x74, 0x63, 0x68, 0x12, 0x25, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79,
-	0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x63,
-	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63,
-	0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x0d, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f,
-	0x6e, 0x61, 0x72, 0x79, 0x53, 0x65, 0x74, 0x12, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f,
-	0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61,
-	0x72, 0x79, 0x53, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x63,
-	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63,
-	0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x6e, 0x0a, 0x13, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61,
-	0x72, 0x79, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x29, 0x2e, 0x63, 0x61,
+	0x5f, 0x4b, 0x65, 0x79, 0x73, 0x45, 0x78, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e,
+	0x74, 0x12, 0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
+	0x2e, 0x5f, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e,
+	0x74, 0x2e, 0x5f, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x54, 0x74, 0x6c, 0x12, 0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65,
+	0x6e, 0x74, 0x2e, 0x5f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x74, 0x6c, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69,
+	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x74, 0x6c, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x0d, 0x44, 0x69, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x47, 0x65, 0x74, 0x12, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x61, 0x72, 0x79, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24,
+	0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44,
+	0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x62, 0x0a, 0x0f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x61, 0x72, 0x79, 0x46, 0x65, 0x74, 0x63, 0x68, 0x12, 0x25, 0x2e, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x61, 0x72, 0x79, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x26, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
+	0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x46, 0x65, 0x74, 0x63, 0x68,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x0d, 0x44, 0x69,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x53, 0x65, 0x74, 0x12, 0x23, 0x2e, 0x63, 0x61,
 	0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
-	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72,
-	0x79, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x65, 0x0a, 0x10, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61,
-	0x72, 0x79, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x26, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65,
-	0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x61, 0x72, 0x79, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x27, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
-	0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4d, 0x0a, 0x08, 0x53,
-	0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x12, 0x1e, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f,
-	0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f,
-	0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4d, 0x0a, 0x08, 0x53, 0x65,
-	0x74, 0x55, 0x6e, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
-	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x55, 0x6e, 0x69, 0x6f, 0x6e, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
-	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x55, 0x6e, 0x69, 0x6f, 0x6e, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x0d, 0x53, 0x65, 0x74,
-	0x44, 0x69, 0x66, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x23, 0x2e, 0x63, 0x61, 0x63,
-	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x44, 0x69,
-	0x66, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x24, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
-	0x53, 0x65, 0x74, 0x44, 0x69, 0x66, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x56, 0x0a, 0x0b, 0x53, 0x65, 0x74, 0x43, 0x6f,
-	0x6e, 0x74, 0x61, 0x69, 0x6e, 0x73, 0x12, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
-	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69,
-	0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68,
-	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x43, 0x6f, 0x6e,
-	0x74, 0x61, 0x69, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
-	0x5c, 0x0a, 0x0d, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x46, 0x72, 0x6f, 0x6e, 0x74,
-	0x12, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
-	0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x46, 0x72,
-	0x6f, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x59, 0x0a,
-	0x0c, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x42, 0x61, 0x63, 0x6b, 0x12, 0x22, 0x2e,
-	0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69,
-	0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
-	0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x59, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74,
-	0x50, 0x6f, 0x70, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x12, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65,
-	0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70,
-	0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x63,
-	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73,
-	0x74, 0x50, 0x6f, 0x70, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x12, 0x56, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70, 0x42, 0x61,
-	0x63, 0x6b, 0x12, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e,
-	0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70, 0x42, 0x61, 0x63,
-	0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x4c,
-	0x69, 0x73, 0x74, 0x45, 0x72, 0x61, 0x73, 0x65, 0x12, 0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65,
-	0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x45, 0x72, 0x61,
-	0x73, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68,
-	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x45, 0x72,
-	0x61, 0x73, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x53, 0x0a,
-	0x0a, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x12, 0x20, 0x2e, 0x63, 0x61,
-	0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74,
-	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e,
-	0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69,
-	0x73, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x12,
-	0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
-	0x4c, 0x69, 0x73, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
-	0x5f, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x53, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x4c, 0x65, 0x6e, 0x67,
-	0x74, 0x68, 0x12, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e,
-	0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x4c, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69,
-	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x4c, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x71, 0x0a, 0x14, 0x4c, 0x69, 0x73,
-	0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74, 0x65, 0x46, 0x72, 0x6f, 0x6e,
-	0x74, 0x12, 0x2a, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
-	0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74,
-	0x65, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2b, 0x2e,
-	0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69,
-	0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74, 0x65, 0x46, 0x72, 0x6f,
-	0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x6e, 0x0a, 0x13,
-	0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74, 0x65, 0x42,
-	0x61, 0x63, 0x6b, 0x12, 0x29, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65,
-	0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e,
-	0x61, 0x74, 0x65, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a,
-	0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c,
-	0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74, 0x65, 0x42, 0x61,
-	0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x53, 0x0a, 0x0a,
-	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x74, 0x61, 0x69, 0x6e, 0x12, 0x20, 0x2e, 0x63, 0x61, 0x63,
-	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x52,
-	0x65, 0x74, 0x61, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x63,
-	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73,
-	0x74, 0x52, 0x65, 0x74, 0x61, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x00, 0x12, 0x59, 0x0a, 0x0c, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x50, 0x75,
-	0x74, 0x12, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
-	0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x50, 0x75, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x50,
-	0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5f, 0x0a, 0x0e,
-	0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x12, 0x24,
-	0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53,
-	0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69,
-	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x46, 0x65,
-	0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x68, 0x0a,
-	0x11, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x53, 0x63, 0x6f,
-	0x72, 0x65, 0x12, 0x27, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e,
-	0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x53,
-	0x63, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x63, 0x61,
-	0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74,
-	0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x62, 0x0a, 0x0f, 0x53, 0x6f, 0x72, 0x74, 0x65,
-	0x64, 0x53, 0x65, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x12, 0x25, 0x2e, 0x63, 0x61, 0x63,
-	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65,
-	0x64, 0x53, 0x65, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x26, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
-	0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x6b, 0x0a, 0x12, 0x53,
-	0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e,
-	0x74, 0x12, 0x28, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
-	0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x49, 0x6e, 0x63, 0x72, 0x65,
-	0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e, 0x63, 0x61,
-	0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74,
-	0x65, 0x64, 0x53, 0x65, 0x74, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x65, 0x0a, 0x10, 0x53, 0x6f, 0x72, 0x74,
-	0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6e, 0x6b, 0x12, 0x26, 0x2e, 0x63,
-	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72,
-	0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6e, 0x6b, 0x52, 0x65, 0x71,
+	0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x53, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x24, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
+	0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x53, 0x65, 0x74, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x6e, 0x0a, 0x13, 0x44, 0x69, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12,
+	0x29, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
+	0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d,
+	0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x63, 0x61, 0x63,
+	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x61, 0x72, 0x79, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x65, 0x0a, 0x10, 0x44, 0x69, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x26, 0x2e, 0x63,
+	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69,
-	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65,
-	0x74, 0x52, 0x61, 0x6e, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42,
-	0x64, 0x0a, 0x11, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x50, 0x01, 0x5a, 0x30, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x6d, 0x6f, 0x6d, 0x65, 0x6e, 0x74, 0x6f, 0x68, 0x71, 0x2f, 0x63, 0x6c, 0x69,
-	0x65, 0x6e, 0x74, 0x2d, 0x73, 0x64, 0x6b, 0x2d, 0x67, 0x6f, 0x3b, 0x63, 0x6c, 0x69, 0x65, 0x6e,
-	0x74, 0x5f, 0x73, 0x64, 0x6b, 0x5f, 0x67, 0x6f, 0xaa, 0x02, 0x1a, 0x4d, 0x6f, 0x6d, 0x65, 0x6e,
-	0x74, 0x6f, 0x2e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x43, 0x61, 0x63, 0x68, 0x65, 0x43,
-	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x44, 0x69, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x72, 0x79, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x4d, 0x0a, 0x08, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x12, 0x1e, 0x2e, 0x63, 0x61,
+	0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x46,
+	0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x63, 0x61,
+	0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x46,
+	0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4d,
+	0x0a, 0x08, 0x53, 0x65, 0x74, 0x55, 0x6e, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x63, 0x61, 0x63,
+	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x55, 0x6e,
+	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x63, 0x61, 0x63,
+	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x55, 0x6e,
+	0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a,
+	0x0d, 0x53, 0x65, 0x74, 0x44, 0x69, 0x66, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x23,
+	0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53,
+	0x65, 0x74, 0x44, 0x69, 0x66, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65,
+	0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x44, 0x69, 0x66, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x56, 0x0a, 0x0b, 0x53,
+	0x65, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x73, 0x12, 0x21, 0x2e, 0x63, 0x61, 0x63,
+	0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65, 0x74, 0x43, 0x6f,
+	0x6e, 0x74, 0x61, 0x69, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e,
+	0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x65,
+	0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x12, 0x5c, 0x0a, 0x0d, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x46,
+	0x72, 0x6f, 0x6e, 0x74, 0x12, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69,
+	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x46, 0x72, 0x6f,
+	0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75,
+	0x73, 0x68, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x12, 0x59, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x42, 0x61, 0x63,
+	0x6b, 0x12, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
+	0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
+	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x75, 0x73, 0x68, 0x42, 0x61,
+	0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x59, 0x0a, 0x0c,
+	0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x12, 0x22, 0x2e, 0x63,
+	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73,
+	0x74, 0x50, 0x6f, 0x70, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
+	0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x56, 0x0a, 0x0b, 0x4c, 0x69, 0x73, 0x74, 0x50,
+	0x6f, 0x70, 0x42, 0x61, 0x63, 0x6b, 0x12, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
+	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x70, 0x42, 0x61,
+	0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f,
+	0x70, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x50, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x45, 0x72, 0x61, 0x73, 0x65, 0x12, 0x1f, 0x2e, 0x63,
+	0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73,
+	0x74, 0x45, 0x72, 0x61, 0x73, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e,
+	0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69,
+	0x73, 0x74, 0x45, 0x72, 0x61, 0x73, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x12, 0x53, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x12,
+	0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
+	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
+	0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x50, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x65,
+	0x74, 0x63, 0x68, 0x12, 0x1f, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65,
+	0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69,
+	0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x53, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74,
+	0x4c, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x12, 0x20, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
+	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x4c, 0x65, 0x6e, 0x67, 0x74,
+	0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65,
+	0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x4c, 0x65, 0x6e,
+	0x67, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x71, 0x0a,
+	0x14, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74, 0x65,
+	0x46, 0x72, 0x6f, 0x6e, 0x74, 0x12, 0x2a, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
+	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74,
+	0x65, 0x6e, 0x61, 0x74, 0x65, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x2b, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74,
+	0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61, 0x74,
+	0x65, 0x46, 0x72, 0x6f, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x6e, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e,
+	0x61, 0x74, 0x65, 0x42, 0x61, 0x63, 0x6b, 0x12, 0x29, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f,
+	0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63,
+	0x61, 0x74, 0x65, 0x6e, 0x61, 0x74, 0x65, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e,
+	0x74, 0x2e, 0x5f, 0x4c, 0x69, 0x73, 0x74, 0x43, 0x6f, 0x6e, 0x63, 0x61, 0x74, 0x65, 0x6e, 0x61,
+	0x74, 0x65, 0x42, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x53, 0x0a, 0x0a, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x74, 0x61, 0x69, 0x6e, 0x12, 0x20,
+	0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x4c,
+	0x69, 0x73, 0x74, 0x52, 0x65, 0x74, 0x61, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x21, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
+	0x5f, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x74, 0x61, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x59, 0x0a, 0x0c, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53,
+	0x65, 0x74, 0x50, 0x75, 0x74, 0x12, 0x22, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
+	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x50,
+	0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64,
+	0x53, 0x65, 0x74, 0x50, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x5f, 0x0a, 0x0e, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74,
+	0x63, 0x68, 0x12, 0x24, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e,
+	0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x46, 0x65, 0x74, 0x63,
+	0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65,
+	0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53,
+	0x65, 0x74, 0x46, 0x65, 0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x12, 0x68, 0x0a, 0x11, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65,
+	0x74, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x12, 0x27, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63,
+	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74,
+	0x47, 0x65, 0x74, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x28, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
+	0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x53, 0x63, 0x6f, 0x72,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x62, 0x0a, 0x0f, 0x53,
+	0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x12, 0x25,
+	0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53,
+	0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
+	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x52,
+	0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x6b, 0x0a, 0x12, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x49, 0x6e, 0x63, 0x72,
+	0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x28, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c,
+	0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x49,
+	0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x29, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f,
+	0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x49, 0x6e, 0x63, 0x72, 0x65, 0x6d, 0x65,
+	0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x65, 0x0a, 0x10,
+	0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6e, 0x6b,
+	0x12, 0x26, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e,
+	0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53, 0x65, 0x74, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6e,
+	0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x63, 0x61, 0x63, 0x68, 0x65,
+	0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2e, 0x5f, 0x53, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x53,
+	0x65, 0x74, 0x47, 0x65, 0x74, 0x52, 0x61, 0x6e, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x42, 0x64, 0x0a, 0x11, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x63, 0x61, 0x63, 0x68,
+	0x65, 0x5f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x50, 0x01, 0x5a, 0x30, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6d, 0x6f, 0x6d, 0x65, 0x6e, 0x74, 0x6f, 0x68, 0x71,
+	0x2f, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x2d, 0x73, 0x64, 0x6b, 0x2d, 0x67, 0x6f, 0x3b, 0x63,
+	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x5f, 0x73, 0x64, 0x6b, 0x5f, 0x67, 0x6f, 0xaa, 0x02, 0x1a, 0x4d,
+	0x6f, 0x6d, 0x65, 0x6e, 0x74, 0x6f, 0x2e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x43, 0x61,
+	0x63, 0x68, 0x65, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -7513,7 +7974,7 @@ func file_protos_cacheclient_proto_rawDescGZIP() []byte {
 }
 
 var file_protos_cacheclient_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_protos_cacheclient_proto_msgTypes = make([]protoimpl.MessageInfo, 109)
+var file_protos_cacheclient_proto_msgTypes = make([]protoimpl.MessageInfo, 116)
 var file_protos_cacheclient_proto_goTypes = []interface{}{
 	(ECacheResult)(0),                                                 // 0: cache_client.ECacheResult
 	(XSortedSetFetchRequest_Order)(0),                                 // 1: cache_client._SortedSetFetchRequest.Order
@@ -7526,240 +7987,254 @@ var file_protos_cacheclient_proto_goTypes = []interface{}{
 	(*XSetResponse)(nil),                                              // 8: cache_client._SetResponse
 	(*XSetIfNotExistsRequest)(nil),                                    // 9: cache_client._SetIfNotExistsRequest
 	(*XSetIfNotExistsResponse)(nil),                                   // 10: cache_client._SetIfNotExistsResponse
-	(*XIncrementRequest)(nil),                                         // 11: cache_client._IncrementRequest
-	(*XIncrementResponse)(nil),                                        // 12: cache_client._IncrementResponse
-	(*XDictionaryGetRequest)(nil),                                     // 13: cache_client._DictionaryGetRequest
-	(*XDictionaryGetResponse)(nil),                                    // 14: cache_client._DictionaryGetResponse
-	(*XDictionaryFetchRequest)(nil),                                   // 15: cache_client._DictionaryFetchRequest
-	(*XDictionaryFieldValuePair)(nil),                                 // 16: cache_client._DictionaryFieldValuePair
-	(*XDictionaryFetchResponse)(nil),                                  // 17: cache_client._DictionaryFetchResponse
-	(*XDictionarySetRequest)(nil),                                     // 18: cache_client._DictionarySetRequest
-	(*XDictionarySetResponse)(nil),                                    // 19: cache_client._DictionarySetResponse
-	(*XDictionaryIncrementRequest)(nil),                               // 20: cache_client._DictionaryIncrementRequest
-	(*XDictionaryIncrementResponse)(nil),                              // 21: cache_client._DictionaryIncrementResponse
-	(*XDictionaryDeleteRequest)(nil),                                  // 22: cache_client._DictionaryDeleteRequest
-	(*XDictionaryDeleteResponse)(nil),                                 // 23: cache_client._DictionaryDeleteResponse
-	(*XSetFetchRequest)(nil),                                          // 24: cache_client._SetFetchRequest
-	(*XSetFetchResponse)(nil),                                         // 25: cache_client._SetFetchResponse
-	(*XSetUnionRequest)(nil),                                          // 26: cache_client._SetUnionRequest
-	(*XSetUnionResponse)(nil),                                         // 27: cache_client._SetUnionResponse
-	(*XSetDifferenceRequest)(nil),                                     // 28: cache_client._SetDifferenceRequest
-	(*XSetDifferenceResponse)(nil),                                    // 29: cache_client._SetDifferenceResponse
-	(*XSetContainsRequest)(nil),                                       // 30: cache_client._SetContainsRequest
-	(*XSetContainsResponse)(nil),                                      // 31: cache_client._SetContainsResponse
-	(*XListConcatenateFrontRequest)(nil),                              // 32: cache_client._ListConcatenateFrontRequest
-	(*XListConcatenateFrontResponse)(nil),                             // 33: cache_client._ListConcatenateFrontResponse
-	(*XListConcatenateBackRequest)(nil),                               // 34: cache_client._ListConcatenateBackRequest
-	(*XListConcatenateBackResponse)(nil),                              // 35: cache_client._ListConcatenateBackResponse
-	(*XListPushFrontRequest)(nil),                                     // 36: cache_client._ListPushFrontRequest
-	(*XListPushFrontResponse)(nil),                                    // 37: cache_client._ListPushFrontResponse
-	(*XListPushBackRequest)(nil),                                      // 38: cache_client._ListPushBackRequest
-	(*XListPushBackResponse)(nil),                                     // 39: cache_client._ListPushBackResponse
-	(*XListPopFrontRequest)(nil),                                      // 40: cache_client._ListPopFrontRequest
-	(*XListPopFrontResponse)(nil),                                     // 41: cache_client._ListPopFrontResponse
-	(*XListPopBackRequest)(nil),                                       // 42: cache_client._ListPopBackRequest
-	(*XListPopBackResponse)(nil),                                      // 43: cache_client._ListPopBackResponse
-	(*XListRange)(nil),                                                // 44: cache_client._ListRange
-	(*XListEraseRequest)(nil),                                         // 45: cache_client._ListEraseRequest
-	(*XListEraseResponse)(nil),                                        // 46: cache_client._ListEraseResponse
-	(*XListRemoveRequest)(nil),                                        // 47: cache_client._ListRemoveRequest
-	(*XListRemoveResponse)(nil),                                       // 48: cache_client._ListRemoveResponse
-	(*XUnbounded)(nil),                                                // 49: cache_client._Unbounded
-	(*XListFetchRequest)(nil),                                         // 50: cache_client._ListFetchRequest
-	(*XListRetainRequest)(nil),                                        // 51: cache_client._ListRetainRequest
-	(*XListRetainResponse)(nil),                                       // 52: cache_client._ListRetainResponse
-	(*XListFetchResponse)(nil),                                        // 53: cache_client._ListFetchResponse
-	(*XListLengthRequest)(nil),                                        // 54: cache_client._ListLengthRequest
-	(*XListLengthResponse)(nil),                                       // 55: cache_client._ListLengthResponse
-	(*XSortedSetElement)(nil),                                         // 56: cache_client._SortedSetElement
-	(*XSortedSetPutRequest)(nil),                                      // 57: cache_client._SortedSetPutRequest
-	(*XSortedSetPutResponse)(nil),                                     // 58: cache_client._SortedSetPutResponse
-	(*XSortedSetFetchRequest)(nil),                                    // 59: cache_client._SortedSetFetchRequest
-	(*XSortedSetFetchResponse)(nil),                                   // 60: cache_client._SortedSetFetchResponse
-	(*XSortedSetGetScoreRequest)(nil),                                 // 61: cache_client._SortedSetGetScoreRequest
-	(*XSortedSetGetScoreResponse)(nil),                                // 62: cache_client._SortedSetGetScoreResponse
-	(*XSortedSetRemoveRequest)(nil),                                   // 63: cache_client._SortedSetRemoveRequest
-	(*XSortedSetRemoveResponse)(nil),                                  // 64: cache_client._SortedSetRemoveResponse
-	(*XSortedSetIncrementRequest)(nil),                                // 65: cache_client._SortedSetIncrementRequest
-	(*XSortedSetIncrementResponse)(nil),                               // 66: cache_client._SortedSetIncrementResponse
-	(*XSortedSetGetRankRequest)(nil),                                  // 67: cache_client._SortedSetGetRankRequest
-	(*XSortedSetGetRankResponse)(nil),                                 // 68: cache_client._SortedSetGetRankResponse
-	(*XSetIfNotExistsResponse_XStored)(nil),                           // 69: cache_client._SetIfNotExistsResponse._Stored
-	(*XSetIfNotExistsResponse_XNotStored)(nil),                        // 70: cache_client._SetIfNotExistsResponse._NotStored
-	(*XDictionaryGetResponse_XDictionaryGetResponsePart)(nil),         // 71: cache_client._DictionaryGetResponse._DictionaryGetResponsePart
-	(*XDictionaryGetResponse_XFound)(nil),                             // 72: cache_client._DictionaryGetResponse._Found
-	(*XDictionaryGetResponse_XMissing)(nil),                           // 73: cache_client._DictionaryGetResponse._Missing
-	(*XDictionaryFetchResponse_XFound)(nil),                           // 74: cache_client._DictionaryFetchResponse._Found
-	(*XDictionaryFetchResponse_XMissing)(nil),                         // 75: cache_client._DictionaryFetchResponse._Missing
-	(*XDictionaryDeleteRequest_Some)(nil),                             // 76: cache_client._DictionaryDeleteRequest.Some
-	(*XDictionaryDeleteRequest_All)(nil),                              // 77: cache_client._DictionaryDeleteRequest.All
-	(*XSetFetchResponse_XFound)(nil),                                  // 78: cache_client._SetFetchResponse._Found
-	(*XSetFetchResponse_XMissing)(nil),                                // 79: cache_client._SetFetchResponse._Missing
-	(*XSetDifferenceRequest_XMinuend)(nil),                            // 80: cache_client._SetDifferenceRequest._Minuend
-	(*XSetDifferenceRequest_XSubtrahend)(nil),                         // 81: cache_client._SetDifferenceRequest._Subtrahend
-	(*XSetDifferenceRequest_XSubtrahend_XSet)(nil),                    // 82: cache_client._SetDifferenceRequest._Subtrahend._Set
-	(*XSetDifferenceRequest_XSubtrahend_XIdentity)(nil),               // 83: cache_client._SetDifferenceRequest._Subtrahend._Identity
-	(*XSetDifferenceResponse_XFound)(nil),                             // 84: cache_client._SetDifferenceResponse._Found
-	(*XSetDifferenceResponse_XMissing)(nil),                           // 85: cache_client._SetDifferenceResponse._Missing
-	(*XSetContainsResponse_XFound)(nil),                               // 86: cache_client._SetContainsResponse._Found
-	(*XSetContainsResponse_XMissing)(nil),                             // 87: cache_client._SetContainsResponse._Missing
-	(*XListPopFrontResponse_XFound)(nil),                              // 88: cache_client._ListPopFrontResponse._Found
-	(*XListPopFrontResponse_XMissing)(nil),                            // 89: cache_client._ListPopFrontResponse._Missing
-	(*XListPopBackResponse_XFound)(nil),                               // 90: cache_client._ListPopBackResponse._Found
-	(*XListPopBackResponse_XMissing)(nil),                             // 91: cache_client._ListPopBackResponse._Missing
-	(*XListEraseRequest_XAll)(nil),                                    // 92: cache_client._ListEraseRequest._All
-	(*XListEraseRequest_XListRanges)(nil),                             // 93: cache_client._ListEraseRequest._ListRanges
-	(*XListFetchResponse_XFound)(nil),                                 // 94: cache_client._ListFetchResponse._Found
-	(*XListFetchResponse_XMissing)(nil),                               // 95: cache_client._ListFetchResponse._Missing
-	(*XListLengthResponse_XFound)(nil),                                // 96: cache_client._ListLengthResponse._Found
-	(*XListLengthResponse_XMissing)(nil),                              // 97: cache_client._ListLengthResponse._Missing
-	(*XSortedSetFetchRequest_XByIndex)(nil),                           // 98: cache_client._SortedSetFetchRequest._ByIndex
-	(*XSortedSetFetchRequest_XByScore)(nil),                           // 99: cache_client._SortedSetFetchRequest._ByScore
-	(*XSortedSetFetchRequest_XByScore_XScore)(nil),                    // 100: cache_client._SortedSetFetchRequest._ByScore._Score
-	(*XSortedSetFetchResponse_XFound)(nil),                            // 101: cache_client._SortedSetFetchResponse._Found
-	(*XSortedSetFetchResponse_XMissing)(nil),                          // 102: cache_client._SortedSetFetchResponse._Missing
-	(*XSortedSetFetchResponse_XFound_XValuesWithScores)(nil),          // 103: cache_client._SortedSetFetchResponse._Found._ValuesWithScores
-	(*XSortedSetFetchResponse_XFound_XValues)(nil),                    // 104: cache_client._SortedSetFetchResponse._Found._Values
-	(*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart)(nil), // 105: cache_client._SortedSetGetScoreResponse._SortedSetGetScoreResponsePart
-	(*XSortedSetGetScoreResponse_XSortedSetFound)(nil),                // 106: cache_client._SortedSetGetScoreResponse._SortedSetFound
-	(*XSortedSetGetScoreResponse_XSortedSetMissing)(nil),              // 107: cache_client._SortedSetGetScoreResponse._SortedSetMissing
-	(*XSortedSetRemoveRequest_XAll)(nil),                              // 108: cache_client._SortedSetRemoveRequest._All
-	(*XSortedSetRemoveRequest_XSome)(nil),                             // 109: cache_client._SortedSetRemoveRequest._Some
-	(*XSortedSetGetRankResponse_XRankResponsePart)(nil),               // 110: cache_client._SortedSetGetRankResponse._RankResponsePart
-	(*XSortedSetGetRankResponse_XSortedSetMissing)(nil),               // 111: cache_client._SortedSetGetRankResponse._SortedSetMissing
+	(*XKeysExistRequest)(nil),                                         // 11: cache_client._KeysExistRequest
+	(*XKeysExistResponse)(nil),                                        // 12: cache_client._KeysExistResponse
+	(*XIncrementRequest)(nil),                                         // 13: cache_client._IncrementRequest
+	(*XIncrementResponse)(nil),                                        // 14: cache_client._IncrementResponse
+	(*XUpdateTtlRequest)(nil),                                         // 15: cache_client._UpdateTtlRequest
+	(*XUpdateTtlResponse)(nil),                                        // 16: cache_client._UpdateTtlResponse
+	(*XDictionaryGetRequest)(nil),                                     // 17: cache_client._DictionaryGetRequest
+	(*XDictionaryGetResponse)(nil),                                    // 18: cache_client._DictionaryGetResponse
+	(*XDictionaryFetchRequest)(nil),                                   // 19: cache_client._DictionaryFetchRequest
+	(*XDictionaryFieldValuePair)(nil),                                 // 20: cache_client._DictionaryFieldValuePair
+	(*XDictionaryFetchResponse)(nil),                                  // 21: cache_client._DictionaryFetchResponse
+	(*XDictionarySetRequest)(nil),                                     // 22: cache_client._DictionarySetRequest
+	(*XDictionarySetResponse)(nil),                                    // 23: cache_client._DictionarySetResponse
+	(*XDictionaryIncrementRequest)(nil),                               // 24: cache_client._DictionaryIncrementRequest
+	(*XDictionaryIncrementResponse)(nil),                              // 25: cache_client._DictionaryIncrementResponse
+	(*XDictionaryDeleteRequest)(nil),                                  // 26: cache_client._DictionaryDeleteRequest
+	(*XDictionaryDeleteResponse)(nil),                                 // 27: cache_client._DictionaryDeleteResponse
+	(*XSetFetchRequest)(nil),                                          // 28: cache_client._SetFetchRequest
+	(*XSetFetchResponse)(nil),                                         // 29: cache_client._SetFetchResponse
+	(*XSetUnionRequest)(nil),                                          // 30: cache_client._SetUnionRequest
+	(*XSetUnionResponse)(nil),                                         // 31: cache_client._SetUnionResponse
+	(*XSetDifferenceRequest)(nil),                                     // 32: cache_client._SetDifferenceRequest
+	(*XSetDifferenceResponse)(nil),                                    // 33: cache_client._SetDifferenceResponse
+	(*XSetContainsRequest)(nil),                                       // 34: cache_client._SetContainsRequest
+	(*XSetContainsResponse)(nil),                                      // 35: cache_client._SetContainsResponse
+	(*XListConcatenateFrontRequest)(nil),                              // 36: cache_client._ListConcatenateFrontRequest
+	(*XListConcatenateFrontResponse)(nil),                             // 37: cache_client._ListConcatenateFrontResponse
+	(*XListConcatenateBackRequest)(nil),                               // 38: cache_client._ListConcatenateBackRequest
+	(*XListConcatenateBackResponse)(nil),                              // 39: cache_client._ListConcatenateBackResponse
+	(*XListPushFrontRequest)(nil),                                     // 40: cache_client._ListPushFrontRequest
+	(*XListPushFrontResponse)(nil),                                    // 41: cache_client._ListPushFrontResponse
+	(*XListPushBackRequest)(nil),                                      // 42: cache_client._ListPushBackRequest
+	(*XListPushBackResponse)(nil),                                     // 43: cache_client._ListPushBackResponse
+	(*XListPopFrontRequest)(nil),                                      // 44: cache_client._ListPopFrontRequest
+	(*XListPopFrontResponse)(nil),                                     // 45: cache_client._ListPopFrontResponse
+	(*XListPopBackRequest)(nil),                                       // 46: cache_client._ListPopBackRequest
+	(*XListPopBackResponse)(nil),                                      // 47: cache_client._ListPopBackResponse
+	(*XListRange)(nil),                                                // 48: cache_client._ListRange
+	(*XListEraseRequest)(nil),                                         // 49: cache_client._ListEraseRequest
+	(*XListEraseResponse)(nil),                                        // 50: cache_client._ListEraseResponse
+	(*XListRemoveRequest)(nil),                                        // 51: cache_client._ListRemoveRequest
+	(*XListRemoveResponse)(nil),                                       // 52: cache_client._ListRemoveResponse
+	(*XUnbounded)(nil),                                                // 53: cache_client._Unbounded
+	(*XListFetchRequest)(nil),                                         // 54: cache_client._ListFetchRequest
+	(*XListRetainRequest)(nil),                                        // 55: cache_client._ListRetainRequest
+	(*XListRetainResponse)(nil),                                       // 56: cache_client._ListRetainResponse
+	(*XListFetchResponse)(nil),                                        // 57: cache_client._ListFetchResponse
+	(*XListLengthRequest)(nil),                                        // 58: cache_client._ListLengthRequest
+	(*XListLengthResponse)(nil),                                       // 59: cache_client._ListLengthResponse
+	(*XSortedSetElement)(nil),                                         // 60: cache_client._SortedSetElement
+	(*XSortedSetPutRequest)(nil),                                      // 61: cache_client._SortedSetPutRequest
+	(*XSortedSetPutResponse)(nil),                                     // 62: cache_client._SortedSetPutResponse
+	(*XSortedSetFetchRequest)(nil),                                    // 63: cache_client._SortedSetFetchRequest
+	(*XSortedSetFetchResponse)(nil),                                   // 64: cache_client._SortedSetFetchResponse
+	(*XSortedSetGetScoreRequest)(nil),                                 // 65: cache_client._SortedSetGetScoreRequest
+	(*XSortedSetGetScoreResponse)(nil),                                // 66: cache_client._SortedSetGetScoreResponse
+	(*XSortedSetRemoveRequest)(nil),                                   // 67: cache_client._SortedSetRemoveRequest
+	(*XSortedSetRemoveResponse)(nil),                                  // 68: cache_client._SortedSetRemoveResponse
+	(*XSortedSetIncrementRequest)(nil),                                // 69: cache_client._SortedSetIncrementRequest
+	(*XSortedSetIncrementResponse)(nil),                               // 70: cache_client._SortedSetIncrementResponse
+	(*XSortedSetGetRankRequest)(nil),                                  // 71: cache_client._SortedSetGetRankRequest
+	(*XSortedSetGetRankResponse)(nil),                                 // 72: cache_client._SortedSetGetRankResponse
+	(*XSetIfNotExistsResponse_XStored)(nil),                           // 73: cache_client._SetIfNotExistsResponse._Stored
+	(*XSetIfNotExistsResponse_XNotStored)(nil),                        // 74: cache_client._SetIfNotExistsResponse._NotStored
+	(*XUpdateTtlResponse_XSet)(nil),                                   // 75: cache_client._UpdateTtlResponse._Set
+	(*XUpdateTtlResponse_XNotSet)(nil),                                // 76: cache_client._UpdateTtlResponse._NotSet
+	(*XUpdateTtlResponse_XMissing)(nil),                               // 77: cache_client._UpdateTtlResponse._Missing
+	(*XDictionaryGetResponse_XDictionaryGetResponsePart)(nil),         // 78: cache_client._DictionaryGetResponse._DictionaryGetResponsePart
+	(*XDictionaryGetResponse_XFound)(nil),                             // 79: cache_client._DictionaryGetResponse._Found
+	(*XDictionaryGetResponse_XMissing)(nil),                           // 80: cache_client._DictionaryGetResponse._Missing
+	(*XDictionaryFetchResponse_XFound)(nil),                           // 81: cache_client._DictionaryFetchResponse._Found
+	(*XDictionaryFetchResponse_XMissing)(nil),                         // 82: cache_client._DictionaryFetchResponse._Missing
+	(*XDictionaryDeleteRequest_Some)(nil),                             // 83: cache_client._DictionaryDeleteRequest.Some
+	(*XDictionaryDeleteRequest_All)(nil),                              // 84: cache_client._DictionaryDeleteRequest.All
+	(*XSetFetchResponse_XFound)(nil),                                  // 85: cache_client._SetFetchResponse._Found
+	(*XSetFetchResponse_XMissing)(nil),                                // 86: cache_client._SetFetchResponse._Missing
+	(*XSetDifferenceRequest_XMinuend)(nil),                            // 87: cache_client._SetDifferenceRequest._Minuend
+	(*XSetDifferenceRequest_XSubtrahend)(nil),                         // 88: cache_client._SetDifferenceRequest._Subtrahend
+	(*XSetDifferenceRequest_XSubtrahend_XSet)(nil),                    // 89: cache_client._SetDifferenceRequest._Subtrahend._Set
+	(*XSetDifferenceRequest_XSubtrahend_XIdentity)(nil),               // 90: cache_client._SetDifferenceRequest._Subtrahend._Identity
+	(*XSetDifferenceResponse_XFound)(nil),                             // 91: cache_client._SetDifferenceResponse._Found
+	(*XSetDifferenceResponse_XMissing)(nil),                           // 92: cache_client._SetDifferenceResponse._Missing
+	(*XSetContainsResponse_XFound)(nil),                               // 93: cache_client._SetContainsResponse._Found
+	(*XSetContainsResponse_XMissing)(nil),                             // 94: cache_client._SetContainsResponse._Missing
+	(*XListPopFrontResponse_XFound)(nil),                              // 95: cache_client._ListPopFrontResponse._Found
+	(*XListPopFrontResponse_XMissing)(nil),                            // 96: cache_client._ListPopFrontResponse._Missing
+	(*XListPopBackResponse_XFound)(nil),                               // 97: cache_client._ListPopBackResponse._Found
+	(*XListPopBackResponse_XMissing)(nil),                             // 98: cache_client._ListPopBackResponse._Missing
+	(*XListEraseRequest_XAll)(nil),                                    // 99: cache_client._ListEraseRequest._All
+	(*XListEraseRequest_XListRanges)(nil),                             // 100: cache_client._ListEraseRequest._ListRanges
+	(*XListFetchResponse_XFound)(nil),                                 // 101: cache_client._ListFetchResponse._Found
+	(*XListFetchResponse_XMissing)(nil),                               // 102: cache_client._ListFetchResponse._Missing
+	(*XListLengthResponse_XFound)(nil),                                // 103: cache_client._ListLengthResponse._Found
+	(*XListLengthResponse_XMissing)(nil),                              // 104: cache_client._ListLengthResponse._Missing
+	(*XSortedSetFetchRequest_XByIndex)(nil),                           // 105: cache_client._SortedSetFetchRequest._ByIndex
+	(*XSortedSetFetchRequest_XByScore)(nil),                           // 106: cache_client._SortedSetFetchRequest._ByScore
+	(*XSortedSetFetchRequest_XByScore_XScore)(nil),                    // 107: cache_client._SortedSetFetchRequest._ByScore._Score
+	(*XSortedSetFetchResponse_XFound)(nil),                            // 108: cache_client._SortedSetFetchResponse._Found
+	(*XSortedSetFetchResponse_XMissing)(nil),                          // 109: cache_client._SortedSetFetchResponse._Missing
+	(*XSortedSetFetchResponse_XFound_XValuesWithScores)(nil),          // 110: cache_client._SortedSetFetchResponse._Found._ValuesWithScores
+	(*XSortedSetFetchResponse_XFound_XValues)(nil),                    // 111: cache_client._SortedSetFetchResponse._Found._Values
+	(*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart)(nil), // 112: cache_client._SortedSetGetScoreResponse._SortedSetGetScoreResponsePart
+	(*XSortedSetGetScoreResponse_XSortedSetFound)(nil),                // 113: cache_client._SortedSetGetScoreResponse._SortedSetFound
+	(*XSortedSetGetScoreResponse_XSortedSetMissing)(nil),              // 114: cache_client._SortedSetGetScoreResponse._SortedSetMissing
+	(*XSortedSetRemoveRequest_XAll)(nil),                              // 115: cache_client._SortedSetRemoveRequest._All
+	(*XSortedSetRemoveRequest_XSome)(nil),                             // 116: cache_client._SortedSetRemoveRequest._Some
+	(*XSortedSetGetRankResponse_XRankResponsePart)(nil),               // 117: cache_client._SortedSetGetRankResponse._RankResponsePart
+	(*XSortedSetGetRankResponse_XSortedSetMissing)(nil),               // 118: cache_client._SortedSetGetRankResponse._SortedSetMissing
 }
 var file_protos_cacheclient_proto_depIdxs = []int32{
 	0,   // 0: cache_client._GetResponse.result:type_name -> cache_client.ECacheResult
 	0,   // 1: cache_client._SetResponse.result:type_name -> cache_client.ECacheResult
-	69,  // 2: cache_client._SetIfNotExistsResponse.stored:type_name -> cache_client._SetIfNotExistsResponse._Stored
-	70,  // 3: cache_client._SetIfNotExistsResponse.not_stored:type_name -> cache_client._SetIfNotExistsResponse._NotStored
-	72,  // 4: cache_client._DictionaryGetResponse.found:type_name -> cache_client._DictionaryGetResponse._Found
-	73,  // 5: cache_client._DictionaryGetResponse.missing:type_name -> cache_client._DictionaryGetResponse._Missing
-	74,  // 6: cache_client._DictionaryFetchResponse.found:type_name -> cache_client._DictionaryFetchResponse._Found
-	75,  // 7: cache_client._DictionaryFetchResponse.missing:type_name -> cache_client._DictionaryFetchResponse._Missing
-	16,  // 8: cache_client._DictionarySetRequest.items:type_name -> cache_client._DictionaryFieldValuePair
-	76,  // 9: cache_client._DictionaryDeleteRequest.some:type_name -> cache_client._DictionaryDeleteRequest.Some
-	77,  // 10: cache_client._DictionaryDeleteRequest.all:type_name -> cache_client._DictionaryDeleteRequest.All
-	78,  // 11: cache_client._SetFetchResponse.found:type_name -> cache_client._SetFetchResponse._Found
-	79,  // 12: cache_client._SetFetchResponse.missing:type_name -> cache_client._SetFetchResponse._Missing
-	80,  // 13: cache_client._SetDifferenceRequest.minuend:type_name -> cache_client._SetDifferenceRequest._Minuend
-	81,  // 14: cache_client._SetDifferenceRequest.subtrahend:type_name -> cache_client._SetDifferenceRequest._Subtrahend
-	84,  // 15: cache_client._SetDifferenceResponse.found:type_name -> cache_client._SetDifferenceResponse._Found
-	85,  // 16: cache_client._SetDifferenceResponse.missing:type_name -> cache_client._SetDifferenceResponse._Missing
-	86,  // 17: cache_client._SetContainsResponse.found:type_name -> cache_client._SetContainsResponse._Found
-	87,  // 18: cache_client._SetContainsResponse.missing:type_name -> cache_client._SetContainsResponse._Missing
-	88,  // 19: cache_client._ListPopFrontResponse.found:type_name -> cache_client._ListPopFrontResponse._Found
-	89,  // 20: cache_client._ListPopFrontResponse.missing:type_name -> cache_client._ListPopFrontResponse._Missing
-	90,  // 21: cache_client._ListPopBackResponse.found:type_name -> cache_client._ListPopBackResponse._Found
-	91,  // 22: cache_client._ListPopBackResponse.missing:type_name -> cache_client._ListPopBackResponse._Missing
-	93,  // 23: cache_client._ListEraseRequest.some:type_name -> cache_client._ListEraseRequest._ListRanges
-	92,  // 24: cache_client._ListEraseRequest.all:type_name -> cache_client._ListEraseRequest._All
-	49,  // 25: cache_client._ListFetchRequest.unbounded_start:type_name -> cache_client._Unbounded
-	49,  // 26: cache_client._ListFetchRequest.unbounded_end:type_name -> cache_client._Unbounded
-	49,  // 27: cache_client._ListRetainRequest.unbounded_start:type_name -> cache_client._Unbounded
-	49,  // 28: cache_client._ListRetainRequest.unbounded_end:type_name -> cache_client._Unbounded
-	94,  // 29: cache_client._ListFetchResponse.found:type_name -> cache_client._ListFetchResponse._Found
-	95,  // 30: cache_client._ListFetchResponse.missing:type_name -> cache_client._ListFetchResponse._Missing
-	96,  // 31: cache_client._ListLengthResponse.found:type_name -> cache_client._ListLengthResponse._Found
-	97,  // 32: cache_client._ListLengthResponse.missing:type_name -> cache_client._ListLengthResponse._Missing
-	56,  // 33: cache_client._SortedSetPutRequest.elements:type_name -> cache_client._SortedSetElement
-	1,   // 34: cache_client._SortedSetFetchRequest.order:type_name -> cache_client._SortedSetFetchRequest.Order
-	98,  // 35: cache_client._SortedSetFetchRequest.by_index:type_name -> cache_client._SortedSetFetchRequest._ByIndex
-	99,  // 36: cache_client._SortedSetFetchRequest.by_score:type_name -> cache_client._SortedSetFetchRequest._ByScore
-	101, // 37: cache_client._SortedSetFetchResponse.found:type_name -> cache_client._SortedSetFetchResponse._Found
-	102, // 38: cache_client._SortedSetFetchResponse.missing:type_name -> cache_client._SortedSetFetchResponse._Missing
-	106, // 39: cache_client._SortedSetGetScoreResponse.found:type_name -> cache_client._SortedSetGetScoreResponse._SortedSetFound
-	107, // 40: cache_client._SortedSetGetScoreResponse.missing:type_name -> cache_client._SortedSetGetScoreResponse._SortedSetMissing
-	108, // 41: cache_client._SortedSetRemoveRequest.all:type_name -> cache_client._SortedSetRemoveRequest._All
-	109, // 42: cache_client._SortedSetRemoveRequest.some:type_name -> cache_client._SortedSetRemoveRequest._Some
-	2,   // 43: cache_client._SortedSetGetRankRequest.order:type_name -> cache_client._SortedSetGetRankRequest.Order
-	110, // 44: cache_client._SortedSetGetRankResponse.element_rank:type_name -> cache_client._SortedSetGetRankResponse._RankResponsePart
-	111, // 45: cache_client._SortedSetGetRankResponse.missing:type_name -> cache_client._SortedSetGetRankResponse._SortedSetMissing
-	0,   // 46: cache_client._DictionaryGetResponse._DictionaryGetResponsePart.result:type_name -> cache_client.ECacheResult
-	71,  // 47: cache_client._DictionaryGetResponse._Found.items:type_name -> cache_client._DictionaryGetResponse._DictionaryGetResponsePart
-	16,  // 48: cache_client._DictionaryFetchResponse._Found.items:type_name -> cache_client._DictionaryFieldValuePair
-	82,  // 49: cache_client._SetDifferenceRequest._Subtrahend.set:type_name -> cache_client._SetDifferenceRequest._Subtrahend._Set
-	83,  // 50: cache_client._SetDifferenceRequest._Subtrahend.identity:type_name -> cache_client._SetDifferenceRequest._Subtrahend._Identity
-	44,  // 51: cache_client._ListEraseRequest._ListRanges.ranges:type_name -> cache_client._ListRange
-	49,  // 52: cache_client._SortedSetFetchRequest._ByIndex.unbounded_start:type_name -> cache_client._Unbounded
-	49,  // 53: cache_client._SortedSetFetchRequest._ByIndex.unbounded_end:type_name -> cache_client._Unbounded
-	49,  // 54: cache_client._SortedSetFetchRequest._ByScore.unbounded_min:type_name -> cache_client._Unbounded
-	100, // 55: cache_client._SortedSetFetchRequest._ByScore.min_score:type_name -> cache_client._SortedSetFetchRequest._ByScore._Score
-	49,  // 56: cache_client._SortedSetFetchRequest._ByScore.unbounded_max:type_name -> cache_client._Unbounded
-	100, // 57: cache_client._SortedSetFetchRequest._ByScore.max_score:type_name -> cache_client._SortedSetFetchRequest._ByScore._Score
-	103, // 58: cache_client._SortedSetFetchResponse._Found.values_with_scores:type_name -> cache_client._SortedSetFetchResponse._Found._ValuesWithScores
-	104, // 59: cache_client._SortedSetFetchResponse._Found.values:type_name -> cache_client._SortedSetFetchResponse._Found._Values
-	56,  // 60: cache_client._SortedSetFetchResponse._Found._ValuesWithScores.elements:type_name -> cache_client._SortedSetElement
-	0,   // 61: cache_client._SortedSetGetScoreResponse._SortedSetGetScoreResponsePart.result:type_name -> cache_client.ECacheResult
-	105, // 62: cache_client._SortedSetGetScoreResponse._SortedSetFound.elements:type_name -> cache_client._SortedSetGetScoreResponse._SortedSetGetScoreResponsePart
-	0,   // 63: cache_client._SortedSetGetRankResponse._RankResponsePart.result:type_name -> cache_client.ECacheResult
-	3,   // 64: cache_client.Scs.Get:input_type -> cache_client._GetRequest
-	7,   // 65: cache_client.Scs.Set:input_type -> cache_client._SetRequest
-	9,   // 66: cache_client.Scs.SetIfNotExists:input_type -> cache_client._SetIfNotExistsRequest
-	5,   // 67: cache_client.Scs.Delete:input_type -> cache_client._DeleteRequest
-	11,  // 68: cache_client.Scs.Increment:input_type -> cache_client._IncrementRequest
-	13,  // 69: cache_client.Scs.DictionaryGet:input_type -> cache_client._DictionaryGetRequest
-	15,  // 70: cache_client.Scs.DictionaryFetch:input_type -> cache_client._DictionaryFetchRequest
-	18,  // 71: cache_client.Scs.DictionarySet:input_type -> cache_client._DictionarySetRequest
-	20,  // 72: cache_client.Scs.DictionaryIncrement:input_type -> cache_client._DictionaryIncrementRequest
-	22,  // 73: cache_client.Scs.DictionaryDelete:input_type -> cache_client._DictionaryDeleteRequest
-	24,  // 74: cache_client.Scs.SetFetch:input_type -> cache_client._SetFetchRequest
-	26,  // 75: cache_client.Scs.SetUnion:input_type -> cache_client._SetUnionRequest
-	28,  // 76: cache_client.Scs.SetDifference:input_type -> cache_client._SetDifferenceRequest
-	30,  // 77: cache_client.Scs.SetContains:input_type -> cache_client._SetContainsRequest
-	36,  // 78: cache_client.Scs.ListPushFront:input_type -> cache_client._ListPushFrontRequest
-	38,  // 79: cache_client.Scs.ListPushBack:input_type -> cache_client._ListPushBackRequest
-	40,  // 80: cache_client.Scs.ListPopFront:input_type -> cache_client._ListPopFrontRequest
-	42,  // 81: cache_client.Scs.ListPopBack:input_type -> cache_client._ListPopBackRequest
-	45,  // 82: cache_client.Scs.ListErase:input_type -> cache_client._ListEraseRequest
-	47,  // 83: cache_client.Scs.ListRemove:input_type -> cache_client._ListRemoveRequest
-	50,  // 84: cache_client.Scs.ListFetch:input_type -> cache_client._ListFetchRequest
-	54,  // 85: cache_client.Scs.ListLength:input_type -> cache_client._ListLengthRequest
-	32,  // 86: cache_client.Scs.ListConcatenateFront:input_type -> cache_client._ListConcatenateFrontRequest
-	34,  // 87: cache_client.Scs.ListConcatenateBack:input_type -> cache_client._ListConcatenateBackRequest
-	51,  // 88: cache_client.Scs.ListRetain:input_type -> cache_client._ListRetainRequest
-	57,  // 89: cache_client.Scs.SortedSetPut:input_type -> cache_client._SortedSetPutRequest
-	59,  // 90: cache_client.Scs.SortedSetFetch:input_type -> cache_client._SortedSetFetchRequest
-	61,  // 91: cache_client.Scs.SortedSetGetScore:input_type -> cache_client._SortedSetGetScoreRequest
-	63,  // 92: cache_client.Scs.SortedSetRemove:input_type -> cache_client._SortedSetRemoveRequest
-	65,  // 93: cache_client.Scs.SortedSetIncrement:input_type -> cache_client._SortedSetIncrementRequest
-	67,  // 94: cache_client.Scs.SortedSetGetRank:input_type -> cache_client._SortedSetGetRankRequest
-	4,   // 95: cache_client.Scs.Get:output_type -> cache_client._GetResponse
-	8,   // 96: cache_client.Scs.Set:output_type -> cache_client._SetResponse
-	10,  // 97: cache_client.Scs.SetIfNotExists:output_type -> cache_client._SetIfNotExistsResponse
-	6,   // 98: cache_client.Scs.Delete:output_type -> cache_client._DeleteResponse
-	12,  // 99: cache_client.Scs.Increment:output_type -> cache_client._IncrementResponse
-	14,  // 100: cache_client.Scs.DictionaryGet:output_type -> cache_client._DictionaryGetResponse
-	17,  // 101: cache_client.Scs.DictionaryFetch:output_type -> cache_client._DictionaryFetchResponse
-	19,  // 102: cache_client.Scs.DictionarySet:output_type -> cache_client._DictionarySetResponse
-	21,  // 103: cache_client.Scs.DictionaryIncrement:output_type -> cache_client._DictionaryIncrementResponse
-	23,  // 104: cache_client.Scs.DictionaryDelete:output_type -> cache_client._DictionaryDeleteResponse
-	25,  // 105: cache_client.Scs.SetFetch:output_type -> cache_client._SetFetchResponse
-	27,  // 106: cache_client.Scs.SetUnion:output_type -> cache_client._SetUnionResponse
-	29,  // 107: cache_client.Scs.SetDifference:output_type -> cache_client._SetDifferenceResponse
-	31,  // 108: cache_client.Scs.SetContains:output_type -> cache_client._SetContainsResponse
-	37,  // 109: cache_client.Scs.ListPushFront:output_type -> cache_client._ListPushFrontResponse
-	39,  // 110: cache_client.Scs.ListPushBack:output_type -> cache_client._ListPushBackResponse
-	41,  // 111: cache_client.Scs.ListPopFront:output_type -> cache_client._ListPopFrontResponse
-	43,  // 112: cache_client.Scs.ListPopBack:output_type -> cache_client._ListPopBackResponse
-	46,  // 113: cache_client.Scs.ListErase:output_type -> cache_client._ListEraseResponse
-	48,  // 114: cache_client.Scs.ListRemove:output_type -> cache_client._ListRemoveResponse
-	53,  // 115: cache_client.Scs.ListFetch:output_type -> cache_client._ListFetchResponse
-	55,  // 116: cache_client.Scs.ListLength:output_type -> cache_client._ListLengthResponse
-	33,  // 117: cache_client.Scs.ListConcatenateFront:output_type -> cache_client._ListConcatenateFrontResponse
-	35,  // 118: cache_client.Scs.ListConcatenateBack:output_type -> cache_client._ListConcatenateBackResponse
-	52,  // 119: cache_client.Scs.ListRetain:output_type -> cache_client._ListRetainResponse
-	58,  // 120: cache_client.Scs.SortedSetPut:output_type -> cache_client._SortedSetPutResponse
-	60,  // 121: cache_client.Scs.SortedSetFetch:output_type -> cache_client._SortedSetFetchResponse
-	62,  // 122: cache_client.Scs.SortedSetGetScore:output_type -> cache_client._SortedSetGetScoreResponse
-	64,  // 123: cache_client.Scs.SortedSetRemove:output_type -> cache_client._SortedSetRemoveResponse
-	66,  // 124: cache_client.Scs.SortedSetIncrement:output_type -> cache_client._SortedSetIncrementResponse
-	68,  // 125: cache_client.Scs.SortedSetGetRank:output_type -> cache_client._SortedSetGetRankResponse
-	95,  // [95:126] is the sub-list for method output_type
-	64,  // [64:95] is the sub-list for method input_type
-	64,  // [64:64] is the sub-list for extension type_name
-	64,  // [64:64] is the sub-list for extension extendee
-	0,   // [0:64] is the sub-list for field type_name
+	73,  // 2: cache_client._SetIfNotExistsResponse.stored:type_name -> cache_client._SetIfNotExistsResponse._Stored
+	74,  // 3: cache_client._SetIfNotExistsResponse.not_stored:type_name -> cache_client._SetIfNotExistsResponse._NotStored
+	75,  // 4: cache_client._UpdateTtlResponse.set:type_name -> cache_client._UpdateTtlResponse._Set
+	76,  // 5: cache_client._UpdateTtlResponse.not_set:type_name -> cache_client._UpdateTtlResponse._NotSet
+	77,  // 6: cache_client._UpdateTtlResponse.missing:type_name -> cache_client._UpdateTtlResponse._Missing
+	79,  // 7: cache_client._DictionaryGetResponse.found:type_name -> cache_client._DictionaryGetResponse._Found
+	80,  // 8: cache_client._DictionaryGetResponse.missing:type_name -> cache_client._DictionaryGetResponse._Missing
+	81,  // 9: cache_client._DictionaryFetchResponse.found:type_name -> cache_client._DictionaryFetchResponse._Found
+	82,  // 10: cache_client._DictionaryFetchResponse.missing:type_name -> cache_client._DictionaryFetchResponse._Missing
+	20,  // 11: cache_client._DictionarySetRequest.items:type_name -> cache_client._DictionaryFieldValuePair
+	83,  // 12: cache_client._DictionaryDeleteRequest.some:type_name -> cache_client._DictionaryDeleteRequest.Some
+	84,  // 13: cache_client._DictionaryDeleteRequest.all:type_name -> cache_client._DictionaryDeleteRequest.All
+	85,  // 14: cache_client._SetFetchResponse.found:type_name -> cache_client._SetFetchResponse._Found
+	86,  // 15: cache_client._SetFetchResponse.missing:type_name -> cache_client._SetFetchResponse._Missing
+	87,  // 16: cache_client._SetDifferenceRequest.minuend:type_name -> cache_client._SetDifferenceRequest._Minuend
+	88,  // 17: cache_client._SetDifferenceRequest.subtrahend:type_name -> cache_client._SetDifferenceRequest._Subtrahend
+	91,  // 18: cache_client._SetDifferenceResponse.found:type_name -> cache_client._SetDifferenceResponse._Found
+	92,  // 19: cache_client._SetDifferenceResponse.missing:type_name -> cache_client._SetDifferenceResponse._Missing
+	93,  // 20: cache_client._SetContainsResponse.found:type_name -> cache_client._SetContainsResponse._Found
+	94,  // 21: cache_client._SetContainsResponse.missing:type_name -> cache_client._SetContainsResponse._Missing
+	95,  // 22: cache_client._ListPopFrontResponse.found:type_name -> cache_client._ListPopFrontResponse._Found
+	96,  // 23: cache_client._ListPopFrontResponse.missing:type_name -> cache_client._ListPopFrontResponse._Missing
+	97,  // 24: cache_client._ListPopBackResponse.found:type_name -> cache_client._ListPopBackResponse._Found
+	98,  // 25: cache_client._ListPopBackResponse.missing:type_name -> cache_client._ListPopBackResponse._Missing
+	100, // 26: cache_client._ListEraseRequest.some:type_name -> cache_client._ListEraseRequest._ListRanges
+	99,  // 27: cache_client._ListEraseRequest.all:type_name -> cache_client._ListEraseRequest._All
+	53,  // 28: cache_client._ListFetchRequest.unbounded_start:type_name -> cache_client._Unbounded
+	53,  // 29: cache_client._ListFetchRequest.unbounded_end:type_name -> cache_client._Unbounded
+	53,  // 30: cache_client._ListRetainRequest.unbounded_start:type_name -> cache_client._Unbounded
+	53,  // 31: cache_client._ListRetainRequest.unbounded_end:type_name -> cache_client._Unbounded
+	101, // 32: cache_client._ListFetchResponse.found:type_name -> cache_client._ListFetchResponse._Found
+	102, // 33: cache_client._ListFetchResponse.missing:type_name -> cache_client._ListFetchResponse._Missing
+	103, // 34: cache_client._ListLengthResponse.found:type_name -> cache_client._ListLengthResponse._Found
+	104, // 35: cache_client._ListLengthResponse.missing:type_name -> cache_client._ListLengthResponse._Missing
+	60,  // 36: cache_client._SortedSetPutRequest.elements:type_name -> cache_client._SortedSetElement
+	1,   // 37: cache_client._SortedSetFetchRequest.order:type_name -> cache_client._SortedSetFetchRequest.Order
+	105, // 38: cache_client._SortedSetFetchRequest.by_index:type_name -> cache_client._SortedSetFetchRequest._ByIndex
+	106, // 39: cache_client._SortedSetFetchRequest.by_score:type_name -> cache_client._SortedSetFetchRequest._ByScore
+	108, // 40: cache_client._SortedSetFetchResponse.found:type_name -> cache_client._SortedSetFetchResponse._Found
+	109, // 41: cache_client._SortedSetFetchResponse.missing:type_name -> cache_client._SortedSetFetchResponse._Missing
+	113, // 42: cache_client._SortedSetGetScoreResponse.found:type_name -> cache_client._SortedSetGetScoreResponse._SortedSetFound
+	114, // 43: cache_client._SortedSetGetScoreResponse.missing:type_name -> cache_client._SortedSetGetScoreResponse._SortedSetMissing
+	115, // 44: cache_client._SortedSetRemoveRequest.all:type_name -> cache_client._SortedSetRemoveRequest._All
+	116, // 45: cache_client._SortedSetRemoveRequest.some:type_name -> cache_client._SortedSetRemoveRequest._Some
+	2,   // 46: cache_client._SortedSetGetRankRequest.order:type_name -> cache_client._SortedSetGetRankRequest.Order
+	117, // 47: cache_client._SortedSetGetRankResponse.element_rank:type_name -> cache_client._SortedSetGetRankResponse._RankResponsePart
+	118, // 48: cache_client._SortedSetGetRankResponse.missing:type_name -> cache_client._SortedSetGetRankResponse._SortedSetMissing
+	0,   // 49: cache_client._DictionaryGetResponse._DictionaryGetResponsePart.result:type_name -> cache_client.ECacheResult
+	78,  // 50: cache_client._DictionaryGetResponse._Found.items:type_name -> cache_client._DictionaryGetResponse._DictionaryGetResponsePart
+	20,  // 51: cache_client._DictionaryFetchResponse._Found.items:type_name -> cache_client._DictionaryFieldValuePair
+	89,  // 52: cache_client._SetDifferenceRequest._Subtrahend.set:type_name -> cache_client._SetDifferenceRequest._Subtrahend._Set
+	90,  // 53: cache_client._SetDifferenceRequest._Subtrahend.identity:type_name -> cache_client._SetDifferenceRequest._Subtrahend._Identity
+	48,  // 54: cache_client._ListEraseRequest._ListRanges.ranges:type_name -> cache_client._ListRange
+	53,  // 55: cache_client._SortedSetFetchRequest._ByIndex.unbounded_start:type_name -> cache_client._Unbounded
+	53,  // 56: cache_client._SortedSetFetchRequest._ByIndex.unbounded_end:type_name -> cache_client._Unbounded
+	53,  // 57: cache_client._SortedSetFetchRequest._ByScore.unbounded_min:type_name -> cache_client._Unbounded
+	107, // 58: cache_client._SortedSetFetchRequest._ByScore.min_score:type_name -> cache_client._SortedSetFetchRequest._ByScore._Score
+	53,  // 59: cache_client._SortedSetFetchRequest._ByScore.unbounded_max:type_name -> cache_client._Unbounded
+	107, // 60: cache_client._SortedSetFetchRequest._ByScore.max_score:type_name -> cache_client._SortedSetFetchRequest._ByScore._Score
+	110, // 61: cache_client._SortedSetFetchResponse._Found.values_with_scores:type_name -> cache_client._SortedSetFetchResponse._Found._ValuesWithScores
+	111, // 62: cache_client._SortedSetFetchResponse._Found.values:type_name -> cache_client._SortedSetFetchResponse._Found._Values
+	60,  // 63: cache_client._SortedSetFetchResponse._Found._ValuesWithScores.elements:type_name -> cache_client._SortedSetElement
+	0,   // 64: cache_client._SortedSetGetScoreResponse._SortedSetGetScoreResponsePart.result:type_name -> cache_client.ECacheResult
+	112, // 65: cache_client._SortedSetGetScoreResponse._SortedSetFound.elements:type_name -> cache_client._SortedSetGetScoreResponse._SortedSetGetScoreResponsePart
+	0,   // 66: cache_client._SortedSetGetRankResponse._RankResponsePart.result:type_name -> cache_client.ECacheResult
+	3,   // 67: cache_client.Scs.Get:input_type -> cache_client._GetRequest
+	7,   // 68: cache_client.Scs.Set:input_type -> cache_client._SetRequest
+	9,   // 69: cache_client.Scs.SetIfNotExists:input_type -> cache_client._SetIfNotExistsRequest
+	5,   // 70: cache_client.Scs.Delete:input_type -> cache_client._DeleteRequest
+	11,  // 71: cache_client.Scs.KeysExist:input_type -> cache_client._KeysExistRequest
+	13,  // 72: cache_client.Scs.Increment:input_type -> cache_client._IncrementRequest
+	15,  // 73: cache_client.Scs.UpdateTtl:input_type -> cache_client._UpdateTtlRequest
+	17,  // 74: cache_client.Scs.DictionaryGet:input_type -> cache_client._DictionaryGetRequest
+	19,  // 75: cache_client.Scs.DictionaryFetch:input_type -> cache_client._DictionaryFetchRequest
+	22,  // 76: cache_client.Scs.DictionarySet:input_type -> cache_client._DictionarySetRequest
+	24,  // 77: cache_client.Scs.DictionaryIncrement:input_type -> cache_client._DictionaryIncrementRequest
+	26,  // 78: cache_client.Scs.DictionaryDelete:input_type -> cache_client._DictionaryDeleteRequest
+	28,  // 79: cache_client.Scs.SetFetch:input_type -> cache_client._SetFetchRequest
+	30,  // 80: cache_client.Scs.SetUnion:input_type -> cache_client._SetUnionRequest
+	32,  // 81: cache_client.Scs.SetDifference:input_type -> cache_client._SetDifferenceRequest
+	34,  // 82: cache_client.Scs.SetContains:input_type -> cache_client._SetContainsRequest
+	40,  // 83: cache_client.Scs.ListPushFront:input_type -> cache_client._ListPushFrontRequest
+	42,  // 84: cache_client.Scs.ListPushBack:input_type -> cache_client._ListPushBackRequest
+	44,  // 85: cache_client.Scs.ListPopFront:input_type -> cache_client._ListPopFrontRequest
+	46,  // 86: cache_client.Scs.ListPopBack:input_type -> cache_client._ListPopBackRequest
+	49,  // 87: cache_client.Scs.ListErase:input_type -> cache_client._ListEraseRequest
+	51,  // 88: cache_client.Scs.ListRemove:input_type -> cache_client._ListRemoveRequest
+	54,  // 89: cache_client.Scs.ListFetch:input_type -> cache_client._ListFetchRequest
+	58,  // 90: cache_client.Scs.ListLength:input_type -> cache_client._ListLengthRequest
+	36,  // 91: cache_client.Scs.ListConcatenateFront:input_type -> cache_client._ListConcatenateFrontRequest
+	38,  // 92: cache_client.Scs.ListConcatenateBack:input_type -> cache_client._ListConcatenateBackRequest
+	55,  // 93: cache_client.Scs.ListRetain:input_type -> cache_client._ListRetainRequest
+	61,  // 94: cache_client.Scs.SortedSetPut:input_type -> cache_client._SortedSetPutRequest
+	63,  // 95: cache_client.Scs.SortedSetFetch:input_type -> cache_client._SortedSetFetchRequest
+	65,  // 96: cache_client.Scs.SortedSetGetScore:input_type -> cache_client._SortedSetGetScoreRequest
+	67,  // 97: cache_client.Scs.SortedSetRemove:input_type -> cache_client._SortedSetRemoveRequest
+	69,  // 98: cache_client.Scs.SortedSetIncrement:input_type -> cache_client._SortedSetIncrementRequest
+	71,  // 99: cache_client.Scs.SortedSetGetRank:input_type -> cache_client._SortedSetGetRankRequest
+	4,   // 100: cache_client.Scs.Get:output_type -> cache_client._GetResponse
+	8,   // 101: cache_client.Scs.Set:output_type -> cache_client._SetResponse
+	10,  // 102: cache_client.Scs.SetIfNotExists:output_type -> cache_client._SetIfNotExistsResponse
+	6,   // 103: cache_client.Scs.Delete:output_type -> cache_client._DeleteResponse
+	12,  // 104: cache_client.Scs.KeysExist:output_type -> cache_client._KeysExistResponse
+	14,  // 105: cache_client.Scs.Increment:output_type -> cache_client._IncrementResponse
+	16,  // 106: cache_client.Scs.UpdateTtl:output_type -> cache_client._UpdateTtlResponse
+	18,  // 107: cache_client.Scs.DictionaryGet:output_type -> cache_client._DictionaryGetResponse
+	21,  // 108: cache_client.Scs.DictionaryFetch:output_type -> cache_client._DictionaryFetchResponse
+	23,  // 109: cache_client.Scs.DictionarySet:output_type -> cache_client._DictionarySetResponse
+	25,  // 110: cache_client.Scs.DictionaryIncrement:output_type -> cache_client._DictionaryIncrementResponse
+	27,  // 111: cache_client.Scs.DictionaryDelete:output_type -> cache_client._DictionaryDeleteResponse
+	29,  // 112: cache_client.Scs.SetFetch:output_type -> cache_client._SetFetchResponse
+	31,  // 113: cache_client.Scs.SetUnion:output_type -> cache_client._SetUnionResponse
+	33,  // 114: cache_client.Scs.SetDifference:output_type -> cache_client._SetDifferenceResponse
+	35,  // 115: cache_client.Scs.SetContains:output_type -> cache_client._SetContainsResponse
+	41,  // 116: cache_client.Scs.ListPushFront:output_type -> cache_client._ListPushFrontResponse
+	43,  // 117: cache_client.Scs.ListPushBack:output_type -> cache_client._ListPushBackResponse
+	45,  // 118: cache_client.Scs.ListPopFront:output_type -> cache_client._ListPopFrontResponse
+	47,  // 119: cache_client.Scs.ListPopBack:output_type -> cache_client._ListPopBackResponse
+	50,  // 120: cache_client.Scs.ListErase:output_type -> cache_client._ListEraseResponse
+	52,  // 121: cache_client.Scs.ListRemove:output_type -> cache_client._ListRemoveResponse
+	57,  // 122: cache_client.Scs.ListFetch:output_type -> cache_client._ListFetchResponse
+	59,  // 123: cache_client.Scs.ListLength:output_type -> cache_client._ListLengthResponse
+	37,  // 124: cache_client.Scs.ListConcatenateFront:output_type -> cache_client._ListConcatenateFrontResponse
+	39,  // 125: cache_client.Scs.ListConcatenateBack:output_type -> cache_client._ListConcatenateBackResponse
+	56,  // 126: cache_client.Scs.ListRetain:output_type -> cache_client._ListRetainResponse
+	62,  // 127: cache_client.Scs.SortedSetPut:output_type -> cache_client._SortedSetPutResponse
+	64,  // 128: cache_client.Scs.SortedSetFetch:output_type -> cache_client._SortedSetFetchResponse
+	66,  // 129: cache_client.Scs.SortedSetGetScore:output_type -> cache_client._SortedSetGetScoreResponse
+	68,  // 130: cache_client.Scs.SortedSetRemove:output_type -> cache_client._SortedSetRemoveResponse
+	70,  // 131: cache_client.Scs.SortedSetIncrement:output_type -> cache_client._SortedSetIncrementResponse
+	72,  // 132: cache_client.Scs.SortedSetGetRank:output_type -> cache_client._SortedSetGetRankResponse
+	100, // [100:133] is the sub-list for method output_type
+	67,  // [67:100] is the sub-list for method input_type
+	67,  // [67:67] is the sub-list for extension type_name
+	67,  // [67:67] is the sub-list for extension extendee
+	0,   // [0:67] is the sub-list for field type_name
 }
 
 func init() { file_protos_cacheclient_proto_init() }
@@ -7865,7 +8340,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XIncrementRequest); i {
+			switch v := v.(*XKeysExistRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7877,7 +8352,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XIncrementResponse); i {
+			switch v := v.(*XKeysExistResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7889,7 +8364,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryGetRequest); i {
+			switch v := v.(*XIncrementRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7901,7 +8376,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryGetResponse); i {
+			switch v := v.(*XIncrementResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7913,7 +8388,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryFetchRequest); i {
+			switch v := v.(*XUpdateTtlRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7925,7 +8400,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryFieldValuePair); i {
+			switch v := v.(*XUpdateTtlResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7937,7 +8412,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryFetchResponse); i {
+			switch v := v.(*XDictionaryGetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7949,7 +8424,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionarySetRequest); i {
+			switch v := v.(*XDictionaryGetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7961,7 +8436,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionarySetResponse); i {
+			switch v := v.(*XDictionaryFetchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7973,7 +8448,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryIncrementRequest); i {
+			switch v := v.(*XDictionaryFieldValuePair); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7985,7 +8460,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryIncrementResponse); i {
+			switch v := v.(*XDictionaryFetchResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -7997,7 +8472,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryDeleteRequest); i {
+			switch v := v.(*XDictionarySetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8009,7 +8484,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryDeleteResponse); i {
+			switch v := v.(*XDictionarySetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8021,7 +8496,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetFetchRequest); i {
+			switch v := v.(*XDictionaryIncrementRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8033,7 +8508,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetFetchResponse); i {
+			switch v := v.(*XDictionaryIncrementResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8045,7 +8520,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetUnionRequest); i {
+			switch v := v.(*XDictionaryDeleteRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8057,7 +8532,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetUnionResponse); i {
+			switch v := v.(*XDictionaryDeleteResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8069,7 +8544,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceRequest); i {
+			switch v := v.(*XSetFetchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8081,7 +8556,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceResponse); i {
+			switch v := v.(*XSetFetchResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8093,7 +8568,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetContainsRequest); i {
+			switch v := v.(*XSetUnionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8105,7 +8580,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetContainsResponse); i {
+			switch v := v.(*XSetUnionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8117,7 +8592,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListConcatenateFrontRequest); i {
+			switch v := v.(*XSetDifferenceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8129,7 +8604,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListConcatenateFrontResponse); i {
+			switch v := v.(*XSetDifferenceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8141,7 +8616,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListConcatenateBackRequest); i {
+			switch v := v.(*XSetContainsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8153,7 +8628,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListConcatenateBackResponse); i {
+			switch v := v.(*XSetContainsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8165,7 +8640,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPushFrontRequest); i {
+			switch v := v.(*XListConcatenateFrontRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8177,7 +8652,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPushFrontResponse); i {
+			switch v := v.(*XListConcatenateFrontResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8189,7 +8664,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPushBackRequest); i {
+			switch v := v.(*XListConcatenateBackRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8201,7 +8676,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPushBackResponse); i {
+			switch v := v.(*XListConcatenateBackResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8213,7 +8688,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopFrontRequest); i {
+			switch v := v.(*XListPushFrontRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8225,7 +8700,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopFrontResponse); i {
+			switch v := v.(*XListPushFrontResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8237,7 +8712,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopBackRequest); i {
+			switch v := v.(*XListPushBackRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8249,7 +8724,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopBackResponse); i {
+			switch v := v.(*XListPushBackResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8261,7 +8736,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListRange); i {
+			switch v := v.(*XListPopFrontRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8273,7 +8748,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListEraseRequest); i {
+			switch v := v.(*XListPopFrontResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8285,7 +8760,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListEraseResponse); i {
+			switch v := v.(*XListPopBackRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8297,7 +8772,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListRemoveRequest); i {
+			switch v := v.(*XListPopBackResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8309,7 +8784,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListRemoveResponse); i {
+			switch v := v.(*XListRange); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8321,7 +8796,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XUnbounded); i {
+			switch v := v.(*XListEraseRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8333,7 +8808,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListFetchRequest); i {
+			switch v := v.(*XListEraseResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8345,7 +8820,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListRetainRequest); i {
+			switch v := v.(*XListRemoveRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8357,7 +8832,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListRetainResponse); i {
+			switch v := v.(*XListRemoveResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8369,7 +8844,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListFetchResponse); i {
+			switch v := v.(*XUnbounded); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8381,7 +8856,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListLengthRequest); i {
+			switch v := v.(*XListFetchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8393,7 +8868,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListLengthResponse); i {
+			switch v := v.(*XListRetainRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8405,7 +8880,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetElement); i {
+			switch v := v.(*XListRetainResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8417,7 +8892,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetPutRequest); i {
+			switch v := v.(*XListFetchResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8429,7 +8904,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetPutResponse); i {
+			switch v := v.(*XListLengthRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8441,7 +8916,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchRequest); i {
+			switch v := v.(*XListLengthResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8453,7 +8928,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchResponse); i {
+			switch v := v.(*XSortedSetElement); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8465,7 +8940,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetScoreRequest); i {
+			switch v := v.(*XSortedSetPutRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8477,7 +8952,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetScoreResponse); i {
+			switch v := v.(*XSortedSetPutResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8489,7 +8964,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetRemoveRequest); i {
+			switch v := v.(*XSortedSetFetchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8501,7 +8976,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetRemoveResponse); i {
+			switch v := v.(*XSortedSetFetchResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8513,7 +8988,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetIncrementRequest); i {
+			switch v := v.(*XSortedSetGetScoreRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8525,7 +9000,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetIncrementResponse); i {
+			switch v := v.(*XSortedSetGetScoreResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8537,7 +9012,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetRankRequest); i {
+			switch v := v.(*XSortedSetRemoveRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8549,7 +9024,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetRankResponse); i {
+			switch v := v.(*XSortedSetRemoveResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8561,7 +9036,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetIfNotExistsResponse_XStored); i {
+			switch v := v.(*XSortedSetIncrementRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8573,7 +9048,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetIfNotExistsResponse_XNotStored); i {
+			switch v := v.(*XSortedSetIncrementResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8585,7 +9060,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryGetResponse_XDictionaryGetResponsePart); i {
+			switch v := v.(*XSortedSetGetRankRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8597,7 +9072,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryGetResponse_XFound); i {
+			switch v := v.(*XSortedSetGetRankResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8609,7 +9084,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryGetResponse_XMissing); i {
+			switch v := v.(*XSetIfNotExistsResponse_XStored); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8621,7 +9096,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryFetchResponse_XFound); i {
+			switch v := v.(*XSetIfNotExistsResponse_XNotStored); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8633,7 +9108,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryFetchResponse_XMissing); i {
+			switch v := v.(*XUpdateTtlResponse_XSet); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8645,7 +9120,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryDeleteRequest_Some); i {
+			switch v := v.(*XUpdateTtlResponse_XNotSet); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8657,7 +9132,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XDictionaryDeleteRequest_All); i {
+			switch v := v.(*XUpdateTtlResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8669,7 +9144,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetFetchResponse_XFound); i {
+			switch v := v.(*XDictionaryGetResponse_XDictionaryGetResponsePart); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8681,7 +9156,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetFetchResponse_XMissing); i {
+			switch v := v.(*XDictionaryGetResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8693,7 +9168,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[77].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceRequest_XMinuend); i {
+			switch v := v.(*XDictionaryGetResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8705,7 +9180,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[78].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceRequest_XSubtrahend); i {
+			switch v := v.(*XDictionaryFetchResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8717,7 +9192,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[79].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceRequest_XSubtrahend_XSet); i {
+			switch v := v.(*XDictionaryFetchResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8729,7 +9204,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[80].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceRequest_XSubtrahend_XIdentity); i {
+			switch v := v.(*XDictionaryDeleteRequest_Some); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8741,7 +9216,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[81].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceResponse_XFound); i {
+			switch v := v.(*XDictionaryDeleteRequest_All); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8753,7 +9228,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[82].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetDifferenceResponse_XMissing); i {
+			switch v := v.(*XSetFetchResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8765,7 +9240,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[83].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetContainsResponse_XFound); i {
+			switch v := v.(*XSetFetchResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8777,7 +9252,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[84].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSetContainsResponse_XMissing); i {
+			switch v := v.(*XSetDifferenceRequest_XMinuend); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8789,7 +9264,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[85].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopFrontResponse_XFound); i {
+			switch v := v.(*XSetDifferenceRequest_XSubtrahend); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8801,7 +9276,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[86].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopFrontResponse_XMissing); i {
+			switch v := v.(*XSetDifferenceRequest_XSubtrahend_XSet); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8813,7 +9288,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[87].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopBackResponse_XFound); i {
+			switch v := v.(*XSetDifferenceRequest_XSubtrahend_XIdentity); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8825,7 +9300,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[88].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListPopBackResponse_XMissing); i {
+			switch v := v.(*XSetDifferenceResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8837,7 +9312,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[89].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListEraseRequest_XAll); i {
+			switch v := v.(*XSetDifferenceResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8849,7 +9324,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[90].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListEraseRequest_XListRanges); i {
+			switch v := v.(*XSetContainsResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8861,7 +9336,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[91].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListFetchResponse_XFound); i {
+			switch v := v.(*XSetContainsResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8873,7 +9348,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[92].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListFetchResponse_XMissing); i {
+			switch v := v.(*XListPopFrontResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8885,7 +9360,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[93].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListLengthResponse_XFound); i {
+			switch v := v.(*XListPopFrontResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8897,7 +9372,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[94].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XListLengthResponse_XMissing); i {
+			switch v := v.(*XListPopBackResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8909,7 +9384,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[95].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchRequest_XByIndex); i {
+			switch v := v.(*XListPopBackResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8921,7 +9396,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[96].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchRequest_XByScore); i {
+			switch v := v.(*XListEraseRequest_XAll); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8933,7 +9408,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[97].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchRequest_XByScore_XScore); i {
+			switch v := v.(*XListEraseRequest_XListRanges); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8945,7 +9420,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[98].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchResponse_XFound); i {
+			switch v := v.(*XListFetchResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8957,7 +9432,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[99].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchResponse_XMissing); i {
+			switch v := v.(*XListFetchResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8969,7 +9444,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[100].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchResponse_XFound_XValuesWithScores); i {
+			switch v := v.(*XListLengthResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8981,7 +9456,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[101].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetFetchResponse_XFound_XValues); i {
+			switch v := v.(*XListLengthResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -8993,7 +9468,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[102].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart); i {
+			switch v := v.(*XSortedSetFetchRequest_XByIndex); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9005,7 +9480,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[103].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetScoreResponse_XSortedSetFound); i {
+			switch v := v.(*XSortedSetFetchRequest_XByScore); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9017,7 +9492,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[104].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetScoreResponse_XSortedSetMissing); i {
+			switch v := v.(*XSortedSetFetchRequest_XByScore_XScore); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9029,7 +9504,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[105].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetRemoveRequest_XAll); i {
+			switch v := v.(*XSortedSetFetchResponse_XFound); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9041,7 +9516,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[106].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetRemoveRequest_XSome); i {
+			switch v := v.(*XSortedSetFetchResponse_XMissing); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9053,7 +9528,7 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[107].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*XSortedSetGetRankResponse_XRankResponsePart); i {
+			switch v := v.(*XSortedSetFetchResponse_XFound_XValuesWithScores); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9065,6 +9540,90 @@ func file_protos_cacheclient_proto_init() {
 			}
 		}
 		file_protos_cacheclient_proto_msgTypes[108].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetFetchResponse_XFound_XValues); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[109].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[110].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetGetScoreResponse_XSortedSetFound); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[111].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetGetScoreResponse_XSortedSetMissing); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[112].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetRemoveRequest_XAll); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[113].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetRemoveRequest_XSome); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[114].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*XSortedSetGetRankResponse_XRankResponsePart); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_cacheclient_proto_msgTypes[115].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*XSortedSetGetRankResponse_XSortedSetMissing); i {
 			case 0:
 				return &v.state
@@ -9081,106 +9640,116 @@ func file_protos_cacheclient_proto_init() {
 		(*XSetIfNotExistsResponse_Stored)(nil),
 		(*XSetIfNotExistsResponse_NotStored)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[11].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[12].OneofWrappers = []interface{}{
+		(*XUpdateTtlRequest_IncreaseToMilliseconds)(nil),
+		(*XUpdateTtlRequest_DecreaseToMilliseconds)(nil),
+		(*XUpdateTtlRequest_OverwriteToMilliseconds)(nil),
+	}
+	file_protos_cacheclient_proto_msgTypes[13].OneofWrappers = []interface{}{
+		(*XUpdateTtlResponse_Set)(nil),
+		(*XUpdateTtlResponse_NotSet)(nil),
+		(*XUpdateTtlResponse_Missing)(nil),
+	}
+	file_protos_cacheclient_proto_msgTypes[15].OneofWrappers = []interface{}{
 		(*XDictionaryGetResponse_Found)(nil),
 		(*XDictionaryGetResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[14].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[18].OneofWrappers = []interface{}{
 		(*XDictionaryFetchResponse_Found)(nil),
 		(*XDictionaryFetchResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[19].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[23].OneofWrappers = []interface{}{
 		(*XDictionaryDeleteRequest_Some_)(nil),
 		(*XDictionaryDeleteRequest_All_)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[22].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[26].OneofWrappers = []interface{}{
 		(*XSetFetchResponse_Found)(nil),
 		(*XSetFetchResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[25].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[29].OneofWrappers = []interface{}{
 		(*XSetDifferenceRequest_Minuend)(nil),
 		(*XSetDifferenceRequest_Subtrahend)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[26].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[30].OneofWrappers = []interface{}{
 		(*XSetDifferenceResponse_Found)(nil),
 		(*XSetDifferenceResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[28].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[32].OneofWrappers = []interface{}{
 		(*XSetContainsResponse_Found)(nil),
 		(*XSetContainsResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[38].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[42].OneofWrappers = []interface{}{
 		(*XListPopFrontResponse_Found)(nil),
 		(*XListPopFrontResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[40].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[44].OneofWrappers = []interface{}{
 		(*XListPopBackResponse_Found)(nil),
 		(*XListPopBackResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[42].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[46].OneofWrappers = []interface{}{
 		(*XListEraseRequest_Some)(nil),
 		(*XListEraseRequest_All)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[44].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[48].OneofWrappers = []interface{}{
 		(*XListRemoveRequest_AllElementsWithValue)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[47].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[51].OneofWrappers = []interface{}{
 		(*XListFetchRequest_UnboundedStart)(nil),
 		(*XListFetchRequest_InclusiveStart)(nil),
 		(*XListFetchRequest_UnboundedEnd)(nil),
 		(*XListFetchRequest_ExclusiveEnd)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[48].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[52].OneofWrappers = []interface{}{
 		(*XListRetainRequest_UnboundedStart)(nil),
 		(*XListRetainRequest_InclusiveStart)(nil),
 		(*XListRetainRequest_UnboundedEnd)(nil),
 		(*XListRetainRequest_ExclusiveEnd)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[50].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[54].OneofWrappers = []interface{}{
 		(*XListFetchResponse_Found)(nil),
 		(*XListFetchResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[52].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[56].OneofWrappers = []interface{}{
 		(*XListLengthResponse_Found)(nil),
 		(*XListLengthResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[56].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[60].OneofWrappers = []interface{}{
 		(*XSortedSetFetchRequest_ByIndex)(nil),
 		(*XSortedSetFetchRequest_ByScore)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[57].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[61].OneofWrappers = []interface{}{
 		(*XSortedSetFetchResponse_Found)(nil),
 		(*XSortedSetFetchResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[59].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[63].OneofWrappers = []interface{}{
 		(*XSortedSetGetScoreResponse_Found)(nil),
 		(*XSortedSetGetScoreResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[60].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[64].OneofWrappers = []interface{}{
 		(*XSortedSetRemoveRequest_All)(nil),
 		(*XSortedSetRemoveRequest_Some)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[65].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[69].OneofWrappers = []interface{}{
 		(*XSortedSetGetRankResponse_ElementRank)(nil),
 		(*XSortedSetGetRankResponse_Missing)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[78].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[85].OneofWrappers = []interface{}{
 		(*XSetDifferenceRequest_XSubtrahend_Set)(nil),
 		(*XSetDifferenceRequest_XSubtrahend_Identity)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[95].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[102].OneofWrappers = []interface{}{
 		(*XSortedSetFetchRequest_XByIndex_UnboundedStart)(nil),
 		(*XSortedSetFetchRequest_XByIndex_InclusiveStartIndex)(nil),
 		(*XSortedSetFetchRequest_XByIndex_UnboundedEnd)(nil),
 		(*XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[96].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[103].OneofWrappers = []interface{}{
 		(*XSortedSetFetchRequest_XByScore_UnboundedMin)(nil),
 		(*XSortedSetFetchRequest_XByScore_MinScore)(nil),
 		(*XSortedSetFetchRequest_XByScore_UnboundedMax)(nil),
 		(*XSortedSetFetchRequest_XByScore_MaxScore)(nil),
 	}
-	file_protos_cacheclient_proto_msgTypes[98].OneofWrappers = []interface{}{
+	file_protos_cacheclient_proto_msgTypes[105].OneofWrappers = []interface{}{
 		(*XSortedSetFetchResponse_XFound_ValuesWithScores)(nil),
 		(*XSortedSetFetchResponse_XFound_Values)(nil),
 	}
@@ -9190,7 +9759,7 @@ func file_protos_cacheclient_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_protos_cacheclient_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   109,
+			NumMessages:   116,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
