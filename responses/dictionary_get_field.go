@@ -1,9 +1,12 @@
 package responses
 
+// DictionaryGetFieldResponse is a base response type for a dictionary field request.
 type DictionaryGetFieldResponse interface {
 	isDictionaryGetFieldResponse()
 }
 
+// DictionaryGetFieldHit Indicates that the requested data was successfully retrieved from the cache.  Provides
+// `Value*` accessors to retrieve the data in the appropriate format.
 type DictionaryGetFieldHit struct {
 	field []byte
 	body  []byte
@@ -11,36 +14,44 @@ type DictionaryGetFieldHit struct {
 
 func (DictionaryGetFieldHit) isDictionaryGetFieldResponse() {}
 
+// FieldString returns the field name for the retrieved element, as an utf-8 string decoded from the underlying byte array.
 func (resp DictionaryGetFieldHit) FieldString() string {
 	return string(resp.field)
 }
 
+// FieldByte returns the field name for the retrieved element, as a byte array.
 func (resp DictionaryGetFieldHit) FieldByte() []byte {
 	return resp.field
 }
 
+// ValueString returns the data as a utf-8 string, decoded from the underlying byte array.
 func (resp DictionaryGetFieldHit) ValueString() string {
 	return string(resp.body)
 }
 
+// ValueByte returns the data as a byte array.
 func (resp DictionaryGetFieldHit) ValueByte() []byte {
 	return resp.body
 }
 
+// DictionaryGetFieldMiss indicates that the requested data was not available in the cache.
 type DictionaryGetFieldMiss struct {
 	field []byte
 }
 
 func (DictionaryGetFieldMiss) isDictionaryGetFieldResponse() {}
 
+// FieldString returns the field name for the retrieved element, as an utf-8 string decoded from the underlying byte array.
 func (resp DictionaryGetFieldMiss) FieldString() string {
 	return string(resp.field)
 }
 
+// FieldByte returns the field name for the retrieved element, as a byte array.
 func (resp DictionaryGetFieldMiss) FieldByte() []byte {
 	return resp.field
 }
 
+// NewDictionaryGetFieldHit returns a new DictionaryGetFieldHit contains field and body.
 func NewDictionaryGetFieldHit(field []byte, body []byte) *DictionaryGetFieldHit {
 	return &DictionaryGetFieldHit{
 		field: field,
@@ -48,10 +59,13 @@ func NewDictionaryGetFieldHit(field []byte, body []byte) *DictionaryGetFieldHit 
 	}
 }
 
+// NewDictionaryGetFieldMiss returns a new DictionaryGetFieldMiss contains field.
 func NewDictionaryGetFieldMiss(field []byte) *DictionaryGetFieldMiss {
 	return &DictionaryGetFieldMiss{field: field}
 }
 
+// NewDictionaryGetFieldHitFromFieldsHit returns a new DictionaryGetFieldHit contains the first field and element's body.
+// This is used specifically to provide a hit response for getting a single dictionary field.
 func NewDictionaryGetFieldHitFromFieldsHit(fieldHit *DictionaryGetFieldsHit) *DictionaryGetFieldHit {
 	return &DictionaryGetFieldHit{
 		field: fieldHit.fields[0],

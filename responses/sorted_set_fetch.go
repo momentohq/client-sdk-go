@@ -25,10 +25,13 @@ type SortedSetFetchHit struct {
 
 func (SortedSetFetchHit) isSortedSetFetchResponse() {}
 
+// NewSortedSetFetchHit returns a new SortedSetFetchHit contains elements.
 func NewSortedSetFetchHit(elements []*SortedSetElement) *SortedSetFetchHit {
 	return &SortedSetFetchHit{elements: elements}
 }
 
+// ValueStringElements returns the elements as an array of objects, each containing a `value` and `score` field.
+// The value is a utf-8 string, decoded from the underlying byte array, and the score is a number.
 func (r SortedSetFetchHit) ValueStringElements() []*SortedSetStringElement {
 	elementsString := make([]*SortedSetStringElement, 0, len(r.elements))
 
@@ -43,6 +46,8 @@ func (r SortedSetFetchHit) ValueStringElements() []*SortedSetStringElement {
 	return elementsString
 }
 
+// ValueByteElements returns the elements as an array of objects, each containing a `value` and `score` field.
+// The value is a byte array, and the score is a number.
 func (r SortedSetFetchHit) ValueByteElements() []*SortedSetElement {
 	return r.elements
 }

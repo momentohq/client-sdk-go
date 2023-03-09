@@ -1,13 +1,16 @@
 package responses
 
+// CreateCacheResponse is a base response type for a create cache request.
 type CreateCacheResponse interface {
 	isCreateCacheResponse()
 }
 
+// CreateCacheSuccess indicates a successful create cache request.
 type CreateCacheSuccess struct{}
 
 func (CreateCacheSuccess) isCreateCacheResponse() {}
 
+// CreateCacheAlreadyExists indicates that the cache already exists, so there was nothing to do.
 type CreateCacheAlreadyExists struct{}
 
 func (CreateCacheAlreadyExists) isCreateCacheResponse() {}
