@@ -13,7 +13,7 @@ type IncreaseTtlRequest struct {
 	CacheName string
 	// string or byte key to be used to store item.
 	Key Key
-	// Time to live that you want to increase in cache in seconds.
+	// Time to live that you want to increase to.
 	Ttl time.Duration
 
 	grpcRequest  *pb.XUpdateTtlRequest
@@ -27,7 +27,7 @@ func (r *IncreaseTtlRequest) key() Key { return r.Key }
 
 func (r *IncreaseTtlRequest) updateTtl() time.Duration { return r.Ttl }
 
-func (r *IncreaseTtlRequest) requestName() string { return "UpdateTtl" }
+func (r *IncreaseTtlRequest) requestName() string { return "IncreaseTtl" }
 
 func (r *IncreaseTtlRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
