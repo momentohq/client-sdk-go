@@ -1,17 +1,17 @@
 package responses
 
 type DecreaseTtlResponse interface {
-	isUpdateTtlResponse()
+	isDecreaseTtlResponse()
 }
 
 type DecreaseTtlNotSet struct{}
 
-func (*DecreaseTtlNotSet) isUpdateTtlResponse() {}
+func (*DecreaseTtlNotSet) isDecreaseTtlResponse() {}
 
 type DecreaseTtlMiss struct{}
 
-func (*DecreaseTtlMiss) isUpdateTtlResponse() {}
+func (*DecreaseTtlMiss) isDecreaseTtlResponse() {}
 
 type DecreaseTtlSet struct{}
 
-func (*DecreaseTtlSet) isUpdateTtlResponse() {}
+func (*DecreaseTtlSet) isDecreaseTtlResponse() {}

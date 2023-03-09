@@ -18,7 +18,7 @@ type IncreaseTtlRequest struct {
 
 	grpcRequest  *pb.XUpdateTtlRequest
 	grpcResponse *pb.XUpdateTtlResponse
-	response     responses.UpdateTtlResponse
+	response     responses.IncreaseTtlResponse
 }
 
 func (r *IncreaseTtlRequest) cacheName() string { return r.CacheName }

@@ -355,7 +355,7 @@ var _ = Describe("Scalar methods", func() {
 				}),
 			).To(BeAssignableToTypeOf(&DecreaseTtlSet{}))
 
-			time.Sleep(sharedContext.DefaultTtl)
+			time.Sleep(2 * time.Second)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
