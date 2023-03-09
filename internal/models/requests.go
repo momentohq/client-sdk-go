@@ -23,6 +23,10 @@ type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 }
 
+type PingGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+}
+
 type LocalDataGrpcManagerRequest struct {
 	Endpoint string
 }
@@ -51,6 +55,11 @@ type DataClientRequest struct {
 }
 
 type PubSubClientRequest struct {
+	Configuration      config.Configuration
+	CredentialProvider auth.CredentialProvider
+}
+
+type PingClientRequest struct {
 	Configuration      config.Configuration
 	CredentialProvider auth.CredentialProvider
 }

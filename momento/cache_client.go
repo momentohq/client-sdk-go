@@ -62,6 +62,8 @@ type CacheClient interface {
 	IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error)
 	DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error)
 
+	Ping(ctx context.Context) (responses.PingResponse, error)
+
 	Close()
 }
 
@@ -70,6 +72,7 @@ type defaultScsClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
+	pingClient         *services.ScsPingClient
 }
 
 type CacheClientProps struct {
@@ -86,7 +89,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		DefaultTtl:         defaultTtl,
 	}
 	if props.Configuration.GetClientSideTimeout() < 1 {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultScsClient{
 		credentialProvider: props.CredentialProvider,
@@ -117,8 +120,17 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
+	pingClient, err := services.NewScsPingClient(&models.PingClientRequest{
+		Configuration:      props.Configuration,
+		CredentialProvider: props.CredentialProvider,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
 	client.dataClient = dataClient
 	client.controlClient = controlClient
+	client.pingClient = pingClient
 
 	return client, nil
 }
@@ -476,6 +488,13 @@ func (c defaultScsClient) DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c defaultScsClient) Ping(ctx context.Context) (responses.PingResponse, error) {
+	if err := c.pingClient.Ping(ctx); err != nil {
+		return nil, err
+	}
+	return &responses.PingSuccess{}, nil
 }
 
 func (c defaultScsClient) Close() {
