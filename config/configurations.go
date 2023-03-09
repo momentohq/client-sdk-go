@@ -8,34 +8,34 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
-	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
-	if len(loggerFactory) != 0 {
-		defaultLoggerFactory = loggerFactory[0]
-	}
+func LaptopLatest() Configuration {
+	return LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+}
+
+func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
-		LoggerFactory: defaultLoggerFactory,
+		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 5 * time.Second,
 			}),
 		}),
-		RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(loggerFactory),
 	})
 }
 
-func InRegionLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
-	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
-	if len(loggerFactory) != 0 {
-		defaultLoggerFactory = loggerFactory[0]
-	}
+func InRegionLatest() Configuration {
+	return InRegionLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+}
+
+func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
-		LoggerFactory: defaultLoggerFactory,
+		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 1100 * time.Millisecond,
 			}),
 		}),
-		RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(loggerFactory),
 	})
 }
