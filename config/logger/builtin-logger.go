@@ -8,7 +8,7 @@ import (
 
 type BuiltinMomentoLogger struct {
 	loggerName string
-	level      loggerLevel
+	level      LogLevel
 }
 
 func (l *BuiltinMomentoLogger) Trace(message string, args ...string) {
@@ -41,7 +41,7 @@ func (l *BuiltinMomentoLogger) Error(message string, args ...string) {
 	}
 }
 
-func momentoLog(level loggerLevel, loggerName string, message string, args ...string) {
+func momentoLog(level LogLevel, loggerName string, message string, args ...string) {
 	if len(args) > 0 {
 		log.Printf("[%s] %d (%s): %s, %s\n", time.RFC3339, level, loggerName, message, strings.Join(args, ", "))
 	} else {
@@ -49,14 +49,13 @@ func momentoLog(level loggerLevel, loggerName string, message string, args ...st
 	}
 }
 
-type BuiltinMomentoLoggerFactory struct {
-}
+type BuiltinMomentoLoggerFactory struct{}
 
 func NewBuiltinMomentoLoggerFactory() MomentoLoggerFactory {
 	return &BuiltinMomentoLoggerFactory{}
 }
 
-func (*BuiltinMomentoLoggerFactory) GetLogger(loggerName string, level loggerLevel) MomentoLogger {
+func (BuiltinMomentoLoggerFactory) GetLogger(loggerName string, level LogLevel) MomentoLogger {
 	log.SetFlags(0)
 	return &BuiltinMomentoLogger{loggerName: loggerName, level: level}
 }

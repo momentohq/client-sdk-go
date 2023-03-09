@@ -1,13 +1,13 @@
 package logger
 
-type loggerLevel int
+type LogLevel int
 
 const (
-	TRACE loggerLevel = 5
-	DEBUG loggerLevel = 10
-	INFO  loggerLevel = 20
-	WARN  loggerLevel = 30
-	ERROR loggerLevel = 40
+	TRACE LogLevel = 5
+	DEBUG LogLevel = 10
+	INFO  LogLevel = 20
+	WARN  LogLevel = 30
+	ERROR LogLevel = 40
 )
 
 type MomentoLogger interface {
@@ -19,5 +19,5 @@ type MomentoLogger interface {
 }
 
 type MomentoLoggerFactory interface {
-	GetLogger(loggerName string, logLevel loggerLevel) MomentoLogger
+	GetLogger(loggerName string, logLevel LogLevel) MomentoLogger
 }
