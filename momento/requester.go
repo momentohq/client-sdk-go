@@ -79,6 +79,10 @@ type hasCollectionTtl interface {
 	collectionTtl() *utils.CollectionTtl
 }
 
+type hasUpdateTtl interface {
+	updateTtl() time.Duration
+}
+
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {
 	return convertMomentoSvcErrorToCustomerError(
 		momentoerrors.NewMomentoSvcErr(errorCode, errorMessage, originalError),
@@ -189,6 +193,13 @@ func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
 		)
 	}
 	return uint64(ttl.Milliseconds()), nil
+}
+
+func prepareUpdateTtl(r hasUpdateTtl) (uint64, error) {
+	if r.updateTtl() <= time.Duration(0) {
+		return 0, buildError(momentoerrors.InvalidArgumentError, "updateTtl must be a non-zero positive value", nil)
+	}
+	return uint64(r.updateTtl().Milliseconds()), nil
 }
 
 func momentoValuesToPrimitiveByteList(values []Value) ([][]byte, error) {

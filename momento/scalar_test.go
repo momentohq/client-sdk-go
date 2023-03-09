@@ -272,4 +272,214 @@ var _ = Describe("Scalar methods", func() {
 			Entry("mixed", []Key{String("nope"), String("#1")}, []bool{false, true}),
 		)
 	})
+
+	Describe(`UpdateTtl`, func() {
+		It(`Overwrites Ttl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       6 * time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&UpdateTtlSet{}))
+
+			time.Sleep(sharedContext.DefaultTtl)
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+		})
+
+		It(`Increases Ttl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+					Ttl:       2 * time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       3 * time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&IncreaseTtlSet{}))
+
+			time.Sleep(2 * time.Second)
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetHit{}))
+		})
+
+		It(`Decreases Ttl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       2 * time.Second,
+				}),
+			).To(BeAssignableToTypeOf(&DecreaseTtlSet{}))
+
+			time.Sleep(2 * time.Second)
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		})
+
+		It(`Returns InvalidArgumentError with negative or zero Ttl value for UpdateTtl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       0,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       -1,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+		It(`Returns InvalidArgumentError with negative or zero Ttl value for IncreaseTtl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       0,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       -1,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+		It(`Returns InvalidArgumentError with negative or zero Ttl value for DecreaseTtl`, func() {
+			key := String("key")
+			value := String("value")
+
+			Expect(
+				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Value:     value,
+				}),
+			).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			Expect(
+				sharedContext.Client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       0,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+					Ttl:       -1,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+		It(`Returns UpdateTtlMiss when a key doesn't exist`, func() {
+			Expect(
+				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       String("test-update-ttl-miss"),
+					Ttl:       sharedContext.DefaultTtl,
+				}),
+			).To(BeAssignableToTypeOf(&UpdateTtlMiss{}))
+		})
+
+		It(`Returns IncreaseTtlMiss when a key doesn't exist`, func() {
+			Expect(
+				sharedContext.Client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       String("test-increase-ttl-miss"),
+					Ttl:       sharedContext.DefaultTtl,
+				}),
+			).To(BeAssignableToTypeOf(&IncreaseTtlMiss{}))
+		})
+
+		It(`Returns DecreaseTtlMiss when a key doesn't exist`, func() {
+			Expect(
+				sharedContext.Client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       String("test-decrease-ttl-miss"),
+					Ttl:       sharedContext.DefaultTtl,
+				}),
+			).To(BeAssignableToTypeOf(&DecreaseTtlMiss{}))
+		})
+	})
 })
