@@ -60,7 +60,7 @@ func (r *DecreaseTtlRequest) makeGrpcRequest(metadata context.Context, client sc
 func (r *DecreaseTtlRequest) interpretGrpcResponse() error {
 	grpcResp := r.grpcResponse
 
-	var resp responses.UpdateTtlResponse
+	var resp responses.DecreaseTtlResponse
 	switch grpcResp.Result.(type) {
 	case *pb.XUpdateTtlResponse_NotSet:
 		resp = &responses.DecreaseTtlNotSet{}
