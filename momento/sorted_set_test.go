@@ -257,14 +257,14 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It(`It errors when ByIndex and ByScore are defined`, func() {
+			It(`It errors when ByRank and ByScore are defined`, func() {
 				Expect(
 					sharedContext.Client.SortedSetFetch(
 						sharedContext.Ctx,
 						&SortedSetFetchRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
-							ByIndex:   &SortedSetFetchByIndex{},
+							ByRank:    &SortedSetFetchByRank{},
 							ByScore:   &SortedSetFetchByScore{},
 						},
 					),
@@ -293,7 +293,7 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It(`Constrains by start/end index`, func() {
+			It(`Constrains by start/end rank`, func() {
 				start := int32(1)
 				end := int32(4)
 				Expect(
@@ -303,9 +303,9 @@ var _ = Describe("SortedSet", func() {
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByIndex: &SortedSetFetchByIndex{
-								StartIndex: &start,
-								EndIndex:   &end,
+							ByRank: &SortedSetFetchByRank{
+								StartRank: &start,
+								EndRank:   &end,
 							},
 						},
 					),
@@ -318,7 +318,7 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It(`Counts negative start index inclusive from the end`, func() {
+			It(`Counts negative start rank inclusive from the end`, func() {
 				start := int32(-3)
 				Expect(
 					sharedContext.Client.SortedSetFetch(
@@ -327,8 +327,8 @@ var _ = Describe("SortedSet", func() {
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByIndex: &SortedSetFetchByIndex{
-								StartIndex: &start,
+							ByRank: &SortedSetFetchByRank{
+								StartRank: &start,
 							},
 						},
 					),
@@ -341,7 +341,7 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It(`Counts negative end index exclusively from the end`, func() {
+			It(`Counts negative end rank exclusively from the end`, func() {
 				end := int32(-3)
 				Expect(
 					sharedContext.Client.SortedSetFetch(
@@ -350,8 +350,8 @@ var _ = Describe("SortedSet", func() {
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByIndex: &SortedSetFetchByIndex{
-								EndIndex: &end,
+							ByRank: &SortedSetFetchByRank{
+								EndRank: &end,
 							},
 						},
 					),

@@ -15,9 +15,9 @@ const (
 	DESCENDING SortedSetOrder = 1
 )
 
-type SortedSetFetchByIndex struct {
-	StartIndex *int32
-	EndIndex   *int32
+type SortedSetFetchByRank struct {
+	StartRank *int32
+	EndRank   *int32
 }
 
 type SortedSetFetchByScore struct {
@@ -31,7 +31,7 @@ type SortedSetFetchRequest struct {
 	CacheName string
 	SetName   string
 	Order     SortedSetOrder
-	ByIndex   *SortedSetFetchByIndex
+	ByRank    *SortedSetFetchByRank
 	ByScore   *SortedSetFetchByScore
 
 	grpcRequest  *pb.XSortedSetFetchRequest
@@ -50,10 +50,10 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	if r.ByIndex != nil && r.ByScore != nil {
+	if r.ByRank != nil && r.ByScore != nil {
 		return NewMomentoError(
 			InvalidArgumentError,
-			"Only one of ByIndex or ByScore may be specified",
+			"Only one of ByRank or ByScore may be specified",
 			nil,
 		)
 	}
@@ -110,16 +110,16 @@ func (r *SortedSetFetchRequest) initGrpcRequest(scsDataClient) error {
 			},
 		}
 
-		if r.ByIndex != nil {
-			if r.ByIndex.StartIndex != nil {
+		if r.ByRank != nil {
+			if r.ByRank.StartRank != nil {
 				by_index.ByIndex.Start = &pb.XSortedSetFetchRequest_XByIndex_InclusiveStartIndex{
-					InclusiveStartIndex: *r.ByIndex.StartIndex,
+					InclusiveStartIndex: *r.ByRank.StartRank,
 				}
 			}
 
-			if r.ByIndex.EndIndex != nil {
+			if r.ByRank.EndRank != nil {
 				by_index.ByIndex.End = &pb.XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex{
-					ExclusiveEndIndex: *r.ByIndex.EndIndex,
+					ExclusiveEndIndex: *r.ByRank.EndRank,
 				}
 			}
 		}
