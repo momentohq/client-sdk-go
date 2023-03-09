@@ -58,6 +58,10 @@ type CacheClient interface {
 	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error)
 	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error)
 
+	UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (responses.UpdateTtlResponse, error)
+	IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error)
+	DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error)
+
 	Ping(ctx context.Context) (responses.PingResponse, error)
 
 	Close()
@@ -459,6 +463,27 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 }
 
 func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (responses.UpdateTtlResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
