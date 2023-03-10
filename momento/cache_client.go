@@ -16,52 +16,96 @@ import (
 )
 
 type CacheClient interface {
+	// CreateCache Creates a cache if it does not exist.
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error)
+	// DeleteCache deletes a cache and all the items within it.
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error)
+	// ListCaches lists all caches.
 	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
+	// Set sets the value in cache with a given time to live (TTL)
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
+	// Get gets the cache value stored for the given key.
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
+	// Delete removes the key from the cache.
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
+	// KeysExist checks if provided keys exist in the cache.
 	KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error)
 
+	// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
+	// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
+	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
+	// SortedSetGetScores looks up the scores of multiple elements in the sorted set, by the value of the elements.
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
+	// SortedSetRemoveElements removes elements from the sorted set.
 	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
+	// SortedSetGetRank looks up the rank of an element in the sorted set, by the value of the element.
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
+	// SortedSetIncrementScore increments the score of an element in the sorted set.
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
 
+	// SetAddElement adds an element to the given set. Creates the set if it does not already exist.
 	SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error)
+	// SetAddElements adds multiple elements to the given set. Creates the set if it does not already exist.
 	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error)
+	// SetFetch fetches the requested set.
 	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
+	// SetRemoveElement removes an element from the given set.
 	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)
+	// SetRemoveElements removes multiple elements from the set.
 	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error)
+	// SetContainsElements checks if provided elements are in the given set.
 	SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error)
 
+	// ListPushFront adds an element to the front of the given list. Creates the list if it does not already exist.
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
+	// ListPushBack adds an element to the back of the given list. Creates the list if it does not already exist.
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error)
+	// ListPopFront gets and removes the first value from the given list.
 	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error)
+	// ListPopBack gets and removes the last value from the given list.
 	ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error)
+	// ListConcatenateFront adds multiple elements to the front of the given list. Creates the list if it does not already exist.
 	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error)
+	// ListConcatenateBack adds multiple elements to the back of the given list. Creates the list if it does not already exist.
 	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error)
+	// ListFetch fetches all elements of the given list.
 	ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error)
+	// ListLength gets the number of elements in the given list.
 	ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error)
+	// ListRemoveValue removes all elements from the given list equal to the given value.
 	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error)
 
+	// DictionarySetField adds an element to the given dictionary. Creates the dictionary if it does not already exist.
 	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error)
+	// DictionarySetFields adds multiple elements to the given dictionary. Creates the dictionary if it does not already exist.
 	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
+	// DictionaryFetch fetches all elements of the given dictionary.
 	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error)
+	// DictionaryGetField gets the value stored for the given dictionary and field.
 	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error)
+	// DictionaryGetFields gets multiple values from the given dictionary.
 	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error)
+	// DictionaryIncrement adds an integer quantity to a dictionary value.
+	// Incrementing the value of a missing field sets the value to amount.
 	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error)
+	// DictionaryRemoveField removes an element from the given dictionary.
+	// Performs a no-op if the dictionary or field does not exist.
 	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error)
+	// DictionaryRemoveFields removes multiple fields from the given dictionary.
+	// Performs a no-op if the dictionary or fields do not exist.
 	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error)
 
+	// UpdateTtl overwrites the TTL for key to the provided value.
 	UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (responses.UpdateTtlResponse, error)
+	// IncreaseTtl sets the TTL for a key to the provided value only if it would increase the existing TTL.
 	IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error)
+	// DecreaseTtl sets the TTL for a key to the provided value only if it would decrease the existing TTL.
 	DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error)
 
+	// Ping pings the cache endpoint to check if the service is up and running.
 	Ping(ctx context.Context) (responses.PingResponse, error)
 
 	Close()
@@ -138,7 +182,6 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 	return client, nil
 }
 
-// CreateCache Creates a cache if it does not exist.
 func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
@@ -155,7 +198,6 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 	return &responses.CreateCacheSuccess{}, nil
 }
 
-// DeleteCache deletes a cache and all of the items within it.
 func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error) {
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
@@ -172,7 +214,6 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	return &responses.DeleteCacheSuccess{}, nil
 }
 
-// ListCaches lists all caches.
 func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error) {
 	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
 		NextToken: request.NextToken,
@@ -183,7 +224,6 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
 }
 
-// Set sets the value in cache with a given time to live (TTL)
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -191,7 +231,6 @@ func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.Set
 	return r.response, nil
 }
 
-// Get gets the cache value stored for the given key.
 func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -199,7 +238,6 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.Get
 	return r.response, nil
 }
 
-// Delete removes the key from the cache.
 func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -207,7 +245,6 @@ func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (respons
 	return r.response, nil
 }
 
-// KeysExist checks if provided keys exist in the cache.
 func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -215,7 +252,6 @@ func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (r
 	return r.response, nil
 }
 
-// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -223,8 +259,6 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 	return r.response, nil
 }
 
-// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
-// its score is updated. Creates the sorted set if it does not exist.
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -232,7 +266,6 @@ func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSet
 	return r.response, nil
 }
 
-// SortedSetGetScores looks up the scores of multiple elements in the sorted set, by the value of the elements.
 func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -240,7 +273,6 @@ func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGe
 	return r.response, nil
 }
 
-// SortedSetRemoveElements removes elements from the sorted set
 func (c defaultScsClient) SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -248,7 +280,6 @@ func (c defaultScsClient) SortedSetRemoveElements(ctx context.Context, r *Sorted
 	return r.response, nil
 }
 
-// SortedSetGetRank looks up the rank of an element in the sorted set, by the value of the element.
 func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -256,7 +287,6 @@ func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetR
 	return r.response, nil
 }
 
-// SortedSetIncrementScore increments the score of an element in the sorted set.
 func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -264,15 +294,6 @@ func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *Sorted
 	return r.response, nil
 }
 
-// SetAddElements adds multiple elements to the given set. Creates the set if it does not already exist.
-func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, r); err != nil {
-		return nil, err
-	}
-	return r.response, nil
-}
-
-// SetAddElement adds an element to the given set. Creates the set if it does not already exist.
 func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error) {
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
@@ -286,7 +307,13 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	return &responses.SetAddElementSuccess{}, nil
 }
 
-// SetFetch fetches the requested set.
+func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
 func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -294,15 +321,6 @@ func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (res
 	return r.response, nil
 }
 
-// SetRemoveElements removes multiple elements from the set.
-func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, r); err != nil {
-		return nil, err
-	}
-	return r.response, nil
-}
-
-// SetRemoveElement removes an element from the given set.
 func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error) {
 	newRequest := &SetRemoveElementsRequest{
 		CacheName: r.CacheName,
@@ -315,7 +333,13 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 	return &responses.SetRemoveElementSuccess{}, nil
 }
 
-// SetContainsElements checks if provided elements are in the given set.
+func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
 func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -323,7 +347,6 @@ func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContain
 	return r.response, nil
 }
 
-// ListPushFront adds an element to the front of the given list. Creates the list if it does not already exist.
 func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -331,7 +354,6 @@ func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontReq
 	return r.response, nil
 }
 
-// ListPushBack adds an element to the back of the given list. Creates the list if it does not already exist.
 func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -339,7 +361,6 @@ func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackReque
 	return r.response, nil
 }
 
-// ListPopFront gets and removes the first value from the given list.
 func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -347,7 +368,6 @@ func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontReque
 	return r.response, nil
 }
 
-// ListPopBack gets and removes the last value from the given list.
 func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -355,7 +375,6 @@ func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest
 	return r.response, nil
 }
 
-// ListConcatenateFront adds multiple elements to the front of the given list. Creates the list if it does not already exist.
 func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -363,7 +382,6 @@ func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConca
 	return r.response, nil
 }
 
-// ListConcatenateBack adds multiple elements to the back of the given list. Creates the list if it does not already exist.
 func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -371,7 +389,6 @@ func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcat
 	return r.response, nil
 }
 
-// ListFetch fetches all elements of the given list.
 func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -379,7 +396,6 @@ func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (r
 	return r.response, nil
 }
 
-// ListLength gets the number of elements in the given list.
 func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -387,7 +403,6 @@ func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) 
 	return r.response, nil
 }
 
-// ListRemoveValue removes all elements from the given list equal to the given value.
 func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -395,7 +410,6 @@ func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValu
 	return r.response, nil
 }
 
-// DictionarySetField adds an element to the given dictionary. Creates the dictionary if it does not already exist.
 func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error) {
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
@@ -422,7 +436,6 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 	return &responses.DictionarySetFieldSuccess{}, nil
 }
 
-// DictionarySetFields adds multiple elements to the given dictionary. Creates the dictionary if it does not already exist.
 func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -430,7 +443,6 @@ func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *Dictionary
 	return r.response, nil
 }
 
-// DictionaryFetch fetches all elements of the given dictionary.
 func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -438,7 +450,6 @@ func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetc
 	return r.response, nil
 }
 
-// DictionaryGetField gets the value stored for the given dictionary and field.
 func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error) {
 	newRequest := &DictionaryGetFieldsRequest{
 		CacheName:      r.CacheName,
@@ -465,7 +476,6 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 	}
 }
 
-// DictionaryGetFields gets multiple values from the given dictionary.
 func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -473,8 +483,6 @@ func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *Dictionary
 	return r.response, nil
 }
 
-// DictionaryIncrement adds an integer quantity to a dictionary value.
-// Incrementing the value of a missing field sets the value to amount.
 func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -482,8 +490,6 @@ func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *Dictionary
 	return r.response, nil
 }
 
-// DictionaryRemoveField removes an element from the given dictionary.
-// Performs a no-op if the dictionary or field does not exist.
 func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error) {
 	if r.Field == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
@@ -503,8 +509,6 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 	return &responses.DictionaryRemoveFieldSuccess{}, nil
 }
 
-// DictionaryRemoveFields removes multiple fields from the given dictionary.
-// Performs a no-op if the dictionary or fields do not exist.
 func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -512,7 +516,6 @@ func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *Diction
 	return r.response, nil
 }
 
-// UpdateTtl overwrites the TTL for key to the provided value.
 func (c defaultScsClient) UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (responses.UpdateTtlResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -520,7 +523,6 @@ func (c defaultScsClient) UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (r
 	return r.response, nil
 }
 
-// IncreaseTtl sets the TTL for a key to the provided value only if it would increase the existing TTL.
 func (c defaultScsClient) IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -528,7 +530,6 @@ func (c defaultScsClient) IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest
 	return r.response, nil
 }
 
-// DecreaseTtl sets the TTL for a key to the provided value only if it would decrease the existing TTL.
 func (c defaultScsClient) DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -536,7 +537,6 @@ func (c defaultScsClient) DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest
 	return r.response, nil
 }
 
-// Ping pings the cache endpoint to check if the service is up and running.
 func (c defaultScsClient) Ping(ctx context.Context) (responses.PingResponse, error) {
 	if err := c.pingClient.Ping(ctx); err != nil {
 		return nil, err
