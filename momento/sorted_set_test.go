@@ -722,45 +722,13 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
-	Describe(`SortedSetPutElement`, func() {
-		// TODO
-		/*
-			It(`Puts an element with a string value`, func() {
-				resp, err := sharedContext.Client.SortedSetPutElement(
-					sharedContext.Ctx,
-					&SortedSetPutElementRequest{
-						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
-						Value:     String("aValue"),
-						Score:     42,
-					})
-				Expect(err).To(BeNil())
-				Expect(resp).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
-
-				fetchResp, fetchErr := sharedContext.Client.SortedSetFetch(
-					sharedContext.Ctx,
-					&SortedSetFetchRequest{
-						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
-					},
-				)
-				Expect(fetchErr).To(BeNil())
-				switch fetchResp := fetchResp.(type) {
-				case *SortedSetFetchHit:
-					Expect(fetchResp.elements).To(Equal(
-						[]SortedSetElement{
-							&SortedSetElement{Value: "aValue", Score: 42},
-						},
-					))
-				}
-			})*/
-	})
-
 	Describe(`SortedSetPutElements`, func() {
 		// TODO: add tests for SortedSetPutElements
 	})
 
-	Describe(`SortedSetRemove`, func() {
+	// TODO: SortedSetRemoveElement
+
+	Describe(`SortedSetRemoveElements`, func() {
 		It(`Succeeds when the element does not exist`, func() {
 			Expect(
 				sharedContext.Client.SortedSetRemoveElements(
@@ -771,7 +739,7 @@ var _ = Describe("SortedSet", func() {
 						Values:    []Value{String("dne")},
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetRemoveSuccess{}))
+			).To(BeAssignableToTypeOf(&SortedSetRemoveElementsSuccess{}))
 		})
 
 		It(`Removes elements`, func() {
@@ -794,7 +762,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetRemoveSuccess{}))
+			).To(BeAssignableToTypeOf(&SortedSetRemoveElementsSuccess{}))
 
 			Expect(
 				sharedContext.Client.SortedSetFetch(
