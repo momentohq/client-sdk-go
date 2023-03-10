@@ -46,7 +46,7 @@ const (
 	ServerUnavailableError = "ServerUnavailableError"
 	// FailedPreconditionError occurs when the system is not in a state required for the operation's execution.
 	FailedPreconditionError = "FailedPreconditionError"
-	// InternalServerErrorMessage is the message for an unexpected error occurred while trying to fulfill the request.
+	// InternalServerErrorMessage is the message for an unexpected error occurring while trying to fulfill the request.
 	InternalServerErrorMessage = "CacheService failed with an internal error"
 	// ClientSdkErrorMessage is the message for when SDK Failed to process the request.
 	ClientSdkErrorMessage = "SDK Failed to process the request."
