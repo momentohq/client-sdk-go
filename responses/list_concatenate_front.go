@@ -12,10 +12,12 @@ type ListConcatenateFrontSuccess struct {
 
 func (ListConcatenateFrontSuccess) isListConcatenateFrontResponse() {}
 
+// ListLength returns the length of the given list.
 func (resp ListConcatenateFrontSuccess) ListLength() uint32 {
 	return resp.listLength
 }
 
+// NewListConcatenateFrontSuccess returns a new ListConcatenateFrontSuccess containing the supplied length.
 func NewListConcatenateFrontSuccess(listLength uint32) *ListConcatenateFrontSuccess {
 	return &ListConcatenateFrontSuccess{listLength: listLength}
 }
