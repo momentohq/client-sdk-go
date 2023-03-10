@@ -54,7 +54,11 @@ func (l *DefaultMomentoLogger) Error(message string, args ...string) {
 }
 
 func momentoLog(level LogLevel, loggerName string, message string, args ...string) {
-	finalMessage := fmt.Sprintf(message, args)
+	anyArgs := make([]any, len(args))
+	for i, v := range args {
+		anyArgs[i] = v
+	}
+	finalMessage := fmt.Sprintf(message, anyArgs...)
 	log.Printf("[%s] %d (%s): %s\n", time.RFC3339, level, loggerName, finalMessage)
 }
 
