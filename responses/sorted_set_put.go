@@ -1,6 +1,6 @@
 package responses
 
-type SortedSetPutResponse interface {
+type SortedSetPutElementsResponse interface {
 	isSortedSetPutResponse()
 }
 
