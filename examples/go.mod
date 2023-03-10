@@ -2,7 +2,10 @@ module github.com/momentohq/go-example
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/momentohq/client-sdk-go v0.11.0
+	github.com/momentohq/client-sdk-go v0.14.0
+
+	// logrus is not required to use momento, but it is used in the logging-example
+	github.com/sirupsen/logrus v1.9.0
 )
 
 require (
