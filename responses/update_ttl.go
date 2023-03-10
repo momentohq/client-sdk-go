@@ -1,6 +1,6 @@
 package responses
 
-// UpdateTtlResponse is a base response type for an update ttl request.
+// UpdateTtlResponse is the base response type for an update ttl request.
 type UpdateTtlResponse interface {
 	isUpdateTtlResponse()
 }
