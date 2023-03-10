@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"math"
 	"strings"
 	"sync"
@@ -23,7 +24,7 @@ const (
 )
 
 type loadGeneratorOptions struct {
-	logLevel                   logger.LogLevel
+	logLevel                   momento_default_logger.LogLevel
 	showStatsInterval          time.Duration
 	cacheItemPayloadBytes      int
 	numberOfConcurrentRequests int
@@ -47,7 +48,7 @@ type ErrorCounter struct {
 
 func newLoadGenerator(config config.Configuration, options loadGeneratorOptions) *loadGenerator {
 	loggerFactory := config.GetLoggerFactory()
-	lgLogger := loggerFactory.GetLogger("loadgen", options.logLevel)
+	lgLogger := loggerFactory.GetLogger("loadgen")
 	cacheValue := strings.Repeat("x", options.cacheItemPayloadBytes)
 	return &loadGenerator{
 		loggerFactory:       loggerFactory,
@@ -302,7 +303,7 @@ func main() {
 	ctx := context.Background()
 
 	opts := loadGeneratorOptions{
-		logLevel:                   logger.DEBUG,
+		logLevel:                   momento_default_logger.DEBUG,
 		showStatsInterval:          time.Second * 5,
 		cacheItemPayloadBytes:      100,
 		numberOfConcurrentRequests: 50,
@@ -310,8 +311,7 @@ func main() {
 		howLongToRun:               time.Minute,
 	}
 
-	loggerFactory := logger.NewBuiltinMomentoLoggerFactory()
-	loadGenerator := newLoadGenerator(config.LaptopLatest(loggerFactory), opts)
+	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
 	client, workerDelayBetweenRequests := loadGenerator.init(ctx)
 
 	runStart := time.Now()
