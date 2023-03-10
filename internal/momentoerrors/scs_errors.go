@@ -12,7 +12,7 @@ type MomentoSvcErr interface {
 	OriginalErr() error
 }
 
-// NewMomentoSvcErr returns a new MomentoSvcErr.
+// NewMomentoSvcErr returns a new Momento service error.
 func NewMomentoSvcErr(code string, message string, originalErr error) MomentoSvcErr {
 	return newMomentoSvcErr(code, message, originalErr)
 }
