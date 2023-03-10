@@ -41,9 +41,9 @@ type loadGenerator struct {
 }
 
 type ErrorCounter struct {
-	unavailable   int
-	timeout       int
-	limitExceeded int
+	unavailable   int64
+	timeout       int64
+	limitExceeded int64
 }
 
 func newLoadGenerator(config config.Configuration, options loadGeneratorOptions) *loadGenerator {
@@ -169,45 +169,58 @@ func worker(
 	}
 }
 
-func printStats(gets []int64, sets []int64, errorCounter ErrorCounter) {
-	fmt.Println("================\ncumulative stats:")
-	fmt.Printf("\ttotal requests: %d\n", len(gets)+len(sets))
-
-	fmt.Printf("\tsuccess: %d\n", len(gets)+len(sets))
-	fmt.Printf("\tunavailable: %d\n", errorCounter.unavailable)
-	fmt.Printf("\ttimeout exceeded: %d\n", errorCounter.timeout)
-	fmt.Printf("\tlimit exceeded: %d\n\n", errorCounter.limitExceeded)
-
-	getHisto := hdrhistogram.New(1, 1000, 1)
-	for _, sample := range gets {
-		if err := getHisto.RecordValue(sample); err != nil {
-			panic(err)
-		}
-	}
+func printStats(gets *hdrhistogram.Histogram, sets *hdrhistogram.Histogram, errorCounter ErrorCounter, startTime time.Duration) {
+	totalRequests := gets.TotalCount() + sets.TotalCount() + errorCounter.timeout + errorCounter.unavailable + errorCounter.unavailable
+	totalTps := int(math.Round(
+		float64(totalRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
+	))
+	fmt.Println("==============================\ncumulative stats:")
 	fmt.Printf(
-		"cumulative get latencies:\n\ttotal requests: %d\n\tp50: %d\n\tp90: %d\n\tp99: %d\n\tp99.9: %d\n\tmax: %d\n\n",
-		len(gets),
-		getHisto.ValueAtQuantile(50.0),
-		getHisto.ValueAtQuantile(90.0),
-		getHisto.ValueAtQuantile(99.0),
-		getHisto.ValueAtQuantile(99.9),
-		getHisto.Max(),
+		"%20s: %d (%d tps)\n",
+		"total requests",
+		totalRequests,
+		totalTps,
 	)
 
-	setHisto := hdrhistogram.New(1, 1000, 1)
-	for _, sample := range sets {
-		if err := setHisto.RecordValue(sample); err != nil {
-			panic(err)
-		}
-	}
+	successfulRequests := gets.TotalCount() + sets.TotalCount()
+	successTps := int(math.Round(
+		float64(successfulRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
+	))
+	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "success", successfulRequests, successfulRequests/totalRequests*100, successTps)
+	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", errorCounter.unavailable, errorCounter.unavailable/totalRequests*100)
+	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", errorCounter.timeout, errorCounter.timeout/totalRequests*100)
+	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", errorCounter.limitExceeded, errorCounter.limitExceeded/totalRequests*100)
+
 	fmt.Printf(
-		"cumulative set latencies:\n\ttotal requests: %d\n\tp50: %d\n\tp90: %d\n\tp99: %d\n\tp99.9: %d\n\tmax: %d\n\n",
-		len(sets),
-		setHisto.ValueAtQuantile(50.0),
-		setHisto.ValueAtQuantile(90.0),
-		setHisto.ValueAtQuantile(99.0),
-		setHisto.ValueAtQuantile(99.9),
-		setHisto.Max(),
+		"cumulative get latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
+		"total requests",
+		gets.TotalCount(),
+		"p50",
+		gets.ValueAtQuantile(50.0),
+		"p90",
+		gets.ValueAtQuantile(90.0),
+		"p99",
+		gets.ValueAtQuantile(99.0),
+		"p99.9",
+		gets.ValueAtQuantile(99.9),
+		"max",
+		gets.Max(),
+	)
+
+	fmt.Printf(
+		"cumulative set latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
+		"total requests",
+		sets.TotalCount(),
+		"p50",
+		sets.ValueAtQuantile(50.0),
+		"p90",
+		sets.ValueAtQuantile(90.0),
+		"p99",
+		sets.ValueAtQuantile(99.0),
+		"p99.9",
+		sets.ValueAtQuantile(99.9),
+		"max",
+		sets.Max(),
 	)
 }
 
@@ -222,27 +235,33 @@ func (ec *ErrorCounter) updateErrors(err string) {
 }
 
 func timer(ctx context.Context, getChan chan int64, setChan chan int64, errChan chan string, statsInterval time.Duration) {
-	var getMessages []int64
-	var setMessages []int64
+	getHistogram := hdrhistogram.New(1, 1000, 1)
+	setHistogram := hdrhistogram.New(1, 1000, 1)
 	errorCounter := ErrorCounter{}
 
 	startTime := hrtime.Now()
+	origStartTime := startTime
+
 	for {
 
 		if hrtime.Since(startTime) >= statsInterval {
-			printStats(getMessages, setMessages, errorCounter)
+			printStats(getHistogram, setHistogram, errorCounter, origStartTime)
 			startTime = hrtime.Now()
 		}
 
 		select {
 		case <-ctx.Done():
 			fmt.Println("\n=====> run complete <====")
-			printStats(getMessages, setMessages, errorCounter)
+			printStats(getHistogram, setHistogram, errorCounter, origStartTime)
 			return
 		case getMessage := <-getChan:
-			getMessages = append(getMessages, getMessage)
+			if err := getHistogram.RecordValue(getMessage); err != nil {
+				panic(err)
+			}
 		case setMessage := <-setChan:
-			setMessages = append(setMessages, setMessage)
+			if err := setHistogram.RecordValue(setMessage); err != nil {
+				panic(err)
+			}
 		case errCode := <-errChan:
 			errorCounter.updateErrors(errCode)
 		default:
