@@ -24,16 +24,22 @@ To make development easier, we provide a [Makefile](https://golangdocs.com/makef
 
 Run `make install-devtools`. This will install...
 
-* [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports)
-* [staticcheck](https://staticcheck.io/)
-* [gingko](https://onsi.github.io/ginkgo/) for testing
+- [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports)
+- [staticcheck](https://staticcheck.io/)
+- [gingko](https://onsi.github.io/ginkgo/) for testing
+
+As a post-setup test, run `ginkgo` from the command line. If the program is not found, try adding go to the path as follows:
+
+`export PATH=$PATH:$(go env GOPATH)/bin`
+
+And retry running `ginkgo`. If that works, then add the above line to your shell profile.
 
 ## Developing :computer:
 
 Running `make precommit` will run all formatters, linters, and the tests. Run this before submitting a PR to ensure the code passes tests and follows our project conventions.
 
-* `make test` will just run the tests
-* `make lint` will just run the formatting and linters
+- `make test` will just run the tests
+- `make lint` will just run the formatting and linters
 
 ## Tests :zap:
 
