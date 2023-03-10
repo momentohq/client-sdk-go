@@ -6,9 +6,12 @@ require (
 
 	// logrus is not required to use momento, but it is used in the logging-example
 	github.com/sirupsen/logrus v1.9.0
+	github.com/loov/hrtime v1.0.3
+	github.com/momentohq/client-sdk-go v0.11.0
 )
 
 require (
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	golang.org/x/net v0.7.0 // indirect
