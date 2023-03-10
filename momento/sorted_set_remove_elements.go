@@ -8,23 +8,23 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-type SortedSetRemoveRequest struct {
+type SortedSetRemoveElementsRequest struct {
 	CacheName string
 	SetName   string
 	Values    []Value
 
 	grpcRequest  *pb.XSortedSetRemoveRequest
 	grpcResponse *pb.XSortedSetRemoveResponse
-	response     responses.SortedSetRemoveResponse
+	response     responses.SortedSetRemoveElementsResponse
 }
 
-func (r *SortedSetRemoveRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetRemoveElementsRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetRemoveRequest) requestName() string { return "Sorted set remove" }
+func (r *SortedSetRemoveElementsRequest) requestName() string { return "Sorted set remove" }
 
-func (r *SortedSetRemoveRequest) values() []Value { return r.Values }
+func (r *SortedSetRemoveElementsRequest) values() []Value { return r.Values }
 
-func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetRemoveElementsRequest) initGrpcRequest(scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
@@ -49,7 +49,7 @@ func (r *SortedSetRemoveRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetRemoveRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetRemove(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (r *SortedSetRemoveRequest) makeGrpcRequest(metadata context.Context, clien
 	return resp, nil
 }
 
-func (r *SortedSetRemoveRequest) interpretGrpcResponse() error {
+func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse() error {
 	r.response = &responses.SortedSetRemoveSuccess{}
 	return nil
 }
