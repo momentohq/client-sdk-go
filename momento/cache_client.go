@@ -215,7 +215,7 @@ func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (r
 	return r.response, nil
 }
 
-// SortedSetFetch fetches the elements in the given sorted set by index (rank).
+// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
