@@ -26,9 +26,9 @@ var _ = Describe("SortedSet", func() {
 	// A convenience for adding elements to a sorted set.
 	putElements := func(elements []*SortedSetPutElement) {
 		Expect(
-			sharedContext.Client.SortedSetPut(
+			sharedContext.Client.SortedSetPutElements(
 				sharedContext.Ctx,
-				&SortedSetPutRequest{
+				&SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
 					Elements:  elements,
@@ -84,7 +84,7 @@ var _ = Describe("SortedSet", func() {
 				Score: float64(1),
 			}}
 			Expect(
-				client.SortedSetPut(ctx, &SortedSetPutRequest{
+				client.SortedSetPutElements(ctx, &SortedSetPutElementsRequest{
 					CacheName: cacheName, SetName: collectionName, Elements: putElements,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
@@ -182,7 +182,7 @@ var _ = Describe("SortedSet", func() {
 		),
 		Entry(`SortedSetPut`,
 			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
-				request := &SortedSetPutRequest{
+				request := &SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
 					Elements:  []*SortedSetPutElement{&element},
@@ -192,7 +192,7 @@ var _ = Describe("SortedSet", func() {
 				}
 
 				Expect(
-					sharedContext.Client.SortedSetPut(sharedContext.Ctx, request),
+					sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, request),
 				).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
 			},
 		),
