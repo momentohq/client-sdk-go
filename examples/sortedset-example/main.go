@@ -97,7 +97,7 @@ func setupCache(client momento.CacheClient, ctx context.Context) {
 func displayElements(setName string, resp responses.SortedSetFetchResponse) {
 	switch r := resp.(type) {
 	case *responses.SortedSetFetchHit:
-		for _, e := range r.Elements {
+		for _, e := range r.ValueStringElements() {
 			fmt.Printf("setName: %s, value: %s, score: %f\n", setName, e.Value, e.Score)
 		}
 		fmt.Println("")
