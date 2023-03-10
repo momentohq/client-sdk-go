@@ -32,7 +32,7 @@ func NewFixedCountRetryStrategy(logFactory logger.MomentoLoggerFactory) Strategy
 	return fixedCountRetryStrategy{
 		eligibilityStrategy: DefaultEligibilityStrategy{},
 		maxAttempts:         3,
-		log:                 logFactory.GetLogger("fixed-count-retry-strategy", logger.DEBUG),
+		log:                 logFactory.GetLogger("fixed-count-retry-strategy"),
 	}
 }
 
