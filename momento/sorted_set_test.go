@@ -34,7 +34,7 @@ var _ = Describe("SortedSet", func() {
 					Elements:  elements,
 				},
 			),
-		).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
+		).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
 	}
 
 	// Convenience for fetching elements.
@@ -193,7 +193,7 @@ var _ = Describe("SortedSet", func() {
 
 				Expect(
 					sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, request),
-				).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
+				).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
 			},
 		),
 	)
