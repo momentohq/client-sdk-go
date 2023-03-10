@@ -20,7 +20,7 @@ type SortedSetRemoveElementsRequest struct {
 
 func (r *SortedSetRemoveElementsRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetRemoveElementsRequest) requestName() string { return "Sorted set remove" }
+func (r *SortedSetRemoveElementsRequest) requestName() string { return "Sorted set remove elements" }
 
 func (r *SortedSetRemoveElementsRequest) values() []Value { return r.Values }
 
