@@ -183,7 +183,7 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
 }
 
-// Set sets the value in cache with a given time to live (TTL) seconds
+// Set sets the value in cache with a given time to live (TTL)
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
