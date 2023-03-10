@@ -90,7 +90,7 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
-				client.SortedSetRemove(ctx, &SortedSetRemoveRequest{
+				client.SortedSetRemoveElements(ctx, &SortedSetRemoveElementsRequest{
 					CacheName: cacheName, SetName: collectionName, Values: values,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
@@ -702,9 +702,9 @@ var _ = Describe("SortedSet", func() {
 	Describe(`SortedSetRemove`, func() {
 		It(`Succeeds when the element does not exist`, func() {
 			Expect(
-				sharedContext.Client.SortedSetRemove(
+				sharedContext.Client.SortedSetRemoveElements(
 					sharedContext.Ctx,
-					&SortedSetRemoveRequest{
+					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Values:    []Value{String("dne")},
@@ -723,9 +723,9 @@ var _ = Describe("SortedSet", func() {
 			)
 
 			Expect(
-				sharedContext.Client.SortedSetRemove(
+				sharedContext.Client.SortedSetRemoveElements(
 					sharedContext.Ctx,
-					&SortedSetRemoveRequest{
+					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Values: []Value{
@@ -753,9 +753,9 @@ var _ = Describe("SortedSet", func() {
 
 		It("returns an error when elements are nil", func() {
 			Expect(
-				sharedContext.Client.SortedSetRemove(
+				sharedContext.Client.SortedSetRemoveElements(
 					sharedContext.Ctx,
-					&SortedSetRemoveRequest{
+					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Values:    nil,
@@ -764,9 +764,9 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
 			Expect(
-				sharedContext.Client.SortedSetRemove(
+				sharedContext.Client.SortedSetRemoveElements(
 					sharedContext.Ctx,
-					&SortedSetRemoveRequest{
+					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 						Values:    []Value{nil, String("aValue"), nil},

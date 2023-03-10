@@ -1,6 +1,6 @@
 package responses
 
-type SortedSetRemoveResponse interface {
+type SortedSetRemoveElementsResponse interface {
 	isSortedSetRemoveResponse()
 }
 
