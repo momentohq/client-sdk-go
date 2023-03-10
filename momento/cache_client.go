@@ -214,6 +214,13 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 }
 
 func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error) {
+	if r.Value == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "value cannot be nil", nil,
+			),
+		)
+	}
 	newRequest := &SortedSetPutElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
