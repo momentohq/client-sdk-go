@@ -699,7 +699,8 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
-	Describe(`SortedSetRemove`, func() {
+	// TODO: SortedSetRemoveElement
+	Describe(`SortedSetRemoveElements`, func() {
 		It(`Succeeds when the element does not exist`, func() {
 			Expect(
 				sharedContext.Client.SortedSetRemoveElements(
@@ -710,7 +711,7 @@ var _ = Describe("SortedSet", func() {
 						Values:    []Value{String("dne")},
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetRemoveSuccess{}))
+			).To(BeAssignableToTypeOf(&SortedSetRemoveElementsSuccess{}))
 		})
 
 		It(`Removes elements`, func() {
@@ -733,7 +734,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					},
 				),
-			).To(BeAssignableToTypeOf(&SortedSetRemoveSuccess{}))
+			).To(BeAssignableToTypeOf(&SortedSetRemoveElementsSuccess{}))
 
 			Expect(
 				sharedContext.Client.SortedSetFetch(
