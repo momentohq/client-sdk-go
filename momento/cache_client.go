@@ -260,6 +260,26 @@ func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGe
 	return r.response, nil
 }
 
+func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error) {
+	newRequest := &SortedSetGetScoresRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Values:    []Value{r.Value},
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	switch result := newRequest.response.(type) {
+	case *responses.SortedSetGetScoresHit:
+		score := result.Scores()[0]
+		return responses.NewSortedSetGetScoreHit(score), nil
+	case *responses.SortedSetGetScoresMiss:
+		return &responses.SortedSetGetScoreMiss{}, nil
+	default:
+		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
+	}
+}
+
 func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error) {
 	if r.Value == nil {
 		return nil, convertMomentoSvcErrorToCustomerError(
