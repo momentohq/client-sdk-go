@@ -265,7 +265,6 @@ func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *Sorted
 }
 
 // SetAddElements adds multiple elements to the given set. Creates the set if it does not already exist.
-// After this operation the set will contain the union of the element passed in and the original elements of the set.
 func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -274,7 +273,6 @@ func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsR
 }
 
 // SetAddElement adds an element to the given set. Creates the set if it does not already exist.
-// After this operation the set will contain the union of the element passed in and the original elements of the set.
 func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error) {
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
