@@ -3,13 +3,15 @@ package config
 import (
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
+
 	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 func LaptopLatest() Configuration {
-	return LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+	return LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
 func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
@@ -25,7 +27,7 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 }
 
 func InRegionLatest() Configuration {
-	return InRegionLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+	return InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
 func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
