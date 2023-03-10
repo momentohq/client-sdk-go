@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
+
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
@@ -37,5 +39,27 @@ var _ = Describe("CacheClient", func() {
 		Expect(
 			NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
+
+	It(`Supports constructing a laptop config with a logger`, func() {
+		_, err := NewCacheClient(
+			config.LaptopLatestWithLogger(logger.NewBuiltinMomentoLoggerFactory()),
+			sharedContext.CredentialProvider,
+			sharedContext.DefaultTtl,
+		)
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	It(`Supports constructing an InRegion config with a logger`, func() {
+		_, err := NewCacheClient(
+			config.InRegionLatestWithLogger(logger.NewBuiltinMomentoLoggerFactory()),
+			sharedContext.CredentialProvider,
+			sharedContext.DefaultTtl,
+		)
+		if err != nil {
+			panic(err)
+		}
 	})
 })
