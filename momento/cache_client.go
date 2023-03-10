@@ -214,10 +214,21 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 }
 
 func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+	newRequest := &SortedSetPutElementsRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Elements:  []*SortedSetPutElement{{Value: r.Value, Score: r.Score}},
+		Ttl:       r.Ttl,
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	switch newRequest.response.(type) {
+	case *responses.SortedSetPutElementsSuccess:
+		return &responses.SortedSetPutElementSuccess{}, nil
+	default:
+		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
+	}
 }
 
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
