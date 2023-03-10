@@ -1,7 +1,7 @@
 package responses
 
-// SortedSetPutResponse is a base reponse type for a sorted set put request.
-type SortedSetPutResponse interface {
+// SortedSetPutElementsResponse is a base reponse type for a sorted set put request.
+type SortedSetPutElementsResponse interface {
 	isSortedSetPutResponse()
 }
 

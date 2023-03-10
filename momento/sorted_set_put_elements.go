@@ -15,7 +15,7 @@ type SortedSetPutElement struct {
 	Score float64
 }
 
-type SortedSetPutRequest struct {
+type SortedSetPutElementsRequest struct {
 	CacheName string
 	SetName   string
 	Elements  []*SortedSetPutElement
@@ -23,18 +23,18 @@ type SortedSetPutRequest struct {
 
 	grpcRequest  *pb.XSortedSetPutRequest
 	grpcResponse *pb.XSortedSetPutResponse
-	response     responses.SortedSetPutResponse
+	response     responses.SortedSetPutElementsResponse
 }
 
-func (r *SortedSetPutRequest) cacheName() string { return r.CacheName }
+func (r *SortedSetPutElementsRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetPutRequest) requestName() string { return "Sorted set put" }
+func (r *SortedSetPutElementsRequest) requestName() string { return "Sorted set put" }
 
-func (r *SortedSetPutRequest) ttl() time.Duration { return r.Ttl.Ttl }
+func (r *SortedSetPutElementsRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
-func (r *SortedSetPutRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
+func (r *SortedSetPutElementsRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
-func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
@@ -58,7 +58,7 @@ func (r *SortedSetPutRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *SortedSetPutRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+func (r *SortedSetPutElementsRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SortedSetPut(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (r *SortedSetPutRequest) makeGrpcRequest(metadata context.Context, client s
 	return resp, nil
 }
 
-func (r *SortedSetPutRequest) interpretGrpcResponse() error {
+func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
 	r.response = &responses.SortedSetPutSuccess{}
 	return nil
 }

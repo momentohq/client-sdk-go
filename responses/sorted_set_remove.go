@@ -1,7 +1,7 @@
 package responses
 
-// SortedSetRemoveResponse is a base response type for a sorted set remove request.
-type SortedSetRemoveResponse interface {
+// SortedSetRemoveElementsResponse is a base response type for a sorted set remove request.
+type SortedSetRemoveElementsResponse interface {
 	isSortedSetRemoveResponse()
 }
 

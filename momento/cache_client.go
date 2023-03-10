@@ -26,9 +26,9 @@ type CacheClient interface {
 	KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error)
 
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
-	SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error)
+	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
-	SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (responses.SortedSetRemoveResponse, error)
+	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
 
@@ -223,9 +223,9 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 	return r.response, nil
 }
 
-// SortedSetPut adds elements to the given sorted set. If the element already exists,
+// SortedSetPutElements adds elements to the given sorted set. If the element already exists,
 // its score is updated. Creates the sorted set if it does not exist.
-func (c defaultScsClient) SortedSetPut(ctx context.Context, r *SortedSetPutRequest) (responses.SortedSetPutResponse, error) {
+func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -240,8 +240,8 @@ func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGe
 	return r.response, nil
 }
 
-// SortedSetRemove removes elements from the sorted set
-func (c defaultScsClient) SortedSetRemove(ctx context.Context, r *SortedSetRemoveRequest) (responses.SortedSetRemoveResponse, error) {
+// SortedSetRemoveElements removes elements from the sorted set
+func (c defaultScsClient) SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
