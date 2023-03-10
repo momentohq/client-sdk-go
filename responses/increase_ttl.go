@@ -1,6 +1,6 @@
 package responses
 
-// IncreaseTtlResponse is a base response type for an increase ttl request.
+// IncreaseTtlResponse is the base response type for an increase ttl request.
 type IncreaseTtlResponse interface {
 	isIncreaseTtlResponse()
 }

@@ -1,6 +1,6 @@
 package responses
 
-// ListRemoveValueResponse is a base type for a list remove value request.
+// ListRemoveValueResponse is the base type for a list remove value request.
 type ListRemoveValueResponse interface {
 	isListRemoveValueResponse()
 }

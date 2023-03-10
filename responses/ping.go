@@ -1,6 +1,6 @@
 package responses
 
-// PingResponse is a base response type for a ping request.
+// PingResponse is the base response type for a ping request.
 type PingResponse interface {
 	isPingResponse()
 }

@@ -1,6 +1,6 @@
 package responses
 
-// DictionarySetFieldResponse is a base response type for a dictionary set field request.
+// DictionarySetFieldResponse is the base response type for a dictionary set field request.
 type DictionarySetFieldResponse interface {
 	isDictionarySetFieldResponse()
 }

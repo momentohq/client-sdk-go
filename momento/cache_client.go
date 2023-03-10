@@ -76,7 +76,7 @@ type defaultScsClient struct {
 }
 
 type CacheClientProps struct {
-	// Configuration to use for the transport, retries, middlewares.
+	// Configuration to use for logging, transport, retries, and middlewares.
 	Configuration config.Configuration
 	// CredentialProvider Momento credential provider.
 	CredentialProvider auth.CredentialProvider
@@ -183,7 +183,7 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
 }
 
-// Set sets the value in cache with a given time to live (TTL) seconds
+// Set sets the value in cache with a given time to live (TTL)
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (r
 	return r.response, nil
 }
 
-// SortedSetFetch fetches the elements in the given sorted set by index (rank).
+// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 	return r.response, nil
 }
 
-// SortedSetPutElements adds elements to the given sorted set. If the element already exists,
+// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
 // its score is updated. Creates the sorted set if it does not exist.
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
@@ -286,7 +286,7 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	return &responses.SetAddElementSuccess{}, nil
 }
 
-// SetFetch fetches the elements in the given sorted set by index (rank).
+// SetFetch fetches the requested set.
 func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -294,7 +294,7 @@ func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (res
 	return r.response, nil
 }
 
-// SetRemoveElements removes multiple elements from the sorted set.
+// SetRemoveElements removes multiple elements from the set.
 func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -371,7 +371,7 @@ func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcat
 	return r.response, nil
 }
 
-// ListFetch fetched all elements of the given list.
+// ListFetch fetches all elements of the given list.
 func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err

@@ -25,7 +25,7 @@ type SortedSetFetchHit struct {
 
 func (SortedSetFetchHit) isSortedSetFetchResponse() {}
 
-// NewSortedSetFetchHit returns a new SortedSetFetchHit contains elements.
+// NewSortedSetFetchHit returns a new SortedSetFetchHit containing the supplied elements.
 func NewSortedSetFetchHit(elements []*SortedSetElement) *SortedSetFetchHit {
 	return &SortedSetFetchHit{elements: elements}
 }

@@ -1,6 +1,6 @@
 package responses
 
-// DictionaryGetFieldResponse is a base response type for a dictionary field request.
+// DictionaryGetFieldResponse is the base response type for a dictionary get field request.
 type DictionaryGetFieldResponse interface {
 	isDictionaryGetFieldResponse()
 }
@@ -51,7 +51,7 @@ func (resp DictionaryGetFieldMiss) FieldByte() []byte {
 	return resp.field
 }
 
-// NewDictionaryGetFieldHit returns a new DictionaryGetFieldHit contains field and body.
+// NewDictionaryGetFieldHit returns a new DictionaryGetFieldHit which contains field and body.
 func NewDictionaryGetFieldHit(field []byte, body []byte) *DictionaryGetFieldHit {
 	return &DictionaryGetFieldHit{
 		field: field,
@@ -59,12 +59,12 @@ func NewDictionaryGetFieldHit(field []byte, body []byte) *DictionaryGetFieldHit 
 	}
 }
 
-// NewDictionaryGetFieldMiss returns a new DictionaryGetFieldMiss contains field.
+// NewDictionaryGetFieldMiss returns a new DictionaryGetFieldMiss which contains the requested field.
 func NewDictionaryGetFieldMiss(field []byte) *DictionaryGetFieldMiss {
 	return &DictionaryGetFieldMiss{field: field}
 }
 
-// NewDictionaryGetFieldHitFromFieldsHit returns a new DictionaryGetFieldHit contains the first field and element's body.
+// NewDictionaryGetFieldHitFromFieldsHit returns a new DictionaryGetFieldHit containing the first field and element's body.
 // This is used specifically to provide a hit response for getting a single dictionary field.
 func NewDictionaryGetFieldHitFromFieldsHit(fieldHit *DictionaryGetFieldsHit) *DictionaryGetFieldHit {
 	return &DictionaryGetFieldHit{

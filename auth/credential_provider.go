@@ -45,7 +45,7 @@ func (credentialProvider defaultCredentialProvider) GetCacheEndpoint() string {
 	return credentialProvider.cacheEndpoint
 }
 
-// FromEnvironmentVariable returns a new CredentialProvider with the provided environment variable.
+// FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
 func FromEnvironmentVariable(envVar string) (CredentialProvider, error) {
 	credentialProvider, err := NewEnvMomentoTokenProvider(envVar)
 	if err != nil {

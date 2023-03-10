@@ -1,6 +1,6 @@
 package responses
 
-// TopicPublishResponse is a base response type for a publish request.
+// TopicPublishResponse is the base response type for a publish request.
 type TopicPublishResponse interface {
 	isTopicPublishResponse()
 }

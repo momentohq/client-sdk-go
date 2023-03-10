@@ -1,6 +1,6 @@
 package responses
 
-// SetFetchResponse is a base response type for a set fetch request.
+// SetFetchResponse is the base response type for a set fetch request.
 type SetFetchResponse interface {
 	isSetFetchResponse()
 }
@@ -33,7 +33,7 @@ type SetFetchMiss struct{}
 
 func (SetFetchMiss) isSetFetchResponse() {}
 
-// NewSetFetchHit returns a new SetFetchHit contains elements.
+// NewSetFetchHit returns a new SetFetchHit containing the supplied elements.
 func NewSetFetchHit(elements [][]byte) *SetFetchHit {
 	return &SetFetchHit{
 		elements: elements,

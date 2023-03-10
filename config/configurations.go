@@ -28,7 +28,7 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 }
 
 // InRegionLatest provides defaults suitable for an environment where your client is running in the same region as the Momento service.
-// It has more agressive timeouts and retry behavior than the Laptop config.
+// It has more aggressive timeouts and retry behavior than the Laptop config.
 
 func InRegionLatest() Configuration {
 	return InRegionLatestWithLogger(logger.NewNoopMomentoLoggerFactory())

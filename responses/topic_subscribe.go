@@ -1,4 +1,4 @@
 package responses
 
-// TopicSubscribeResponse is a base response type for
+// TopicSubscribeResponse is the base response type for
 type TopicSubscribeResponse struct{}

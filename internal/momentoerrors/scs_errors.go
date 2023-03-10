@@ -12,15 +12,15 @@ type MomentoSvcErr interface {
 	OriginalErr() error
 }
 
-// NewMomentoSvcErr returns a new MomentoSvcErr.
+// NewMomentoSvcErr returns a new Momento service error.
 func NewMomentoSvcErr(code string, message string, originalErr error) MomentoSvcErr {
 	return newMomentoSvcErr(code, message, originalErr)
 }
 
 const (
-	// InvalidArgumentError occurs when invalid argument passed to Momento client
+	// InvalidArgumentError occurs when an invalid argument is passed to Momento client.
 	InvalidArgumentError = "InvalidArgumentError"
-	// InternalServerError is an unexpected error occurred while trying to fulfill the request
+	// InternalServerError occurs when an unexpected error is encountered trying to fulfill the request.
 	InternalServerError = "InternalServerError"
 	// ClientSdkError occurs when a client side error happens.
 	ClientSdkError = "ClientSdkError"
@@ -32,11 +32,11 @@ const (
 	TimeoutError = "TimeoutError"
 	// PermissionError occurs when there are insufficient permissions to perform operation.
 	PermissionError = "PermissionError"
-	// AuthenticationError occurs when invalid authentication credentials to connect to cache service.
+	// AuthenticationError occurs when invalid authentication credentials to connect to cache service are provided.
 	AuthenticationError = "AuthenticationError"
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"
-	// NotFoundError occurs when a cache with specified name doesn't exist
+	// NotFoundError occurs when a cache with specified name doesn't exist.
 	NotFoundError = "NotFoundError"
 	// AlreadyExistsError occurs when a cache with specified name already exists.
 	AlreadyExistsError = "AlreadyExistsError"
@@ -46,7 +46,7 @@ const (
 	ServerUnavailableError = "ServerUnavailableError"
 	// FailedPreconditionError occurs when the system is not in a state required for the operation's execution.
 	FailedPreconditionError = "FailedPreconditionError"
-	// InternalServerErrorMessage is the message for an unexpected error occurred while trying to fulfill the request.
+	// InternalServerErrorMessage is the message for an unexpected error occurring while trying to fulfill the request.
 	InternalServerErrorMessage = "CacheService failed with an internal error"
 	// ClientSdkErrorMessage is the message for when SDK Failed to process the request.
 	ClientSdkErrorMessage = "SDK Failed to process the request."

@@ -1,6 +1,6 @@
 package responses
 
-// SortedSetIncrementScoreResponse is a base response type for a sorted set increment score request.
+// SortedSetIncrementScoreResponse is the base response type for a sorted set increment score request.
 type SortedSetIncrementScoreResponse interface {
 	isSortedSetIncrementResponse()
 }

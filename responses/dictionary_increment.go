@@ -1,6 +1,6 @@
 package responses
 
-// DictionaryIncrementResponse is a base response type for a dictionary increment request.
+// DictionaryIncrementResponse is the base response type for a dictionary increment request.
 type DictionaryIncrementResponse interface {
 	isDictionaryIncrementResponse()
 }
@@ -17,7 +17,7 @@ func (resp DictionaryIncrementSuccess) Value() int64 {
 	return resp.value
 }
 
-// NewDictionaryIncrementSuccess returns a new DictionaryIncrementSuccess contains value.
+// NewDictionaryIncrementSuccess returns a new DictionaryIncrementSuccess containing the supplied value.
 func NewDictionaryIncrementSuccess(value int64) *DictionaryIncrementSuccess {
 	return &DictionaryIncrementSuccess{value: value}
 }

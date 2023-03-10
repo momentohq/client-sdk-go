@@ -1,6 +1,6 @@
 package responses
 
-// DecreaseTtlResponse is a base response type for a decrease ttl request.
+// DecreaseTtlResponse is the base response type for a decrease ttl request.
 type DecreaseTtlResponse interface {
 	isDecreaseTtlResponse()
 }

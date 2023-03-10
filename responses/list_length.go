@@ -1,6 +1,6 @@
 package responses
 
-// ListLengthResponse is base response type for a list length request.
+// ListLengthResponse is the base response type for a list length request.
 type ListLengthResponse interface {
 	isListLengthResponse()
 }
@@ -22,7 +22,7 @@ type ListLengthMiss struct{}
 
 func (ListLengthMiss) isListLengthResponse() {}
 
-// NewListLengthHit returns a new ListLengthHit contains value.
+// NewListLengthHit returns a new ListLengthHit containing the supplied value.
 func NewListLengthHit(value uint32) *ListLengthHit {
 	return &ListLengthHit{value: value}
 }

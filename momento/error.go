@@ -6,9 +6,9 @@ import (
 
 // Momento Error codes
 const (
-	// InvalidArgumentError occurs when invalid argument passed to Momento client
+	// InvalidArgumentError occurs when an invalid argument is passed to Momento client.
 	InvalidArgumentError = "InvalidArgumentError"
-	// InternalServerError is an unexpected error occurred while trying to fulfill the request
+	// InternalServerError occurs when an unexpected error is encountered while trying to fulfill the request.
 	InternalServerError = "InternalServerError"
 	// ClientSdkError occurs when a client side error happens.
 	ClientSdkError = "ClientSdkError"
@@ -20,11 +20,11 @@ const (
 	TimeoutError = "TimeoutError"
 	// PermissionError occurs when there are insufficient permissions to perform operation.
 	PermissionError = "PermissionError"
-	// AuthenticationError occurs when invalid authentication credentials to connect to cache service.
+	// AuthenticationError occurs when invalid authentication credentials to connect to cache service are provided.
 	AuthenticationError = "AuthenticationError"
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"
-	// NotFoundError occurs when a cache with specified name doesn't exist
+	// NotFoundError occurs when a cache with specified name doesn't exist.
 	NotFoundError = "NotFoundError"
 	// AlreadyExistsError occurs when a cache with specified name already exists.
 	AlreadyExistsError = "AlreadyExistsError"

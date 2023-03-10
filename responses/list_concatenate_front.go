@@ -1,11 +1,11 @@
 package responses
 
-// ListConcatenateFrontResponse is a base reponse for a list concatenate front request.
+// ListConcatenateFrontResponse is the base response for a list concatenate front request.
 type ListConcatenateFrontResponse interface {
 	isListConcatenateFrontResponse()
 }
 
-// ListConcatenateFrontSuccess
+// ListConcatenateFrontSuccess returns a new ListConcatenateFrontSuccess containing the supplied length.
 type ListConcatenateFrontSuccess struct {
 	listLength uint32
 }

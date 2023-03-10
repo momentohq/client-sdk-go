@@ -1,6 +1,6 @@
 package responses
 
-// DictionaryFetchResponse is a base response type for a dictionary fetch request.
+// DictionaryFetchResponse is the base response type for a dictionary fetch request.
 type DictionaryFetchResponse interface {
 	isDictionaryFetchResponse()
 }

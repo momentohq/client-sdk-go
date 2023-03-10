@@ -1,6 +1,6 @@
 package responses
 
-// ListCachesResponse is a base response type for a list caches request.
+// ListCachesResponse is the base response type for a list caches request.
 type ListCachesResponse interface {
 	isListCachesResponse()
 }
@@ -43,7 +43,7 @@ func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
-// NewCacheInfo returns new CacheInfo contains name.
+// NewCacheInfo returns new CacheInfo with the supplied name.
 func NewCacheInfo(name string) CacheInfo {
 	return CacheInfo{name: name}
 }

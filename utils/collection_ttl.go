@@ -2,18 +2,18 @@ package utils
 
 import "time"
 
-// CollectionTtl represents the desired behavior for managing the Ttl on collection objects (dictionaries, lists, sets) in your cache.
+// CollectionTtl represents the desired behavior for managing the Ttl on collection objects (dictionaries, lists, sets, and sorted sets) in your cache.
 // For cache operations that modify a collection, there are a few things to consider.
 // The first time the collection is created, we need to set a Ttl on it.
 // For subsequent operations that modify the collection you may choose to update the Ttl in order to prolong
-// the life of the ached collection object, or you may choose to leave the Ttl unmodified in order to ensure that the collection expires at the original TTL.
+// the life of the cached collection object, or you may choose to leave the Ttl unmodified in order to ensure that the collection expires at the original TTL.
 // The default behavior is to refresh the Ttl (to prolong the life of the collection) each time it is written.
 // This behavior can be modified by calling WithNoRefreshTtlOnUpdates.
 type CollectionTtl struct {
 	// Ttl is the time.Duration after which the cached collection should be expired from the cache.
-	// If CollectionTtl is not provided, the default Ttl that was passed to a momento.CacheClient instance.
+	// If CollectionTtl is not provided, the default Ttl that was passed to a momento.CacheClient instance is used.
 	Ttl time.Duration
-	// RefreshTtl is true, then the collection's Ttl will be refreshed (to prolong the life of the collection) on every update.
+	// If RefreshTtl is true, then the collection's Ttl will be refreshed (to prolong the life of the collection) on every update.
 	// If false, then the collection's Ttl will only be set when the collection is initially created.
 	RefreshTtl bool
 }
