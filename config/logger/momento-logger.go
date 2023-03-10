@@ -19,5 +19,5 @@ type MomentoLogger interface {
 }
 
 type MomentoLoggerFactory interface {
-	GetLogger(loggerName string, logLevel LogLevel) MomentoLogger
+	GetLogger(loggerName string) MomentoLogger
 }

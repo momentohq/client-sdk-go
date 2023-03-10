@@ -49,13 +49,17 @@ func momentoLog(level LogLevel, loggerName string, message string, args ...strin
 	}
 }
 
-type BuiltinMomentoLoggerFactory struct{}
-
-func NewBuiltinMomentoLoggerFactory() MomentoLoggerFactory {
-	return &BuiltinMomentoLoggerFactory{}
+type BuiltinMomentoLoggerFactory struct {
+	level LogLevel
 }
 
-func (BuiltinMomentoLoggerFactory) GetLogger(loggerName string, level LogLevel) MomentoLogger {
+func NewBuiltinMomentoLoggerFactory(level LogLevel) MomentoLoggerFactory {
+	return &BuiltinMomentoLoggerFactory{
+		level: level,
+	}
+}
+
+func (lf BuiltinMomentoLoggerFactory) GetLogger(loggerName string) MomentoLogger {
 	log.SetFlags(0)
-	return &BuiltinMomentoLogger{loggerName: loggerName, level: level}
+	return &BuiltinMomentoLogger{loggerName: loggerName, level: lf.level}
 }

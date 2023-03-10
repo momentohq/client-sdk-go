@@ -3,6 +3,7 @@ package momento
 
 import (
 	"context"
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"strings"
 	"time"
 
@@ -69,6 +70,7 @@ type CacheClient interface {
 
 // defaultScsClient represents all information needed for momento client to enable cache control and data operations.
 type defaultScsClient struct {
+	logger             logger.MomentoLogger
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
@@ -92,6 +94,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultScsClient{
+		logger:             configuration.GetLoggerFactory().GetLogger("CacheClient"),
 		credentialProvider: props.CredentialProvider,
 	}
 
@@ -139,15 +142,19 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
+	c.logger.Info("Creating cache with name: %s", request.CacheName)
 	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
 		if err.Code() == AlreadyExistsError {
+			c.logger.Info("Cache with name '%s' already exists, skipping", request.CacheName)
 			return &responses.CreateCacheAlreadyExists{}, nil
 		}
+		c.logger.Warn("Error creating cache '%s': %s", request.CacheName, err.Message())
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
+	c.logger.Info("Cache '%s' created successfully", request.CacheName)
 	return &responses.CreateCacheSuccess{}, nil
 }
 
@@ -155,15 +162,19 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
+	c.logger.Info("Deleting cache with name: %s", request.CacheName)
 	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
 		if err.Code() == NotFoundError {
+			c.logger.Info("Cache with name '%s' does not exist, skipping", request.CacheName)
 			return &responses.DeleteCacheSuccess{}, nil
 		}
+		c.logger.Warn("Error deleting cache '%s': %s", request.CacheName, err.Message())
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
+	c.logger.Info("Cache '%s' deleted successfully", request.CacheName)
 	return &responses.DeleteCacheSuccess{}, nil
 }
 
