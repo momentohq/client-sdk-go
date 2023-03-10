@@ -230,12 +230,8 @@ func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetP
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
 		return nil, err
 	}
-	switch newRequest.response.(type) {
-	case *responses.SortedSetPutElementsSuccess:
-		return &responses.SortedSetPutElementSuccess{}, nil
-	default:
-		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
-	}
+
+	return &responses.SortedSetPutElementSuccess{}, nil
 }
 
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
