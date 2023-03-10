@@ -30,6 +30,7 @@ type CacheClient interface {
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
 	SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error)
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
+	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error)
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
 	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
