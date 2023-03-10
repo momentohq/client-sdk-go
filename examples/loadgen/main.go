@@ -15,7 +15,6 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/momentohq/client-sdk-go/responses"
 )
 
 const (
@@ -148,18 +147,15 @@ func worker(
 
 			elapsed = 0
 			getStart := hrtime.Now()
-			getResp, err := client.Get(ctx, &momento.GetRequest{
+			_, err = client.Get(ctx, &momento.GetRequest{
 				CacheName: CacheName,
 				Key:       momento.String(cacheKey),
 			})
 			if err != nil {
 				processError(err, errChan)
 			} else {
-				switch getResp.(type) {
-				case *responses.GetHit:
-					elapsed = hrtime.Since(getStart)
-					getChan <- elapsed.Milliseconds()
-				}
+				elapsed = hrtime.Since(getStart)
+				getChan <- elapsed.Milliseconds()
 			}
 
 			if elapsed.Milliseconds() < workerDelayBetweenRequests.Milliseconds() {
