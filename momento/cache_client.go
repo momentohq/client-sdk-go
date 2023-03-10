@@ -3,9 +3,10 @@ package momento
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"strings"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
