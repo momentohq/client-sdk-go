@@ -1,6 +1,6 @@
 package responses
 
-// DictionaryRemoveFieldsResponse is a base response type for a dictionary remove fields request.
+// DictionaryRemoveFieldsResponse is the base response type for a dictionary remove fields request.
 type DictionaryRemoveFieldsResponse interface {
 	isDictionaryRemoveFieldsResponse()
 }

@@ -1,6 +1,6 @@
 package responses
 
-// ListConcatenateBackResponse is a base response type for a list concatenate back request.
+// ListConcatenateBackResponse is the base response type for a list concatenate back request.
 type ListConcatenateBackResponse interface {
 	isListConcatenateBackResponse()
 }
@@ -17,7 +17,7 @@ func (resp ListConcatenateBackSuccess) ListLength() uint32 {
 	return resp.listLength
 }
 
-// NewListConcatenateBackSuccess returns a new ListConcatenateBackSuccess contains length.
+// NewListConcatenateBackSuccess returns a new ListConcatenateBackSuccess containing the supplied length.
 func NewListConcatenateBackSuccess(listLength uint32) *ListConcatenateBackSuccess {
 	return &ListConcatenateBackSuccess{listLength: listLength}
 }

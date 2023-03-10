@@ -223,7 +223,7 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 	return r.response, nil
 }
 
-// SortedSetPutElements adds elements to the given sorted set. If the element already exists,
+// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
 // its score is updated. Creates the sorted set if it does not exist.
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
@@ -288,7 +288,7 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	return &responses.SetAddElementSuccess{}, nil
 }
 
-// SetFetch fetches the elements in the given sorted set by index (rank).
+// SetFetch fetches the requested set.
 func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (res
 	return r.response, nil
 }
 
-// SetRemoveElements removes multiple elements from the sorted set.
+// SetRemoveElements removes multiple elements from the set.
 func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err

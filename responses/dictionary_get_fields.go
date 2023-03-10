@@ -2,7 +2,7 @@ package responses
 
 import pb "github.com/momentohq/client-sdk-go/internal/protos"
 
-// DictionaryGetFieldsResponse is a base response type for a dictionary fields request.
+// DictionaryGetFieldsResponse is the base response type for a dictionary fields request.
 type DictionaryGetFieldsResponse interface {
 	isDictionaryGetFieldsResponse()
 }
@@ -55,7 +55,7 @@ type DictionaryGetFieldsMiss struct{}
 
 func (DictionaryGetFieldsMiss) isDictionaryGetFieldsResponse() {}
 
-// NewDictionaryGetFieldsHit returns a new DictionaryGetFieldsHit contains elements, fields, and responses.
+// NewDictionaryGetFieldsHit returns a new DictionaryGetFieldsHit containing elements, fields, and responses.
 func NewDictionaryGetFieldsHit(
 	fields [][]byte, elements []*pb.XDictionaryGetResponse_XDictionaryGetResponsePart, responses []DictionaryGetFieldResponse,
 ) *DictionaryGetFieldsHit {

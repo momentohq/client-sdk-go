@@ -1,6 +1,6 @@
 package responses
 
-// DeleteResponse is a base response type for a delete request.
+// DeleteResponse is the base response type for a delete request.
 type DeleteResponse interface {
 	isDeleteResponse()
 }

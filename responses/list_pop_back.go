@@ -1,6 +1,6 @@
 package responses
 
-// ListPopBackResponse is a base response type for a list pop back request.
+// ListPopBackResponse is the base response type for a list pop back request.
 type ListPopBackResponse interface {
 	isListPopBackResponse()
 }
@@ -27,7 +27,7 @@ type ListPopBackMiss struct{}
 
 func (ListPopBackMiss) isListPopBackResponse() {}
 
-// NewListPopBackHit returns a new ListPopBackHit contains value.
+// NewListPopBackHit returns a new ListPopBackHit containing the supplied value.
 func NewListPopBackHit(value []byte) *ListPopBackHit {
 	return &ListPopBackHit{value: value}
 }

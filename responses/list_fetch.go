@@ -1,6 +1,6 @@
 package responses
 
-// ListFetchResponse is a base response type for a list fetch request.
+// ListFetchResponse is the base response type for a list fetch request.
 type ListFetchResponse interface {
 	isListFetchResponse()
 }
@@ -38,7 +38,7 @@ type ListFetchMiss struct{}
 
 func (ListFetchMiss) isListFetchResponse() {}
 
-// NewListFetchHit returns a new ListFetchHit contains value.
+// NewListFetchHit returns a new ListFetchHit containing the supplied value.
 func NewListFetchHit(value [][]byte) *ListFetchHit {
 	return &ListFetchHit{value: value}
 }

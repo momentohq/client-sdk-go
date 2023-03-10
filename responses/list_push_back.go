@@ -1,11 +1,11 @@
 package responses
 
-// ListPushBackResponse is a base response type for a list push back request.
+// ListPushBackResponse is the base response type for a list push back request.
 type ListPushBackResponse interface {
 	isListPushBackResponse()
 }
 
-// ListPushBackSuccess indicates a successful lit push back request.
+// ListPushBackSuccess indicates a successful list push back request.
 type ListPushBackSuccess struct {
 	value uint32
 }
@@ -17,7 +17,7 @@ func (resp ListPushBackSuccess) ListLength() uint32 {
 	return resp.value
 }
 
-// NewListPushBackSuccess returns a new ListPushBackSuccess contains value.
+// NewListPushBackSuccess returns a new ListPushBackSuccess containing the supplied value.
 func NewListPushBackSuccess(value uint32) *ListPushBackSuccess {
 	return &ListPushBackSuccess{value: value}
 }

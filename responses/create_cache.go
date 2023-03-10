@@ -1,6 +1,6 @@
 package responses
 
-// CreateCacheResponse is a base response type for a create cache request.
+// CreateCacheResponse is the base response type for a create cache request.
 type CreateCacheResponse interface {
 	isCreateCacheResponse()
 }

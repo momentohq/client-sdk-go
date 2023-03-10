@@ -1,6 +1,6 @@
 package responses
 
-// ListPushFrontResponse is a base type for a list push front request.
+// ListPushFrontResponse is the base type for a list push front request.
 type ListPushFrontResponse interface {
 	isListPushFrontResponse()
 }
@@ -17,7 +17,7 @@ func (resp ListPushFrontSuccess) ListLength() uint32 {
 	return resp.value
 }
 
-// NewListPushFrontSuccess returns a new ListPushFrontSuccess contains value.
+// NewListPushFrontSuccess returns a new ListPushFrontSuccess containing the supplied value.
 func NewListPushFrontSuccess(value uint32) *ListPushFrontSuccess {
 	return &ListPushFrontSuccess{value: value}
 }
