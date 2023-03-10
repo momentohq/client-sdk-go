@@ -1,6 +1,6 @@
 package responses
 
-// SetContainsElementsResponse is a base response type for a set contains elements request.
+// SetContainsElementsResponse is the base response type for a set contains elements request.
 type SetContainsElementsResponse interface {
 	isSetContainsElementsResponse()
 }
@@ -22,7 +22,7 @@ func (r *SetContainsElementsHit) ContainsElements() []bool {
 	return r.values
 }
 
-// NewSetContainsElementsHit returns a new SetContainsElementsHit contains values.
+// NewSetContainsElementsHit returns a new SetContainsElementsHit containing the supplied values.
 func NewSetContainsElementsHit(values []bool) *SetContainsElementsHit {
 	return &SetContainsElementsHit{values: values}
 }

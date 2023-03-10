@@ -373,7 +373,7 @@ func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcat
 	return r.response, nil
 }
 
-// ListFetch fetched all elements of the given list.
+// ListFetch fetches all elements of the given list.
 func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err

@@ -1,6 +1,6 @@
 package responses
 
-// SortedSetGetRankResponse is a base response type for a sorted set get rank request.
+// SortedSetGetRankResponse is the base response type for a sorted set get rank request.
 type SortedSetGetRankResponse interface {
 	isSortedSetGetRankResponse()
 }

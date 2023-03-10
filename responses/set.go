@@ -1,6 +1,6 @@
 package responses
 
-// SetResponse is a base response type for a set request.
+// SetResponse is the base response type for a set request.
 type SetResponse interface {
 	isSetResponse()
 }

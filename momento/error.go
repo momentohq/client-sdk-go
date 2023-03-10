@@ -20,7 +20,7 @@ const (
 	TimeoutError = "TimeoutError"
 	// PermissionError occurs when there are insufficient permissions to perform operation.
 	PermissionError = "PermissionError"
-	// AuthenticationError occurs when invalid authentication credentials to connect to cache service.
+	// AuthenticationError occurs when invalid authentication credentials to connect to cache service are provided.
 	AuthenticationError = "AuthenticationError"
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"

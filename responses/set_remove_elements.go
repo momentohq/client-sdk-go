@@ -1,6 +1,6 @@
 package responses
 
-// SetRemoveElementsResponse is a base response type for a set remove elements request.
+// SetRemoveElementsResponse is the base response type for a set remove elements request.
 type SetRemoveElementsResponse interface {
 	isSetRemoveElementsResponse()
 }
