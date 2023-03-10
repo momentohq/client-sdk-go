@@ -47,7 +47,7 @@ func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) erro
 		return err
 	}
 
-	elements := convertSortedSetElementToGrpc(r.Elements)
+	elements := convertSortedSetElementsToGrpc(r.Elements)
 
 	r.grpcRequest = &pb.XSortedSetPutRequest{
 		SetName:         []byte(r.SetName),
@@ -68,11 +68,11 @@ func (r *SortedSetPutElementsRequest) makeGrpcRequest(metadata context.Context, 
 }
 
 func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
-	r.response = &responses.SortedSetPutSuccess{}
+	r.response = &responses.SortedSetPutElementsSuccess{}
 	return nil
 }
 
-func convertSortedSetElementToGrpc(modelSetElements []*SortedSetPutElement) []*pb.XSortedSetElement {
+func convertSortedSetElementsToGrpc(modelSetElements []*SortedSetPutElement) []*pb.XSortedSetElement {
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
 		returnList = append(returnList, &pb.XSortedSetElement{

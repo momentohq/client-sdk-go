@@ -34,7 +34,7 @@ var _ = Describe("SortedSet", func() {
 					Elements:  elements,
 				},
 			),
-		).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
+		).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
 	}
 
 	// Convenience for fetching elements.
@@ -76,6 +76,12 @@ var _ = Describe("SortedSet", func() {
 			Expect(
 				client.SortedSetIncrementScore(ctx, &SortedSetIncrementScoreRequest{
 					CacheName: cacheName, SetName: collectionName, Value: value, Amount: 1,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
+				client.SortedSetPutElement(ctx, &SortedSetPutElementRequest{
+					CacheName: cacheName, SetName: collectionName, Value: value, Score: float64(1),
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
@@ -180,7 +186,24 @@ var _ = Describe("SortedSet", func() {
 				).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(0)))
 			},
 		),
-		Entry(`SortedSetPut`,
+		Entry(`SortedSetPutElement`,
+			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
+				request := &SortedSetPutElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     element.Value,
+					Score:     element.Score,
+				}
+				if ttl != nil {
+					request.Ttl = ttl
+				}
+
+				Expect(
+					sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, request),
+				).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
+			},
+		),
+		Entry(`SortedSetPutElements`,
 			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
@@ -193,7 +216,7 @@ var _ = Describe("SortedSet", func() {
 
 				Expect(
 					sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, request),
-				).To(BeAssignableToTypeOf(&SortedSetPutSuccess{}))
+				).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
 			},
 		),
 	)
@@ -699,7 +722,12 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
+	Describe(`SortedSetPutElements`, func() {
+		// TODO: add tests for SortedSetPutElements
+	})
+
 	// TODO: SortedSetRemoveElement
+
 	Describe(`SortedSetRemoveElements`, func() {
 		It(`Succeeds when the element does not exist`, func() {
 			Expect(

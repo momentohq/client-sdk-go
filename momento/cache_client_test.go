@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
@@ -43,7 +43,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a laptop config with a logger`, func() {
 		_, err := NewCacheClient(
-			config.LaptopLatestWithLogger(logger.NewBuiltinMomentoLoggerFactory()),
+			config.LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 		)
@@ -54,7 +54,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing an InRegion config with a logger`, func() {
 		_, err := NewCacheClient(
-			config.InRegionLatestWithLogger(logger.NewBuiltinMomentoLoggerFactory()),
+			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 		)

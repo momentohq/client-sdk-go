@@ -35,7 +35,7 @@ func NewTopicClient(configuration config.Configuration, credentialProvider auth.
 	}
 	client := &defaultTopicClient{
 		credentialProvider: credentialProvider,
-		log:                configuration.GetLoggerFactory().GetLogger("topic-client", logger.TRACE),
+		log:                configuration.GetLoggerFactory().GetLogger("topic-client"),
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
