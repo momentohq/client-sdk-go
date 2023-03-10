@@ -28,7 +28,7 @@ func main() {
 	// Put score for each element to set
 	// Using counter, element N has score N
 	for i := 1; i < 11; i++ {
-		_, err := client.SortedSetPut(ctx, &momento.SortedSetPutElementsRequest{
+		_, err := client.SortedSetPut(ctx, &momento.SortedSetPutRequest{
 			CacheName: cacheName,
 			SetName:   setName,
 			Elements: []*momento.SortedSetPutElement{{
