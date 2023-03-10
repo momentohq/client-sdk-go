@@ -32,7 +32,7 @@ func (r *DictionaryIncrementRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
 func (r *DictionaryIncrementRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
-func (r *DictionaryIncrementRequest) requestName() string { return "DictionaryFetch" }
+func (r *DictionaryIncrementRequest) requestName() string { return "DictionaryIncrement" }
 
 func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
