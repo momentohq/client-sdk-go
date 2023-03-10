@@ -79,6 +79,12 @@ var _ = Describe("SortedSet", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
+			Expect(
+				client.SortedSetPutElement(ctx, &SortedSetPutElementRequest{
+					CacheName: cacheName, SetName: collectionName, Value: value, Score: float64(1),
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
 			putElements := []*SortedSetPutElement{{
 				Value: value,
 				Score: float64(1),
@@ -180,7 +186,24 @@ var _ = Describe("SortedSet", func() {
 				).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(0)))
 			},
 		),
-		Entry(`SortedSetPut`,
+		Entry(`SortedSetPutElement`,
+			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
+				request := &SortedSetPutElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     element.Value,
+					Score:     element.Score,
+				}
+				if ttl != nil {
+					request.Ttl = ttl
+				}
+
+				Expect(
+					sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, request),
+				).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
+			},
+		),
+		Entry(`SortedSetPutElements`,
 			func(element SortedSetPutElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
@@ -697,6 +720,44 @@ var _ = Describe("SortedSet", func() {
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(60)))
 		})
+	})
+
+	Describe(`SortedSetPutElement`, func() {
+		// TODO
+		/*
+			It(`Puts an element with a string value`, func() {
+				resp, err := sharedContext.Client.SortedSetPutElement(
+					sharedContext.Ctx,
+					&SortedSetPutElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     String("aValue"),
+						Score:     42,
+					})
+				Expect(err).To(BeNil())
+				Expect(resp).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
+
+				fetchResp, fetchErr := sharedContext.Client.SortedSetFetch(
+					sharedContext.Ctx,
+					&SortedSetFetchRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				)
+				Expect(fetchErr).To(BeNil())
+				switch fetchResp := fetchResp.(type) {
+				case *SortedSetFetchHit:
+					Expect(fetchResp.elements).To(Equal(
+						[]SortedSetElement{
+							&SortedSetElement{Value: "aValue", Score: 42},
+						},
+					))
+				}
+			})*/
+	})
+
+	Describe(`SortedSetPutElements`, func() {
+		// TODO: add tests for SortedSetPutElements
 	})
 
 	Describe(`SortedSetRemove`, func() {
