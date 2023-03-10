@@ -32,7 +32,7 @@ type SortedSetGetScore interface {
 	isSortedSetScoreElement()
 }
 
-// SortedSetScore indicates a sorted set score request was a hit.
+// SortedSetScore contains the result of a successful sorted set score request.
 type SortedSetScore float64
 
 func (SortedSetScore) isSortedSetScoreElement() {}
