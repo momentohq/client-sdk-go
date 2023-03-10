@@ -2,8 +2,9 @@ package momento_test
 
 import (
 	"errors"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
 
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
