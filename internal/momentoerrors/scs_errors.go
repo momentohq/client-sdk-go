@@ -18,7 +18,7 @@ func NewMomentoSvcErr(code string, message string, originalErr error) MomentoSvc
 }
 
 const (
-	// InvalidArgumentError occurs when invalid argument passed to Momento client
+	// InvalidArgumentError occurs when an invalid argument is passed to Momento client.
 	InvalidArgumentError = "InvalidArgumentError"
 	// InternalServerError is an unexpected error occurred while trying to fulfill the request
 	InternalServerError = "InternalServerError"
