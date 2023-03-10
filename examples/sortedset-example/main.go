@@ -28,7 +28,7 @@ func main() {
 	// Put score for each element to set
 	// Using counter, element N has score N
 	for i := 1; i < 11; i++ {
-		_, err := client.SortedSetPut(ctx, &momento.SortedSetPutRequest{
+		_, err := client.SortedSetPutElements(ctx, &momento.SortedSetPutElementsRequest{
 			CacheName: cacheName,
 			SetName:   setName,
 			Elements: []*momento.SortedSetPutElement{{
@@ -97,7 +97,7 @@ func setupCache(client momento.CacheClient, ctx context.Context) {
 func displayElements(setName string, resp responses.SortedSetFetchResponse) {
 	switch r := resp.(type) {
 	case *responses.SortedSetFetchHit:
-		for _, e := range r.Elements {
+		for _, e := range r.ValueStringElements() {
 			fmt.Printf("setName: %s, value: %s, score: %f\n", setName, e.Value, e.Score)
 		}
 		fmt.Println("")

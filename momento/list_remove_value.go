@@ -8,10 +8,6 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-// ListRemoveValueResponse
-
-// ListRemoveValueRequest
-
 type ListRemoveValueRequest struct {
 	CacheName string
 	ListName  string

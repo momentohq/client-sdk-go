@@ -21,7 +21,7 @@ func (r *KeysExistRequest) cacheName() string { return r.CacheName }
 
 func (r *KeysExistRequest) keys() []Key { return r.Keys }
 
-func (r *KeysExistRequest) requestName() string { return "Get" }
+func (r *KeysExistRequest) requestName() string { return "KeysExist" }
 
 func (r *KeysExistRequest) initGrpcRequest(scsDataClient) error {
 	var err error
