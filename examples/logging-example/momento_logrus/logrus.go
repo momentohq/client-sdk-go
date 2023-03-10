@@ -1,9 +1,10 @@
 package momento_logrus
 
 import (
+	"log"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 	logrus "github.com/sirupsen/logrus"
-	"log"
 )
 
 type LogrusMomentoLogger struct {
@@ -30,9 +31,7 @@ func (l LogrusMomentoLogger) Error(message string, args ...string) {
 	l.logrusLogger.Errorf(message, args)
 }
 
-type LogrusMomentoLoggerFactory struct {
-	level logger.LogLevel
-}
+type LogrusMomentoLoggerFactory struct{}
 
 func NewLogrusMomentoLoggerFactory() logger.MomentoLoggerFactory {
 	return &LogrusMomentoLoggerFactory{}

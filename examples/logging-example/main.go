@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/go-example/logging-example/momento_logrus"
 	logrus "github.com/sirupsen/logrus"
-	"time"
 )
 
 func main() {
