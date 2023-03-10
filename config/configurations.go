@@ -11,36 +11,37 @@ import (
 
 // LaptopLatest provides defaults suitable for a medium-to-high-latency dev environment.
 // Permissive timeouts, retries, and relaxed latency and throughput targets.
-func LaptopLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
-	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
-	if len(loggerFactory) != 0 {
-		defaultLoggerFactory = loggerFactory[0]
-	}
+func LaptopLatest() Configuration {
+	return LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+}
+
+func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
-		LoggerFactory: defaultLoggerFactory,
+		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 5 * time.Second,
 			}),
 		}),
-		RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(loggerFactory),
 	})
 }
 
 // InRegionLatest provides defaults suitable for an environment where your client is running in the same region as the Momento service.
 // It has more agressive timeouts and retry behavior than the Laptop config.
-func InRegionLatest(loggerFactory ...logger.MomentoLoggerFactory) Configuration {
-	defaultLoggerFactory := logger.NewNoopMomentoLoggerFactory()
-	if len(loggerFactory) != 0 {
-		defaultLoggerFactory = loggerFactory[0]
-	}
+
+func InRegionLatest() Configuration {
+	return InRegionLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+}
+
+func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
-		LoggerFactory: defaultLoggerFactory,
+		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 1100 * time.Millisecond,
 			}),
 		}),
-		RetryStrategy: retry.NewFixedCountRetryStrategy(defaultLoggerFactory),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(loggerFactory),
 	})
 }
