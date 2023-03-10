@@ -76,7 +76,7 @@ type defaultScsClient struct {
 }
 
 type CacheClientProps struct {
-	// Configuration to use for the transport, retries, middlewares.
+	// Configuration to use for logging, transport, retries, and middlewares.
 	Configuration config.Configuration
 	// CredentialProvider Momento credential provider.
 	CredentialProvider auth.CredentialProvider
