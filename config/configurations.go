@@ -4,6 +4,8 @@ package config
 import (
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
+
 	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -12,7 +14,7 @@ import (
 // LaptopLatest provides defaults suitable for a medium-to-high-latency dev environment.
 // Permissive timeouts, retries, and relaxed latency and throughput targets.
 func LaptopLatest() Configuration {
-	return LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+	return LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
 func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
@@ -31,7 +33,7 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 // It has more aggressive timeouts and retry behavior than the Laptop config.
 
 func InRegionLatest() Configuration {
-	return InRegionLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+	return InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
 func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {

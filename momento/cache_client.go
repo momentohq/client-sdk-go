@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
+
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
@@ -34,6 +36,9 @@ type CacheClient interface {
 
 	// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
+	// SortedSetPutElement adds an element to the given sorted set. If the element already exists,
+	// its score is updated. Creates the sorted set if it does not exist.
+	SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error)
 	// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
 	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
@@ -113,6 +118,7 @@ type CacheClient interface {
 
 // defaultScsClient represents all information needed for momento client to enable cache control and data operations.
 type defaultScsClient struct {
+	logger             logger.MomentoLogger
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	dataClient         *scsDataClient
@@ -139,6 +145,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultScsClient{
+		logger:             configuration.GetLoggerFactory().GetLogger("CacheClient"),
 		credentialProvider: props.CredentialProvider,
 	}
 
@@ -186,15 +193,19 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
+	c.logger.Info("Creating cache with name: %s", request.CacheName)
 	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
 		if err.Code() == AlreadyExistsError {
+			c.logger.Info("Cache with name '%s' already exists, skipping", request.CacheName)
 			return &responses.CreateCacheAlreadyExists{}, nil
 		}
+		c.logger.Warn("Error creating cache '%s': %s", request.CacheName, err.Message())
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
+	c.logger.Info("Cache '%s' created successfully", request.CacheName)
 	return &responses.CreateCacheSuccess{}, nil
 }
 
@@ -202,15 +213,19 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
+	c.logger.Info("Deleting cache with name: %s", request.CacheName)
 	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
 		if err.Code() == NotFoundError {
+			c.logger.Info("Cache with name '%s' does not exist, skipping", request.CacheName)
 			return &responses.DeleteCacheSuccess{}, nil
 		}
+		c.logger.Warn("Error deleting cache '%s': %s", request.CacheName, err.Message())
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
+	c.logger.Info("Cache '%s' deleted successfully", request.CacheName)
 	return &responses.DeleteCacheSuccess{}, nil
 }
 
@@ -257,6 +272,27 @@ func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchR
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error) {
+	if r.Value == nil {
+		return nil, convertMomentoSvcErrorToCustomerError(
+			momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError, "value cannot be nil", nil,
+			),
+		)
+	}
+	newRequest := &SortedSetPutElementsRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Elements:  []*SortedSetPutElement{{Value: r.Value, Score: r.Score}},
+		Ttl:       r.Ttl,
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+
+	return &responses.SortedSetPutElementSuccess{}, nil
 }
 
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
