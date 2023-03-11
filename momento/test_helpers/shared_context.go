@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/momento"
 )
 
@@ -31,7 +32,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 	shared.CredentialProvider = credentialProvider
-	shared.Configuration = config.LaptopLatest()
+	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
