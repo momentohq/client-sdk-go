@@ -1,7 +1,5 @@
 module github.com/momentohq/go-example
 
-go 1.19
-
 require (
 	github.com/google/uuid v1.3.0
 	github.com/loov/hrtime v1.0.3
@@ -24,5 +22,3 @@ require (
 	google.golang.org/grpc v1.52.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
-
-replace github.com/momentohq/client-sdk-go => ../
