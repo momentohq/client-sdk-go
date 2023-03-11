@@ -1,5 +1,6 @@
 package responses
 
+// ListCachesResponse is the base response type for a list caches request.
 type ListCachesResponse interface {
 	isListCachesResponse()
 }
@@ -12,6 +13,7 @@ type ListCachesSuccess struct {
 
 func (ListCachesSuccess) isListCachesResponse() {}
 
+// NewListCachesSuccess returns a new ListCachesSuccess which indicates a successful list caches request.
 func NewListCachesSuccess(nextToken string, caches []CacheInfo) *ListCachesSuccess {
 	return &ListCachesSuccess{
 		nextToken: nextToken,
@@ -41,6 +43,7 @@ func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
+// NewCacheInfo returns new CacheInfo with the supplied name.
 func NewCacheInfo(name string) CacheInfo {
 	return CacheInfo{name: name}
 }

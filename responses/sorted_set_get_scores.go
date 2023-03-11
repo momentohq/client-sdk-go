@@ -1,7 +1,6 @@
 package responses
 
-// High level responses.
-
+// SortedSetGetScoresResponse is the base response type for a sorted set get scores request.
 type SortedSetGetScoresResponse interface {
 	isSortedSetGetScoresResponse()
 }
@@ -18,28 +17,32 @@ type SortedSetGetScoresHit struct {
 
 func (SortedSetGetScoresHit) isSortedSetGetScoresResponse() {}
 
+// NewSortedSetGetScoresHit returns a new SortedSetGetScoresHit containing the supplied scores.
 func NewSortedSetGetScoresHit(scores []SortedSetGetScore) *SortedSetGetScoresHit {
 	return &SortedSetGetScoresHit{scores: scores}
 }
 
+// Scores returns an array of SortedSetGetScore.
 func (r SortedSetGetScoresHit) Scores() []SortedSetGetScore {
 	return r.scores
 }
 
-// Responses for individual scores.
-
+// SortedSetGetScore is the base response for individual scores.
 type SortedSetGetScore interface {
 	isSortedSetScoreElement()
 }
 
+// SortedSetScore contains the result of a successful sorted set score request.
 type SortedSetScore float64
 
 func (SortedSetScore) isSortedSetScoreElement() {}
 
+// SortedSetScoreMiss indicates a sorted set score request was a miss.
 type SortedSetScoreMiss struct{}
 
 func (SortedSetScoreMiss) isSortedSetScoreElement() {}
 
+// SortedSetScoreInvalid indicates an unknown response was returned for a sorted set score request.
 type SortedSetScoreInvalid struct{}
 
 func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
