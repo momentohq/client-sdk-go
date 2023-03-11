@@ -5,12 +5,12 @@ type SortedSetGetScoreResponse interface {
 	isSortedSetGetScoreResponse()
 }
 
-// SortedSetGetScoreMiss Miss Response to a cache SortedSetScore api request.
+// SortedSetGetScoreMiss Miss Response to a cache SortedSetGetScore api request.
 type SortedSetGetScoreMiss struct{}
 
 func (SortedSetGetScoreMiss) isSortedSetGetScoreResponse() {}
 
-// SortedSetGetScoreHit Hit Response to a cache SortedSetScore api request.
+// SortedSetGetScoreHit Hit Response to a cache SortedSetGetScore api request.
 type SortedSetGetScoreHit struct {
 	score SortedSetGetScore
 }
