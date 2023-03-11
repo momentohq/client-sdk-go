@@ -30,6 +30,7 @@ type CacheClient interface {
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
 	SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error)
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
+	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error)
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
 	SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error)
 	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
@@ -259,6 +260,26 @@ func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGe
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error) {
+	newRequest := &SortedSetGetScoresRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Values:    []Value{r.Value},
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	switch result := newRequest.response.(type) {
+	case *responses.SortedSetGetScoresHit:
+		score := result.Scores()[0]
+		return responses.NewSortedSetGetScoreHit(score), nil
+	case *responses.SortedSetGetScoresMiss:
+		return &responses.SortedSetGetScoreMiss{}, nil
+	default:
+		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
+	}
 }
 
 func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error) {
