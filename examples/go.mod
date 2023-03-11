@@ -9,8 +9,6 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 )
 
-require github.com/HdrHistogram/hdrhistogram-go v1.1.2
-
 require (
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
