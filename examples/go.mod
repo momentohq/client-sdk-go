@@ -2,6 +2,7 @@ module github.com/momentohq/go-example
 
 require (
 	github.com/google/uuid v1.3.0
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/loov/hrtime v1.0.3
 	github.com/momentohq/client-sdk-go v0.14.0
 
