@@ -42,6 +42,8 @@ type CacheClient interface {
 	// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
 	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
+	// SortedSetGetScore looks up the score of an element in the sorted set, by the value of the elements.
+	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error)
 	// SortedSetGetScores looks up the scores of multiple elements in the sorted set, by the value of the elements.
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
 	// SortedSetRemoveElement removes an element from the sorted set.
@@ -308,6 +310,26 @@ func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGe
 		return nil, err
 	}
 	return r.response, nil
+}
+
+func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error) {
+	newRequest := &SortedSetGetScoresRequest{
+		CacheName: r.CacheName,
+		SetName:   r.SetName,
+		Values:    []Value{r.Value},
+	}
+	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
+		return nil, err
+	}
+	switch result := newRequest.response.(type) {
+	case *responses.SortedSetGetScoresHit:
+		score := result.Scores()[0]
+		return responses.NewSortedSetGetScoreHit(score), nil
+	case *responses.SortedSetGetScoresMiss:
+		return &responses.SortedSetGetScoreMiss{}, nil
+	default:
+		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
+	}
 }
 
 func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error) {
