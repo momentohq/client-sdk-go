@@ -6,19 +6,33 @@ import (
 
 // Momento Error codes
 const (
-	InvalidArgumentError    = "InvalidArgumentError"
-	InternalServerError     = "InternalServerError"
-	ClientSdkError          = "ClientSdkError"
-	BadRequestError         = "BadRequestError"
-	CanceledError           = "CanceledError"
-	TimeoutError            = "TimeoutError"
-	PermissionError         = "PermissionError"
-	AuthenticationError     = "AuthenticationError"
-	LimitExceededError      = "LimitExceededError"
-	NotFoundError           = "NotFoundError"
-	AlreadyExistsError      = "AlreadyExistsError"
-	UnknownServiceError     = "UnknownServiceError"
-	ServerUnavailableError  = "ServerUnavailableError"
+	// InvalidArgumentError occurs when an invalid argument is passed to Momento client.
+	InvalidArgumentError = "InvalidArgumentError"
+	// InternalServerError occurs when an unexpected error is encountered while trying to fulfill the request.
+	InternalServerError = "InternalServerError"
+	// ClientSdkError occurs when a client side error happens.
+	ClientSdkError = "ClientSdkError"
+	// BadRequestError occurs when a request was invalid.
+	BadRequestError = "BadRequestError"
+	// CanceledError occurs when a request was cancelled by the server.
+	CanceledError = "CanceledError"
+	// TimeoutError occurs when an operation did not complete in time.
+	TimeoutError = "TimeoutError"
+	// PermissionError occurs when there are insufficient permissions to perform operation.
+	PermissionError = "PermissionError"
+	// AuthenticationError occurs when invalid authentication credentials to connect to cache service are provided.
+	AuthenticationError = "AuthenticationError"
+	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
+	LimitExceededError = "LimitExceededError"
+	// NotFoundError occurs when a cache with specified name doesn't exist.
+	NotFoundError = "NotFoundError"
+	// AlreadyExistsError occurs when a cache with specified name already exists.
+	AlreadyExistsError = "AlreadyExistsError"
+	// UnknownServiceError occurs when an unknown error has occurred.
+	UnknownServiceError = "UnknownServiceError"
+	// ServerUnavailableError occurs when the server was unable to handle the request.
+	ServerUnavailableError = "ServerUnavailableError"
+	// FailedPreconditionError occurs when the system is not in a state required for the operation's execution.
 	FailedPreconditionError = "FailedPreconditionError"
 )
 

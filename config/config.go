@@ -9,9 +9,12 @@ import (
 )
 
 type ConfigurationProps struct {
-	LoggerFactory     logger.MomentoLoggerFactory
+	// LoggerFactory represents a type used to configure the Momento logging system.
+	LoggerFactory logger.MomentoLoggerFactory
+	// TransportStrategy is responsible for configuring network tunables.
 	TransportStrategy TransportStrategy
-	RetryStrategy     retry.Strategy
+	// RetryStrategy defines a contract for how and when to retry a request.
+	RetryStrategy retry.Strategy
 }
 
 type Configuration interface {

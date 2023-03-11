@@ -1,5 +1,6 @@
 package responses
 
+// GetResponse is the base response type for a get request.
 type GetResponse interface {
 	isGetResponse()
 }
@@ -26,6 +27,7 @@ func (resp GetHit) ValueByte() []byte {
 	return resp.value
 }
 
+// NewGetHit returns a new GetHit containing the supplied value.
 func NewGetHit(value []byte) *GetHit {
 	return &GetHit{value: value}
 }

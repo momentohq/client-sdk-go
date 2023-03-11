@@ -18,55 +18,103 @@ import (
 )
 
 type CacheClient interface {
+	// CreateCache Creates a cache if it does not exist.
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error)
+	// DeleteCache deletes a cache and all the items within it.
 	DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error)
+	// ListCaches lists all caches.
 	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
+	// Set sets the value in cache with a given time to live (TTL)
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
+	// Get gets the cache value stored for the given key.
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
+	// Delete removes the key from the cache.
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
+	// KeysExist checks if provided keys exist in the cache.
 	KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error)
 
+	// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
+	// SortedSetPutElement adds an element to the given sorted set. If the element already exists,
+	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error)
+	// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
+	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
+	// SortedSetGetScore looks up the score of an element in the sorted set, by the value of the elements.
 	SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error)
+	// SortedSetGetScores looks up the scores of multiple elements in the sorted set, by the value of the elements.
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
+	// SortedSetRemoveElement removes an element from the sorted set.
 	SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error)
+	// SortedSetRemoveElements removes elements from the sorted set.
 	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
+	// SortedSetGetRank looks up the rank of an element in the sorted set, by the value of the element.
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
+	// SortedSetIncrementScore increments the score of an element in the sorted set.
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
 
+	// SetAddElement adds an element to the given set. Creates the set if it does not already exist.
 	SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error)
+	// SetAddElements adds multiple elements to the given set. Creates the set if it does not already exist.
 	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error)
+	// SetFetch fetches the requested set.
 	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
+	// SetRemoveElement removes an element from the given set.
 	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)
+	// SetRemoveElements removes multiple elements from the set.
 	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error)
+	// SetContainsElements checks if provided elements are in the given set.
 	SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error)
 
+	// ListPushFront adds an element to the front of the given list. Creates the list if it does not already exist.
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
+	// ListPushBack adds an element to the back of the given list. Creates the list if it does not already exist.
 	ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error)
+	// ListPopFront gets and removes the first value from the given list.
 	ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error)
+	// ListPopBack gets and removes the last value from the given list.
 	ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error)
+	// ListConcatenateFront adds multiple elements to the front of the given list. Creates the list if it does not already exist.
 	ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error)
+	// ListConcatenateBack adds multiple elements to the back of the given list. Creates the list if it does not already exist.
 	ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error)
+	// ListFetch fetches all elements of the given list.
 	ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error)
+	// ListLength gets the number of elements in the given list.
 	ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error)
+	// ListRemoveValue removes all elements from the given list equal to the given value.
 	ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error)
 
+	// DictionarySetField adds an element to the given dictionary. Creates the dictionary if it does not already exist.
 	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error)
+	// DictionarySetFields adds multiple elements to the given dictionary. Creates the dictionary if it does not already exist.
 	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
+	// DictionaryFetch fetches all elements of the given dictionary.
 	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error)
+	// DictionaryGetField gets the value stored for the given dictionary and field.
 	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error)
+	// DictionaryGetFields gets multiple values from the given dictionary.
 	DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error)
+	// DictionaryIncrement adds an integer quantity to a dictionary value.
+	// Incrementing the value of a missing field sets the value to amount.
 	DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error)
+	// DictionaryRemoveField removes an element from the given dictionary.
+	// Performs a no-op if the dictionary or field does not exist.
 	DictionaryRemoveField(ctx context.Context, r *DictionaryRemoveFieldRequest) (responses.DictionaryRemoveFieldResponse, error)
+	// DictionaryRemoveFields removes multiple fields from the given dictionary.
+	// Performs a no-op if the dictionary or fields do not exist.
 	DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error)
 
+	// UpdateTtl overwrites the TTL for key to the provided value.
 	UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (responses.UpdateTtlResponse, error)
+	// IncreaseTtl sets the TTL for a key to the provided value only if it would increase the existing TTL.
 	IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error)
+	// DecreaseTtl sets the TTL for a key to the provided value only if it would decrease the existing TTL.
 	DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error)
 
+	// Ping pings the cache endpoint to check if the service is up and running.
 	Ping(ctx context.Context) (responses.PingResponse, error)
 
 	Close()
@@ -82,7 +130,9 @@ type defaultScsClient struct {
 }
 
 type CacheClientProps struct {
-	Configuration      config.Configuration
+	// Configuration to use for logging, transport, retries, and middlewares.
+	Configuration config.Configuration
+	// CredentialProvider Momento credential provider.
 	CredentialProvider auth.CredentialProvider
 	DefaultTtl         time.Duration
 }
@@ -322,13 +372,6 @@ func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *Sorted
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
-	if err := c.dataClient.makeRequest(ctx, r); err != nil {
-		return nil, err
-	}
-	return r.response, nil
-}
-
 func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error) {
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
@@ -342,14 +385,14 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 	return &responses.SetAddElementSuccess{}, nil
 }
 
-func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
+func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
 	return r.response, nil
 }
 
-func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
+func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -366,6 +409,13 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 		return nil, err
 	}
 	return &responses.SetRemoveElementSuccess{}, nil
+}
+
+func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
 func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error) {

@@ -1,5 +1,6 @@
 package responses
 
+// SortedSetGetScoreResponse is the base response type for a sorted set get score request.
 type SortedSetGetScoreResponse interface {
 	isSortedSetGetScoreResponse()
 }
@@ -16,10 +17,12 @@ type SortedSetGetScoreHit struct {
 
 func (SortedSetGetScoreHit) isSortedSetGetScoreResponse() {}
 
+// NewSortedSetGetScoreHit returns a new SortedSetGetScoreHit containing the supplied score.
 func NewSortedSetGetScoreHit(score SortedSetGetScore) *SortedSetGetScoreHit {
 	return &SortedSetGetScoreHit{score: score}
 }
 
+// Score returns a SortedSetGetScore.
 func (r SortedSetGetScoreHit) Score() SortedSetGetScore {
 	return r.score
 }

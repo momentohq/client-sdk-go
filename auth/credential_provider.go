@@ -11,8 +11,10 @@ import (
 )
 
 type Endpoints struct {
+	// ControlEndpoint is the host which the Momento client will connect to the Momento control plane
 	ControlEndpoint string
-	CacheEndpoint   string
+	// CacheEndpoint is the host which the Momento client will connect to the Momento data plane
+	CacheEndpoint string
 }
 
 type CredentialProvider interface {
@@ -28,18 +30,22 @@ type defaultCredentialProvider struct {
 	cacheEndpoint   string
 }
 
+// GetAuthToken returns user's auth token.
 func (credentialProvider defaultCredentialProvider) GetAuthToken() string {
 	return credentialProvider.authToken
 }
 
+// GetControlEndpoint returns Endpoints.ControlEndpoint.
 func (credentialProvider defaultCredentialProvider) GetControlEndpoint() string {
 	return credentialProvider.controlEndpoint
 }
 
+// GetCacheEndpoint returns Endpoints.CacheEndpoint.
 func (credentialProvider defaultCredentialProvider) GetCacheEndpoint() string {
 	return credentialProvider.cacheEndpoint
 }
 
+// FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
 func FromEnvironmentVariable(envVar string) (CredentialProvider, error) {
 	credentialProvider, err := NewEnvMomentoTokenProvider(envVar)
 	if err != nil {
@@ -48,6 +54,7 @@ func FromEnvironmentVariable(envVar string) (CredentialProvider, error) {
 	return credentialProvider, nil
 }
 
+// FromString returns a new CredentialProvider with the provided user auth token.
 func FromString(authToken string) (CredentialProvider, error) {
 	credentialProvider, err := NewStringMomentoTokenProvider(authToken)
 	if err != nil {
