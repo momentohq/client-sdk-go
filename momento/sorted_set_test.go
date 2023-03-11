@@ -607,6 +607,32 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
+	Describe("sorted set get score", func() {
+		It("succeeds on the happy path", func() {
+			putElements(
+				[]*SortedSetPutElement{
+					{Value: String("first"), Score: 9999},
+					{Value: String("last"), Score: -9999},
+					{Value: String("middle"), Score: 50},
+				},
+			)
+			getResp, err := sharedContext.Client.SortedSetGetScore(
+				sharedContext.Ctx, &SortedSetGetScoreRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("first"),
+				},
+			)
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *SortedSetGetScoreHit:
+				Expect(result.Score()).To(Equal(SortedSetScore(9999)))
+			default:
+				Fail("expected a sorted set get score hit but got a miss")
+			}
+		})
+	})
+
 	Describe(`SortedSetIncrementScore`, func() {
 		It(`Increments if it does not exist`, func() {
 			Expect(
@@ -722,11 +748,108 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
-	Describe(`SortedSetPutElements`, func() {
-		// TODO: add tests for SortedSetPutElements
+	Describe(`SortedSetPutElement`, func() {
+		It(`Puts an element with a string value`, func() {
+			resp, err := sharedContext.Client.SortedSetPutElement(
+				sharedContext.Ctx,
+				&SortedSetPutElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("aValue"),
+					Score:     42,
+				})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
+
+			fetchResp, fetchErr := sharedContext.Client.SortedSetFetch(
+				sharedContext.Ctx,
+				&SortedSetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				},
+			)
+			Expect(fetchErr).To(BeNil())
+			switch fetchResp := fetchResp.(type) {
+			case *SortedSetFetchHit:
+				Expect(fetchResp.ValueByteElements()).To(Equal(
+					[]*SortedSetElement{
+						{Value: Bytes("aValue"), Score: 42},
+					},
+				))
+			}
+		})
 	})
 
-	// TODO: SortedSetRemoveElement
+	Describe(`SortedSetPutElements`, func() {
+		It("puts multiple elements", func() {
+			elems := []*SortedSetPutElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
+			Expect(
+				sharedContext.Client.SortedSetPutElements(
+					sharedContext.Ctx,
+					&SortedSetPutElementsRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Elements:  elems,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
+
+			fetchResp, err := sharedContext.Client.SortedSetFetch(sharedContext.Ctx, &SortedSetFetchRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Order:     ASCENDING,
+			})
+			Expect(err).To(BeNil())
+			switch result := fetchResp.(type) {
+			case *SortedSetFetchHit:
+				Expect(
+					result.ValueStringElements(),
+				).To(Equal([]*SortedSetStringElement{{Value: "val1", Score: 0}, {Value: "val2", Score: 10}}))
+			default:
+				Fail("expected a hit for sorted set fetch but got a miss")
+			}
+		})
+	})
+
+	Describe("Sorted set remove element", func() {
+		It("removes an element", func() {
+			elems := []*SortedSetPutElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
+			Expect(
+				sharedContext.Client.SortedSetPutElements(
+					sharedContext.Ctx,
+					&SortedSetPutElementsRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Elements:  elems,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
+
+			Expect(
+				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("val1"),
+				}),
+			).To(BeAssignableToTypeOf(&SortedSetRemoveElementSuccess{}))
+
+			fetchResp, err := sharedContext.Client.SortedSetFetch(sharedContext.Ctx, &SortedSetFetchRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Order:     ASCENDING,
+			})
+			Expect(err).To(BeNil())
+			switch result := fetchResp.(type) {
+			case *SortedSetFetchHit:
+				Expect(
+					result.ValueStringElements(),
+				).To(Equal([]*SortedSetStringElement{{Value: "val2", Score: 10}}))
+			default:
+				Fail("expected a hit for sorted set fetch but got a miss")
+			}
+
+		})
+	})
 
 	Describe(`SortedSetRemoveElements`, func() {
 		It(`Succeeds when the element does not exist`, func() {
