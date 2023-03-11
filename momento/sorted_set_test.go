@@ -24,7 +24,7 @@ var _ = Describe("SortedSet", func() {
 	})
 
 	// A convenience for adding elements to a sorted set.
-	putElements := func(elements []*SortedSetPutElement) {
+	putElements := func(elements []SortedSetPutElement) {
 		Expect(
 			sharedContext.Client.SortedSetPutElements(
 				sharedContext.Ctx,
@@ -85,7 +85,7 @@ var _ = Describe("SortedSet", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
-			putElements := []*SortedSetPutElement{{
+			putElements := []SortedSetPutElement{{
 				Value: value,
 				Score: float64(1),
 			}}
@@ -118,12 +118,12 @@ var _ = Describe("SortedSet", func() {
 				Score: 99,
 			}
 
-			expectedElements := []*SortedSetElement{
+			expectedElements := []SortedSetElement{
 				{Value: []byte(value), Score: element.Score},
 			}
 
 			// It does nothing with no TTL
-			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			putElements([]SortedSetPutElement{{Value: String(value), Score: 0}})
 			changer(element, nil)
 
 			Expect(fetch()).To(HaveSortedSetElements(expectedElements))
@@ -133,7 +133,7 @@ var _ = Describe("SortedSet", func() {
 			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
 
 			// It does nothing without refresh TTL set.
-			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			putElements([]SortedSetPutElement{{Value: String(value), Score: 0}})
 			changer(
 				element,
 				&utils.CollectionTtl{
@@ -149,7 +149,7 @@ var _ = Describe("SortedSet", func() {
 			Expect(fetch()).To(Equal(&SortedSetFetchMiss{}))
 
 			// It does nothing without refresh TTL set.
-			putElements([]*SortedSetPutElement{{Value: String(value), Score: 0}})
+			putElements([]SortedSetPutElement{{Value: String(value), Score: 0}})
 			changer(
 				element,
 				&utils.CollectionTtl{
@@ -208,7 +208,7 @@ var _ = Describe("SortedSet", func() {
 				request := &SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
-					Elements:  []*SortedSetPutElement{&element},
+					Elements:  []SortedSetPutElement{element},
 				}
 				if ttl != nil {
 					request.Ttl = ttl
@@ -236,7 +236,7 @@ var _ = Describe("SortedSet", func() {
 
 		Context(`With a populated SortedSet`, func() {
 			// We'll populate the SortedSet with these elements.
-			sortedSetElements := []*SortedSetPutElement{
+			sortedSetElements := []SortedSetPutElement{
 				{Value: String("one"), Score: 9999},
 				{Value: String("two"), Score: 50},
 				{Value: String("three"), Score: 0},
@@ -259,7 +259,7 @@ var _ = Describe("SortedSet", func() {
 				)
 				Expect(err).To(BeNil())
 				Expect(resp).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("six"), Score: -1000},
 						{Value: []byte("five"), Score: -500},
 						{Value: []byte("four"), Score: -50},
@@ -269,7 +269,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				))
 				Expect(resp).To(HaveSortedSetStringElements(
-					[]*SortedSetStringElement{
+					[]SortedSetStringElement{
 						{Value: "six", Score: -1000},
 						{Value: "five", Score: -500},
 						{Value: "four", Score: -50},
@@ -305,7 +305,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					),
 				).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("one"), Score: 9999},
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
@@ -333,7 +333,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					),
 				).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
 						{Value: []byte("four"), Score: -50},
@@ -356,7 +356,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					),
 				).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("four"), Score: -50},
 						{Value: []byte("five"), Score: -500},
 						{Value: []byte("six"), Score: -1000},
@@ -379,7 +379,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					),
 				).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("one"), Score: 9999},
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
@@ -404,7 +404,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					),
 				).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("two"), Score: 50},
 						{Value: []byte("three"), Score: 0},
 					},
@@ -432,7 +432,7 @@ var _ = Describe("SortedSet", func() {
 						},
 					),
 				).To(HaveSortedSetElements(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: []byte("three"), Score: 0},
 						{Value: []byte("four"), Score: -50},
 					},
@@ -457,7 +457,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Gets the rank`, func() {
 			putElements(
-				[]*SortedSetPutElement{
+				[]SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -519,7 +519,7 @@ var _ = Describe("SortedSet", func() {
 		})
 
 		It(`accepts an empty value`, func() {
-			putElements([]*SortedSetPutElement{
+			putElements([]SortedSetPutElement{
 				{Value: String(""), Score: 0},
 			})
 
@@ -552,7 +552,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Gets the score`, func() {
 			putElements(
-				[]*SortedSetPutElement{
+				[]SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -572,13 +572,17 @@ var _ = Describe("SortedSet", func() {
 			Expect(err).To(BeNil())
 			switch resp := getResp.(type) {
 			case *SortedSetGetScoresHit:
-				Expect(resp.Scores()).To(Equal(
-					[]SortedSetGetScore{
-						SortedSetScore(9999),
-						SortedSetScore(-9999),
-						&SortedSetScoreMiss{},
+				Expect(resp.Responses()).To(Equal(
+					[]SortedSetGetScoreResponse{
+						NewSortedSetGetScoreHit(9999),
+						NewSortedSetGetScoreHit(-9999),
+						&SortedSetGetScoreMiss{},
 					},
 				))
+
+				Expect(resp.ScoresFloat()).To(Equal([]float64{9999, -9999}))
+
+				Expect(resp.ScoresMap()).To(Equal(map[string]float64{"first": 9999, "last": -9999}))
 			}
 		})
 
@@ -610,7 +614,7 @@ var _ = Describe("SortedSet", func() {
 	Describe("sorted set get score", func() {
 		It("succeeds on the happy path", func() {
 			putElements(
-				[]*SortedSetPutElement{
+				[]SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -626,7 +630,8 @@ var _ = Describe("SortedSet", func() {
 			Expect(err).To(BeNil())
 			switch result := getResp.(type) {
 			case *SortedSetGetScoreHit:
-				Expect(result.Score()).To(Equal(SortedSetScore(9999)))
+				score := result.Score()
+				Expect(score).To(Equal(9999.0))
 			default:
 				Fail("expected a sorted set get score hit but got a miss")
 			}
@@ -677,7 +682,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Increments the score`, func() {
 			putElements(
-				[]*SortedSetPutElement{
+				[]SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -730,7 +735,7 @@ var _ = Describe("SortedSet", func() {
 		})
 
 		It(`accepts an empty value`, func() {
-			putElements([]*SortedSetPutElement{
+			putElements([]SortedSetPutElement{
 				{Value: String(""), Score: 50},
 			})
 
@@ -772,7 +777,7 @@ var _ = Describe("SortedSet", func() {
 			switch fetchResp := fetchResp.(type) {
 			case *SortedSetFetchHit:
 				Expect(fetchResp.ValueByteElements()).To(Equal(
-					[]*SortedSetElement{
+					[]SortedSetElement{
 						{Value: Bytes("aValue"), Score: 42},
 					},
 				))
@@ -782,7 +787,7 @@ var _ = Describe("SortedSet", func() {
 
 	Describe(`SortedSetPutElements`, func() {
 		It("puts multiple elements", func() {
-			elems := []*SortedSetPutElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
+			elems := []SortedSetPutElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
 			Expect(
 				sharedContext.Client.SortedSetPutElements(
 					sharedContext.Ctx,
@@ -804,7 +809,7 @@ var _ = Describe("SortedSet", func() {
 			case *SortedSetFetchHit:
 				Expect(
 					result.ValueStringElements(),
-				).To(Equal([]*SortedSetStringElement{{Value: "val1", Score: 0}, {Value: "val2", Score: 10}}))
+				).To(Equal([]SortedSetStringElement{{Value: "val1", Score: 0}, {Value: "val2", Score: 10}}))
 			default:
 				Fail("expected a hit for sorted set fetch but got a miss")
 			}
@@ -813,7 +818,7 @@ var _ = Describe("SortedSet", func() {
 
 	Describe("Sorted set remove element", func() {
 		It("removes an element", func() {
-			elems := []*SortedSetPutElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
+			elems := []SortedSetPutElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
 			Expect(
 				sharedContext.Client.SortedSetPutElements(
 					sharedContext.Ctx,
@@ -843,7 +848,7 @@ var _ = Describe("SortedSet", func() {
 			case *SortedSetFetchHit:
 				Expect(
 					result.ValueStringElements(),
-				).To(Equal([]*SortedSetStringElement{{Value: "val2", Score: 10}}))
+				).To(Equal([]SortedSetStringElement{{Value: "val2", Score: 10}}))
 			default:
 				Fail("expected a hit for sorted set fetch but got a miss")
 			}
@@ -867,7 +872,7 @@ var _ = Describe("SortedSet", func() {
 
 		It(`Removes elements`, func() {
 			putElements(
-				[]*SortedSetPutElement{
+				[]SortedSetPutElement{
 					{Value: String("first"), Score: 9999},
 					{Value: String("last"), Score: -9999},
 					{Value: String("middle"), Score: 50},
@@ -896,7 +901,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				),
 			).To(HaveSortedSetElements(
-				[]*SortedSetElement{
+				[]SortedSetElement{
 					{Value: []byte("last"), Score: -9999},
 					{Value: []byte("middle"), Score: 50},
 				},

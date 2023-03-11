@@ -60,6 +60,7 @@ func (r *SortedSetGetScoresRequest) interpretGrpcResponse() error {
 	case *pb.XSortedSetGetScoreResponse_Found:
 		r.response = responses.NewSortedSetGetScoresHit(
 			convertSortedSetScoreElement(grpcResp.Found.GetElements()),
+			r.grpcRequest.Values,
 		)
 	case *pb.XSortedSetGetScoreResponse_Missing:
 		r.response = &responses.SortedSetGetScoresMiss{}
@@ -70,16 +71,16 @@ func (r *SortedSetGetScoresRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []responses.SortedSetGetScore {
-	var rList []responses.SortedSetGetScore
+func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []responses.SortedSetGetScoreResponse {
+	var rList []responses.SortedSetGetScoreResponse
 	for _, element := range grpcSetElements {
 		switch element.Result {
 		case pb.ECacheResult_Hit:
-			rList = append(rList, responses.SortedSetScore(element.Score))
+			rList = append(rList, responses.NewSortedSetGetScoreHit(element.Score))
 		case pb.ECacheResult_Miss:
-			rList = append(rList, &responses.SortedSetScoreMiss{})
+			rList = append(rList, &responses.SortedSetGetScoreMiss{})
 		default:
-			rList = append(rList, &responses.SortedSetScoreInvalid{})
+			rList = append(rList, &responses.SortedSetGetScoreInvalid{})
 		}
 	}
 	return rList
