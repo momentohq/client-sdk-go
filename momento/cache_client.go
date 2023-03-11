@@ -44,6 +44,8 @@ type CacheClient interface {
 	SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error)
 	// SortedSetGetScores looks up the scores of multiple elements in the sorted set, by the value of the elements.
 	SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error)
+	// SortedSetRemoveElement removes an element from the sorted set.
+	SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error)
 	// SortedSetRemoveElements removes elements from the sorted set.
 	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
 	// SortedSetGetRank looks up the rank of an element in the sorted set, by the value of the element.
@@ -130,8 +132,7 @@ type CacheClientProps struct {
 	Configuration config.Configuration
 	// CredentialProvider Momento credential provider.
 	CredentialProvider auth.CredentialProvider
-	// DefaultTtl is default time to live for the item in cache.
-	DefaultTtl time.Duration
+	DefaultTtl         time.Duration
 }
 
 // NewCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments.
