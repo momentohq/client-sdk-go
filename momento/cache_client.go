@@ -34,9 +34,11 @@ type CacheClient interface {
 	// KeysExist checks if provided keys exist in the cache.
 	KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error)
 
-	// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
-	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
-	// SortedSetElement adds an element to the given sorted set. If the element already exists,
+	// SortedSetFetchByRank fetches the elements in the given sorted set by rank.
+	SortedSetFetchByRank(ctx context.Context, r *SortedSetFetchByRankRequest) (responses.SortedSetFetchResponse, error)
+	// SortedSetFetchByScore fetches the elements in the given sorted set by rank.
+	SortedSetFetchByScore(ctx context.Context, r *SortedSetFetchByScoreRequest) (responses.SortedSetFetchResponse, error)
+	// SortedSetPutElement adds an element to the given sorted set. If the element already exists,
 	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error)
 	// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
@@ -271,7 +273,14 @@ func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (r
 	return r.response, nil
 }
 
-func (c defaultScsClient) SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error) {
+func (c defaultScsClient) SortedSetFetchByRank(ctx context.Context, r *SortedSetFetchByRankRequest) (responses.SortedSetFetchResponse, error) {
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SortedSetFetchByScore(ctx context.Context, r *SortedSetFetchByScoreRequest) (responses.SortedSetFetchResponse, error) {
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
