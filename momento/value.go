@@ -36,3 +36,71 @@ func (v String) asString() string {
 type DictionaryElement struct {
 	Field, Value Value
 }
+
+// DictionaryElementsFromMap converts a map[string]string to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMap(theMap map[string]string) []DictionaryElement {
+	return DictionaryElementsFromMapStringString(theMap)
+}
+
+// DictionaryElementsFromMapStringString converts a map[string]string to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMapStringString(theMap map[string]string) []DictionaryElement {
+	var elements []DictionaryElement
+	for k, v := range theMap {
+		elements = append(elements, DictionaryElement{
+			Field: String(k),
+			Value: String(v),
+		})
+	}
+	return elements
+}
+
+// DictionaryElementsFromMapStringBytes converts a map[string][]byte to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMapStringBytes(theMap map[string][]byte) []DictionaryElement {
+	var elements []DictionaryElement
+	for k, v := range theMap {
+		elements = append(elements, DictionaryElement{
+			Field: String(k),
+			Value: Bytes(v),
+		})
+	}
+	return elements
+}
+
+// DictionaryElementsFromMapStringValue converts a map[string]momento.Value to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMapStringValue(theMap map[string]Value) []DictionaryElement {
+	var elements []DictionaryElement
+	for k, v := range theMap {
+		elements = append(elements, DictionaryElement{
+			Field: String(k),
+			Value: v,
+		})
+	}
+	return elements
+}
+
+type SortedSetElement struct {
+	Value Value
+	Score float64
+}
+
+// SortedSetElementsFromMap converts a map[string]float64 to an array of momento SortedSetElements.
+//
+//	SortedSetElements are used as input to SortedSetPutElements.
+func SortedSetElementsFromMap(theMap map[string]float64) []SortedSetElement {
+	var elements []SortedSetElement
+	for k, v := range theMap {
+		elements = append(elements, SortedSetElement{
+			Value: String(k),
+			Score: v,
+		})
+	}
+	return elements
+}

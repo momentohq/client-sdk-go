@@ -155,10 +155,10 @@ func (r *SortedSetFetchRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func sortedSetGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []responses.SortedSetElement {
-	var returnList []responses.SortedSetElement
+func sortedSetGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []responses.SortedSetBytesElement {
+	var returnList []responses.SortedSetBytesElement
 	for _, element := range grpcSetElements {
-		returnList = append(returnList, responses.SortedSetElement{
+		returnList = append(returnList, responses.SortedSetBytesElement{
 			Value: element.Value,
 			Score: element.Score,
 		})
