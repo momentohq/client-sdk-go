@@ -36,7 +36,7 @@ type CacheClient interface {
 
 	// SortedSetFetch fetches the elements in the given sorted set by index rank or by score.
 	SortedSetFetch(ctx context.Context, r *SortedSetFetchRequest) (responses.SortedSetFetchResponse, error)
-	// SortedSetPutElement adds an element to the given sorted set. If the element already exists,
+	// SortedSetElement adds an element to the given sorted set. If the element already exists,
 	// its score is updated. Creates the sorted set if it does not exist.
 	SortedSetPutElement(ctx context.Context, r *SortedSetPutElementRequest) (responses.SortedSetPutElementResponse, error)
 	// SortedSetPutElements adds elements to the given sorted set. If an element already exists,
@@ -289,7 +289,7 @@ func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetP
 	newRequest := &SortedSetPutElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
-		Elements:  []SortedSetPutElement{{Value: r.Value, Score: r.Score}},
+		Elements:  []SortedSetElement{{Value: r.Value, Score: r.Score}},
 		Ttl:       r.Ttl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
