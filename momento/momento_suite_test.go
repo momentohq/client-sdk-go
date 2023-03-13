@@ -60,7 +60,7 @@ func HaveSortedSetElements(expected []responses.SortedSetBytesElement) types.Gom
 		func(fetchResp responses.SortedSetFetchResponse) ([]responses.SortedSetBytesElement, error) {
 			switch rtype := fetchResp.(type) {
 			case *responses.SortedSetFetchHit:
-				return rtype.ValueByteElements(), nil
+				return rtype.ValueBytesElements(), nil
 			default:
 				return nil, fmt.Errorf("expected SortedSetFetchHit, but got %T", fetchResp)
 			}

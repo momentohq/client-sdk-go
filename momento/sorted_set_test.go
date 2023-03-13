@@ -776,7 +776,7 @@ var _ = Describe("SortedSet", func() {
 			Expect(fetchErr).To(BeNil())
 			switch fetchResp := fetchResp.(type) {
 			case *SortedSetFetchHit:
-				Expect(fetchResp.ValueByteElements()).To(Equal(
+				Expect(fetchResp.ValueBytesElements()).To(Equal(
 					[]SortedSetBytesElement{
 						{Value: Bytes("aValue"), Score: 42},
 					},

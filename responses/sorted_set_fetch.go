@@ -46,8 +46,8 @@ func (r SortedSetFetchHit) ValueStringElements() []SortedSetStringElement {
 	return elementsString
 }
 
-// ValueByteElements returns the elements as an array of objects, each containing a `value` and `score` field.
+// ValueBytesElements returns the elements as an array of objects, each containing a `value` and `score` field.
 // The value is a byte array, and the score is a number.
-func (r SortedSetFetchHit) ValueByteElements() []SortedSetBytesElement {
+func (r SortedSetFetchHit) ValueBytesElements() []SortedSetBytesElement {
 	return r.elements
 }
