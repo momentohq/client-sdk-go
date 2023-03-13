@@ -36,7 +36,7 @@ type CacheClient interface {
 
 	// SortedSetFetchByRank fetches the elements in the given sorted set by rank.
 	SortedSetFetchByRank(ctx context.Context, r *SortedSetFetchByRankRequest) (responses.SortedSetFetchResponse, error)
-	// SortedSetFetchByScore fetches the elements in the given sorted set by rank.
+	// SortedSetFetchByScore fetches the elements in the given sorted set by score.
 	SortedSetFetchByScore(ctx context.Context, r *SortedSetFetchByScoreRequest) (responses.SortedSetFetchResponse, error)
 	// SortedSetPutElement adds an element to the given sorted set. If the element already exists,
 	// its score is updated. Creates the sorted set if it does not exist.
