@@ -1,6 +1,6 @@
 package responses
 
-type SortedSetElement struct {
+type SortedSetBytesElement struct {
 	Value []byte
 	Score float64
 }
@@ -20,13 +20,13 @@ func (SortedSetFetchMiss) isSortedSetFetchResponse() {}
 
 // SortedSetFetchHit Hit Response to a cache SortedSetFetch api request.
 type SortedSetFetchHit struct {
-	elements []SortedSetElement
+	elements []SortedSetBytesElement
 }
 
 func (SortedSetFetchHit) isSortedSetFetchResponse() {}
 
 // NewSortedSetFetchHit returns a new SortedSetFetchHit containing the supplied elements.
-func NewSortedSetFetchHit(elements []SortedSetElement) *SortedSetFetchHit {
+func NewSortedSetFetchHit(elements []SortedSetBytesElement) *SortedSetFetchHit {
 	return &SortedSetFetchHit{elements: elements}
 }
 
@@ -46,8 +46,8 @@ func (r SortedSetFetchHit) ValueStringElements() []SortedSetStringElement {
 	return elementsString
 }
 
-// ValueByteElements returns the elements as an array of objects, each containing a `value` and `score` field.
+// ValueBytesElements returns the elements as an array of objects, each containing a `value` and `score` field.
 // The value is a byte array, and the score is a number.
-func (r SortedSetFetchHit) ValueByteElements() []SortedSetElement {
+func (r SortedSetFetchHit) ValueBytesElements() []SortedSetBytesElement {
 	return r.elements
 }

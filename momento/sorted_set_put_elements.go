@@ -10,15 +10,10 @@ import (
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
-type SortedSetPutElement struct {
-	Value Value
-	Score float64
-}
-
 type SortedSetPutElementsRequest struct {
 	CacheName string
 	SetName   string
-	Elements  []SortedSetPutElement
+	Elements  []SortedSetElement
 	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetPutRequest
@@ -72,7 +67,7 @@ func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetElementsToGrpc(modelSetElements []SortedSetPutElement) []*pb.XSortedSetElement {
+func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) []*pb.XSortedSetElement {
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
 		returnList = append(returnList, &pb.XSortedSetElement{

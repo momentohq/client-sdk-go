@@ -55,12 +55,12 @@ func HaveListLength(length int) types.GomegaMatcher {
 	)
 }
 
-func HaveSortedSetElements(expected []responses.SortedSetElement) types.GomegaMatcher {
+func HaveSortedSetElements(expected []responses.SortedSetBytesElement) types.GomegaMatcher {
 	return WithTransform(
-		func(fetchResp responses.SortedSetFetchResponse) ([]responses.SortedSetElement, error) {
+		func(fetchResp responses.SortedSetFetchResponse) ([]responses.SortedSetBytesElement, error) {
 			switch rtype := fetchResp.(type) {
 			case *responses.SortedSetFetchHit:
-				return rtype.ValueByteElements(), nil
+				return rtype.ValueBytesElements(), nil
 			default:
 				return nil, fmt.Errorf("expected SortedSetFetchHit, but got %T", fetchResp)
 			}
