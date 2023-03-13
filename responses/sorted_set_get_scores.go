@@ -1,6 +1,6 @@
 package responses
 
-// SortedSetGetScoresResponse is the base response type for a sorted set get scores request.
+// SortedSetGetScoresResponse is the base response type for a sorted set get responses request.
 type SortedSetGetScoresResponse interface {
 	isSortedSetGetScoresResponse()
 }
@@ -12,37 +12,46 @@ func (SortedSetGetScoresMiss) isSortedSetGetScoresResponse() {}
 
 // SortedSetGetScoresHit Hit Response to a cache SortedSetGetScores api request.
 type SortedSetGetScoresHit struct {
-	scores []SortedSetGetScore
+	responses []SortedSetGetScoreResponse
+	values    [][]byte
 }
 
 func (SortedSetGetScoresHit) isSortedSetGetScoresResponse() {}
 
-// NewSortedSetGetScoresHit returns a new SortedSetGetScoresHit containing the supplied scores.
-func NewSortedSetGetScoresHit(scores []SortedSetGetScore) *SortedSetGetScoresHit {
-	return &SortedSetGetScoresHit{scores: scores}
+// NewSortedSetGetScoresHit returns a new SortedSetGetScoresHit containing the supplied responses.
+func NewSortedSetGetScoresHit(responses []SortedSetGetScoreResponse, values [][]byte) *SortedSetGetScoresHit {
+	return &SortedSetGetScoresHit{responses: responses, values: values}
 }
 
-// Scores returns an array of SortedSetGetScore.
-func (r SortedSetGetScoresHit) Scores() []SortedSetGetScore {
-	return r.scores
+// Responses returns an array of SortedSetGetScoreResponse which will either be
+// of type SortedSetGetScoreHit, SortedSetGetScoreMiss, or SortedSetGetScoreInvalid
+func (r SortedSetGetScoresHit) Responses() []SortedSetGetScoreResponse {
+	return r.responses
 }
 
-// SortedSetGetScore is the base response for individual scores.
-type SortedSetGetScore interface {
-	isSortedSetScoreElement()
+// ScoresArray returns an array of float64 values that represent the hit responses. Misses
+// are not represented the array.
+func (r SortedSetGetScoresHit) ScoresArray() []float64 {
+	var hits []float64
+	for _, v := range r.responses {
+		switch vType := v.(type) {
+		case *SortedSetGetScoreHit:
+			hits = append(hits, vType.score)
+		}
+	}
+	return hits
 }
 
-// SortedSetScore contains the result of a successful sorted set score request.
-type SortedSetScore float64
-
-func (SortedSetScore) isSortedSetScoreElement() {}
-
-// SortedSetScoreMiss indicates a sorted set score request was a miss.
-type SortedSetScoreMiss struct{}
-
-func (SortedSetScoreMiss) isSortedSetScoreElement() {}
-
-// SortedSetScoreInvalid indicates an unknown response was returned for a sorted set score request.
-type SortedSetScoreInvalid struct{}
-
-func (SortedSetScoreInvalid) isSortedSetScoreElement() {}
+// ScoresMap returns a map with string keys representing the originally supplied values
+// and float64 values representing the corresponding score. Misses are not represented
+// in the map.
+func (r SortedSetGetScoresHit) ScoresMap() map[string]float64 {
+	hits := make(map[string]float64)
+	for index, v := range r.responses {
+		switch vType := v.(type) {
+		case *SortedSetGetScoreHit:
+			hits[string(r.values[index])] = vType.score
+		}
+	}
+	return hits
+}

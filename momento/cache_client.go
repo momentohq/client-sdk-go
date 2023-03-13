@@ -289,7 +289,7 @@ func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetP
 	newRequest := &SortedSetPutElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
-		Elements:  []*SortedSetPutElement{{Value: r.Value, Score: r.Score}},
+		Elements:  []SortedSetPutElement{{Value: r.Value, Score: r.Score}},
 		Ttl:       r.Ttl,
 	}
 	if err := c.dataClient.makeRequest(ctx, newRequest); err != nil {
@@ -324,13 +324,11 @@ func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGet
 	}
 	switch result := newRequest.response.(type) {
 	case *responses.SortedSetGetScoresHit:
-		score := result.Scores()[0]
-		return responses.NewSortedSetGetScoreHit(score), nil
+		return result.Responses()[0], nil
 	case *responses.SortedSetGetScoresMiss:
 		return &responses.SortedSetGetScoreMiss{}, nil
-	default:
-		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 	}
+	return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 }
 
 func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error) {

@@ -18,7 +18,7 @@ type SortedSetPutElement struct {
 type SortedSetPutElementsRequest struct {
 	CacheName string
 	SetName   string
-	Elements  []*SortedSetPutElement
+	Elements  []SortedSetPutElement
 	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetPutRequest
@@ -72,7 +72,7 @@ func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetElementsToGrpc(modelSetElements []*SortedSetPutElement) []*pb.XSortedSetElement {
+func convertSortedSetElementsToGrpc(modelSetElements []SortedSetPutElement) []*pb.XSortedSetElement {
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
 		returnList = append(returnList, &pb.XSortedSetElement{
