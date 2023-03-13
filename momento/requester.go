@@ -240,7 +240,17 @@ func validateNotNil(value Value, label string) error {
 	return nil
 }
 
-func ElementsFromMapStringString(theMap map[string]string) []DictionaryElement {
+// DictionaryElementsFromMap converts a map[string]string to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMap(theMap map[string]string) []DictionaryElement {
+	return DictionaryElementsFromMapStringString(theMap)
+}
+
+// DictionaryElementsFromMapStringString converts a map[string]string to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMapStringString(theMap map[string]string) []DictionaryElement {
 	var elements []DictionaryElement
 	for k, v := range theMap {
 		elements = append(elements, DictionaryElement{
@@ -251,7 +261,10 @@ func ElementsFromMapStringString(theMap map[string]string) []DictionaryElement {
 	return elements
 }
 
-func ElementsFromMapStringBytes(theMap map[string][]byte) []DictionaryElement {
+// DictionaryElementsFromMapStringBytes converts a map[string][]byte to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMapStringBytes(theMap map[string][]byte) []DictionaryElement {
 	var elements []DictionaryElement
 	for k, v := range theMap {
 		elements = append(elements, DictionaryElement{
@@ -262,7 +275,10 @@ func ElementsFromMapStringBytes(theMap map[string][]byte) []DictionaryElement {
 	return elements
 }
 
-func ElementsFromMapStringValue(theMap map[string]Value) []DictionaryElement {
+// DictionaryElementsFromMapStringValue converts a map[string]momento.Value to an array of momento DictionaryElements.
+//
+//	DictionaryElements are used as input to DictionarySetFields.
+func DictionaryElementsFromMapStringValue(theMap map[string]Value) []DictionaryElement {
 	var elements []DictionaryElement
 	for k, v := range theMap {
 		elements = append(elements, DictionaryElement{
