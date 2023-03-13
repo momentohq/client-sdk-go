@@ -90,6 +90,7 @@ type CacheClient interface {
 	// DictionarySetField adds an element to the given dictionary. Creates the dictionary if it does not already exist.
 	DictionarySetField(ctx context.Context, r *DictionarySetFieldRequest) (responses.DictionarySetFieldResponse, error)
 	// DictionarySetFields adds multiple elements to the given dictionary. Creates the dictionary if it does not already exist.
+	//  Use momento.DictionaryElementsFromMap to help construct the Request from a map object.
 	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
 	// DictionaryFetch fetches all elements of the given dictionary.
 	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error)

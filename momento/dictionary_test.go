@@ -268,7 +268,7 @@ var _ = Describe("Dictionary methods", func() {
 				{Field: String("myField1"), Value: String("myValue1")},
 				{Field: String("myField2"), Value: String("myValue2")},
 			}
-			elems := ElementsFromMapStringString(theMap)
+			elems := DictionaryElementsFromMapStringString(theMap)
 			Expect(elems).To(ConsistOf(expected))
 		})
 
@@ -278,7 +278,7 @@ var _ = Describe("Dictionary methods", func() {
 				{Field: String("myField1"), Value: Bytes("myValue1")},
 				{Field: String("myField2"), Value: Bytes("myValue2")},
 			}
-			elems := ElementsFromMapStringBytes(theMap)
+			elems := DictionaryElementsFromMapStringBytes(theMap)
 			Expect(elems).To(ConsistOf(expected))
 		})
 
@@ -288,7 +288,7 @@ var _ = Describe("Dictionary methods", func() {
 				{Field: String("myField1"), Value: String("myValue1")},
 				{Field: String("myField2"), Value: Bytes("myValue2")},
 			}
-			elems := ElementsFromMapStringValue(theMap)
+			elems := DictionaryElementsFromMapStringValue(theMap)
 			Expect(elems).To(ConsistOf(expected))
 		})
 
@@ -387,7 +387,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements: ElementsFromMapStringValue(
+					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 					),
 				}),
@@ -534,7 +534,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements: ElementsFromMapStringValue(
+					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 					),
 				}),
@@ -573,7 +573,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements: ElementsFromMapStringValue(
+					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{
 							"myField1": String("myValue1"),
 							"myField2": Bytes("myValue2"),
@@ -720,7 +720,7 @@ var _ = Describe("Dictionary methods", func() {
 					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
 						DictionaryName: sharedContext.CollectionName,
-						Elements: ElementsFromMapStringValue(
+						Elements: DictionaryElementsFromMapStringValue(
 							map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 						),
 					}),
@@ -754,7 +754,7 @@ var _ = Describe("Dictionary methods", func() {
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
-					Elements: ElementsFromMapStringValue(
+					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 					),
 				}),
