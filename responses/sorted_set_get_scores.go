@@ -29,9 +29,9 @@ func (r SortedSetGetScoresHit) Responses() []SortedSetGetScoreResponse {
 	return r.responses
 }
 
-// ScoresFloat returns an array of float64 values that represent the hit responses. Misses
+// ScoresArray returns an array of float64 values that represent the hit responses. Misses
 // are not represented the array.
-func (r SortedSetGetScoresHit) ScoresFloat() []float64 {
+func (r SortedSetGetScoresHit) ScoresArray() []float64 {
 	var hits []float64
 	for _, v := range r.responses {
 		switch vType := v.(type) {

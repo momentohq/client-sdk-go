@@ -580,7 +580,7 @@ var _ = Describe("SortedSet", func() {
 					},
 				))
 
-				Expect(resp.ScoresFloat()).To(Equal([]float64{9999, -9999}))
+				Expect(resp.ScoresArray()).To(Equal([]float64{9999, -9999}))
 
 				Expect(resp.ScoresMap()).To(Equal(map[string]float64{"first": 9999, "last": -9999}))
 			}
