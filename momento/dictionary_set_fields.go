@@ -10,6 +10,9 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
+// DictionarySetFieldsRequest represents a request to store multiple elements in a Dictionary.
+//
+//	Use momento.DictionaryElementsFromMap to help construct the Request from a map object.
 type DictionarySetFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
