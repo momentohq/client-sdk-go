@@ -39,9 +39,9 @@ var _ = Describe("SortedSet", func() {
 
 	// Convenience for fetching elements.
 	fetch := func() (SortedSetFetchResponse, error) {
-		return sharedContext.Client.SortedSetFetch(
+		return sharedContext.Client.SortedSetFetchByRank(
 			sharedContext.Ctx,
-			&SortedSetFetchRequest{
+			&SortedSetFetchByRankRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   sharedContext.CollectionName,
 			},
@@ -55,7 +55,7 @@ var _ = Describe("SortedSet", func() {
 			value := String(uuid.NewString())
 
 			Expect(
-				client.SortedSetFetch(ctx, &SortedSetFetchRequest{
+				client.SortedSetFetchByRank(ctx, &SortedSetFetchByRankRequest{
 					CacheName: cacheName, SetName: collectionName,
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
@@ -221,12 +221,12 @@ var _ = Describe("SortedSet", func() {
 		),
 	)
 
-	Describe(`SortedSetFetch`, func() {
+	Describe(`SortedSetFetchByRank`, func() {
 		It(`Misses if the set does not exist`, func() {
 			Expect(
-				sharedContext.Client.SortedSetFetch(
+				sharedContext.Client.SortedSetFetchByRank(
 					sharedContext.Ctx,
-					&SortedSetFetchRequest{
+					&SortedSetFetchByRankRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 					},
@@ -250,9 +250,9 @@ var _ = Describe("SortedSet", func() {
 			})
 
 			It(`With no extra args it fetches everything in ascending order`, func() {
-				resp, err := sharedContext.Client.SortedSetFetch(
+				resp, err := sharedContext.Client.SortedSetFetchByRank(
 					sharedContext.Ctx,
-					&SortedSetFetchRequest{
+					&SortedSetFetchByRankRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 					},
@@ -280,25 +280,11 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It(`It errors when ByRank and ByScore are defined`, func() {
-				Expect(
-					sharedContext.Client.SortedSetFetch(
-						sharedContext.Ctx,
-						&SortedSetFetchRequest{
-							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
-							ByRank:    &SortedSetFetchByRank{},
-							ByScore:   &SortedSetFetchByScore{},
-						},
-					),
-				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-			})
-
 			It(`Orders`, func() {
 				Expect(
-					sharedContext.Client.SortedSetFetch(
+					sharedContext.Client.SortedSetFetchByRank(
 						sharedContext.Ctx,
-						&SortedSetFetchRequest{
+						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
@@ -320,16 +306,14 @@ var _ = Describe("SortedSet", func() {
 				start := int32(1)
 				end := int32(4)
 				Expect(
-					sharedContext.Client.SortedSetFetch(
+					sharedContext.Client.SortedSetFetchByRank(
 						sharedContext.Ctx,
-						&SortedSetFetchRequest{
+						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByRank: &SortedSetFetchByRank{
-								StartRank: &start,
-								EndRank:   &end,
-							},
+							StartRank: &start,
+							EndRank:   &end,
 						},
 					),
 				).To(HaveSortedSetElements(
@@ -344,15 +328,13 @@ var _ = Describe("SortedSet", func() {
 			It(`Counts negative start rank inclusive from the end`, func() {
 				start := int32(-3)
 				Expect(
-					sharedContext.Client.SortedSetFetch(
+					sharedContext.Client.SortedSetFetchByRank(
 						sharedContext.Ctx,
-						&SortedSetFetchRequest{
+						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByRank: &SortedSetFetchByRank{
-								StartRank: &start,
-							},
+							StartRank: &start,
 						},
 					),
 				).To(HaveSortedSetElements(
@@ -367,15 +349,13 @@ var _ = Describe("SortedSet", func() {
 			It(`Counts negative end rank exclusively from the end`, func() {
 				end := int32(-3)
 				Expect(
-					sharedContext.Client.SortedSetFetch(
+					sharedContext.Client.SortedSetFetchByRank(
 						sharedContext.Ctx,
-						&SortedSetFetchRequest{
+						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByRank: &SortedSetFetchByRank{
-								EndRank: &end,
-							},
+							EndRank:   &end,
 						},
 					),
 				).To(HaveSortedSetElements(
@@ -386,21 +366,102 @@ var _ = Describe("SortedSet", func() {
 					},
 				))
 			})
+		})
+	})
+
+	Describe(`SortedSetFetchByScore`, func() {
+		It(`Misses if the set does not exist`, func() {
+			Expect(
+				sharedContext.Client.SortedSetFetchByScore(
+					sharedContext.Ctx,
+					&SortedSetFetchByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetFetchMiss{}))
+		})
+
+		Context(`With a populated SortedSet`, func() {
+			// We'll populate the SortedSet with these elements.
+			sortedSetElements := []SortedSetElement{
+				{Value: String("one"), Score: 9999},
+				{Value: String("two"), Score: 50},
+				{Value: String("three"), Score: 0},
+				{Value: String("four"), Score: -50},
+				{Value: String("five"), Score: -500},
+				{Value: String("six"), Score: -1000},
+			}
+
+			BeforeEach(func() {
+				putElements(sortedSetElements)
+			})
+
+			It(`With no extra args it fetches everything in ascending order`, func() {
+				resp, err := sharedContext.Client.SortedSetFetchByScore(
+					sharedContext.Ctx,
+					&SortedSetFetchByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				)
+				Expect(err).To(BeNil())
+				Expect(resp).To(HaveSortedSetElements(
+					[]SortedSetBytesElement{
+						{Value: []byte("six"), Score: -1000},
+						{Value: []byte("five"), Score: -500},
+						{Value: []byte("four"), Score: -50},
+						{Value: []byte("three"), Score: 0},
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("one"), Score: 9999},
+					},
+				))
+				Expect(resp).To(HaveSortedSetStringElements(
+					[]SortedSetStringElement{
+						{Value: "six", Score: -1000},
+						{Value: "five", Score: -500},
+						{Value: "four", Score: -50},
+						{Value: "three", Score: 0},
+						{Value: "two", Score: 50},
+						{Value: "one", Score: 9999},
+					},
+				))
+			})
+
+			It(`Orders`, func() {
+				Expect(
+					sharedContext.Client.SortedSetFetchByScore(
+						sharedContext.Ctx,
+						&SortedSetFetchByScoreRequest{
+							CacheName: sharedContext.CacheName,
+							SetName:   sharedContext.CollectionName,
+							Order:     DESCENDING,
+						},
+					),
+				).To(HaveSortedSetElements(
+					[]SortedSetBytesElement{
+						{Value: []byte("one"), Score: 9999},
+						{Value: []byte("two"), Score: 50},
+						{Value: []byte("three"), Score: 0},
+						{Value: []byte("four"), Score: -50},
+						{Value: []byte("five"), Score: -500},
+						{Value: []byte("six"), Score: -1000},
+					},
+				))
+			})
 
 			It(`Constrains by score inclusive`, func() {
 				minScore := float64(0)
 				maxScore := float64(50)
 				Expect(
-					sharedContext.Client.SortedSetFetch(
+					sharedContext.Client.SortedSetFetchByScore(
 						sharedContext.Ctx,
-						&SortedSetFetchRequest{
+						&SortedSetFetchByScoreRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByScore: &SortedSetFetchByScore{
-								MinScore: &minScore,
-								MaxScore: &maxScore,
-							},
+							MinScore:  &minScore,
+							MaxScore:  &maxScore,
 						},
 					),
 				).To(HaveSortedSetElements(
@@ -417,18 +478,16 @@ var _ = Describe("SortedSet", func() {
 				offset := uint32(1)
 				count := uint32(2)
 				Expect(
-					sharedContext.Client.SortedSetFetch(
+					sharedContext.Client.SortedSetFetchByScore(
 						sharedContext.Ctx,
-						&SortedSetFetchRequest{
+						&SortedSetFetchByScoreRequest{
 							CacheName: sharedContext.CacheName,
 							SetName:   sharedContext.CollectionName,
 							Order:     DESCENDING,
-							ByScore: &SortedSetFetchByScore{
-								MinScore: &minScore,
-								MaxScore: &maxScore,
-								Offset:   &offset,
-								Count:    &count,
-							},
+							MinScore:  &minScore,
+							MaxScore:  &maxScore,
+							Offset:    &offset,
+							Count:     &count,
 						},
 					),
 				).To(HaveSortedSetElements(
@@ -766,9 +825,9 @@ var _ = Describe("SortedSet", func() {
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
 
-			fetchResp, fetchErr := sharedContext.Client.SortedSetFetch(
+			fetchResp, fetchErr := sharedContext.Client.SortedSetFetchByRank(
 				sharedContext.Ctx,
-				&SortedSetFetchRequest{
+				&SortedSetFetchByRankRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
 				},
@@ -799,7 +858,7 @@ var _ = Describe("SortedSet", func() {
 				),
 			).To(BeAssignableToTypeOf(&SortedSetPutElementsSuccess{}))
 
-			fetchResp, err := sharedContext.Client.SortedSetFetch(sharedContext.Ctx, &SortedSetFetchRequest{
+			fetchResp, err := sharedContext.Client.SortedSetFetchByRank(sharedContext.Ctx, &SortedSetFetchByRankRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   sharedContext.CollectionName,
 				Order:     ASCENDING,
@@ -838,7 +897,7 @@ var _ = Describe("SortedSet", func() {
 				}),
 			).To(BeAssignableToTypeOf(&SortedSetRemoveElementSuccess{}))
 
-			fetchResp, err := sharedContext.Client.SortedSetFetch(sharedContext.Ctx, &SortedSetFetchRequest{
+			fetchResp, err := sharedContext.Client.SortedSetFetchByRank(sharedContext.Ctx, &SortedSetFetchByRankRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   sharedContext.CollectionName,
 				Order:     ASCENDING,
@@ -893,9 +952,9 @@ var _ = Describe("SortedSet", func() {
 			).To(BeAssignableToTypeOf(&SortedSetRemoveElementsSuccess{}))
 
 			Expect(
-				sharedContext.Client.SortedSetFetch(
+				sharedContext.Client.SortedSetFetchByRank(
 					sharedContext.Ctx,
-					&SortedSetFetchRequest{
+					&SortedSetFetchByRankRequest{
 						CacheName: sharedContext.CacheName,
 						SetName:   sharedContext.CollectionName,
 					},

@@ -86,6 +86,13 @@ func DictionaryElementsFromMapStringValue(theMap map[string]Value) []DictionaryE
 	return elements
 }
 
+type SortedSetOrder int
+
+const (
+	ASCENDING  SortedSetOrder = 0
+	DESCENDING SortedSetOrder = 1
+)
+
 type SortedSetElement struct {
 	Value Value
 	Score float64
