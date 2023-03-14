@@ -29,7 +29,7 @@ Check out full working code in the [examples](./examples/README.md) directory of
 ### Installation
 
 ```bash
-go get github.com/momentohq/client-sdk-go
+go install github.com/momentohq/client-sdk-go@latest
 ```
 
 ### Usage
