@@ -130,7 +130,7 @@ func printDict() {
 	switch r := resp.(type) {
 	case *responses.DictionaryFetchHit:
 		fmt.Println("\nprinting dictionary contents:")
-		for k, v := range r.ValueMapStringString() {
+		for k, v := range r.ValueMap() {
 			fmt.Printf("%s = %s\n", k, v)
 		}
 	case *responses.DictionaryFetchMiss:
