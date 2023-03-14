@@ -25,26 +25,35 @@ func main() {
 	// Create cache
 	setupCache(client, ctx)
 
+	data := map[string]float64{
+		"element1":  1.0,
+		"element2":  2.0,
+		"element3":  3.0,
+		"element4":  4.0,
+		"element5":  5.0,
+		"element6":  6.0,
+		"element7":  7.0,
+		"element8":  8.0,
+		"element9":  9.0,
+		"element10": 10.0,
+	}
+
 	// Put score for each element to set
 	// Using counter, element N has score N
-	for i := 1; i < 11; i++ {
-		_, err := client.SortedSetPutElements(ctx, &momento.SortedSetPutElementsRequest{
-			CacheName: cacheName,
-			SetName:   setName,
-			Elements: []*momento.SortedSetPutElement{{
-				Value: momento.String(fmt.Sprintf("element-%d", i)),
-				Score: float64(i),
-			}},
-		})
-		if err != nil {
-			panic(err)
-		}
+
+	_, err := client.SortedSetPutElements(ctx, &momento.SortedSetPutElementsRequest{
+		CacheName: cacheName,
+		SetName:   setName,
+		Elements:  momento.SortedSetElementsFromMap(data),
+	})
+	if err != nil {
+		panic(err)
 	}
 
 	// Fetch sorted set
 	fmt.Println("\n\nFetching all elements from sorted set:")
 	fmt.Println("--------------")
-	fetchResp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
+	fetchResp, err := client.SortedSetFetchByRank(ctx, &momento.SortedSetFetchByRankRequest{
 		CacheName: cacheName,
 		SetName:   setName,
 	})
@@ -57,7 +66,7 @@ func main() {
 	// Fetch elements in descending order (high -> low)
 	fmt.Println("\n\nFetching all elements from sorted set in descending order:")
 	fmt.Println("--------------")
-	descendingResp, err := client.SortedSetFetch(ctx, &momento.SortedSetFetchRequest{
+	descendingResp, err := client.SortedSetFetchByRank(ctx, &momento.SortedSetFetchByRankRequest{
 		CacheName: cacheName,
 		SetName:   setName,
 		Order:     momento.DESCENDING,

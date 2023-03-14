@@ -2,7 +2,7 @@ module github.com/momentohq/go-example
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/momentohq/client-sdk-go v0.15.0
+	github.com/momentohq/client-sdk-go v0.16.0
 
 	// the hrtime and hdrhistogram-go modules are not required to use momento, but
 	// they are used in the loadgen example
