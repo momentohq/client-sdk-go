@@ -15,6 +15,9 @@ const (
 	topicName = "test-topic"
 )
 
+// If you were creating your own app, one wouldn't need the cacheClient object, setupCache function, or associated code if you were connecting
+// to an existing cache in Momento Serverless Cache. For demonstration purposes, this example creates a cache for the new Topic to show the publish
+// and subscribe functionality.
 func main() {
 	// Initialization
 	topicClient := getTopicClient()
