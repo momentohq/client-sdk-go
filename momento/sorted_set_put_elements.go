@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utils"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/utils"
 )
 
 type SortedSetPutElementsRequest struct {
@@ -42,7 +43,10 @@ func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) erro
 		return err
 	}
 
-	elements := convertSortedSetElementsToGrpc(r.Elements)
+	elements, err := convertSortedSetElementsToGrpc(r.Elements)
+	if err != nil {
+		return err
+	}
 
 	r.grpcRequest = &pb.XSortedSetPutRequest{
 		SetName:         []byte(r.SetName),
@@ -67,13 +71,23 @@ func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) []*pb.XSortedSetElement {
+func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) ([]*pb.XSortedSetElement, error) {
+	if modelSetElements == nil {
+		return nil, buildError(
+			momentoerrors.InvalidArgumentError, "elements cannot be nil", nil,
+		)
+	}
 	var returnList []*pb.XSortedSetElement
 	for _, el := range modelSetElements {
+		if el.Value == nil {
+			return nil, buildError(
+				momentoerrors.InvalidArgumentError, "element value cannot be nil", nil,
+			)
+		}
 		returnList = append(returnList, &pb.XSortedSetElement{
 			Value: el.Value.asBytes(),
 			Score: el.Score,
 		})
 	}
-	return returnList
+	return returnList, nil
 }

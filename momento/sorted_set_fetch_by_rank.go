@@ -38,27 +38,33 @@ func (r *SortedSetFetchByRankRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	// This is the default: fetch everything in ascending order.
-	by_index := pb.XSortedSetFetchRequest_ByIndex{
+	byIndex := pb.XSortedSetFetchRequest_ByIndex{
 		ByIndex: &pb.XSortedSetFetchRequest_XByIndex{
 			Start: &pb.XSortedSetFetchRequest_XByIndex_UnboundedStart{},
 			End:   &pb.XSortedSetFetchRequest_XByIndex_UnboundedEnd{},
 		},
 	}
 
+	startForValidation := int32(0)
 	if r.StartRank != nil {
 
-		by_index.ByIndex.Start = &pb.XSortedSetFetchRequest_XByIndex_InclusiveStartIndex{
+		byIndex.ByIndex.Start = &pb.XSortedSetFetchRequest_XByIndex_InclusiveStartIndex{
 			InclusiveStartIndex: *r.StartRank,
 		}
+		startForValidation = *r.StartRank
 	}
 
 	if r.EndRank != nil {
-		by_index.ByIndex.End = &pb.XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex{
+		byIndex.ByIndex.End = &pb.XSortedSetFetchRequest_XByIndex_ExclusiveEndIndex{
 			ExclusiveEndIndex: *r.EndRank,
+		}
+		endForValidation := *r.EndRank
+		if err := validateSortedSetRanks(startForValidation, endForValidation); err != nil {
+			return err
 		}
 	}
 
-	grpcReq.Range = &by_index
+	grpcReq.Range = &byIndex
 
 	r.grpcRequest = grpcReq
 
