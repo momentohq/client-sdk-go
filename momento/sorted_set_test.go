@@ -406,23 +406,29 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It("returns an error for detectable invalid ranges", func() {
-				start := int32(10)
-				end := int32(3)
-				Expect(
-					sharedContext.Client.SortedSetFetchByRank(
-						sharedContext.Ctx,
-						&SortedSetFetchByRankRequest{
-							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
-							StartRank: &start,
-							EndRank:   &end,
-						},
-					),
-				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			DescribeTable("we get an error for detectable invalid ranges",
+				func(start int32, end int32) {
+					Expect(
+						sharedContext.Client.SortedSetFetchByRank(
+							sharedContext.Ctx,
+							&SortedSetFetchByRankRequest{
+								CacheName: sharedContext.CacheName,
+								SetName:   sharedContext.CollectionName,
+								StartRank: &start,
+								EndRank:   &end,
+							},
+						),
+					).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			})
+					start = int32(-5)
+					end = int32(-3)
 
+				},
+				Entry("positive values", int32(5), int32(3)),
+				Entry("negative values", int32(-5), int32(-8)),
+				Entry("equal positives", int32(5), int32(5)),
+				Entry("equal negatives", int32(-5), int32(-5)),
+			)
 		})
 	})
 
