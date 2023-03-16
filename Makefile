@@ -54,3 +54,14 @@ test:
 .PHONY: vendor
 vendor:
 	go mod vendor
+
+.PHONY: examples
+examples:
+	go run scalar-example/main.go
+	go run dictionary-example/main.go
+	go run list-example/main.go
+	go run set-example/main.go
+	go run sortedset-example/main.go
+	go run logging-example/main.go
+	go run pubsub-example/main.go
+	

@@ -18,6 +18,7 @@ jobs:
       pull-requests: read
     env:
       TEST_AUTH_TOKEN: ${{ secrets.auth-token }}
+      MOMENTO_AUTH_TOKEN: ${{ secrets.auth-token }}
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
@@ -52,3 +53,6 @@ jobs:
 
       - name: Run test
         run: make test
+
+      - name: Run examples
+        run: make examples
