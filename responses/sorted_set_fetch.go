@@ -27,15 +27,15 @@ func (SortedSetFetchHit) isSortedSetFetchResponse() {}
 
 // NewSortedSetFetchHit returns a new SortedSetFetchHit containing the supplied elements.
 func NewSortedSetFetchHit(elements []SortedSetBytesElement) *SortedSetFetchHit {
+	if elements == nil {
+		elements = []SortedSetBytesElement{}
+	}
 	return &SortedSetFetchHit{elements: elements}
 }
 
 // ValueStringElements returns the elements as an array of objects, each containing a `value` and `score` field.
 // The value is a utf-8 string, decoded from the underlying byte array, and the score is a number.
 func (r SortedSetFetchHit) ValueStringElements() []SortedSetStringElement {
-	if r.elements == nil {
-		return nil
-	}
 	elementsString := make([]SortedSetStringElement, 0, len(r.elements))
 
 	for _, element := range r.elements {

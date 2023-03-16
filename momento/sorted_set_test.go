@@ -364,7 +364,7 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
-			It("returns nil when start is after end", func() {
+			It("returns an empty list when start is after end", func() {
 				start := int32(3)
 				end := int32(-5)
 				fetchResp, err := sharedContext.Client.SortedSetFetchByRank(
@@ -380,8 +380,8 @@ var _ = Describe("SortedSet", func() {
 				Expect(err).To(BeNil())
 				switch fetchResp := fetchResp.(type) {
 				case *SortedSetFetchHit:
-					Expect(fetchResp.ValueBytesElements()).To(BeNil())
-					Expect(fetchResp.ValueStringElements()).To(BeNil())
+					Expect(fetchResp.ValueBytesElements()).To(Equal([]SortedSetBytesElement{}))
+					Expect(fetchResp.ValueStringElements()).To(Equal([]SortedSetStringElement{}))
 				}
 			})
 
