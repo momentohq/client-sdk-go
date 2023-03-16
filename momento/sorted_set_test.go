@@ -61,8 +61,20 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
+				client.SortedSetFetchByScore(ctx, &SortedSetFetchByScoreRequest{
+					CacheName: cacheName, SetName: collectionName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
 				client.SortedSetGetRank(ctx, &SortedSetGetRankRequest{
 					CacheName: cacheName, SetName: collectionName, Value: value,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
+				client.SortedSetGetScore(ctx, &SortedSetGetScoreRequest{
+					CacheName: cacheName, SetName: collectionName, Value: String("hi"),
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
@@ -92,6 +104,12 @@ var _ = Describe("SortedSet", func() {
 			Expect(
 				client.SortedSetPutElements(ctx, &SortedSetPutElementsRequest{
 					CacheName: cacheName, SetName: collectionName, Elements: putElements,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
+				client.SortedSetRemoveElement(ctx, &SortedSetRemoveElementRequest{
+					CacheName: cacheName, SetName: collectionName, Value: String("hi"),
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
@@ -186,7 +204,7 @@ var _ = Describe("SortedSet", func() {
 				).To(BeAssignableToTypeOf(SortedSetIncrementScoreSuccess(0)))
 			},
 		),
-		Entry(`SortedSetElement`,
+		Entry(`SortedSetPutElement`,
 			func(element SortedSetElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetPutElementRequest{
 					CacheName: sharedContext.CacheName,
@@ -346,6 +364,27 @@ var _ = Describe("SortedSet", func() {
 				))
 			})
 
+			It("returns an empty list when start is after end", func() {
+				start := int32(3)
+				end := int32(-5)
+				fetchResp, err := sharedContext.Client.SortedSetFetchByRank(
+					sharedContext.Ctx,
+					&SortedSetFetchByRankRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Order:     DESCENDING,
+						StartRank: &start,
+						EndRank:   &end,
+					},
+				)
+				Expect(err).To(BeNil())
+				switch fetchResp := fetchResp.(type) {
+				case *SortedSetFetchHit:
+					Expect(fetchResp.ValueBytesElements()).To(Equal([]SortedSetBytesElement{}))
+					Expect(fetchResp.ValueStringElements()).To(Equal([]SortedSetStringElement{}))
+				}
+			})
+
 			It(`Counts negative end rank exclusively from the end`, func() {
 				end := int32(-3)
 				Expect(
@@ -366,6 +405,30 @@ var _ = Describe("SortedSet", func() {
 					},
 				))
 			})
+
+			DescribeTable("we get an error for detectable invalid ranges",
+				func(start int32, end int32) {
+					Expect(
+						sharedContext.Client.SortedSetFetchByRank(
+							sharedContext.Ctx,
+							&SortedSetFetchByRankRequest{
+								CacheName: sharedContext.CacheName,
+								SetName:   sharedContext.CollectionName,
+								StartRank: &start,
+								EndRank:   &end,
+							},
+						),
+					).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+					start = int32(-5)
+					end = int32(-3)
+
+				},
+				Entry("positive values", int32(5), int32(3)),
+				Entry("negative values", int32(-5), int32(-8)),
+				Entry("equal positives", int32(5), int32(5)),
+				Entry("equal negatives", int32(-5), int32(-5)),
+			)
 		})
 	})
 
@@ -514,6 +577,18 @@ var _ = Describe("SortedSet", func() {
 			).To(BeAssignableToTypeOf(&SortedSetGetRankMiss{}))
 		})
 
+		It("Misses when the sorted set doesn't exist", func() {
+			getResp, err := sharedContext.Client.SortedSetGetRank(
+				sharedContext.Ctx, &SortedSetGetRankRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   uuid.NewString(),
+					Value:     String("idontexist"),
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(getResp).To(BeAssignableToTypeOf(&SortedSetGetRankMiss{}))
+		})
+
 		It(`Gets the rank`, func() {
 			putElements(
 				[]SortedSetElement{
@@ -609,7 +684,19 @@ var _ = Describe("SortedSet", func() {
 			).To(BeAssignableToTypeOf(&SortedSetGetScoresMiss{}))
 		})
 
-		It(`Gets the score`, func() {
+		It("misses when the sorted set doesn't exist", func() {
+			getResp, err := sharedContext.Client.SortedSetGetScores(
+				sharedContext.Ctx, &SortedSetGetScoresRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   uuid.NewString(),
+					Values:    []Value{String("idontexist")},
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(getResp).To(BeAssignableToTypeOf(&SortedSetGetScoresMiss{}))
+		})
+
+		It(`Gets the correct set of scores`, func() {
 			putElements(
 				[]SortedSetElement{
 					{Value: String("first"), Score: 9999},
@@ -694,6 +781,45 @@ var _ = Describe("SortedSet", func() {
 			default:
 				Fail("expected a sorted set get score hit but got a miss")
 			}
+		})
+
+		It("misses when the element doesn't exist", func() {
+			putElements([]SortedSetElement{
+				{Value: Bytes("value1"), Score: 0},
+				{Value: String("value2"), Score: 10},
+			})
+			getResp, err := sharedContext.Client.SortedSetGetScore(
+				sharedContext.Ctx, &SortedSetGetScoreRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("idontexist"),
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(getResp).To(BeAssignableToTypeOf(&SortedSetGetScoreMiss{}))
+		})
+
+		It("misses when the sorted set doesn't exist", func() {
+			getResp, err := sharedContext.Client.SortedSetGetScore(
+				sharedContext.Ctx, &SortedSetGetScoreRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   uuid.NewString(),
+					Value:     String("idontexist"),
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(getResp).To(BeAssignableToTypeOf(&SortedSetGetScoreMiss{}))
+		})
+
+		It("returns an error for a nil value", func() {
+			Expect(
+				sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     nil,
+					Score:     10,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
 
@@ -812,41 +938,96 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
-	Describe(`SortedSetElement`, func() {
-		It(`Puts an element with a string value`, func() {
-			resp, err := sharedContext.Client.SortedSetPutElement(
-				sharedContext.Ctx,
-				&SortedSetPutElementRequest{
+	Describe("SortedSetPutElement", func() {
+
+		DescribeTable("put an element with each of string and byte values",
+			func(inputValue Value, inputScore float64, expected []SortedSetBytesElement) {
+				resp, err := sharedContext.Client.SortedSetPutElement(
+					sharedContext.Ctx,
+					&SortedSetPutElementRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						Value:     inputValue,
+						Score:     inputScore,
+					})
+				Expect(err).To(BeNil())
+				Expect(resp).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
+
+				fetchResp, fetchErr := sharedContext.Client.SortedSetFetchByRank(
+					sharedContext.Ctx,
+					&SortedSetFetchByRankRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				)
+				Expect(fetchErr).To(BeNil())
+				switch fetchResp := fetchResp.(type) {
+				case *SortedSetFetchHit:
+					Expect(fetchResp.ValueBytesElements()).To(Equal(expected))
+				}
+			},
+			Entry("string value", String("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
+			Entry("bytes value", Bytes("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
+		)
+
+		It("overwrites an existing element's score", func() {
+			strValue := String("aValue")
+			putElements([]SortedSetElement{{Value: strValue, Score: 5}})
+			putElements([]SortedSetElement{{Value: strValue, Score: 500}})
+			fetchResp, err := sharedContext.Client.SortedSetGetScore(sharedContext.Ctx, &SortedSetGetScoreRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Value:     strValue,
+			})
+			Expect(err).To(BeNil())
+			switch fetchResp := fetchResp.(type) {
+			case *SortedSetGetScoreHit:
+				Expect(fetchResp.Score()).To(Equal(500.0))
+			default:
+				Fail("expected a hit from sorted set get score but got a miss")
+			}
+		})
+
+		It("creates the sorted set if it doesn't exist", func() {
+			newSetName := uuid.NewString()
+			Expect(
+				sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   newSetName,
 					Value:     String("aValue"),
 					Score:     42,
-				})
-			Expect(err).To(BeNil())
-			Expect(resp).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
+				}),
+			).To(BeAssignableToTypeOf(&SortedSetPutElementSuccess{}))
 
-			fetchResp, fetchErr := sharedContext.Client.SortedSetFetchByRank(
-				sharedContext.Ctx,
-				&SortedSetFetchByRankRequest{
+			fetchResp, err := sharedContext.Client.SortedSetGetScore(sharedContext.Ctx, &SortedSetGetScoreRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   newSetName,
+				Value:     String("aValue"),
+			})
+			Expect(err).To(BeNil())
+			switch fetchResp := fetchResp.(type) {
+			case *SortedSetGetScoreHit:
+				Expect(fetchResp.Score()).To(Equal(42.0))
+			default:
+				Fail("expected a hit from sorted set get score but got a miss")
+			}
+		})
+
+		It("returns an error for a nil value", func() {
+			Expect(
+				sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
 					CacheName: sharedContext.CacheName,
 					SetName:   sharedContext.CollectionName,
-				},
-			)
-			Expect(fetchErr).To(BeNil())
-			switch fetchResp := fetchResp.(type) {
-			case *SortedSetFetchHit:
-				Expect(fetchResp.ValueBytesElements()).To(Equal(
-					[]SortedSetBytesElement{
-						{Value: Bytes("aValue"), Score: 42},
-					},
-				))
-			}
+					Value:     nil,
+					Score:     0,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
 
 	Describe(`SortedSetPutElements`, func() {
 		It("puts multiple elements", func() {
-			elems := []SortedSetElement{{Value: String("val1"), Score: 0}, {Value: String("val2"), Score: 10}}
+			elems := []SortedSetElement{{Value: String("val1"), Score: 0}, {Value: Bytes("val2"), Score: 10}}
 			Expect(
 				sharedContext.Client.SortedSetPutElements(
 					sharedContext.Ctx,
@@ -869,9 +1050,46 @@ var _ = Describe("SortedSet", func() {
 				Expect(
 					result.ValueStringElements(),
 				).To(Equal([]SortedSetStringElement{{Value: "val1", Score: 0}, {Value: "val2", Score: 10}}))
+				Expect(
+					result.ValueBytesElements(),
+				).To(Equal([]SortedSetBytesElement{{Value: []byte("val1"), Score: 0}, {Value: []byte("val2"), Score: 10}}))
 			default:
 				Fail("expected a hit for sorted set fetch but got a miss")
 			}
+		})
+
+		It("overwrites multiple elements", func() {
+			elems := []SortedSetElement{{Value: String("val1"), Score: 0}, {Value: Bytes("val2"), Score: 10}}
+			putElements(elems)
+			elems = []SortedSetElement{{Value: String("val1"), Score: -999}, {Value: Bytes("val2"), Score: -100}}
+			putElements(elems)
+			fetchResp, err := fetch()
+			Expect(err).To(BeNil())
+			switch fetchResp := fetchResp.(type) {
+			case *SortedSetFetchHit:
+				Expect(fetchResp.ValueBytesElements()).To(Equal(
+					[]SortedSetBytesElement{{Value: []byte("val1"), Score: -999}, {Value: []byte("val2"), Score: -100}},
+				))
+				Expect(fetchResp.ValueStringElements()).To(Equal(
+					[]SortedSetStringElement{{Value: "val1", Score: -999}, {Value: "val2", Score: -100}},
+				))
+			}
+		})
+
+		It("returns an error for nil elements", func() {
+			Expect(sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, &SortedSetPutElementsRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Elements:  nil,
+			})).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		})
+
+		It("returns an error for nil values", func() {
+			Expect(sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, &SortedSetPutElementsRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Elements:  []SortedSetElement{{Value: String("hi"), Score: 10}, {Value: nil, Score: 500}},
+			})).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
 
@@ -912,6 +1130,33 @@ var _ = Describe("SortedSet", func() {
 				Fail("expected a hit for sorted set fetch but got a miss")
 			}
 
+		})
+
+		It("succeeds when the element doesn't exist", func() {
+			Expect(
+				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     String("idontexist"),
+				}),
+			).To(BeAssignableToTypeOf(&SortedSetRemoveElementSuccess{}))
+		})
+
+		It("returns an error when value is nil", func() {
+			Expect(
+				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Value:     nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 	})
 

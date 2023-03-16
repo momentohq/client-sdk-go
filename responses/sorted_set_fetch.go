@@ -27,6 +27,9 @@ func (SortedSetFetchHit) isSortedSetFetchResponse() {}
 
 // NewSortedSetFetchHit returns a new SortedSetFetchHit containing the supplied elements.
 func NewSortedSetFetchHit(elements []SortedSetBytesElement) *SortedSetFetchHit {
+	if elements == nil {
+		elements = []SortedSetBytesElement{}
+	}
 	return &SortedSetFetchHit{elements: elements}
 }
 

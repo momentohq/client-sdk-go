@@ -239,3 +239,17 @@ func validateNotNil(value Value, label string) error {
 
 	return nil
 }
+
+func validateSortedSetRanks(start int32, end int32) error {
+	if start >= 0 && end >= 0 && start >= end {
+		return buildError(
+			momentoerrors.InvalidArgumentError, "start rank must be less than end rank", nil,
+		)
+	}
+	if start < 0 && end < 0 && start >= end {
+		return buildError(
+			momentoerrors.InvalidArgumentError, "negative start rank must be less than negative end rank", nil,
+		)
+	}
+	return nil
+}
