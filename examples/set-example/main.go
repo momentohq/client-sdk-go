@@ -113,6 +113,13 @@ func printSet() {
 	}
 }
 
+func cleanUp() {
+	_, err := client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	setup()
 
@@ -137,4 +144,6 @@ func main() {
 
 	removeElements(elements)
 	printSet()
+
+	cleanUp()
 }

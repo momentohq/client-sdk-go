@@ -50,5 +50,11 @@ jobs:
             exit 1
           fi
 
+      - name: Build
+        run: make build
+
+      - name: Build examples
+        run: make build-examples
+
       - name: Run test
         run: make test

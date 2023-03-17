@@ -54,3 +54,9 @@ test:
 .PHONY: vendor
 vendor:
 	go mod vendor
+
+.PHONY: build-examples
+build:
+	cd examples
+	go build ./...
+	

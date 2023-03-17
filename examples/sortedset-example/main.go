@@ -76,6 +76,12 @@ func main() {
 	}
 
 	displayElements(setName, descendingResp)
+
+	// Clean up the cache
+	_, err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getClient() momento.CacheClient {
@@ -96,7 +102,7 @@ func getClient() momento.CacheClient {
 
 func setupCache(client momento.CacheClient, ctx context.Context) {
 	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "test-cache",
+		CacheName: cacheName,
 	})
 	if err != nil {
 		panic(err)
