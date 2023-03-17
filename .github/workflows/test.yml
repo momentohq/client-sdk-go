@@ -54,10 +54,7 @@ jobs:
         run: make build
 
       - name: Build examples
-        run: |
-          pushd examples
-             make build
-          popd
+        run: make build-examples
 
       - name: Run test
         run: make test
