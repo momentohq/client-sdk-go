@@ -1,7 +1,5 @@
 module github.com/momentohq/go-example
 
-go 1.20
-
 require (
 	// the hrtime and hdrhistogram-go modules are not required to use momento, but
 	// they are used in the loadgen example
