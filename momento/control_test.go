@@ -71,6 +71,15 @@ var _ = Describe("Control ops", func() {
 				Fail("Unexpected response type")
 			}
 		})
+
+		It("creates and deletes using a default cache", func() {
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.CreateCache(sharedContext.Ctx, &CreateCacheRequest{}),
+			).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{}),
+			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
+		})
 	})
 
 	Describe(`Validate cache name`, func() {

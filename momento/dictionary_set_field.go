@@ -11,3 +11,5 @@ type DictionarySetFieldRequest struct {
 	Value          Value
 	Ttl            *utils.CollectionTtl
 }
+
+func (r *DictionarySetFieldRequest) cacheName() string { return r.CacheName }

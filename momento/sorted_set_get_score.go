@@ -5,3 +5,5 @@ type SortedSetGetScoreRequest struct {
 	SetName   string
 	Value     Value
 }
+
+func (r *SortedSetGetScoreRequest) cacheName() string { return r.CacheName }

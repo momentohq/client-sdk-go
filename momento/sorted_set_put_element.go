@@ -11,3 +11,5 @@ type SortedSetPutElementRequest struct {
 	Score     float64
 	Ttl       *utils.CollectionTtl
 }
+
+func (r *SortedSetPutElementRequest) cacheName() string { return r.CacheName }

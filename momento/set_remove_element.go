@@ -5,3 +5,5 @@ type SetRemoveElementRequest struct {
 	SetName   string
 	Element   Value
 }
+
+func (r *SetRemoveElementRequest) cacheName() string { return r.CacheName }
