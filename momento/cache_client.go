@@ -213,7 +213,7 @@ func NewSingleCacheClient(configuration config.Configuration, credentialProvider
 }
 
 func (c defaultScsClient) setRequestCache(request hasCacheName) string {
-	if c.defaultCache == "" {
+	if request.cacheName() != "" {
 		return request.cacheName()
 	}
 	return c.defaultCache
