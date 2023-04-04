@@ -43,7 +43,7 @@ func NewSharedContext() SharedContext {
 	}
 
 	defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
-	clientDefaultCacheName, err := momento.NewSingleCacheClient(
+	clientDefaultCacheName, err := momento.NewCacheClientWithDefaultCache(
 		shared.Configuration, shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
 	)
 	if err != nil {

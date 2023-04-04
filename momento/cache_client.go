@@ -202,7 +202,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 	return commonCacheClient(props)
 }
 
-func NewSingleCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string) (CacheClient, error) {
+func NewCacheClientWithDefaultCache(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string) (CacheClient, error) {
 	props := CacheClientProps{
 		CacheName:          cacheName,
 		Configuration:      configuration,
@@ -212,7 +212,7 @@ func NewSingleCacheClient(configuration config.Configuration, credentialProvider
 	return commonCacheClient(props)
 }
 
-func (c defaultScsClient) setRequestCache(request hasCacheName) string {
+func (c defaultScsClient) getRequestCache(request hasCacheName) string {
 	if request.cacheName() != "" {
 		return request.cacheName()
 	}
@@ -220,7 +220,7 @@ func (c defaultScsClient) setRequestCache(request hasCacheName) string {
 }
 
 func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error) {
-	request.CacheName = c.setRequestCache(request)
+	request.CacheName = c.getRequestCache(request)
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 }
 
 func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheRequest) (responses.DeleteCacheResponse, error) {
-	request.CacheName = c.setRequestCache(request)
+	request.CacheName = c.getRequestCache(request)
 	if err := isCacheNameValid(request.CacheName); err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 }
 
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.Set
 }
 
 func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.Get
 }
 
 func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -296,7 +296,7 @@ func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (respons
 }
 
 func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (r
 }
 
 func (c defaultScsClient) SortedSetFetchByRank(ctx context.Context, r *SortedSetFetchByRankRequest) (responses.SortedSetFetchResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (c defaultScsClient) SortedSetFetchByRank(ctx context.Context, r *SortedSet
 }
 
 func (c defaultScsClient) SortedSetFetchByScore(ctx context.Context, r *SortedSetFetchByScoreRequest) (responses.SortedSetFetchResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetP
 			),
 		)
 	}
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &SortedSetPutElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -342,7 +342,7 @@ func (c defaultScsClient) SortedSetPutElement(ctx context.Context, r *SortedSetP
 }
 
 func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSetPutElementsRequest) (responses.SortedSetPutElementsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -350,7 +350,7 @@ func (c defaultScsClient) SortedSetPutElements(ctx context.Context, r *SortedSet
 }
 
 func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGetScoresRequest) (responses.SortedSetGetScoresResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -358,7 +358,7 @@ func (c defaultScsClient) SortedSetGetScores(ctx context.Context, r *SortedSetGe
 }
 
 func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGetScoreRequest) (responses.SortedSetGetScoreResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &SortedSetGetScoresRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -384,7 +384,7 @@ func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedS
 			),
 		)
 	}
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &SortedSetRemoveElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -397,7 +397,7 @@ func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedS
 }
 
 func (c defaultScsClient) SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func (c defaultScsClient) SortedSetRemoveElements(ctx context.Context, r *Sorted
 }
 
 func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -413,7 +413,7 @@ func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetR
 }
 
 func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -421,7 +421,7 @@ func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *Sorted
 }
 
 func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementRequest) (responses.SetAddElementResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &SetAddElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -435,7 +435,7 @@ func (c defaultScsClient) SetAddElement(ctx context.Context, r *SetAddElementReq
 }
 
 func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -443,7 +443,7 @@ func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsR
 }
 
 func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (res
 }
 
 func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &SetRemoveElementsRequest{
 		CacheName: r.CacheName,
 		SetName:   r.SetName,
@@ -464,7 +464,7 @@ func (c defaultScsClient) SetRemoveElement(ctx context.Context, r *SetRemoveElem
 }
 
 func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -472,7 +472,7 @@ func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveEle
 }
 
 func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -480,7 +480,7 @@ func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContain
 }
 
 func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -488,7 +488,7 @@ func (c defaultScsClient) ListPushFront(ctx context.Context, r *ListPushFrontReq
 }
 
 func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackRequest) (responses.ListPushBackResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -496,7 +496,7 @@ func (c defaultScsClient) ListPushBack(ctx context.Context, r *ListPushBackReque
 }
 
 func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontRequest) (responses.ListPopFrontResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -504,7 +504,7 @@ func (c defaultScsClient) ListPopFront(ctx context.Context, r *ListPopFrontReque
 }
 
 func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest) (responses.ListPopBackResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -512,7 +512,7 @@ func (c defaultScsClient) ListPopBack(ctx context.Context, r *ListPopBackRequest
 }
 
 func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConcatenateFrontRequest) (responses.ListConcatenateFrontResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -520,7 +520,7 @@ func (c defaultScsClient) ListConcatenateFront(ctx context.Context, r *ListConca
 }
 
 func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcatenateBackRequest) (responses.ListConcatenateBackResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -528,7 +528,7 @@ func (c defaultScsClient) ListConcatenateBack(ctx context.Context, r *ListConcat
 }
 
 func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (responses.ListFetchResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -536,7 +536,7 @@ func (c defaultScsClient) ListFetch(ctx context.Context, r *ListFetchRequest) (r
 }
 
 func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) (responses.ListLengthResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -544,7 +544,7 @@ func (c defaultScsClient) ListLength(ctx context.Context, r *ListLengthRequest) 
 }
 
 func (c defaultScsClient) ListRemoveValue(ctx context.Context, r *ListRemoveValueRequest) (responses.ListRemoveValueResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -560,7 +560,7 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 		)
 	}
 
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	var elements []DictionaryElement
 	elements = append(elements, DictionaryElement{
 		Field: r.Field,
@@ -579,7 +579,7 @@ func (c defaultScsClient) DictionarySetField(ctx context.Context, r *DictionaryS
 }
 
 func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -587,7 +587,7 @@ func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *Dictionary
 }
 
 func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -595,7 +595,7 @@ func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetc
 }
 
 func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &DictionaryGetFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
@@ -622,7 +622,7 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 }
 
 func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *DictionaryGetFieldsRequest) (responses.DictionaryGetFieldsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -630,7 +630,7 @@ func (c defaultScsClient) DictionaryGetFields(ctx context.Context, r *Dictionary
 }
 
 func (c defaultScsClient) DictionaryIncrement(ctx context.Context, r *DictionaryIncrementRequest) (responses.DictionaryIncrementResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -645,7 +645,7 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 			),
 		)
 	}
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	newRequest := &DictionaryRemoveFieldsRequest{
 		CacheName:      r.CacheName,
 		DictionaryName: r.DictionaryName,
@@ -658,7 +658,7 @@ func (c defaultScsClient) DictionaryRemoveField(ctx context.Context, r *Dictiona
 }
 
 func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *DictionaryRemoveFieldsRequest) (responses.DictionaryRemoveFieldsResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -666,7 +666,7 @@ func (c defaultScsClient) DictionaryRemoveFields(ctx context.Context, r *Diction
 }
 
 func (c defaultScsClient) UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (responses.UpdateTtlResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -674,7 +674,7 @@ func (c defaultScsClient) UpdateTtl(ctx context.Context, r *UpdateTtlRequest) (r
 }
 
 func (c defaultScsClient) IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest) (responses.IncreaseTtlResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
@@ -682,7 +682,7 @@ func (c defaultScsClient) IncreaseTtl(ctx context.Context, r *IncreaseTtlRequest
 }
 
 func (c defaultScsClient) DecreaseTtl(ctx context.Context, r *DecreaseTtlRequest) (responses.DecreaseTtlResponse, error) {
-	r.CacheName = c.setRequestCache(r)
+	r.CacheName = c.getRequestCache(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
 	}
