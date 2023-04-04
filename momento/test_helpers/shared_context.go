@@ -13,14 +13,16 @@ import (
 )
 
 type SharedContext struct {
-	Client             momento.CacheClient
-	TopicClient        momento.TopicClient
-	CacheName          string
-	CollectionName     string
-	Ctx                context.Context
-	DefaultTtl         time.Duration
-	Configuration      config.Configuration
-	CredentialProvider auth.CredentialProvider
+	Client                     momento.CacheClient
+	ClientWithDefaultCacheName momento.CacheClient
+	DefaultCacheName           string
+	TopicClient                momento.TopicClient
+	CacheName                  string
+	CollectionName             string
+	Ctx                        context.Context
+	DefaultTtl                 time.Duration
+	Configuration              config.Configuration
+	CredentialProvider         auth.CredentialProvider
 }
 
 func NewSharedContext() SharedContext {
@@ -40,12 +42,22 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
+	defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
+	clientDefaultCacheName, err := momento.NewCacheClientWithDefaultCache(
+		shared.Configuration, shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	topicClient, err := momento.NewTopicClient(shared.Configuration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}
 
 	shared.Client = client
+	shared.ClientWithDefaultCacheName = clientDefaultCacheName
+	shared.DefaultCacheName = defaultCacheName
 	shared.TopicClient = topicClient
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())

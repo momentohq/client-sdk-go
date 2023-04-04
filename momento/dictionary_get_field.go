@@ -5,3 +5,5 @@ type DictionaryGetFieldRequest struct {
 	DictionaryName string
 	Field          Value
 }
+
+func (r *DictionaryGetFieldRequest) cacheName() string { return r.CacheName }

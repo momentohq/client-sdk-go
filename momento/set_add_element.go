@@ -10,3 +10,5 @@ type SetAddElementRequest struct {
 	Element   Value
 	Ttl       *utils.CollectionTtl
 }
+
+func (r *SetAddElementRequest) cacheName() string { return r.CacheName }

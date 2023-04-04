@@ -5,3 +5,5 @@ type SortedSetRemoveElementRequest struct {
 	SetName   string
 	Value     Value
 }
+
+func (r *SortedSetRemoveElementRequest) cacheName() string { return r.CacheName }

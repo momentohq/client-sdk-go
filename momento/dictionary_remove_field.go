@@ -5,3 +5,5 @@ type DictionaryRemoveFieldRequest struct {
 	DictionaryName string
 	Field          Value
 }
+
+func (r *DictionaryRemoveFieldRequest) cacheName() string { return r.CacheName }
