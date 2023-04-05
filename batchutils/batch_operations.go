@@ -33,20 +33,18 @@ func deleteWorker(
 	errChan chan string,
 ) {
 	for {
-		select {
-		case myKey := <-keyChan:
-			if myKey == nil {
-				return
-			}
-			_, err := client.Delete(ctx, &momento.DeleteRequest{
-				CacheName: cacheName,
-				Key:       myKey,
-			})
-			if err != nil {
-				errChan <- fmt.Sprintf("error deleting key %s: %s", myKey, err.Error())
-			} else {
-				errChan <- ""
-			}
+		myKey := <-keyChan
+		if myKey == nil {
+			return
+		}
+		_, err := client.Delete(ctx, &momento.DeleteRequest{
+			CacheName: cacheName,
+			Key:       myKey,
+		})
+		if err != nil {
+			errChan <- fmt.Sprintf("error deleting key %s: %s", myKey, err.Error())
+		} else {
+			errChan <- ""
 		}
 	}
 }
