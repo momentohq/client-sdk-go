@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/momento"
 )
 
-const (
-	defaultNumWorkers          = 50
-	defaultMaxRequestPerSecond = 100
-)
+const maxConcurrentDeletes = 5
 
 func keyDistributor(ctx context.Context, keys []momento.Key, keyChan chan momento.Key) {
 	for _, k := range keys {
@@ -31,10 +27,8 @@ func keyDistributor(ctx context.Context, keys []momento.Key, keyChan chan moment
 
 func deleteWorker(
 	ctx context.Context,
-	id int,
 	client momento.CacheClient,
 	cacheName string,
-	workerDelayBetweenRequests float64,
 	keyChan chan momento.Key,
 	errChan chan string,
 ) {
@@ -55,7 +49,6 @@ func deleteWorker(
 			} else {
 				errChan <- ""
 			}
-			time.Sleep(time.Millisecond * time.Duration(int64(workerDelayBetweenRequests*1000)))
 		}
 	}
 }
@@ -64,8 +57,7 @@ type BatchDeleteRequest struct {
 	Client               momento.CacheClient
 	CacheName            string
 	Keys                 []momento.Key
-	NumWorkers           int
-	MaxRequestsPerSecond int
+	MaxConcurrentDeletes int
 }
 
 // BatchDelete deletes a slice of keys from the cache, returning an array containing messages from any delete errors
@@ -76,31 +68,22 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) []string {
 	defer cancelFunc()
 	var wg sync.WaitGroup
 
-	if props.NumWorkers == 0 {
-		props.NumWorkers = defaultNumWorkers
+	if props.MaxConcurrentDeletes == 0 {
+		props.MaxConcurrentDeletes = maxConcurrentDeletes
 	}
-	if props.MaxRequestsPerSecond == 0 {
-		props.MaxRequestsPerSecond = defaultMaxRequestPerSecond
+	if len(props.Keys) < props.MaxConcurrentDeletes {
+		props.MaxConcurrentDeletes = len(props.Keys)
 	}
-	if len(props.Keys) < props.NumWorkers {
-		props.NumWorkers = len(props.Keys)
-	}
-	if props.NumWorkers > props.MaxRequestsPerSecond {
-		props.NumWorkers = props.MaxRequestsPerSecond
-	}
-
-	workerDelayBetweenRequests := float64(props.NumWorkers) / float64(props.MaxRequestsPerSecond)
-	keyChan := make(chan momento.Key, props.NumWorkers)
+	keyChan := make(chan momento.Key, props.MaxConcurrentDeletes)
 	errChan := make(chan string, len(props.Keys))
 
-	for i := 0; i < props.NumWorkers; i++ {
+	for i := 0; i < props.MaxConcurrentDeletes; i++ {
 		wg.Add(1)
 
-		// avoid reuse of the same "i" value in each closure by passing it in to the goroutine
-		go func(i int) {
+		go func() {
 			defer wg.Done()
-			deleteWorker(ctx, i, props.Client, props.CacheName, workerDelayBetweenRequests, keyChan, errChan)
-		}(i)
+			deleteWorker(ctx, props.Client, props.CacheName, keyChan, errChan)
+		}()
 	}
 
 	go keyDistributor(cancelCtx, props.Keys, keyChan)
