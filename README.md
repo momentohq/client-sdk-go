@@ -29,6 +29,15 @@ Check out full working code in the [examples](./examples/README.md) directory of
 ### Installation
 
 ```bash
+# Create a new module directory
+mkdir my-example-project
+cd ./my-example-project
+
+# Create a module with go.mod file in the directory.
+# See https://go.dev/doc/modules/gomod-ref for full docs on go mod
+go mod init example/my-example-project
+
+# Get the SDK.
 go get github.com/momentohq/client-sdk-go
 ```
 
@@ -66,7 +75,7 @@ func main() {
 		itemDefaultTTLSeconds = 60
 	)
 
-	// Initializes Momento
+	// Initializes Momento CacheClient
 	client, err := momento.NewCacheClient(
 		config.LaptopLatest(),
 		credentialProvider,
@@ -76,7 +85,7 @@ func main() {
 		panic(err)
 	}
 
-	// Create Cache
+	// Create a new cache
 	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: cacheName,
 	})
@@ -105,7 +114,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	
+	// Check to see if you got a cache hit or a cache miss.
 	switch r := resp.(type) {
 	case *responses.GetHit:
 		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
@@ -130,7 +140,7 @@ Here's a quick example:
 ```go
 switch r := resp.(type) {
 case *momento.GetHit:
-    log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
+    log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
 default: 
     // you can handle other cases via pattern matching in other `switch case`, or a default case
     // via the `default` block.  For each return value your IDE should be able to give you code 
