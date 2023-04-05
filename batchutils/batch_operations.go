@@ -34,8 +34,6 @@ func deleteWorker(
 ) {
 	for {
 		select {
-		case <-ctx.Done():
-			return
 		case myKey := <-keyChan:
 			if myKey == nil {
 				return
