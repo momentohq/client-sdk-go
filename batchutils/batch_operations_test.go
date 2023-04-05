@@ -27,7 +27,7 @@ var _ = Describe("Batch operations", func() {
 
 	BeforeEach(func() {
 		ctx = context.Background()
-		cacheName = uuid.NewString()
+		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 		credentialProvider, err := auth.FromEnvironmentVariable("TEST_AUTH_TOKEN")
 		if err != nil {
 			panic(err)
@@ -57,6 +57,13 @@ var _ = Describe("Batch operations", func() {
 			if err != nil {
 				panic(err)
 			}
+		}
+	})
+
+	AfterEach(func() {
+		_, err := client.DeleteCache(ctx, &DeleteCacheRequest{CacheName: cacheName})
+		if err != nil {
+			panic(err)
 		}
 	})
 
