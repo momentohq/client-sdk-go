@@ -73,7 +73,7 @@ var _ = Describe("Batch operations", func() {
 			CacheName: cacheName,
 			Keys:      keys[5:21],
 		})
-		Expect(len(errors)).To(Equal(0))
+		Expect(errors).To(BeNil())
 		for i := 0; i < 50; i++ {
 			resp, err := client.Get(ctx, &GetRequest{
 				CacheName: cacheName,
