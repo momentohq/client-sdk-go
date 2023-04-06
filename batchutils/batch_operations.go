@@ -64,19 +64,19 @@ type BatchDeleteRequest struct {
 }
 
 // BatchDeleteError contains a map associating failing cache keys with their specific errors.
-// It may be necessary to use a type assertion to access the messages:
+// It may be necessary to use a type assertion to access the errors:
 //
-// messages := err.(*BatchDeleteError).Messages()
+// errors := err.(*BatchDeleteError).Errors()
 type BatchDeleteError struct {
-	messages map[momento.Value]error
+	errors map[momento.Value]error
 }
 
 func (e *BatchDeleteError) Error() string {
 	return "errors occurred during batch delete"
 }
 
-func (e *BatchDeleteError) Messages() map[momento.Value]error {
-	return e.messages
+func (e *BatchDeleteError) Errors() map[momento.Value]error {
+	return e.errors
 }
 
 // BatchDelete deletes a slice of keys from the cache, returning a map from failing cache keys with their specific errors.
@@ -121,5 +121,5 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteErr
 	if len(errors) == 0 {
 		return nil
 	}
-	return &BatchDeleteError{messages: errors}
+	return &BatchDeleteError{errors: errors}
 }
