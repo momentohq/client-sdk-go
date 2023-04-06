@@ -49,14 +49,13 @@ precommit: lint test
 
 .PHONY: test
 test:
-	ginkgo momento/ auth/
+	ginkgo momento/ auth/ batchutils/
 
 .PHONY: vendor
 vendor:
 	go mod vendor
 
 .PHONY: build-examples
-build:
+build-examples:
 	cd examples
 	go build ./...
-	
