@@ -79,7 +79,7 @@ func (e *BatchDeleteError) Errors() map[momento.Value]error {
 	return e.errors
 }
 
-// BatchDelete deletes a slice of keys from the cache, returning a map from failing cache keys with their specific errors.
+// BatchDelete deletes a slice of keys from the cache, returning a map from failing cache keys to their specific errors.
 func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteError {
 	// initialize return value
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
