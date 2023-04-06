@@ -66,7 +66,7 @@ type BatchDeleteRequest struct {
 // BatchDeleteError contains a map associating failing cache keys with their specific errors.
 // It may be necessary to use a type assertion to access the errors:
 //
-// errors := err.(*BatchDeleteError).Errors()
+// errors := (err.(*BatchDeleteError)).Errors()
 type BatchDeleteError struct {
 	errors map[momento.Value]error
 }
