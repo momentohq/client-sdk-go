@@ -2,7 +2,6 @@ package batchutils
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/momentohq/client-sdk-go/momento"
@@ -25,12 +24,17 @@ func keyDistributor(ctx context.Context, keys []momento.Key, keyChan chan moment
 	}
 }
 
+type errKeyVal struct {
+	key   momento.Value
+	error error
+}
+
 func deleteWorker(
 	ctx context.Context,
 	client momento.CacheClient,
 	cacheName string,
 	keyChan chan momento.Key,
-	errChan chan string,
+	errChan chan *errKeyVal,
 ) {
 	for {
 		myKey := <-keyChan
@@ -42,9 +46,12 @@ func deleteWorker(
 			Key:       myKey,
 		})
 		if err != nil {
-			errChan <- fmt.Sprintf("error deleting key %s: %s", myKey, err.Error())
+			errChan <- &errKeyVal{
+				key:   myKey,
+				error: err,
+			}
 		} else {
-			errChan <- ""
+			errChan <- nil
 		}
 	}
 }
@@ -56,8 +63,24 @@ type BatchDeleteRequest struct {
 	MaxConcurrentDeletes int
 }
 
-// BatchDelete deletes a slice of keys from the cache, returning an array containing messages from any delete errors
-func BatchDelete(ctx context.Context, props *BatchDeleteRequest) []string {
+// BatchDeleteError contains a map associating failing cache keys with their specific errors.
+// It may be necessary to use a type assertion to access the messages:
+//
+// messages := err.(*BatchDeleteError).Messages()
+type BatchDeleteError struct {
+	messages map[momento.Value]error
+}
+
+func (e *BatchDeleteError) Error() string {
+	return "errors occurred during batch delete"
+}
+
+func (e *BatchDeleteError) Messages() map[momento.Value]error {
+	return e.messages
+}
+
+// BatchDelete deletes a slice of keys from the cache, returning a map from failing cache keys with their specific errors.
+func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteError {
 	// initialize return value
 	cancelCtx, cancelFunc := context.WithCancel(ctx)
 	// stop the key distributor when we return
@@ -71,7 +94,7 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) []string {
 		props.MaxConcurrentDeletes = len(props.Keys)
 	}
 	keyChan := make(chan momento.Key, props.MaxConcurrentDeletes)
-	errChan := make(chan string, len(props.Keys))
+	errChan := make(chan *errKeyVal, len(props.Keys))
 
 	for i := 0; i < props.MaxConcurrentDeletes; i++ {
 		wg.Add(1)
@@ -87,12 +110,16 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) []string {
 	// wait for the workers to return
 	wg.Wait()
 
-	var errors = make([]string, 0)
+	var errors = make(map[momento.Value]error, 0)
 	for i := 0; i < len(props.Keys); i++ {
 		msg := <-errChan
-		if msg != "" {
-			errors = append(errors, msg)
+		if msg != nil {
+			errors[msg.key] = msg.error
 		}
 	}
-	return errors
+
+	if len(errors) == 0 {
+		return nil
+	}
+	return &BatchDeleteError{messages: errors}
 }
