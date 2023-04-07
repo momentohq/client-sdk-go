@@ -12,6 +12,11 @@ import (
 	"github.com/momentohq/client-sdk-go/momento"
 )
 
+const (
+	DefaultClient    = "defaultClient"
+	WithDefaultCache = "withDefaultCache"
+)
+
 type SharedContext struct {
 	Client                     momento.CacheClient
 	ClientWithDefaultCacheName momento.CacheClient
@@ -66,8 +71,27 @@ func NewSharedContext() SharedContext {
 	return shared
 }
 
-func (shared SharedContext) CreateDefaultCache() {
+func (shared SharedContext) GetClientPrereqsForType(clientType string) (momento.CacheClient, string) {
+	var client momento.CacheClient
+	var cacheName string
+	if clientType == WithDefaultCache {
+		client = shared.ClientWithDefaultCacheName
+		cacheName = ""
+	} else if clientType == DefaultClient {
+		client = shared.Client
+		cacheName = shared.CacheName
+	} else {
+		panic("invalid client type")
+	}
+	return client, cacheName
+}
+
+func (shared SharedContext) CreateDefaultCaches() {
 	_, err := shared.Client.CreateCache(shared.Ctx, &momento.CreateCacheRequest{CacheName: shared.CacheName})
+	if err != nil {
+		panic(err)
+	}
+	_, err = shared.Client.CreateCache(shared.Ctx, &momento.CreateCacheRequest{CacheName: shared.DefaultCacheName})
 	if err != nil {
 		panic(err)
 	}
@@ -75,6 +99,10 @@ func (shared SharedContext) CreateDefaultCache() {
 
 func (shared SharedContext) Close() {
 	_, err := shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.CacheName})
+	if err != nil {
+		panic(err)
+	}
+	_, err = shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.DefaultCacheName})
 	if err != nil {
 		panic(err)
 	}

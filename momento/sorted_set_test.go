@@ -18,7 +18,7 @@ var _ = Describe("SortedSet", func() {
 	var sharedContext SharedContext
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCache()
+		sharedContext.CreateDefaultCaches()
 
 		DeferCleanup(func() { sharedContext.Close() })
 	})

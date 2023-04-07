@@ -46,7 +46,7 @@ var _ = Describe("List methods", func() {
 
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCache()
+		sharedContext.CreateDefaultCaches()
 		DeferCleanup(func() {
 			sharedContext.Close()
 		})
