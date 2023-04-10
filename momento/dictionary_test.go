@@ -619,7 +619,6 @@ var _ = Describe("Dictionary methods", func() {
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
-					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
@@ -676,7 +675,6 @@ var _ = Describe("Dictionary methods", func() {
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
-					CacheName:      sharedContext.CacheName,
 					DictionaryName: sharedContext.CollectionName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{
