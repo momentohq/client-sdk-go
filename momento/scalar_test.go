@@ -172,9 +172,8 @@ var _ = Describe("Scalar methods", func() {
 		Entry("With default client and an empty cache name", DefaultClient, "", String("key"), String("value")),
 		Entry("With default client and  an bank cache name", DefaultClient, "   ", String("key"), String("value")),
 		Entry("With default client and  an empty key", DefaultClient, uuid.NewString(), String(""), String("value")),
-		Entry("With client with default cache and an empty cache name", WithDefaultCache, "", String("key"), String("value")),
-		Entry("With client with default cache and  an bank cache name", WithDefaultCache, "   ", String("key"), String("value")),
-		Entry("With client with default cache and  an empty key", WithDefaultCache, uuid.NewString(), String(""), String("value")),
+		Entry("With client with default cache and an bank cache name", WithDefaultCache, "   ", String("key"), String("value")),
+		Entry("With client with default cache and an empty key", WithDefaultCache, uuid.NewString(), String(""), String("value")),
 	)
 
 	Describe("Set", func() {
