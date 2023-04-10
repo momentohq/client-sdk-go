@@ -33,49 +33,54 @@ var _ = Describe("Set methods", func() {
 		})
 	})
 
-	It("errors when the cache is missing", func() {
-		cacheName := uuid.NewString()
-		setName := uuid.NewString()
+	DescribeTable("errors when the cache is missing",
+		func(clientType string) {
+			client, _ := sharedContext.GetClientPrereqsForType(clientType)
+			cacheName := uuid.NewString()
+			setName := uuid.NewString()
 
-		Expect(
-			sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-				CacheName: cacheName,
-				SetName:   setName,
-			}),
-		).Error().To(HaveMomentoErrorCode(NotFoundError))
+			Expect(
+				client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: cacheName,
+					SetName:   setName,
+				}),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		Expect(
-			sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
-				CacheName: cacheName,
-				SetName:   setName,
-				Element:   String("astring"),
-			}),
-		).Error().To(HaveMomentoErrorCode(NotFoundError))
+			Expect(
+				client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+					CacheName: cacheName,
+					SetName:   setName,
+					Element:   String("astring"),
+				}),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		Expect(
-			sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
-				CacheName: cacheName,
-				SetName:   setName,
-				Elements:  []Value{String("astring"), String("bstring")},
-			}),
-		).Error().To(HaveMomentoErrorCode(NotFoundError))
+			Expect(
+				client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					CacheName: cacheName,
+					SetName:   setName,
+					Elements:  []Value{String("astring"), String("bstring")},
+				}),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		Expect(
-			sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
-				CacheName: cacheName,
-				SetName:   setName,
-				Element:   String("astring"),
-			}),
-		).Error().To(HaveMomentoErrorCode(NotFoundError))
+			Expect(
+				client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
+					CacheName: cacheName,
+					SetName:   setName,
+					Element:   String("astring"),
+				}),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
 
-		Expect(
-			sharedContext.Client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
-				CacheName: cacheName,
-				SetName:   setName,
-				Elements:  []Value{String("hi")},
-			}),
-		).Error().To(HaveMomentoErrorCode(NotFoundError))
-	})
+			Expect(
+				client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
+					CacheName: cacheName,
+					SetName:   setName,
+					Elements:  []Value{String("hi")},
+				}),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
+		},
+		Entry("with default client", DefaultClient),
+		Entry("with client with default cache", WithDefaultCache),
+	)
 
 	It("errors on invalid set name", func() {
 		setName := ""
@@ -139,17 +144,18 @@ var _ = Describe("Set methods", func() {
 
 	Describe("add", func() {
 		DescribeTable("add string and byte single elements happy path",
-			func(element Value, expectedStrings []string, expectedBytes [][]byte) {
+			func(clientType string, element Value, expectedStrings []string, expectedBytes [][]byte) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 				Expect(
-					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
-						CacheName: sharedContext.CacheName,
+					client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+						CacheName: cacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   element,
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
-				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-					CacheName: sharedContext.CacheName,
+				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: cacheName,
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
@@ -161,22 +167,26 @@ var _ = Describe("Set methods", func() {
 					Fail("Unexpected result for Set Fetch")
 				}
 			},
-			Entry("when element is a string", String("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
-			Entry("when element is bytes", Bytes("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
-			Entry("when element is a empty", String(""), []string{""}, [][]byte{[]byte("")}),
+			Entry("when element is a string", DefaultClient, String("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
+			Entry("when element is bytes", DefaultClient, Bytes("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
+			Entry("when element is a empty", DefaultClient, String(""), []string{""}, [][]byte{[]byte("")}),
+			Entry("when element is a string", WithDefaultCache, String("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
+			Entry("when element is bytes", WithDefaultCache, Bytes("hello"), []string{"hello"}, [][]byte{[]byte("hello")}),
+			Entry("when element is a empty", WithDefaultCache, String(""), []string{""}, [][]byte{[]byte("")}),
 		)
 
 		DescribeTable("add string and byte multiple elements happy path",
-			func(elements []Value, expectedStrings []string, expectedBytes [][]byte) {
+			func(clientType string, elements []Value, expectedStrings []string, expectedBytes [][]byte) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 				Expect(
-					sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
-						CacheName: sharedContext.CacheName,
+					client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+						CacheName: cacheName,
 						SetName:   sharedContext.CollectionName,
 						Elements:  elements,
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementsSuccess{}))
-				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-					CacheName: sharedContext.CacheName,
+				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: cacheName,
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
@@ -190,24 +200,56 @@ var _ = Describe("Set methods", func() {
 			},
 			Entry(
 				"when elements are strings",
+				DefaultClient,
 				[]Value{String("hello"), String("world"), String("!"), String("␆")},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
 				"when elements are bytes",
+				DefaultClient,
 				[]Value{Bytes([]byte("hello")), Bytes([]byte("world")), Bytes([]byte("!")), Bytes([]byte("␆"))},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
 				"when elements are mixed",
+				DefaultClient,
 				[]Value{Bytes([]byte("hello")), String([]byte("world")), Bytes([]byte("!")), String([]byte("␆"))},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
 				"when elements are empty",
+				DefaultClient,
+				[]Value{Bytes([]byte("")), Bytes([]byte(""))},
+				[]string{""},
+				[][]byte{[]byte("")},
+			),
+			Entry(
+				"when elements are strings",
+				WithDefaultCache,
+				[]Value{String("hello"), String("world"), String("!"), String("␆")},
+				[]string{"hello", "world", "!", "␆"},
+				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
+			),
+			Entry(
+				"when elements are bytes",
+				WithDefaultCache,
+				[]Value{Bytes([]byte("hello")), Bytes([]byte("world")), Bytes([]byte("!")), Bytes([]byte("␆"))},
+				[]string{"hello", "world", "!", "␆"},
+				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
+			),
+			Entry(
+				"when elements are mixed",
+				WithDefaultCache,
+				[]Value{Bytes([]byte("hello")), String([]byte("world")), Bytes([]byte("!")), String([]byte("␆"))},
+				[]string{"hello", "world", "!", "␆"},
+				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
+			),
+			Entry(
+				"when elements are empty",
+				WithDefaultCache,
 				[]Value{Bytes([]byte("")), Bytes([]byte(""))},
 				[]string{""},
 				[][]byte{[]byte("")},
@@ -253,20 +295,27 @@ var _ = Describe("Set methods", func() {
 					Elements:  elements,
 				}),
 			).Error().To(BeNil())
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					SetName:  sharedContext.CollectionName,
+					Elements: elements,
+				}),
+			).Error().To(BeNil())
 		})
 
 		DescribeTable("single elements as strings and as bytes",
-			func(toRemove Value, expectedLength int) {
+			func(clientType string, toRemove Value, expectedLength int) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 				Expect(
-					sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
-						CacheName: sharedContext.CacheName,
+					client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
+						CacheName: cacheName,
 						SetName:   sharedContext.CollectionName,
 						Element:   toRemove,
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-					CacheName: sharedContext.CacheName,
+				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: cacheName,
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
@@ -278,23 +327,27 @@ var _ = Describe("Set methods", func() {
 					Fail("something really weird happened")
 				}
 			},
-			Entry("as string", String("#5"), 9),
-			Entry("as bytes", Bytes([]byte("#5")), 9),
-			Entry("unmatched", String("notvalid"), 10),
+			Entry("as string", DefaultClient, String("#5"), 9),
+			Entry("as bytes", DefaultClient, Bytes([]byte("#5")), 9),
+			Entry("unmatched", DefaultClient, String("notvalid"), 10),
+			Entry("as string", WithDefaultCache, String("#5"), 9),
+			Entry("as bytes", WithDefaultCache, Bytes([]byte("#5")), 9),
+			Entry("unmatched", WithDefaultCache, String("notvalid"), 10),
 		)
 
 		DescribeTable("multiple elements as strings and bytes",
-			func(toRemove []Value, expectedLength int) {
+			func(clientType string, toRemove []Value, expectedLength int) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 				Expect(
-					sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
-						CacheName: sharedContext.CacheName,
+					client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
+						CacheName: cacheName,
 						SetName:   sharedContext.CollectionName,
 						Elements:  toRemove,
 					}),
 				).Error().To(BeNil())
 
-				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
-					CacheName: sharedContext.CacheName,
+				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: cacheName,
 					SetName:   sharedContext.CollectionName,
 				})
 				Expect(err).To(BeNil())
@@ -306,9 +359,12 @@ var _ = Describe("Set methods", func() {
 					Fail("something really weird happened")
 				}
 			},
-			Entry("as strings", getElements(5), 5),
-			Entry("as bytes", []Value{Bytes("#3"), Bytes("#4")}, 8),
-			Entry("unmatched", []Value{String("notvalid")}, 10),
+			Entry("as strings", DefaultClient, getElements(5), 5),
+			Entry("as bytes", DefaultClient, []Value{Bytes("#3"), Bytes("#4")}, 8),
+			Entry("unmatched", DefaultClient, []Value{String("notvalid")}, 10),
+			Entry("as strings", WithDefaultCache, getElements(5), 5),
+			Entry("as bytes", WithDefaultCache, []Value{Bytes("#3"), Bytes("#4")}, 8),
+			Entry("unmatched", WithDefaultCache, []Value{String("notvalid")}, 10),
 		)
 
 		It("returns an error when trying to remove nil elements", func() {
@@ -350,12 +406,19 @@ var _ = Describe("Set methods", func() {
 					Elements:  elements,
 				}),
 			).Error().To(BeNil())
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					SetName:  sharedContext.CollectionName,
+					Elements: elements,
+				}),
+			).Error().To(BeNil())
 		})
 
 		DescribeTable("check for various mixes of hits and misses",
-			func(toCheck []Value, expected []bool) {
-				containsResp, err := sharedContext.Client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
-					CacheName: sharedContext.CacheName,
+			func(clientType string, toCheck []Value, expected []bool) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+				containsResp, err := client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
+					CacheName: cacheName,
 					SetName:   sharedContext.CollectionName,
 					Elements:  toCheck,
 				})
@@ -366,9 +429,12 @@ var _ = Describe("Set methods", func() {
 					Expect(result.ContainsElements()).To(Equal(expected))
 				}
 			},
-			Entry("all hits", []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
-			Entry("all misses", []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
-			Entry("a mixture", []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
+			Entry("all hits", DefaultClient, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
+			Entry("all misses", DefaultClient, []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
+			Entry("a mixture", DefaultClient, []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
+			Entry("all hits", WithDefaultCache, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
+			Entry("all misses", WithDefaultCache, []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
+			Entry("a mixture", WithDefaultCache, []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
 		)
 
 		It("gets a miss on a nonexistent set", func() {
