@@ -17,23 +17,24 @@ var _ = Describe("Scalar methods", func() {
 	var sharedContext SharedContext
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCache()
+		sharedContext.CreateDefaultCaches()
 
 		DeferCleanup(func() { sharedContext.Close() })
 	})
 
-	DescribeTable(`Gets, Sets, and Deletes`,
-		func(key Key, value Value, expectedString string, expectedBytes []byte) {
+	DescribeTable("Gets, Sets, and Deletes",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 			Expect(
-				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
-					CacheName: sharedContext.CacheName,
+				client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: cacheName,
 					Key:       key,
 					Value:     value,
 				}),
 			).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-				CacheName: sharedContext.CacheName,
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
 				Key:       key,
 			})
 			Expect(err).To(BeNil())
@@ -47,93 +48,113 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			Expect(
-				sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
-					CacheName: sharedContext.CacheName,
+				client.Delete(sharedContext.Ctx, &DeleteRequest{
+					CacheName: cacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&DeleteSuccess{}))
 
 			Expect(
-				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-					CacheName: sharedContext.CacheName,
+				client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: cacheName,
 					Key:       key,
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 		},
-		Entry("when the key and value are strings", String("key"), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", Bytes([]byte{1, 2, 3}), Bytes([]byte("string")), "string", []byte("string")),
-		Entry("when the value is empty", String("key"), String(""), "", []byte("")),
-		Entry("when the value is blank", String("key"), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
 	)
 
-	It(`errors when the cache is missing`, func() {
-		cacheName := uuid.NewString()
-		key := String("key")
-		value := String("value")
+	DescribeTable("errors when the cache is missing",
+		func(clientType string) {
+			client, _ := sharedContext.GetClientPrereqsForType(clientType)
+			cacheName := uuid.NewString()
+			key := String("key")
+			value := String("value")
 
-		getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-			CacheName: cacheName,
-			Key:       key,
-		})
-		Expect(getResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(getResp).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(NotFoundError))
 
-		setResp, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
-			CacheName: cacheName,
-			Key:       key,
-			Value:     value,
-		})
-		Expect(setResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+			setResp, err := client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(setResp).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(NotFoundError))
 
-		deleteResp, err := sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
-			CacheName: cacheName,
-			Key:       key,
-		})
-		Expect(deleteResp).To(BeNil())
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
-	})
+			deleteResp, err := client.Delete(sharedContext.Ctx, &DeleteRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(deleteResp).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		},
+		Entry("with default client", DefaultClient),
+		Entry("with client with default cache", WithDefaultCache),
+	)
 
-	It(`errors when the key is nil`, func() {
-		Expect(
-			sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-				CacheName: sharedContext.CacheName,
-				Key:       nil,
-			}),
-		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-		Expect(
-			sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
-				CacheName: sharedContext.CacheName,
-				Key:       nil,
-			}),
-		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-		Expect(
-			sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
-				CacheName: sharedContext.CacheName,
-				Key:       nil,
-			}),
-		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
-	})
+	DescribeTable("errors when the key is nil",
+		func(clientType string) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			Expect(
+				client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: cacheName,
+					Key:       nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			Expect(
+				client.Set(sharedContext.Ctx, &SetRequest{
+					CacheName: cacheName,
+					Key:       nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+			Expect(
+				client.Delete(sharedContext.Ctx, &DeleteRequest{
+					CacheName: cacheName,
+					Key:       nil,
+				}),
+			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+		},
+		Entry("with default client", DefaultClient),
+		Entry("with client with default cache", WithDefaultCache),
+	)
 
-	It("returns a miss when the key doesn't exist", func() {
-		Expect(
-			sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-				CacheName: sharedContext.CacheName,
-				Key:       String(uuid.NewString()),
-			}),
-		).To(BeAssignableToTypeOf(&GetMiss{}))
-	})
+	DescribeTable("returns a miss when the key doesn't exist",
+		func(clientType string) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			Expect(
+				client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: cacheName,
+					Key:       String(uuid.NewString()),
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		},
+		Entry("with default client", DefaultClient),
+		Entry("with client with default cache", WithDefaultCache),
+	)
 
-	DescribeTable(`invalid cache names and keys`,
-		func(cacheName string, key Key, value Key) {
-			getResp, err := sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+	DescribeTable("invalid cache names and keys",
+		func(clientType string, cacheName string, key Key, value Key) {
+			client, _ := sharedContext.GetClientPrereqsForType(clientType)
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
 				CacheName: cacheName,
 				Key:       key,
 			})
 			Expect(getResp).To(BeNil())
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			setResp, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+			setResp, err := client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -141,20 +162,22 @@ var _ = Describe("Scalar methods", func() {
 			Expect(setResp).To(BeNil())
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
-			deleteResp, err := sharedContext.Client.Delete(sharedContext.Ctx, &DeleteRequest{
+			deleteResp, err := client.Delete(sharedContext.Ctx, &DeleteRequest{
 				CacheName: cacheName,
 				Key:       key,
 			})
 			Expect(deleteResp).To(BeNil())
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 		},
-		Entry(`With an empty cache name`, "", String("key"), String("value")),
-		Entry(`With an bank cache name`, "   ", String("key"), String("value")),
-		Entry(`With an empty key`, uuid.NewString(), String(""), String("value")),
+		Entry("With default client and an empty cache name", DefaultClient, "", String("key"), String("value")),
+		Entry("With default client and  an bank cache name", DefaultClient, "   ", String("key"), String("value")),
+		Entry("With default client and  an empty key", DefaultClient, uuid.NewString(), String(""), String("value")),
+		Entry("With client with default cache and an bank cache name", WithDefaultCache, "   ", String("key"), String("value")),
+		Entry("With client with default cache and an empty key", WithDefaultCache, uuid.NewString(), String(""), String("value")),
 	)
 
-	Describe(`Set`, func() {
-		It(`Uses the default TTL`, func() {
+	Describe("Set", func() {
+		It("Uses the default TTL", func() {
 			key := String("key")
 			value := String("value")
 
@@ -185,7 +208,7 @@ var _ = Describe("Scalar methods", func() {
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 		})
 
-		It(`Overrides the default TTL`, func() {
+		It("Overrides the default TTL", func() {
 			key := String("key")
 			value := String("value")
 
@@ -250,13 +273,20 @@ var _ = Describe("Scalar methods", func() {
 						Value:     String(strVal),
 					}),
 				).To(BeAssignableToTypeOf(&SetSuccess{}))
+				Expect(
+					sharedContext.ClientWithDefaultCacheName.Set(sharedContext.Ctx, &SetRequest{
+						Key:   String(strKey),
+						Value: String(strVal),
+					}),
+				).To(BeAssignableToTypeOf(&SetSuccess{}))
 			}
 		})
 
 		DescribeTable("check for valid keys exist results",
-			func(toCheck []Key, expected []bool) {
-				resp, err := sharedContext.Client.KeysExist(sharedContext.Ctx, &KeysExistRequest{
-					CacheName: sharedContext.CacheName,
+			func(clientType string, toCheck []Key, expected []bool) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+				resp, err := client.KeysExist(sharedContext.Ctx, &KeysExistRequest{
+					CacheName: cacheName,
 					Keys:      toCheck,
 				})
 				Expect(err).To(BeNil())
@@ -267,105 +297,124 @@ var _ = Describe("Scalar methods", func() {
 					Fail(fmt.Sprintf("expected keys exist success but got %s", result))
 				}
 			},
-			Entry("all hits", []Key{String("#1"), String("#2")}, []bool{true, true}),
-			Entry("all misses", []Key{String("nope"), String("stillnope")}, []bool{false, false}),
-			Entry("mixed", []Key{String("nope"), String("#1")}, []bool{false, true}),
+			Entry("all hits", DefaultClient, []Key{String("#1"), String("#2")}, []bool{true, true}),
+			Entry("all misses", DefaultClient, []Key{String("nope"), String("stillnope")}, []bool{false, false}),
+			Entry("mixed", DefaultClient, []Key{String("nope"), String("#1")}, []bool{false, true}),
+			Entry("all hits with default cache", WithDefaultCache, []Key{String("#1"), String("#2")}, []bool{true, true}),
+			Entry("all misses with default cache", WithDefaultCache, []Key{String("nope"), String("stillnope")}, []bool{false, false}),
+			Entry("mixed with default cache", WithDefaultCache, []Key{String("nope"), String("#1")}, []bool{false, true}),
 		)
 	})
 
-	Describe(`UpdateTtl`, func() {
-		It(`Overwrites Ttl`, func() {
-			key := String("key")
-			value := String("value")
+	Describe("UpdateTtl", func() {
+		DescribeTable("Overwrites Ttl",
+			func(clientType string) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+				key := String("key")
+				value := String("value")
 
-			Expect(
-				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-					Value:     value,
-				}),
-			).To(BeAssignableToTypeOf(&SetSuccess{}))
+				Expect(
+					client.Set(sharedContext.Ctx, &SetRequest{
+						CacheName: cacheName,
+						Key:       key,
+						Value:     value,
+					}),
+				).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			Expect(
-				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-					Ttl:       6 * time.Second,
-				}),
-			).To(BeAssignableToTypeOf(&UpdateTtlSet{}))
+				Expect(
+					client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
+						CacheName: cacheName,
+						Key:       key,
+						Ttl:       6 * time.Second,
+					}),
+				).To(BeAssignableToTypeOf(&UpdateTtlSet{}))
 
-			time.Sleep(sharedContext.DefaultTtl)
+				time.Sleep(sharedContext.DefaultTtl)
 
-			Expect(
-				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-				}),
-			).To(BeAssignableToTypeOf(&GetHit{}))
-		})
+				Expect(
+					client.Get(sharedContext.Ctx, &GetRequest{
+						CacheName: cacheName,
+						Key:       key,
+					}),
+				).To(BeAssignableToTypeOf(&GetHit{}))
+			},
+			Entry("with default client", DefaultClient),
+			Entry("with client with default cache", WithDefaultCache),
+		)
 
-		It(`Increases Ttl`, func() {
-			key := String("key")
-			value := String("value")
+		DescribeTable("Increases Ttl",
+			func(clientType string) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+				key := String("key")
+				value := String("value")
 
-			Expect(
-				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-					Value:     value,
-					Ttl:       2 * time.Second,
-				}),
-			).To(BeAssignableToTypeOf(&SetSuccess{}))
+				Expect(
+					client.Set(sharedContext.Ctx, &SetRequest{
+						CacheName: cacheName,
+						Key:       key,
+						Value:     value,
+						Ttl:       2 * time.Second,
+					}),
+				).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			Expect(
-				sharedContext.Client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-					Ttl:       3 * time.Second,
-				}),
-			).To(BeAssignableToTypeOf(&IncreaseTtlSet{}))
+				Expect(
+					client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
+						CacheName: cacheName,
+						Key:       key,
+						Ttl:       3 * time.Second,
+					}),
+				).To(BeAssignableToTypeOf(&IncreaseTtlSet{}))
 
-			time.Sleep(2 * time.Second)
+				time.Sleep(2 * time.Second)
 
-			Expect(
-				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-				}),
-			).To(BeAssignableToTypeOf(&GetHit{}))
-		})
+				Expect(
+					client.Get(sharedContext.Ctx, &GetRequest{
+						CacheName: cacheName,
+						Key:       key,
+					}),
+				).To(BeAssignableToTypeOf(&GetHit{}))
+			},
+			Entry("with default client", DefaultClient),
+			Entry("with client with default cache", WithDefaultCache),
+		)
 
-		It(`Decreases Ttl`, func() {
-			key := String("key")
-			value := String("value")
+		DescribeTable("Decreases Ttl",
+			func(clientType string) {
+				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 
-			Expect(
-				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-					Value:     value,
-				}),
-			).To(BeAssignableToTypeOf(&SetSuccess{}))
+				key := String("key")
+				value := String("value")
 
-			Expect(
-				sharedContext.Client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-					Ttl:       2 * time.Second,
-				}),
-			).To(BeAssignableToTypeOf(&DecreaseTtlSet{}))
+				Expect(
+					client.Set(sharedContext.Ctx, &SetRequest{
+						CacheName: cacheName,
+						Key:       key,
+						Value:     value,
+					}),
+				).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			time.Sleep(2 * time.Second)
+				Expect(
+					client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
+						CacheName: cacheName,
+						Key:       key,
+						Ttl:       2 * time.Second,
+					}),
+				).To(BeAssignableToTypeOf(&DecreaseTtlSet{}))
 
-			Expect(
-				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
-					CacheName: sharedContext.CacheName,
-					Key:       key,
-				}),
-			).To(BeAssignableToTypeOf(&GetMiss{}))
-		})
+				time.Sleep(2 * time.Second)
 
-		It(`Returns InvalidArgumentError with negative or zero Ttl value for UpdateTtl`, func() {
+				Expect(
+					client.Get(sharedContext.Ctx, &GetRequest{
+						CacheName: cacheName,
+						Key:       key,
+					}),
+				).To(BeAssignableToTypeOf(&GetMiss{}))
+			},
+			Entry("with default client", DefaultClient),
+			Entry("with client with default cache", WithDefaultCache),
+		)
+
+		It("Returns InvalidArgumentError with negative or zero Ttl value for UpdateTtl", func() {
 			key := String("key")
 			value := String("value")
 
@@ -394,7 +443,7 @@ var _ = Describe("Scalar methods", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 
-		It(`Returns InvalidArgumentError with negative or zero Ttl value for IncreaseTtl`, func() {
+		It("Returns InvalidArgumentError with negative or zero Ttl value for IncreaseTtl", func() {
 			key := String("key")
 			value := String("value")
 
@@ -423,7 +472,7 @@ var _ = Describe("Scalar methods", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 
-		It(`Returns InvalidArgumentError with negative or zero Ttl value for DecreaseTtl`, func() {
+		It("Returns InvalidArgumentError with negative or zero Ttl value for DecreaseTtl", func() {
 			key := String("key")
 			value := String("value")
 
@@ -452,7 +501,7 @@ var _ = Describe("Scalar methods", func() {
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
 
-		It(`Returns UpdateTtlMiss when a key doesn't exist`, func() {
+		It("Returns UpdateTtlMiss when a key doesn't exist", func() {
 			Expect(
 				sharedContext.Client.UpdateTtl(sharedContext.Ctx, &UpdateTtlRequest{
 					CacheName: sharedContext.CacheName,
@@ -462,7 +511,7 @@ var _ = Describe("Scalar methods", func() {
 			).To(BeAssignableToTypeOf(&UpdateTtlMiss{}))
 		})
 
-		It(`Returns IncreaseTtlMiss when a key doesn't exist`, func() {
+		It("Returns IncreaseTtlMiss when a key doesn't exist", func() {
 			Expect(
 				sharedContext.Client.IncreaseTtl(sharedContext.Ctx, &IncreaseTtlRequest{
 					CacheName: sharedContext.CacheName,
@@ -472,7 +521,7 @@ var _ = Describe("Scalar methods", func() {
 			).To(BeAssignableToTypeOf(&IncreaseTtlMiss{}))
 		})
 
-		It(`Returns DecreaseTtlMiss when a key doesn't exist`, func() {
+		It("Returns DecreaseTtlMiss when a key doesn't exist", func() {
 			Expect(
 				sharedContext.Client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
 					CacheName: sharedContext.CacheName,

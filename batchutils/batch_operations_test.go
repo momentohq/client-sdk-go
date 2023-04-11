@@ -92,4 +92,15 @@ var _ = Describe("Batch operations", func() {
 			}
 		}
 	})
+
+	It("doesn't error trying to batch delete nonexistent keys", func() {
+		keys := []Key{String("i"), String("don't"), String("exist")}
+		errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
+			Client:    client,
+			CacheName: cacheName,
+			Keys:      keys,
+		})
+		Expect(errors).To(BeNil())
+	})
+
 })

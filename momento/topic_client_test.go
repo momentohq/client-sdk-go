@@ -17,7 +17,7 @@ var _ = Describe("Pubsub", func() {
 
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCache()
+		sharedContext.CreateDefaultCaches()
 
 		DeferCleanup(func() {
 			sharedContext.Close()

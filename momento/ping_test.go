@@ -12,7 +12,7 @@ var _ = Describe("ping", func() {
 
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCache()
+		sharedContext.CreateDefaultCaches()
 		DeferCleanup(func() {
 			sharedContext.Close()
 		})

@@ -20,8 +20,8 @@ var _ = Describe("Control ops", func() {
 		DeferCleanup(func() { sharedContext.Close() })
 	})
 
-	Describe(`Happy Path`, func() {
-		It(`creates, lists, and deletes caches`, func() {
+	Describe("Happy Path", func() {
+		It("creates, lists, and deletes caches", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
 			defer func() {
 				for _, cacheName := range cacheNames {
@@ -80,11 +80,40 @@ var _ = Describe("Control ops", func() {
 				sharedContext.ClientWithDefaultCacheName.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{}),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
+
 	})
 
-	Describe(`Validate cache name`, func() {
-		It(`CreateCache and DeleteCache errors on bad cache names`, func() {
-			badCacheNames := []string{``, `   `}
+	Describe("cache client with default cache name", func() {
+		It("overrides default cache name", func() {
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.CreateCache(
+					sharedContext.Ctx, &CreateCacheRequest{CacheName: sharedContext.CacheName},
+				),
+			).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.Get(
+					sharedContext.Ctx, &GetRequest{Key: String("hi")},
+				),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.Get(
+					sharedContext.Ctx, &GetRequest{
+						CacheName: sharedContext.CacheName,
+						Key:       String("hi"),
+					},
+				),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+			Expect(
+				sharedContext.ClientWithDefaultCacheName.DeleteCache(
+					sharedContext.Ctx, &DeleteCacheRequest{CacheName: sharedContext.CacheName},
+				),
+			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
+		})
+	})
+
+	Describe("Validate cache name", func() {
+		It("CreateCache and DeleteCache errors on bad cache names", func() {
+			badCacheNames := []string{"", "   "}
 			for _, badCacheName := range badCacheNames {
 				createResp, err := sharedContext.Client.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: badCacheName})
 				Expect(createResp).To(BeNil())
@@ -102,8 +131,8 @@ var _ = Describe("Control ops", func() {
 		})
 	})
 
-	Describe(`DeleteCache`, func() {
-		It(`succeeds even if the cache does not exist`, func() {
+	Describe("DeleteCache", func() {
+		It("succeeds even if the cache does not exist", func() {
 			Expect(
 				sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
