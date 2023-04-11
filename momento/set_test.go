@@ -199,56 +199,56 @@ var _ = Describe("Set methods", func() {
 				}
 			},
 			Entry(
-				"when elements are strings",
+				"with default client when elements are strings",
 				DefaultClient,
 				[]Value{String("hello"), String("world"), String("!"), String("␆")},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
-				"when elements are bytes",
+				"with default client when elements are bytes",
 				DefaultClient,
 				[]Value{Bytes([]byte("hello")), Bytes([]byte("world")), Bytes([]byte("!")), Bytes([]byte("␆"))},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
-				"when elements are mixed",
+				"with default client when elements are mixed",
 				DefaultClient,
 				[]Value{Bytes([]byte("hello")), String([]byte("world")), Bytes([]byte("!")), String([]byte("␆"))},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
-				"when elements are empty",
+				"with default client when elements are empty",
 				DefaultClient,
 				[]Value{Bytes([]byte("")), Bytes([]byte(""))},
 				[]string{""},
 				[][]byte{[]byte("")},
 			),
 			Entry(
-				"when elements are strings",
+				"with client with default cache when elements are strings",
 				WithDefaultCache,
 				[]Value{String("hello"), String("world"), String("!"), String("␆")},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
-				"when elements are bytes",
+				"with client with default cache when elements are bytes",
 				WithDefaultCache,
 				[]Value{Bytes([]byte("hello")), Bytes([]byte("world")), Bytes([]byte("!")), Bytes([]byte("␆"))},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
-				"when elements are mixed",
+				"with client with default cache when elements are mixed",
 				WithDefaultCache,
 				[]Value{Bytes([]byte("hello")), String([]byte("world")), Bytes([]byte("!")), String([]byte("␆"))},
 				[]string{"hello", "world", "!", "␆"},
 				[][]byte{[]byte("hello"), []byte("world"), []byte("!"), []byte("␆")},
 			),
 			Entry(
-				"when elements are empty",
+				"with client with default cache when elements are empty",
 				WithDefaultCache,
 				[]Value{Bytes([]byte("")), Bytes([]byte(""))},
 				[]string{""},
@@ -327,12 +327,12 @@ var _ = Describe("Set methods", func() {
 					Fail("something really weird happened")
 				}
 			},
-			Entry("as string", DefaultClient, String("#5"), 9),
-			Entry("as bytes", DefaultClient, Bytes([]byte("#5")), 9),
-			Entry("unmatched", DefaultClient, String("notvalid"), 10),
-			Entry("as string", WithDefaultCache, String("#5"), 9),
-			Entry("as bytes", WithDefaultCache, Bytes([]byte("#5")), 9),
-			Entry("unmatched", WithDefaultCache, String("notvalid"), 10),
+			Entry("with default client as string", DefaultClient, String("#5"), 9),
+			Entry("with default client as bytes", DefaultClient, Bytes([]byte("#5")), 9),
+			Entry("with default client unmatched", DefaultClient, String("notvalid"), 10),
+			Entry("with client with default cache as string", WithDefaultCache, String("#5"), 9),
+			Entry("with client with default cache as bytes", WithDefaultCache, Bytes([]byte("#5")), 9),
+			Entry("with client with default cache unmatched", WithDefaultCache, String("notvalid"), 10),
 		)
 
 		DescribeTable("multiple elements as strings and bytes",
@@ -359,12 +359,12 @@ var _ = Describe("Set methods", func() {
 					Fail("something really weird happened")
 				}
 			},
-			Entry("as strings", DefaultClient, getElements(5), 5),
-			Entry("as bytes", DefaultClient, []Value{Bytes("#3"), Bytes("#4")}, 8),
-			Entry("unmatched", DefaultClient, []Value{String("notvalid")}, 10),
-			Entry("as strings", WithDefaultCache, getElements(5), 5),
-			Entry("as bytes", WithDefaultCache, []Value{Bytes("#3"), Bytes("#4")}, 8),
-			Entry("unmatched", WithDefaultCache, []Value{String("notvalid")}, 10),
+			Entry("with default client as strings", DefaultClient, getElements(5), 5),
+			Entry("with default client as bytes", DefaultClient, []Value{Bytes("#3"), Bytes("#4")}, 8),
+			Entry("with default client unmatched", DefaultClient, []Value{String("notvalid")}, 10),
+			Entry("with client with default cache as strings", WithDefaultCache, getElements(5), 5),
+			Entry("with client with default cache as bytes", WithDefaultCache, []Value{Bytes("#3"), Bytes("#4")}, 8),
+			Entry("with client with default cache unmatched", WithDefaultCache, []Value{String("notvalid")}, 10),
 		)
 
 		It("returns an error when trying to remove nil elements", func() {
@@ -429,12 +429,12 @@ var _ = Describe("Set methods", func() {
 					Expect(result.ContainsElements()).To(Equal(expected))
 				}
 			},
-			Entry("all hits", DefaultClient, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
-			Entry("all misses", DefaultClient, []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
-			Entry("a mixture", DefaultClient, []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
-			Entry("all hits", WithDefaultCache, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
-			Entry("all misses", WithDefaultCache, []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
-			Entry("a mixture", WithDefaultCache, []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
+			Entry("with default client all hits", DefaultClient, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
+			Entry("with default client all misses", DefaultClient, []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
+			Entry("with default client a mixture", DefaultClient, []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
+			Entry("with client with default cache all hits", WithDefaultCache, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
+			Entry("with client with default cache all misses", WithDefaultCache, []Value{String("not"), String("this"), String("time")}, []bool{false, false, false}),
+			Entry("with client with default cache a mixture", WithDefaultCache, []Value{String("not"), String("#2"), String("time")}, []bool{false, true, false}),
 		)
 
 		It("gets a miss on a nonexistent set", func() {

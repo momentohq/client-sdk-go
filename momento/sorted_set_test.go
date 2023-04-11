@@ -128,16 +128,16 @@ var _ = Describe("SortedSet", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 		},
-		Entry("Empty cache name", DefaultClient, "", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Blank cache name", DefaultClient, "  ", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Empty collection name", DefaultClient, sharedContext.CacheName, "", InvalidArgumentError),
-		Entry("Blank collection name", DefaultClient, sharedContext.CacheName, "  ", InvalidArgumentError),
-		Entry("Non-existent cache", DefaultClient, uuid.NewString(), uuid.NewString(), NotFoundError),
-		Entry("Empty cache name", WithDefaultCache, "", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Blank cache name", WithDefaultCache, "  ", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Empty collection name", WithDefaultCache, sharedContext.CacheName, "", InvalidArgumentError),
-		Entry("Blank collection name", WithDefaultCache, sharedContext.CacheName, "  ", InvalidArgumentError),
-		Entry("Non-existent cache", WithDefaultCache, uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("Empty cache name with default client", DefaultClient, "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Blank cache name with default client", DefaultClient, "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty collection name with default client", DefaultClient, sharedContext.CacheName, "", InvalidArgumentError),
+		Entry("Blank collection name with default client", DefaultClient, sharedContext.CacheName, "  ", InvalidArgumentError),
+		Entry("Non-existent cache with default client", DefaultClient, uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("Empty cache name with client with default cache", WithDefaultCache, "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Blank cache name with client with default cache", WithDefaultCache, "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty collection name with client with default cache", WithDefaultCache, sharedContext.CacheName, "", InvalidArgumentError),
+		Entry("Blank collection name with client with default cache", WithDefaultCache, sharedContext.CacheName, "  ", InvalidArgumentError),
+		Entry("Non-existent cache with client with default cache", WithDefaultCache, uuid.NewString(), uuid.NewString(), NotFoundError),
 	)
 
 	DescribeTable("Honors CollectionTtl  ",
@@ -1011,10 +1011,10 @@ var _ = Describe("SortedSet", func() {
 					Expect(fetchResp.ValueBytesElements()).To(Equal(expected))
 				}
 			},
-			Entry("string value", DefaultClient, String("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
-			Entry("bytes value", DefaultClient, Bytes("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
-			Entry("string value", WithDefaultCache, String("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
-			Entry("bytes value", WithDefaultCache, Bytes("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
+			Entry("string value with default client", DefaultClient, String("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
+			Entry("bytes value with default client", DefaultClient, Bytes("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
+			Entry("string value with client with default cache", WithDefaultCache, String("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
+			Entry("bytes value with client with default cache", WithDefaultCache, Bytes("aString"), 42.0, []SortedSetBytesElement{{Value: []byte("aString"), Score: 42}}),
 		)
 
 		It("overwrites an existing element's score", func() {
