@@ -29,6 +29,15 @@ Check out full working code in the [examples](./examples/README.md) directory of
 ### Installation
 
 ```bash
+# Create a new module directory if you dont already have one
+mkdir my-example-project
+cd my-example-project
+
+# Create a module with go.mod file in the directory.
+# See https://go.dev/doc/modules/gomod-ref for full docs on go mod
+go mod init example/my-example-project
+
+# Then, run go get to add the Momento SDK to your module.
 go get github.com/momentohq/client-sdk-go
 ```
 
