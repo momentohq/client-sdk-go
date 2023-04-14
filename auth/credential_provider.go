@@ -1,6 +1,8 @@
 package auth
 
 import (
+	b64 "encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -15,6 +17,11 @@ type Endpoints struct {
 	ControlEndpoint string
 	// CacheEndpoint is the host which the Momento client will connect to the Momento data plane
 	CacheEndpoint string
+}
+
+type tokenAndEndpoints struct {
+	Endpoints
+	AuthToken string
 }
 
 type CredentialProvider interface {
@@ -67,10 +74,10 @@ func FromString(authToken string) (CredentialProvider, error) {
 // and returns a CredentialProvider with the new endpoint values. An endpoint supplied as an empty string is ignored
 // and the existing value for that endpoint is retained.
 func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints Endpoints) (CredentialProvider, error) {
-	if credentialProvider.cacheEndpoint != "" {
+	if endpoints.CacheEndpoint != "" {
 		credentialProvider.cacheEndpoint = endpoints.CacheEndpoint
 	}
-	if credentialProvider.controlEndpoint != "" {
+	if endpoints.ControlEndpoint != "" {
 		credentialProvider.controlEndpoint = endpoints.ControlEndpoint
 	}
 	return credentialProvider, nil
@@ -93,19 +100,54 @@ func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, err
 // NewStringMomentoTokenProvider constructor for a CredentialProvider using a string containing an
 // authentication token
 func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error) {
-	endpoints, err := getEndpointsFromToken(authToken)
+	tokenAndEndpoints, err := decodeAuthToken(authToken)
 	if err != nil {
 		return nil, err
 	}
 	provider := defaultCredentialProvider{
-		authToken:       authToken,
-		controlEndpoint: endpoints.ControlEndpoint,
-		cacheEndpoint:   endpoints.CacheEndpoint,
+		authToken:       tokenAndEndpoints.AuthToken,
+		controlEndpoint: tokenAndEndpoints.ControlEndpoint,
+		cacheEndpoint:   tokenAndEndpoints.CacheEndpoint,
 	}
 	return provider, nil
 }
 
-func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoSvcErr) {
+func decodeAuthToken(authToken string) (*tokenAndEndpoints, momentoerrors.MomentoSvcErr) {
+	decodedBase64Token, err := b64.StdEncoding.DecodeString(authToken)
+	if err != nil {
+		return processJwtToken(authToken)
+	}
+	return processV1Token(decodedBase64Token)
+}
+
+func processV1Token(decodedBase64Token []byte) (*tokenAndEndpoints, momentoerrors.MomentoSvcErr) {
+	var tokenData map[string]string
+	if err := json.Unmarshal(decodedBase64Token, &tokenData); err != nil {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"malformed auth token",
+			nil,
+		)
+	}
+
+	if tokenData["endpoint"] == "" || tokenData["api_key"] == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"failed to parse token",
+			nil,
+		)
+	}
+
+	return &tokenAndEndpoints{
+		Endpoints: Endpoints{
+			ControlEndpoint: fmt.Sprintf("control.%s", tokenData["endpoint"]),
+			CacheEndpoint:   fmt.Sprintf("cache.%s", tokenData["endpoint"]),
+		},
+		AuthToken: tokenData["api_key"],
+	}, nil
+}
+
+func processJwtToken(authToken string) (*tokenAndEndpoints, momentoerrors.MomentoSvcErr) {
 	token, _, err := new(jwt.Parser).ParseUnverified(authToken, jwt.MapClaims{})
 	if err != nil {
 		return nil, momentoerrors.NewMomentoSvcErr(
@@ -115,9 +157,14 @@ func getEndpointsFromToken(authToken string) (*Endpoints, momentoerrors.MomentoS
 		)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		return &Endpoints{
-			ControlEndpoint: reflect.ValueOf(claims["cp"]).String(),
-			CacheEndpoint:   reflect.ValueOf(claims["c"]).String(),
+		controlEndpoint := reflect.ValueOf(claims["cp"]).String()
+		cacheEndpoint := reflect.ValueOf(claims["c"]).String()
+		return &tokenAndEndpoints{
+			Endpoints: Endpoints{
+				ControlEndpoint: controlEndpoint,
+				CacheEndpoint:   cacheEndpoint,
+			},
+			AuthToken: authToken,
 		}, nil
 	}
 	return nil, momentoerrors.NewMomentoSvcErr(
