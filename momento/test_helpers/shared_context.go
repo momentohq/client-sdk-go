@@ -39,7 +39,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 	shared.CredentialProvider = credentialProvider
-	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
