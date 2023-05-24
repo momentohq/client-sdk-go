@@ -7,11 +7,11 @@ import (
 type ItemType int32
 
 const (
-	ItemTypeScalar     ItemType = ItemType(pb.XItemGetTypeResponse_SCALAR)
-	ItemTypeDictionary ItemType = ItemType(pb.XItemGetTypeResponse_DICTIONARY)
-	ItemTypeSet        ItemType = ItemType(pb.XItemGetTypeResponse_SET)
-	ItemTypeList       ItemType = ItemType(pb.XItemGetTypeResponse_LIST)
-	ItemTypeSortedSet  ItemType = ItemType(pb.XItemGetTypeResponse_SORTED_SET)
+	Scalar     ItemType = ItemType(pb.XItemGetTypeResponse_SCALAR)
+	Dictionary ItemType = ItemType(pb.XItemGetTypeResponse_DICTIONARY)
+	Set        ItemType = ItemType(pb.XItemGetTypeResponse_SET)
+	List       ItemType = ItemType(pb.XItemGetTypeResponse_LIST)
+	SortedSet  ItemType = ItemType(pb.XItemGetTypeResponse_SORTED_SET)
 )
 
 // ItemGetTypeResponse is the base response type for an item get type request.
@@ -25,11 +25,6 @@ type ItemGetTypeHit struct {
 }
 
 func (r *ItemGetTypeHit) isItemGetTypeResponse() {}
-
-// TypeString returns the string representation of the item type.
-func (r *ItemGetTypeHit) TypeString() string {
-	return pb.XItemGetTypeResponse_ItemType_name[int32(r.value)]
-}
 
 // Type returns the ItemType representation of the item type.
 func (r *ItemGetTypeHit) Type() ItemType {
