@@ -8,6 +8,10 @@ package auth;
 
 service Auth {
   rpc Login (_LoginRequest) returns (stream _LoginResponse) {}
+  // api for initially generating api and refresh tokens
+  rpc GenerateApiToken(_GenerateApiTokenRequest) returns (_GenerateApiTokenResponse) {}
+  // api for programmatically refreshing api and refresh tokens
+  rpc RefreshApiToken(_RefreshApiTokenRequest) returns (_RefreshApiTokenResponse) {}
 }
 
 message _LoginRequest {
@@ -49,4 +53,99 @@ message _LoginResponse {
   message Message {
     string text = 1;
   }
+}
+
+message _GenerateApiTokenRequest {
+    // generate a token that will never expire
+    message Never {}
+    // generate a token that has an expiry
+    message Expires {
+        // how many seconds do you want the api token to be valid for?
+        uint32 valid_for_seconds = 1;
+    }
+
+    oneof expiry {
+        Never never = 1;
+        Expires expires = 2;
+    }
+
+    // Aliases for categories of functionality.
+    enum CacheRole {
+      CachePermitNone = 0;
+      // Restricts access to apis that read and write data from caches: No higher level resource description or modification.
+      CacheReadWrite = 1;
+    }
+
+    // Aliases for categories of functionality.
+    enum TopicRole {
+      TopicPermitNone = 0;
+      // Restricts access to apis that read and write data from topics: No higher level resource description or modification.
+      TopicReadWrite = 1;
+    }
+
+    string auth_token = 3;
+
+    enum SuperUserPermissions {
+      SuperUser = 0;
+    }
+
+    message Permissions {
+      oneof kind {
+        SuperUserPermissions super_user = 1;
+        ExplicitPermissions explicit = 2;
+      }
+    }
+
+    message ExplicitPermissions {
+      repeated PermissionsType permissions = 1;
+    }
+
+    message PermissionsType {
+      oneof kind {
+        CachePermissions cache_permissions = 1;
+        TopicPermissions topic_permissions = 2;
+      }
+
+      message CachePermissions {
+        CacheRole role = 1;
+      }
+
+      message TopicPermissions {
+        TopicRole role = 1;
+      }
+    }
+
+    Permissions permissions = 4;
+}
+
+message _GenerateApiTokenResponse {
+    // the api key used for authentication against Momento backend
+    string api_key = 1;
+    // the token that will allow the api token to be refreshed, which will
+    // give you back a new refresh and api token
+    string refresh_token = 2;
+    // the Momento endpoint that this token is allowed to make requests against
+    string endpoint = 3;
+    // epoch seconds when the api token expires
+    uint64 valid_until = 4;
+}
+
+message _RefreshApiTokenRequest {
+  // the existing api token to be refreshed
+  string api_key = 1;
+  // the refresh token that was generated with that api token
+  string refresh_token = 2;
+}
+
+message _RefreshApiTokenResponse {
+  // the new api key used for authentication against Momento backend
+  string api_key = 1;
+  // the token that will allow the api token to be refreshed, which will
+  // give you back a new refresh and api token
+  string refresh_token = 2;
+  // the Momento endpoint that this token is allowed to make requests against
+  string endpoint = 3;
+  // epoch seconds when the api token expires
+  uint64 valid_until = 4;
+
 }

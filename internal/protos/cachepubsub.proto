@@ -1,11 +1,14 @@
 syntax = "proto3";
 
+import "extensions.proto";
+
 option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
 option java_multiple_files = true;
 option java_package = "grpc.cache_client.pubsub";
 option csharp_namespace = "Momento.Protos.CacheClient.Pubsub";
 
 package cache_client.pubsub;
+
 
 // For working with topics in a cache.
 // Momento topics are conceptually located on a cache. They are best-effort multicast.
@@ -47,6 +50,8 @@ message _Empty {}
 
 // A value to publish through a topic.
 message _PublishRequest {
+  option (retry_semantic) = NotRetryable;
+
   // Cache namespace for the topic to which you want to send the value.
   string cache_name = 1;
   // The literal topic name to which you want to send the value.
@@ -58,6 +63,8 @@ message _PublishRequest {
 
 // A description of how you want to subscribe to a topic.
 message _SubscriptionRequest {
+  option (retry_semantic) = Retryable;
+
   // Cache namespace for the topic to which you want to subscribe.
   string cache_name = 1;
 

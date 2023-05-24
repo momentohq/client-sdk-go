@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_package = "grpc.extensions";
+option csharp_namespace = "Momento.Protos.Extensions";
+
+// A hint so you can decide a little more in the abstract "can this be retried?""
+enum RetrySemantic {
+    // Never retry this message without telling the user. (you should infer this as the default)
+    NotRetryable = 0;
+    // You can retry this without surfacing an error to the user.
+    Retryable = 1;
+}
+
+extend google.protobuf.MessageOptions {
+    // Can this message be re-driven without an error?
+    RetrySemantic retry_semantic = 50000;
+}
