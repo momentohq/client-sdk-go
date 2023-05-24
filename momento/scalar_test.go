@@ -694,4 +694,98 @@ var _ = Describe("Scalar methods", func() {
 			}
 		})
 	})
+
+	Describe("ItemGetType", func() {
+		BeforeEach(func() {
+			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       String("SCALAR"),
+				Value:     String("hi"),
+			})
+			if err != nil {
+				Fail("failed trying to set key")
+			}
+			_, err = sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
+				CacheName:      sharedContext.CacheName,
+				DictionaryName: "DICTIONARY",
+				Field:          String("hi"),
+				Value:          String("there"),
+			})
+			if err != nil {
+				Fail("failed trying to add dictionary")
+			}
+			_, err = sharedContext.Client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
+				CacheName: sharedContext.CacheName,
+				ListName:  "LIST",
+				Value:     String("hi"),
+			})
+			if err != nil {
+				Fail("failed trying to add list")
+			}
+			_, err = sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   "SET",
+				Element:   String("hi"),
+			})
+			if err != nil {
+				Fail("failed trying to add set")
+			}
+			_, err = sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   "SORTED_SET",
+				Value:     String("hi"),
+				Score:     1.0,
+			})
+			if err != nil {
+				Fail("failed trying to add sorted set")
+			}
+		})
+		DescribeTable("returns the correct item type",
+			func(key Key, expectedType ItemType) {
+				typeResponse, err := sharedContext.Client.ItemGetType(sharedContext.Ctx, &ItemGetTypeRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				})
+				Expect(err).To(BeNil())
+				Expect(typeResponse).To(BeAssignableToTypeOf(&ItemGetTypeHit{}))
+				switch result := typeResponse.(type) {
+				case *ItemGetTypeHit:
+					Expect(result.Type()).To(Equal(expectedType))
+				default:
+					Fail(fmt.Sprintf("expected ItemGetTypeHit but got %s", result))
+				}
+			},
+			Entry("scalar", String("SCALAR"), Scalar),
+			Entry("dictionary", String("DICTIONARY"), Dictionary),
+			Entry("set", String("SET"), Set),
+			Entry("list", String("LIST"), List),
+			Entry("sorted set", String("SORTED_SET"), SortedSet),
+		)
+	})
+
+	Describe("item get ttl", func() {
+		It("accurately reports the remaining TTL for a key", func() {
+			var ttl = time.Duration(time.Second * 60)
+			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       String("hi"),
+				Value:     String("there"),
+				Ttl:       ttl,
+			})
+			Expect(err).To(BeNil())
+			resp, err := sharedContext.Client.ItemGetTtl(sharedContext.Ctx, &ItemGetTtlRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       String("hi"),
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&ItemGetTtlHit{}))
+			switch result := resp.(type) {
+			case *ItemGetTtlHit:
+				Expect(ttl > result.RemainingTtl()).To(BeTrue())
+				Expect(result.RemainingTtl().Milliseconds() > (time.Second * 30).Milliseconds()).To(BeTrue())
+			default:
+				Fail(fmt.Sprintf("expected ItemGetTtlHit but got %s", result))
+			}
+		})
+	})
 })
