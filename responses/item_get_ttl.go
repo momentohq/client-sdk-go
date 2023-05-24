@@ -14,13 +14,8 @@ type ItemGetTtlHit struct {
 
 func (r *ItemGetTtlHit) isItemGetTtlResponse() {}
 
-// Ttl returns the TTL in milliseconds
-func (r *ItemGetTtlHit) Ttl() uint64 {
-	return r.value
-}
-
 // TtlDuration returns the TTL as a duration
-func (r *ItemGetTtlHit) TtlDuration() time.Duration {
+func (r *ItemGetTtlHit) RemainingTtl() time.Duration {
 	return time.Millisecond * time.Duration(r.value)
 }
 
