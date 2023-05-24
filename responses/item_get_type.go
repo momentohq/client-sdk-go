@@ -19,29 +19,29 @@ type ItemGetTypeResponse interface {
 	isItemGetTypeResponse()
 }
 
-// ItemGetTypeHit hit response to an item get type api request
+// ItemGetTypeHit hit response to an item get type api request.
 type ItemGetTypeHit struct {
 	value ItemType
 }
 
 func (r *ItemGetTypeHit) isItemGetTypeResponse() {}
 
-// TypeString returns the string representation of the item type
+// TypeString returns the string representation of the item type.
 func (r *ItemGetTypeHit) TypeString() string {
 	return pb.XItemGetTypeResponse_ItemType_name[int32(r.value)]
 }
 
-// Type returns the ItemType representation of the item type
+// Type returns the ItemType representation of the item type.
 func (r *ItemGetTypeHit) Type() ItemType {
 	return r.value
 }
 
-// NewItemGetTypeHit returns a new ItemGetTypeHit containing the item type
+// NewItemGetTypeHit returns a new ItemGetTypeHit containing the item type.
 func NewItemGetTypeHit(value pb.XItemGetTypeResponse_ItemType) *ItemGetTypeHit {
 	return &ItemGetTypeHit{value: ItemType(value)}
 }
 
-// ItemGetTypeMiss miss response to an item get type api request
+// ItemGetTypeMiss miss response to an item get type api request.
 type ItemGetTypeMiss struct{}
 
 func (r *ItemGetTypeMiss) isItemGetTypeResponse() {}
