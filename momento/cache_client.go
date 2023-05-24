@@ -25,6 +25,8 @@ type CacheClient interface {
 	// ListCaches lists all caches.
 	ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error)
 
+	// Increment adds an integer quantity to a field value.
+	Increment(ctx context.Context, r *IncrementRequest) (responses.IncrementResponse, error)
 	// Set sets the value in cache with a given time to live (TTL)
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
 	// Get gets the cache value stored for the given key.
@@ -269,6 +271,14 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return responses.NewListCachesSuccess(rsp.NextToken, rsp.Caches), nil
+}
+
+func (c defaultScsClient) Increment(ctx context.Context, r *IncrementRequest) (responses.IncrementResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {

@@ -531,4 +531,167 @@ var _ = Describe("Scalar methods", func() {
 			).To(BeAssignableToTypeOf(&DecreaseTtlMiss{}))
 		})
 	})
+
+	Describe("Increment", func() {
+		It("Increments from 0 to expected amount with string field", func() {
+			field := String("field")
+
+			resp, err := sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    1,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(1)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+
+			resp, err = sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    41,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(42)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+
+			resp, err = sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    -1042,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(-1000)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+		})
+
+		It("Increments from 0 to expected amount with bytes field", func() {
+			field := Bytes([]byte{1, 2, 3})
+
+			resp, err := sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    1,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(1)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+
+			resp, err = sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    41,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(42)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+
+			resp, err = sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    -1042,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(-1000)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+		})
+
+		It("Increments with setting and resetting field", func() {
+			field := String("field")
+			value := String("10")
+			Expect(sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{CacheName: sharedContext.CacheName, Key: field, Value: value})).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			resp, err := sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    0,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(10)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+
+			resp, err = sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    90,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(100)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+
+			// Reset the field
+			value = String("0")
+			Expect(sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{CacheName: sharedContext.CacheName, Key: field, Value: value})).To(BeAssignableToTypeOf(&SetSuccess{}))
+			resp, err = sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
+				CacheName: sharedContext.CacheName,
+				Field:     field,
+				Amount:    0,
+			})
+			Expect(
+				resp,
+			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
+			Expect(err).To(BeNil())
+			switch result := resp.(type) {
+			case *IncrementSuccess:
+				Expect(result.Value()).To(Equal(int64(0)))
+			default:
+				Fail(fmt.Sprintf("expected increment success but got %s", result))
+			}
+		})
+	})
 })

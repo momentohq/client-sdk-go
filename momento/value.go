@@ -11,6 +11,9 @@ type Value interface {
 // Key Type alias to future proof passing in keys.
 type Key = Value
 
+// Field Type alias to future proof passing in keys.
+type Field = Value
+
 // Bytes plain old []byte
 type Bytes []byte
 
