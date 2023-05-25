@@ -755,11 +755,11 @@ var _ = Describe("Scalar methods", func() {
 					Fail(fmt.Sprintf("expected ItemGetTypeHit but got %s", result))
 				}
 			},
-			Entry("scalar", String("SCALAR"), Scalar),
-			Entry("dictionary", String("DICTIONARY"), Dictionary),
-			Entry("set", String("SET"), Set),
-			Entry("list", String("LIST"), List),
-			Entry("sorted set", String("SORTED_SET"), SortedSet),
+			Entry("scalar", String("SCALAR"), ItemTypeScalar),
+			Entry("dictionary", String("DICTIONARY"), ItemTypeDictionary),
+			Entry("set", String("SET"), ItemTypeSet),
+			Entry("list", String("LIST"), ItemTypeList),
+			Entry("sorted set", String("SORTED_SET"), ItemTypeSortedSet),
 		)
 	})
 

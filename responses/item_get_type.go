@@ -7,11 +7,11 @@ import (
 type ItemType int32
 
 const (
-	Scalar     ItemType = ItemType(pb.XItemGetTypeResponse_SCALAR)
-	Dictionary ItemType = ItemType(pb.XItemGetTypeResponse_DICTIONARY)
-	Set        ItemType = ItemType(pb.XItemGetTypeResponse_SET)
-	List       ItemType = ItemType(pb.XItemGetTypeResponse_LIST)
-	SortedSet  ItemType = ItemType(pb.XItemGetTypeResponse_SORTED_SET)
+	ItemTypeScalar     ItemType = 0
+	ItemTypeDictionary ItemType = 1
+	ItemTypeSet        ItemType = 2
+	ItemTypeList       ItemType = 3
+	ItemTypeSortedSet  ItemType = 4
 )
 
 // ItemGetTypeResponse is the base response type for an item get type request.
