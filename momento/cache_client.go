@@ -35,6 +35,10 @@ type CacheClient interface {
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 	// KeysExist checks if provided keys exist in the cache.
 	KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error)
+	// ItemGetType returns the type of the key in the cache
+	ItemGetType(ctx context.Context, r *ItemGetTypeRequest) (responses.ItemGetTypeResponse, error)
+	// ItemGetTtl returns the TTL for a key in the cache
+	ItemGetTtl(ctx context.Context, r *ItemGetTtlRequest) (responses.ItemGetTtlResponse, error)
 
 	// SortedSetFetchByRank fetches the elements in the given sorted set by rank.
 	SortedSetFetchByRank(ctx context.Context, r *SortedSetFetchByRankRequest) (responses.SortedSetFetchResponse, error)
@@ -306,6 +310,22 @@ func (c defaultScsClient) Delete(ctx context.Context, r *DeleteRequest) (respons
 }
 
 func (c defaultScsClient) KeysExist(ctx context.Context, r *KeysExistRequest) (responses.KeysExistResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) ItemGetType(ctx context.Context, r *ItemGetTypeRequest) (responses.ItemGetTypeResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) ItemGetTtl(ctx context.Context, r *ItemGetTtlRequest) (responses.ItemGetTtlResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
