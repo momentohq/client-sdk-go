@@ -782,7 +782,7 @@ var _ = Describe("Scalar methods", func() {
 			switch result := resp.(type) {
 			case *ItemGetTtlHit:
 				Expect(ttl > result.RemainingTtl()).To(BeTrue())
-				Expect(result.RemainingTtl().Milliseconds() > (time.Second * 30).Milliseconds()).To(BeTrue())
+				Expect(result.RemainingTtl() > (time.Second * 30)).To(BeTrue())
 			default:
 				Fail(fmt.Sprintf("expected ItemGetTtlHit but got %s", result))
 			}
