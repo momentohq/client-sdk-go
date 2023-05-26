@@ -19,8 +19,7 @@ const (
 )
 
 var _ = Describe("CredentialProvider", func() {
-	Context("legacy auth token", func() {
-
+	Context("V1 auth token", func() {
 		It("errors on a invalid auth token", func() {
 			badCredentialProvider, err := auth.NewStringMomentoTokenProvider("Invalid token")
 
@@ -33,58 +32,6 @@ var _ = Describe("CredentialProvider", func() {
 			}
 		})
 
-		It("returns a credential provider from an environment variable via constructor", func() {
-			Skip("skipping this for now. need to update the tests to handle V1 auth token")
-			credentialProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
-			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(os.Getenv("TEST_AUTH_TOKEN")))
-		})
-
-		It("returns a credential provider from a string via constructor", func() {
-			Skip("skipping this for now. need to update the tests to handle V1 auth token")
-			credentialProvider, err := auth.NewStringMomentoTokenProvider(os.Getenv("TEST_AUTH_TOKEN"))
-			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(os.Getenv("TEST_AUTH_TOKEN")))
-		})
-
-		It("returns a credential provider from an environment variable via method", func() {
-			Skip("skipping this for now. need to update the tests to handle V1 auth token")
-			credentialProvider, err := auth.FromEnvironmentVariable("TEST_AUTH_TOKEN")
-			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(os.Getenv("TEST_AUTH_TOKEN")))
-		})
-
-		It("returns a credential provider from a string via method", func() {
-			Skip("skipping this for now. need to update the tests to handle V1 auth token")
-			credentialProvider, err := auth.FromString(os.Getenv("TEST_AUTH_TOKEN"))
-			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(os.Getenv("TEST_AUTH_TOKEN")))
-		})
-
-		It("overrides endpoints", func() {
-			credentialProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
-			Expect(err).To(BeNil())
-			controlEndpoint := credentialProvider.GetControlEndpoint()
-			cacheEndpoint := credentialProvider.GetCacheEndpoint()
-			Expect(controlEndpoint).ToNot(BeEmpty())
-			Expect(cacheEndpoint).ToNot(BeEmpty())
-
-			controlEndpoint = fmt.Sprintf("%s-overridden", controlEndpoint)
-			cacheEndpoint = fmt.Sprintf("%s-overridden", cacheEndpoint)
-			credentialProvider, err = credentialProvider.WithEndpoints(
-				auth.Endpoints{
-					ControlEndpoint: controlEndpoint,
-					CacheEndpoint:   cacheEndpoint,
-				},
-			)
-			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetControlEndpoint()).To(Equal(controlEndpoint))
-			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(cacheEndpoint))
-		})
-
-	})
-
-	Context("V1 auth token", func() {
 		It("returns a credential provider from an environment variable via constructor", func() {
 			envVar := "v1token"
 			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
@@ -148,7 +95,7 @@ var _ = Describe("CredentialProvider", func() {
 		It("overrides endpoints", func() {
 			envVar := "v1token"
 			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
-				Fail(fmt.Sprintf("error fetching env var %s: %s\n", envVar, err.Error()))
+				Fail(fmt.Sprintf("error setting env var %s: %s\n", envVar, err.Error()))
 			}
 			credentialProvider, err := auth.NewEnvMomentoTokenProvider(envVar)
 			Expect(err).To(BeNil())
