@@ -19,7 +19,22 @@ const (
 )
 
 var _ = Describe("CredentialProvider", func() {
+	envVar := "v1token"
+
+	BeforeEach(func() {
+		if err := os.Setenv(envVar, testV1AuthToken); err != nil {
+			Fail(fmt.Sprintf("error setting env var %s: %s\n", envVar, err.Error()))
+		}
+	})
+
+	AfterEach(func() {
+		if err := os.Setenv(envVar, ""); err != nil {
+			Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
+		}
+	})
+
 	Context("V1 auth token", func() {
+
 		It("errors on a invalid auth token", func() {
 			badCredentialProvider, err := auth.NewStringMomentoTokenProvider("Invalid token")
 
@@ -33,70 +48,38 @@ var _ = Describe("CredentialProvider", func() {
 		})
 
 		It("returns a credential provider from an environment variable via constructor", func() {
-			envVar := "v1token"
-			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
-				Fail(fmt.Sprintf("error fetching env var %s: %s\n", envVar, err.Error()))
-			}
 			credentialProvider, err := auth.NewEnvMomentoTokenProvider(envVar)
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
-			if err := os.Setenv(envVar, ""); err != nil {
-				Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
-			}
 		})
 
 		It("returns a credential provider from a string via constructor", func() {
-			envVar := "v1token"
-			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
-				Fail(fmt.Sprintf("error fetching env var %s: %s\n", envVar, err.Error()))
-			}
 			credentialProvider, err := auth.NewStringMomentoTokenProvider(os.Getenv(envVar))
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
-			if err := os.Setenv(envVar, ""); err != nil {
-				Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
-			}
 		})
 
 		It("returns a credential provider from an environment variable via method", func() {
-			envVar := "v1token"
-			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
-				Fail(fmt.Sprintf("error fetching env var %s: %s\n", envVar, err.Error()))
-			}
 			credentialProvider, err := auth.FromEnvironmentVariable(envVar)
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
-			if err := os.Setenv(envVar, ""); err != nil {
-				Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
-			}
 		})
 
 		It("returns a credential provider from a string via method", func() {
-			envVar := "v1token"
-			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
-				Fail(fmt.Sprintf("error fetching env var %s: %s\n", envVar, err.Error()))
-			}
 			credentialProvider, err := auth.FromString(os.Getenv(envVar))
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
-			if err := os.Setenv(envVar, ""); err != nil {
-				Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
-			}
 		})
 
 		It("overrides endpoints", func() {
-			envVar := "v1token"
-			if err := os.Setenv(envVar, testV1AuthToken); err != nil {
-				Fail(fmt.Sprintf("error setting env var %s: %s\n", envVar, err.Error()))
-			}
 			credentialProvider, err := auth.NewEnvMomentoTokenProvider(envVar)
 			Expect(err).To(BeNil())
 			controlEndpoint := credentialProvider.GetControlEndpoint()
@@ -115,18 +98,11 @@ var _ = Describe("CredentialProvider", func() {
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(controlEndpoint))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(cacheEndpoint))
-			if err := os.Setenv(envVar, ""); err != nil {
-				Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
-			}
 		})
 
 		DescribeTable("errors when v1 token is missing data",
 			func(envVarValue string) {
-				envVar := "v1token"
-				if err := os.Setenv(envVar, envVarValue); err != nil {
-					Fail(fmt.Sprintf("error fetching env var %s: %s\n", envVar, err.Error()))
-				}
-				credentialProvider, err := auth.FromString(os.Getenv(envVar))
+				credentialProvider, err := auth.FromString(envVarValue)
 				Expect(credentialProvider).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				var momentoErr momentoerrors.MomentoSvcErr
@@ -134,9 +110,6 @@ var _ = Describe("CredentialProvider", func() {
 					Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
 				} else {
 					Fail(fmt.Sprintf("unknown error: %s", err.Error()))
-				}
-				if err := os.Setenv(envVar, ""); err != nil {
-					Fail(fmt.Sprintf("error resetting env var %s: %s\n", envVar, err.Error()))
 				}
 			},
 			Entry("missing endpoint", testV1MissingEndpoint),
