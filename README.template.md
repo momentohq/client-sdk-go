@@ -15,7 +15,7 @@ Checkout our [examples](./examples/README.md) directory for complete examples of
 Here is a quickstart you can use in your own project:
 
 ```go
-{{ usageExampleCode }}
+{% include "./examples/readme.go" %}
 ```
 
 ## Getting Started and Documentation
