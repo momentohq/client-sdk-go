@@ -39,6 +39,15 @@ func example_API_CreateCache() {
 	}
 }
 
+func example_API_ListCaches() {
+	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: "cache-name",
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func example_API_Get() {
 	key := uuid.NewString()
 	resp, err := client.Get(ctx, &momento.GetRequest{
