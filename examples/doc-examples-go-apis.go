@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -17,17 +19,22 @@ var (
 	client momento.CacheClient
 )
 
-func retrieveAuthTokenFromSecretsManager() string {
-	fakeTestV1ApiKey := ""
-
-	return fakeTestV1ApiKey
-}
-
-func example_API_CredentialProviderFromEnvVar() {
-	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+func example_API_InstantiateCacheClient() {
+	context := context.Background()
+	configuration := config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
 	}
+	defaultTtl := time.Duration(9999)
+
+
+	client, err := momento.NewCacheClient(configuration, credentialProvider, defaultTtl)
+	if err != nil {
+		panic(err)
+	}
+
+	client.Ping(context)
 }
 
 func example_API_CreateCache() {
@@ -40,11 +47,14 @@ func example_API_CreateCache() {
 }
 
 func example_API_ListCaches() {
-	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "cache-name",
-	})
+	resp, err := client.ListCaches(ctx, &momento.ListCachesRequest{})
 	if err != nil {
 		panic(err)
+	}
+
+	switch r := resp.(type) {
+	case *responses.ListCachesSuccess:
+		log.Printf("Found caches %+v", r.Caches())
 	}
 }
 
@@ -59,10 +69,10 @@ func example_API_Get() {
 	}
 
 	switch r := resp.(type) {
-	case *responses.GetHit:
-		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
-	case *responses.GetMiss:
-		log.Printf("Look up did not find a value key=%s", key)
+		case *responses.GetHit:
+			log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
+		case *responses.GetMiss:
+			log.Printf("Look up did not find a value key=%s", key)
 	}
 }
 
