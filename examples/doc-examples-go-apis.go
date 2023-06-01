@@ -79,12 +79,12 @@ func example_API_Set() {
 	if err != nil {
 		var momentoErr momento.MomentoError
     	if errors.As(err, &momentoErr) {
-        if momentoErr.Code() != momento.TimeoutError {
-            // this would represent a client-side timeout, and you could fall back to your original data source
-        } else {
-			panic(err)
+			if momentoErr.Code() != momento.TimeoutError {
+				// this would represent a client-side timeout, and you could fall back to your original data source
+			} else {
+				panic(err)
+			}
 		}
-    }
 	}
 }
 
