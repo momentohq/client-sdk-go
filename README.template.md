@@ -18,6 +18,10 @@ Here is a quickstart you can use in your own project:
 {{ usageExampleCode }}
 ```
 
+## Getting Started and Documentation
+
+Documentation is available on the [Momento Docs website](https://docs.momentohq.com).
+
 ## Examples
 
 Check out full working code in the [examples](./examples/README.md) directory of this repository!
