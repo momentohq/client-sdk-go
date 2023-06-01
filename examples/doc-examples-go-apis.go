@@ -20,7 +20,7 @@ func retrieveAuthTokenFromSecretsManager() string {
 
 func example_API_CredentialProviderFromEnvVar() {
 	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
-	if (err != nil) {
+	if err != nil {
 		panic(err)
 	}
 }
@@ -28,8 +28,8 @@ func example_API_CredentialProviderFromEnvVar() {
 func example_API_CreateCache() {
 	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: "cache-name",
-	});
-	if (err != nil) {
+	})
+	if err != nil {
 		panic(err)
 	}
 }
