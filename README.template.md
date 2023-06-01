@@ -2,7 +2,7 @@
 
 ## Packages
 
-The Momento Golang SDK is available here on github: [momento](https://github.com/momentohq/client-sdk-go).
+The Momento Golang SDK is available here on github: [momentohq/client-sdk-go](https://github.com/momentohq/client-sdk-go).
 
 ```bash
 go get github.com/momentohq/client-sdk-go
