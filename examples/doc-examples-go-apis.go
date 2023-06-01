@@ -26,10 +26,10 @@ func example_API_CredentialProviderFromEnvVar() {
 }
 
 func example_API_CreateCache() {
-  _, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
+	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
 		CacheName: "cache-name",
 	});
-  if (err != nil) {
-	panic(err)
-  }
+	if (err != nil) {
+		panic(err)
+	}
 }
