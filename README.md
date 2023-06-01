@@ -1,38 +1,31 @@
 <head>
-  <meta name="Momento Go Client Library Documentation" content="Go client software development kit for Momento Serverless Cache">
+  <meta name="Momento Go Client Library Documentation" content="Go client software development kit for Momento Cache">
 </head>
 <img src="https://docs.momentohq.com/img/logo.svg" alt="logo" width="400"/>
 
 [![project status](https://momentohq.github.io/standards-and-practices/badges/project-status-official.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md)
-[![project stability](https://momentohq.github.io/standards-and-practices/badges/project-stability-stable.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md) 
+[![project stability](https://momentohq.github.io/standards-and-practices/badges/project-stability-stable.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md)
 
 # Momento Go Client Library
 
+Momento Cache is a fast, simple, pay-as-you-go caching solution without any of the operational overhead
+required by traditional caching solutions.  This repo contains the source code for the Momento Go client library.
 
-Go client SDK for Momento Serverless Cache: a fast, simple, pay-as-you-go caching solution without
-any of the operational overhead required by traditional caching solutions!
+* Website: [https://www.gomomento.com/](https://www.gomomento.com/)
+* Momento Documentation: [https://docs.momentohq.com/](https://docs.momentohq.com/)
+* Getting Started: [https://docs.momentohq.com/getting-started](https://docs.momentohq.com/getting-started)
+* Go SDK Documentation: [https://docs.momentohq.com/develop/sdks/go](https://docs.momentohq.com/develop/sdks/go)
+* Discuss: [Momento Discord](https://discord.gg/3HkAKjUZGq)
 
+## Packages
 
-
-## Getting Started :running:
-
-### Requirements
-
-- [Go](https://go.dev/dl/)
-- A Momento Auth Token is required, you can generate one using
-  the [Momento CLI](https://github.com/momentohq/momento-cli)
-
-### Examples
-
-Check out full working code in the [examples](./examples/README.md) directory of this repository!
-
-### Installation
+The Momento Golang SDK is available here on github: [momentohq/client-sdk-go](https://github.com/momentohq/client-sdk-go).
 
 ```bash
 go get github.com/momentohq/client-sdk-go
 ```
 
-### Usage
+## Usage
 
 Checkout our [examples](./examples/README.md) directory for complete examples of how to use the SDK.
 
@@ -46,60 +39,44 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
-
-	"github.com/google/uuid"
 )
 
 func main() {
-	ctx := context.Background()
-	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	context := context.Background()
+	configuration := config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	if err != nil {
+		panic(err)
+	}
+	defaultTtl := time.Duration(9999)
+
+	client, err := momento.NewCacheClient(configuration, credentialProvider, defaultTtl)
 	if err != nil {
 		panic(err)
 	}
 
-	const (
-		cacheName             = "my-test-cache"
-		itemDefaultTTLSeconds = 60
-	)
-
-	// Initializes Momento
-	client, err := momento.NewCacheClient(
-		config.LaptopLatest(),
-		credentialProvider,
-		itemDefaultTTLSeconds*time.Second,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	// Create Cache
-	_, err = client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: cacheName,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	// Sets key with default TTL and gets value with that key
 	key := uuid.NewString()
 	value := uuid.NewString()
 	log.Printf("Setting key: %s, value: %s\n", key, value)
-	_, err = client.Set(ctx, &momento.SetRequest{
-		CacheName: cacheName,
+	_, _ = client.Set(context, &momento.SetRequest{
+		CacheName: "cache-name",
 		Key:       momento.String(key),
 		Value:     momento.String(value),
+		Ttl:       time.Duration(9999),
 	})
+
 	if err != nil {
 		panic(err)
 	}
 
-	log.Printf("Getting key: %s\n", key)
-	resp, err := client.Get(ctx, &momento.GetRequest{
-		CacheName: cacheName,
+	resp, err := client.Get(context, &momento.GetRequest{
+		CacheName: "cache-name",
 		Key:       momento.String(key),
 	})
 	if err != nil {
@@ -112,57 +89,21 @@ func main() {
 	case *responses.GetMiss:
 		log.Printf("Look up did not find a value key=%s", key)
 	}
-
-	// Permanently delete the cache
-	if _, err = client.DeleteCache(ctx, &momento.DeleteCacheRequest{CacheName: cacheName}); err != nil {
-		panic(err)
-	}
-	log.Printf("Cache named %s is deleted\n", cacheName)
 }
 
 ```
 
-### Error Handling
+## Getting Started and Documentation
 
-The preferred way of interpreting the return values from `CacheClient` methods is using a `switch` statement to match and handle the specific response type. 
-Here's a quick example:
+Documentation is available on the [Momento Docs website](https://docs.momentohq.com).
 
-```go
-switch r := resp.(type) {
-case *momento.GetHit:
-    log.Printf("Lookup resulted in cahce HIT. value=%s\n", r.ValueString())
-default: 
-    // you can handle other cases via pattern matching in other `switch case`, or a default case
-    // via the `default` block.  For each return value your IDE should be able to give you code 
-    // completion indicating the other possible "case"; in this case, `momento.GetMiss`.
-}
-```
+## Examples
 
-Using this approach, you get a type-safe `GetHit` object in the case of a cache hit. 
-But if the cache read results in a Miss, you'll also get a type-safe object that you can use to get more info about what happened.
+Check out full working code in the [examples](./examples/README.md) directory of this repository!
 
-In cases where you get an error response, it can be treated as `momentoErr` using `As` method and it always include an `momentoErr.Code` that you can use to check the error type:
+## Developing
 
-```go
-_, err := client.Set(ctx, &momento.SetRequest{
-    CacheName: cacheName,
-    Key:       momento.String(key),
-    Value:     momento.String(value),
-})
-
-if err != nil {
-    var momentoErr momento.MomentoError
-    if errors.As(err, &momentoErr) {
-        if momentoErr.Code() != momento.TimeoutError {
-            // this would represent a client-side timeout, and you could fall back to your original data source
-        }
-    }
-}
-```
-
-### Tuning
-
-Coming soon...
+If you are interested in contributing to the SDK, please see the [CONTRIBUTING](./CONTRIBUTING.md) docs.
 
 ----------------------------------------------------------------------------------------
 For more info, visit our website at [https://gomomento.com](https://gomomento.com)!
