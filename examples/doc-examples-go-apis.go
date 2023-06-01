@@ -28,7 +28,6 @@ func example_API_InstantiateCacheClient() {
 	}
 	defaultTtl := time.Duration(9999)
 
-
 	client, err := momento.NewCacheClient(configuration, credentialProvider, defaultTtl)
 	if err != nil {
 		panic(err)
@@ -69,10 +68,10 @@ func example_API_Get() {
 	}
 
 	switch r := resp.(type) {
-		case *responses.GetHit:
-			log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
-		case *responses.GetMiss:
-			log.Printf("Look up did not find a value key=%s", key)
+	case *responses.GetHit:
+		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
+	case *responses.GetMiss:
+		log.Printf("Look up did not find a value key=%s", key)
 	}
 }
 
@@ -83,12 +82,12 @@ func example_API_Set() {
 	_, err := client.Set(ctx, &momento.SetRequest{
 		CacheName: "cache-name",
 		Key:       momento.String(key),
-		Value: 	   momento.String(value),
-		Ttl: 	   time.Duration(9999),
+		Value:     momento.String(value),
+		Ttl:       time.Duration(9999),
 	})
 	if err != nil {
 		var momentoErr momento.MomentoError
-    	if errors.As(err, &momentoErr) {
+		if errors.As(err, &momentoErr) {
 			if momentoErr.Code() != momento.TimeoutError {
 				// this would represent a client-side timeout, and you could fall back to your original data source
 			} else {
