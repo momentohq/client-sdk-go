@@ -37,15 +37,6 @@ func example_API_InstantiateCacheClient() {
 	client.Ping(context)
 }
 
-func example_API_CreateCache() {
-	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "cache-name",
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
 func example_API_ListCaches() {
 	resp, err := client.ListCaches(ctx, &momento.ListCachesRequest{})
 	if err != nil {
@@ -55,6 +46,15 @@ func example_API_ListCaches() {
 	switch r := resp.(type) {
 	case *responses.ListCachesSuccess:
 		log.Printf("Found caches %+v", r.Caches())
+	}
+}
+
+func example_API_CreateCache() {
+	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: "cache-name",
+	})
+	if err != nil {
+		panic(err)
 	}
 }
 
