@@ -1,6 +1,16 @@
 package main
 
-import "github.com/momentohq/client-sdk-go/auth"
+import (
+	"context"
+
+	"github.com/momentohq/client-sdk-go/auth"
+	"github.com/momentohq/client-sdk-go/momento"
+)
+
+var (
+	ctx    context.Context
+	client momento.CacheClient
+)
 
 func retrieveAuthTokenFromSecretsManager() string {
 	fakeTestV1ApiKey := ""
@@ -13,4 +23,13 @@ func example_API_CredentialProviderFromEnvVar() {
 	if (err != nil) {
 		panic(err)
 	}
+}
+
+func example_API_CreateCache() {
+  _, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: "cache-name",
+	});
+  if (err != nil) {
+	panic(err)
+  }
 }
