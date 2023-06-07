@@ -46,7 +46,7 @@ func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSu
 	streamClient, err := client.streamGrpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName: request.CacheName,
 		Topic:     request.TopicName,
-		//ResumeAtTopicSequenceNumber: 0, TODO think about re-establish topic case
+		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 	})
 	return streamClient, err
 }

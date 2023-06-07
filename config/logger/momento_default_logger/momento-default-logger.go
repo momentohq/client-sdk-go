@@ -59,7 +59,7 @@ func momentoLog(level LogLevel, loggerName string, message string, args ...strin
 		anyArgs[i] = v
 	}
 	finalMessage := fmt.Sprintf(message, anyArgs...)
-	log.Printf("[%s] %d (%s): %s\n", time.RFC3339, level, loggerName, finalMessage)
+	log.Printf("[%s] %d (%s): %s\n", time.Now().UTC().Format(time.RFC3339), level, loggerName, finalMessage)
 }
 
 type DefaultMomentoLoggerFactory struct {
