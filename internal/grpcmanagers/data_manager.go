@@ -60,7 +60,7 @@ func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*Data
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDisableRetry(),
 	)
-	
+
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
