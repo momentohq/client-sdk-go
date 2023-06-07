@@ -63,21 +63,19 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	ticker := time.NewTicker(seconds)
 	for{
 		s.log.Debug("Attempting reconnecting to client stream")
-		select {
-		case <- ticker.C:
-			newStream, err := s.momentoTopicClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
-				CacheName: s.cacheName,
-				TopicName: s.topicName,
-				ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
-			})
+		_ = <-ticker.C
+		newStream, err := s.momentoTopicClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+			CacheName: s.cacheName,
+			TopicName: s.topicName,
+			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
+		})
 
-			if err != nil {
-				s.log.Debug("failed to reconnect to stream, will continue to try in %s seconds", fmt.Sprint(seconds))
-			} else {
-				s.log.Debug("successfully reconnected to subscription stream")
-				s.grpcClient = newStream
-				return
-			}
+		if err != nil {
+			s.log.Debug("failed to reconnect to stream, will continue to try in %s seconds", fmt.Sprint(seconds))
+		} else {
+			s.log.Debug("successfully reconnected to subscription stream")
+			s.grpcClient = newStream
+			return
 		}
 	}
 }
