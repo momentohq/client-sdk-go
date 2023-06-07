@@ -63,7 +63,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	ticker := time.NewTicker(seconds)
 	for{
 		s.log.Debug("Attempting reconnecting to client stream")
-		_ = <-ticker.C
+		<-ticker.C
 		newStream, err := s.momentoTopicClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName: s.cacheName,
 			TopicName: s.topicName,
