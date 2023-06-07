@@ -21,6 +21,7 @@ type DataGrpcManagerRequest struct {
 
 type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	RetryStrategy      retry.Strategy
 }
 
 type PingGrpcManagerRequest struct {
