@@ -67,40 +67,96 @@ var _ = Describe("Batch operations", func() {
 		}
 	})
 
-	It("batch deletes", func() {
-		errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
-			Client:    client,
-			CacheName: cacheName,
-			Keys:      keys[5:21],
-		})
-		Expect(errors).To(BeNil())
-		for i := 0; i < 50; i++ {
-			resp, err := client.Get(ctx, &GetRequest{
+	Describe("batch delete", func() {
+		It("batch delete happy path", func() {
+			errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
+				Client:    client,
 				CacheName: cacheName,
-				Key:       keys[i],
+				Keys:      keys[5:21],
 			})
-			Expect(err).To(BeNil())
-			switch resp.(type) {
-			case *responses.GetHit:
-				if i >= 5 && i <= 20 {
-					Fail("got a hit for #%d that should be a miss", i)
-				}
-			case *responses.GetMiss:
-				if !(i >= 5 && i <= 20) {
-					Fail("got a miss for #%d that should be a hit", i)
+			Expect(errors).To(BeNil())
+			for i := 0; i < 50; i++ {
+				resp, err := client.Get(ctx, &GetRequest{
+					CacheName: cacheName,
+					Key:       keys[i],
+				})
+				Expect(err).To(BeNil())
+				switch resp.(type) {
+				case *responses.GetHit:
+					if i >= 5 && i <= 20 {
+						Fail("got a hit for #%d that should be a miss", i)
+					}
+				case *responses.GetMiss:
+					if !(i >= 5 && i <= 20) {
+						Fail("got a miss for #%d that should be a hit", i)
+					}
 				}
 			}
-		}
-	})
-
-	It("doesn't error trying to batch delete nonexistent keys", func() {
-		keys := []Key{String("i"), String("don't"), String("exist")}
-		errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
-			Client:    client,
-			CacheName: cacheName,
-			Keys:      keys,
 		})
-		Expect(errors).To(BeNil())
+
+		It("doesn't error trying to batch delete nonexistent keys", func() {
+			keys := []Key{String("i"), String("don't"), String("exist")}
+			errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Keys:      keys,
+			})
+			Expect(errors).To(BeNil())
+		})
 	})
 
+	Describe("batch get", func() {
+		It("batch get happy path", func() {
+			getBatch, errors := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Keys:      keys[5:21],
+			})
+			Expect(errors).To(BeNil())
+			Expect(len(getBatch.Responses())).To(Equal(16))
+			getResponses := getBatch.Responses()
+			for i := 5; i < 21; i++ {
+				switch r := getResponses[keys[i]].(type) {
+				case *responses.GetHit:
+					Expect(r.ValueString()).To(Equal(fmt.Sprintf("val%d", i)))
+				case *responses.GetMiss:
+					Fail("expected a hit but got a MISS")
+				default:
+					Fail(fmt.Sprintf("failed on %d", i))
+				}
+			}
+		})
+
+		It("returns misses for nonexistent keys", func() {
+			keys := []Key{String("i"), String("don't"), String("exist")}
+			getBatch, errors := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Keys:      keys,
+			})
+			Expect(errors).To(BeNil())
+			getResponses := getBatch.Responses()
+			for _, resp := range getResponses {
+				Expect(resp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
+			}
+		})
+
+		It("returns a mix of hits and misses", func() {
+			keys := []Key{String("i"), String("key1"), String("don't"), String("exist"), String("key12")}
+			getBatch, errors := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Keys:      keys,
+			})
+			Expect(errors).To(BeNil())
+			getResponses := getBatch.Responses()
+			for k, resp := range getResponses {
+				if k == String("key1") || k == String("key12") {
+					Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
+				} else {
+					Expect(resp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
+				}
+			}
+		})
+	})
 })
