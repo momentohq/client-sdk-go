@@ -1,8 +1,8 @@
 package momento
 
 type TopicSubscribeRequest struct {
-	CacheName string
-	TopicName string
+	CacheName                   string
+	TopicName                   string
 	ResumeAtTopicSequenceNumber uint64
 }
 
