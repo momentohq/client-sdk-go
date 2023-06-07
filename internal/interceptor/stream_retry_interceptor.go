@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// streamInterceptor is an example stream interceptor.
-func StreamInterceptor(retryStrat retry.Strategy) func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+// StreamInterceptor is an interceptor that handles retries for streaming apis
+func StreamRetryInterceptor(retryStrat retry.Strategy) func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		attempt := 1
 		for {

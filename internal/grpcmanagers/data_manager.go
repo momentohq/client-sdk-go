@@ -45,7 +45,7 @@ func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*Da
 	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainStreamInterceptor(interceptor.StreamInterceptor(request.RetryStrategy), interceptor.AddStreamHeaderInterceptor(authToken)),
+		grpc.WithChainStreamInterceptor(interceptor.StreamRetryInterceptor(request.RetryStrategy), interceptor.AddStreamHeaderInterceptor(authToken)),
 	)
 
 	if err != nil {
