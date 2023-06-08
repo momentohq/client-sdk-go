@@ -7,6 +7,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"google.golang.org/grpc"
 )
@@ -28,7 +29,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 	unaryDataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
-		RetryStrategy:      request.Configuration.GetRetryStrategy(),
+		RetryStrategy:      retry.NewNeverRetryStrategy(),
 	})
 	if err != nil {
 		return nil, err

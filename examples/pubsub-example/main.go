@@ -57,7 +57,7 @@ func getTopicClient() momento.TopicClient {
 		panic(err)
 	}
 	topicClient, err := momento.NewTopicClient(
-		config.LaptopLatest(),
+		config.TopicsDefault(),
 		credProvider,
 	)
 	if err != nil {

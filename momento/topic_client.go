@@ -29,18 +29,15 @@ type defaultTopicClient struct {
 }
 
 // NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
-func NewTopicClient(configuration config.Configuration, credentialProvider auth.CredentialProvider) (TopicClient, error) {
-	if configuration.GetClientSideTimeout() < 1 {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must not be 0", nil)
-	}
+func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialProvider auth.CredentialProvider) (TopicClient, error) {
 	client := &defaultTopicClient{
 		credentialProvider: credentialProvider,
-		log:                configuration.GetLoggerFactory().GetLogger("topic-client"),
+		log:                topicsConfiguration.GetLoggerFactory().GetLogger("topic-client"),
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
-		CredentialProvider: credentialProvider,
-		Configuration:      configuration,
+		CredentialProvider:  credentialProvider,
+		TopicsConfiguration: topicsConfiguration,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
