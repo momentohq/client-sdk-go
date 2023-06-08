@@ -16,11 +16,14 @@ func StreamRetryInterceptor(retryStrat retry.Strategy) func(ctx context.Context,
 		for {
 			s, lastErr := streamer(ctx, desc, cc, method, opts...)
 			if lastErr == nil {
-				// Success no error returned stop interceptor
+				// Successfully connected the stream. If we wanted to get fancy here, we could return 
+				// a struct that implements the Stream interface, and wraps the SendMsg and ReceiveMsg function
+				// calls. Since we only care about retrying on subscribe, we just return the stream here
+				// ex. https://github.com/grpc/grpc-go/blob/7a7caf363d9b33bfa5ddac83e7dab744f695fb5b/examples/features/interceptor/server/main.go#L106-L141
 				return s, nil
 			}
 
-			// Check retry eligibility based off last error received
+			// Unable to connect to the stream, checking retry eligibility based off last error received
 			retryBackoffTime := retryStrat.DetermineWhenToRetry(retry.StrategyProps{
 				GrpcStatusCode: status.Code(lastErr),
 				GrpcMethod:     method,
