@@ -3,7 +3,6 @@ package momento
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -24,7 +23,6 @@ type topicSubscription struct {
 	topicName               string
 	log                     logger.MomentoLogger
 	lastKnownSequenceNumber uint64
-	mutex                   sync.Mutex
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -32,7 +30,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 			s.log.Error("stream disconnected, attempting to reconnect err:", fmt.Sprint(err))
-			s.lockingReconnect(ctx)
+			s.attemptReconnect(ctx)
 			// retry getting the latest item
 			continue
 		}
@@ -58,12 +56,6 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 			continue
 		}
 	}
-}
-
-func (s *topicSubscription) lockingReconnect(ctx context.Context) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.attemptReconnect(ctx)
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context) {
