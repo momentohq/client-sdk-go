@@ -22,6 +22,17 @@ type Strategy interface {
 	DetermineWhenToRetry(props StrategyProps) *int
 }
 
+type noopRetryStrategy struct { }
+
+func (r noopRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
+	return nil
+}
+
+// NewNoopRetryStrategy is a retry strategy that never retries any request
+func NewNoopRetryStrategy() Strategy {
+	return noopRetryStrategy {}
+}
+
 type fixedCountRetryStrategy struct {
 	eligibilityStrategy EligibilityStrategy
 	maxAttempts         int
