@@ -102,6 +102,6 @@ func publishMessages(client momento.TopicClient, ctx context.Context) {
 		if err != nil {
 			panic(err)
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Second)
 	}
 }
