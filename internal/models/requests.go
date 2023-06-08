@@ -56,7 +56,7 @@ type DataClientRequest struct {
 
 type PubSubClientRequest struct {
 	TopicsConfiguration config.TopicsConfiguration
-	CredentialProvider 	auth.CredentialProvider
+	CredentialProvider  auth.CredentialProvider
 }
 
 type PingClientRequest struct {
