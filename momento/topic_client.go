@@ -36,8 +36,8 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
-		CredentialProvider: 	credentialProvider,
-		TopicsConfiguration:    topicsConfiguration,
+		CredentialProvider:  credentialProvider,
+		TopicsConfiguration: topicsConfiguration,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))

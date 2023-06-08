@@ -16,6 +16,6 @@ type TopicsConfiguration interface {
 
 func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration {
 	return &cacheConfiguration{
-		loggerFactory:     props.LoggerFactory,
+		loggerFactory: props.LoggerFactory,
 	}
 }

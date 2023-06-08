@@ -22,7 +22,7 @@ type Strategy interface {
 	DetermineWhenToRetry(props StrategyProps) *int
 }
 
-type noopRetryStrategy struct { }
+type noopRetryStrategy struct{}
 
 func (r noopRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	return nil
@@ -30,7 +30,7 @@ func (r noopRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 
 // NewNoopRetryStrategy is a retry strategy that never retries any request
 func NewNoopRetryStrategy() Strategy {
-	return noopRetryStrategy {}
+	return noopRetryStrategy{}
 }
 
 type fixedCountRetryStrategy struct {
