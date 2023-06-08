@@ -44,9 +44,9 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 
 func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (grpc.ClientStream, error) {
 	streamClient, err := client.streamGrpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
-		CacheName: request.CacheName,
-		Topic:     request.TopicName,
-		//ResumeAtTopicSequenceNumber: 0, TODO think about re-establish topic case
+		CacheName:                   request.CacheName,
+		Topic:                       request.TopicName,
+		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 	})
 	return streamClient, err
 }

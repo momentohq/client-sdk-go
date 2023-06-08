@@ -24,42 +24,42 @@ type DefaultMomentoLogger struct {
 }
 
 func (l *DefaultMomentoLogger) Trace(message string, args ...string) {
-	if l.level >= TRACE {
-		momentoLog(l.level, l.loggerName, message, args...)
+	if l.level <= TRACE {
+		momentoLog("TRACE", l.loggerName, message, args...)
 	}
 }
 
 func (l *DefaultMomentoLogger) Debug(message string, args ...string) {
-	if l.level >= DEBUG {
-		momentoLog(l.level, l.loggerName, message, args...)
+	if l.level <= DEBUG {
+		momentoLog("DEBUG", l.loggerName, message, args...)
 	}
 }
 
 func (l *DefaultMomentoLogger) Info(message string, args ...string) {
-	if l.level >= INFO {
-		momentoLog(l.level, l.loggerName, message, args...)
+	if l.level <= INFO {
+		momentoLog("INFO", l.loggerName, message, args...)
 	}
 }
 
 func (l *DefaultMomentoLogger) Warn(message string, args ...string) {
-	if l.level >= WARN {
-		momentoLog(l.level, l.loggerName, message, args...)
+	if l.level <= WARN {
+		momentoLog("WARN", l.loggerName, message, args...)
 	}
 }
 
 func (l *DefaultMomentoLogger) Error(message string, args ...string) {
-	if l.level >= ERROR {
-		momentoLog(l.level, l.loggerName, message, args...)
+	if l.level <= ERROR {
+		momentoLog("ERROR", l.loggerName, message, args...)
 	}
 }
 
-func momentoLog(level LogLevel, loggerName string, message string, args ...string) {
+func momentoLog(level string, loggerName string, message string, args ...string) {
 	anyArgs := make([]any, len(args))
 	for i, v := range args {
 		anyArgs[i] = v
 	}
 	finalMessage := fmt.Sprintf(message, anyArgs...)
-	log.Printf("[%s] %d (%s): %s\n", time.RFC3339, level, loggerName, finalMessage)
+	log.Printf("[%s] %s (%s): %s\n", time.Now().UTC().Format(time.RFC3339), level, loggerName, finalMessage)
 }
 
 type DefaultMomentoLoggerFactory struct {

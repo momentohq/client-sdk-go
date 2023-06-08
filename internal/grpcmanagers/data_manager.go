@@ -28,8 +28,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy)),
-		grpc.WithUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
+		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -46,9 +45,9 @@ func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*Da
 	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithDisableRetry(),
-		grpc.WithStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 	)
+
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
@@ -61,6 +60,7 @@ func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*Data
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDisableRetry(),
 	)
+
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}

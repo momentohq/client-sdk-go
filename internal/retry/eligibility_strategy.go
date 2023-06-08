@@ -40,6 +40,7 @@ var retryableRequestMethods = map[string]bool{
 	"/cache_client.Scs/ListLength": true,
 	// not idempotent: "/cache_client.Scs/ListConcatenateFront",
 	// not idempotent: "/cache_client.Scs/ListConcatenateBack"
+	"/cache_client.pubsub.Pubsub/Subscribe": true,
 }
 
 type DefaultEligibilityStrategy struct{}

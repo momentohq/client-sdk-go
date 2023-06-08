@@ -92,7 +92,7 @@ func setupCache(client momento.CacheClient, ctx context.Context) {
 }
 
 func publishMessages(client momento.TopicClient, ctx context.Context) {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		fmt.Printf("publishing message %d\n", i)
 		_, err := client.Publish(ctx, &momento.TopicPublishRequest{
 			CacheName: cacheName,
