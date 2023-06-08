@@ -3,12 +3,14 @@ package momento
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 )
 
 type TopicSubscription interface {
@@ -22,6 +24,7 @@ type topicSubscription struct {
 	topicName               string
 	log                     logger.MomentoLogger
 	lastKnownSequenceNumber uint64
+	mutex                   sync.Mutex
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -29,7 +32,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 			s.log.Error("stream disconnected, attempting to reconnect err:", fmt.Sprint(err))
-			s.attemptReconnect(ctx)
+			s.lockingReconnect(ctx)
 			// retry getting the latest item
 			continue
 		}
@@ -57,13 +60,23 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 	}
 }
 
+func (s *topicSubscription) lockingReconnect(ctx context.Context) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.attemptReconnect(ctx)
+}
+
 func (s *topicSubscription) attemptReconnect(ctx context.Context) {
+	// make sure the connection isnt ready, if its ready no need to reconnect
+	if s.momentoTopicClient.streamDataManager.Conn.GetState() == connectivity.Ready {
+		s.log.Debug("connection is in ready state, not reconnecting")
+		return
+	}
 	// try and reconnect every n seconds. This will attempt to reconnect indefinetly
 	seconds := 5 * time.Second
-	ticker := time.NewTicker(seconds)
 	for {
 		s.log.Debug("Attempting reconnecting to client stream")
-		<-ticker.C
+		time.Sleep(seconds)
 		newStream, err := s.momentoTopicClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
