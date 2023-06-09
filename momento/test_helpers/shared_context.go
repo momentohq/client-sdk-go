@@ -27,6 +27,7 @@ type SharedContext struct {
 	Ctx                        context.Context
 	DefaultTtl                 time.Duration
 	Configuration              config.Configuration
+	TopicConfigration          config.TopicsConfiguration
 	CredentialProvider         auth.CredentialProvider
 }
 
@@ -40,6 +41,7 @@ func NewSharedContext() SharedContext {
 	}
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
+	shared.TopicConfigration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
@@ -55,7 +57,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
-	topicClient, err := momento.NewTopicClient(shared.Configuration, shared.CredentialProvider)
+	topicClient, err := momento.NewTopicClient(shared.TopicConfigration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}

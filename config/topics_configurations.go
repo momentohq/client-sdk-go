@@ -7,7 +7,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-// TopicsDefailt provides defaults configuration for a Topic Client
+// TopicsDefault provides defaults configuration for a Topic Client
 func TopicsDefault() TopicsConfiguration {
 	return TopicsDefaultWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }

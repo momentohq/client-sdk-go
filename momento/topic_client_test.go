@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -24,7 +25,7 @@ var _ = Describe("Pubsub", func() {
 		})
 	})
 
-	DescribeTable(`Validates the names`,
+	DescribeTable("Validates the names",
 		func(cacheName string, collectionName string, expectedError string) {
 			ctx := sharedContext.Ctx
 			client := sharedContext.TopicClient

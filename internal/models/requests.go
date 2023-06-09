@@ -23,6 +23,10 @@ type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 }
 
+type TopicStreamGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+}
+
 type PingGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 }
