@@ -28,6 +28,8 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	var numChannels uint32
 	numSubscriptions := float64(request.TopicsConfiguration.GetMaxSubscriptions())
 	if numSubscriptions > 0 {
+		// a single channel can support 100 streams, so we need to create enough
+		// channels to handle the maximum number of subscriptions
 		numChannels = uint32(math.Ceil(numSubscriptions / 100.0))
 	} else {
 		numChannels = 1
