@@ -76,3 +76,13 @@ func (lf DefaultMomentoLoggerFactory) GetLogger(loggerName string) logger.Moment
 	log.SetFlags(0)
 	return &DefaultMomentoLogger{loggerName: loggerName, level: lf.level}
 }
+
+type NoopMomentoLoggerFactory struct{}
+
+func NewNoopMomentoLoggerFactory() logger.MomentoLoggerFactory {
+	return &NoopMomentoLoggerFactory{}
+}
+
+func (nlf NoopMomentoLoggerFactory) GetLogger(string) logger.MomentoLogger {
+	return &logger.NoopMomentoLogger{}
+}
