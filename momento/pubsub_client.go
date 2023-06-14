@@ -15,11 +15,10 @@ import (
 )
 
 type pubSubClient struct {
-	streamTopicManagers         []*grpcmanagers.TopicGrpcManager
-	unaryDataManager            *grpcmanagers.DataGrpcManager
-	unaryGrpcClient             pb.PubsubClient
-	endpoint                    string
-	nextStreamTopicManagerIndex int
+	streamTopicManagers []*grpcmanagers.TopicGrpcManager
+	unaryDataManager    *grpcmanagers.DataGrpcManager
+	unaryGrpcClient     pb.PubsubClient
+	endpoint            string
 }
 
 var streamTopicManagerCount uint64
