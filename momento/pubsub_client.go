@@ -70,7 +70,7 @@ func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcM
 	return topicManager
 }
 
-func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, error) {
+func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, error) {
 	topicManager := client.getNextStreamTopicManager()
 	clientStream, err := topicManager.StreamClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
@@ -80,7 +80,7 @@ func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSu
 	return topicManager, clientStream, err
 }
 
-func (client *pubSubClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) error {
+func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
 	switch value := request.Value.(type) {
 	case String:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{

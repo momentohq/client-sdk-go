@@ -57,7 +57,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, err
 	}
 
-	topicManager, clientStream, err := c.pubSubClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+	topicManager, clientStream, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
 	})
@@ -109,7 +109,7 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 		)
 	}
 
-	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
+	err := c.pubSubClient.topicPublish(ctx, &TopicPublishRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
 		Value:     request.Value,

@@ -71,7 +71,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	for {
 		s.log.Debug("Attempting reconnecting to client stream")
 		time.Sleep(seconds)
-		newTopicManager, newStream, err := s.momentoTopicClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+		newTopicManager, newStream, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
