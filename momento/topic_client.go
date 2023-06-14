@@ -124,5 +124,5 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 }
 
 func (c defaultTopicClient) Close() {
-	defer c.pubSubClient.Close()
+	defer c.pubSubClient.close()
 }

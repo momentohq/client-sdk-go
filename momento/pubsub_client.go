@@ -3,7 +3,7 @@ package momento
 import (
 	"context"
 	"math"
-	"sync"
+	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -22,7 +22,7 @@ type pubSubClient struct {
 	nextStreamTopicManagerIndex int
 }
 
-var mut sync.Mutex
+var streamTopicManagerCount uint64
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	var numChannels uint32
@@ -63,10 +63,8 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 }
 
 func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcManager {
-	mut.Lock()
-	topicManager := client.streamTopicManagers[client.nextStreamTopicManagerIndex]
-	client.nextStreamTopicManagerIndex = (client.nextStreamTopicManagerIndex + 1) % len(client.streamTopicManagers)
-	mut.Unlock()
+	nextMangerIndex := atomic.AddUint64(&streamTopicManagerCount, 1)
+	topicManager := client.streamTopicManagers[nextMangerIndex%uint64(len(client.streamTopicManagers))]
 	return topicManager
 }
 
@@ -112,11 +110,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	}
 }
 
-func (client *pubSubClient) Endpoint() string {
-	return client.endpoint
-}
-
-func (client *pubSubClient) Close() {
+func (client *pubSubClient) close() {
 	for clientIndex := range client.streamTopicManagers {
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
