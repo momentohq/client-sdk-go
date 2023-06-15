@@ -108,7 +108,8 @@ func user(
 	id int,
 	subscribeChan chan int64,
 	publishChan chan int64,
-	errChan chan string,
+	subscribeErrChan chan string,
+	publishErrChan chan string,
 	client momento.TopicClient,
 	topicName string,
 	messageValue string,
@@ -121,15 +122,17 @@ func user(
 	if err != nil {
 		panic(err)
 	}
-	go func() { pollForMessages(ctx, id, subscription, subscribeChan, errChan) }()
-	go func() { publishMessages(ctx, id, publishChan, errChan, client, topicName, messageValue, publishTps) }()
+	go func() { pollForMessages(ctx, id, subscription, subscribeChan, subscribeErrChan) }()
+	go func() {
+		publishMessages(ctx, id, publishChan, publishErrChan, client, topicName, messageValue, publishTps)
+	}()
 }
 
 func publishMessages(
 	ctx context.Context,
 	id int,
 	publishChan chan int64,
-	errChan chan string,
+	publishErrChan chan string,
 	client momento.TopicClient,
 	topicName string,
 	messageValue string,
@@ -149,7 +152,7 @@ func publishMessages(
 				),
 			})
 			if err != nil {
-				processError(err, errChan)
+				processError(err, publishErrChan)
 			} else {
 				publishChan <- hrtime.Since(publishStart).Milliseconds()
 			}
@@ -159,27 +162,23 @@ func publishMessages(
 	}
 }
 
-func pollForMessages(ctx context.Context, id int, sub momento.TopicSubscription, subscribeChan chan int64, errChan chan string) {
+func pollForMessages(
+	ctx context.Context, id int, sub momento.TopicSubscription, subscribeChan chan int64, subscribeErrChan chan string,
+) {
 	timestampLength := len(strconv.FormatInt(time.Now().UnixMilli(), 10))
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("--> #%d stopping subscription\n", id)
 			return
 		default:
-			//fmt.Printf("%d getting item\n", id)
-			//itemStart := hrtime.Now()
 			item, err := sub.Item(ctx)
 			timestamp, err := strconv.ParseInt(fmt.Sprintf("%v", item)[0:timestampLength], 10, 64)
 			elapsed := time.Now().UnixMilli() - timestamp
-			//fmt.Printf("%d got item %s\n", id, item)
 			if err != nil {
-				processError(err, errChan)
+				processError(err, subscribeErrChan)
 			} else {
-				//subscribeChan <- hrtime.Since(itemStart).Milliseconds()
 				subscribeChan <- elapsed
 			}
-			//fmt.Printf("[%3d] received elapsed: '%d'\n", id, elapsed)
 		}
 	}
 }
@@ -199,36 +198,62 @@ func processError(err error, errChan chan string) {
 	}
 }
 
-func printStats(subscribes *hdrhistogram.Histogram, publishes *hdrhistogram.Histogram, errorCounter ErrorCounter, startTime time.Duration) {
-	totalSubscriptionRequests := subscribes.TotalCount() + errorCounter.timeout + errorCounter.unavailable + errorCounter.limitExceeded
-
-	totalTps := int(math.Round(
+func printStats(
+	subscribes *hdrhistogram.Histogram,
+	publishes *hdrhistogram.Histogram,
+	subscribeErrorCounter ErrorCounter,
+	publishErrorCounter ErrorCounter,
+	startTime time.Duration,
+) {
+	successfulSubscriptionRequests := subscribes.TotalCount()
+	totalSubscriptionRequests := successfulSubscriptionRequests +
+		subscribeErrorCounter.timeout +
+		subscribeErrorCounter.unavailable +
+		subscribeErrorCounter.limitExceeded
+	totalSubscriptionTps := int(math.Round(
 		float64(totalSubscriptionRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
 	))
+	subscribeSuccessTps := int(math.Round(
+		float64(successfulSubscriptionRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
+	))
+	subscribeSuccessPct := readablePercentage(successfulSubscriptionRequests, totalSubscriptionRequests)
+
+	successfulPublishRequests := publishes.TotalCount()
+	totalPublishRequests := successfulPublishRequests +
+		publishErrorCounter.timeout +
+		publishErrorCounter.unavailable +
+		publishErrorCounter.limitExceeded
+	totalPublishTps := int(math.Round(
+		float64(totalPublishRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
+	))
+	publishSuccessTps := int(math.Round(
+		float64(successfulPublishRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
+	))
+	publishSuccessPct := readablePercentage(successfulPublishRequests, totalPublishRequests)
+
 	fmt.Println("==============================\ncumulative stats:")
 	fmt.Printf(
 		"%20s: %d (%d tps)\n",
 		"total subscription requests",
 		totalSubscriptionRequests,
-		totalTps,
+		totalSubscriptionTps,
 	)
 
-	successfulSubscribeRequests := subscribes.TotalCount()
-	subscribeSuccessTps := int(math.Round(
-		float64(successfulSubscribeRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
-	))
-	// TODO: set up a separate error counter for publishes
-	totalPublishRequests := publishes.TotalCount()
-	successfulPublishRequests := publishes.TotalCount()
-	publishSuccessTps := int(math.Round(
-		float64(successfulPublishRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
-	))
-	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscribeRequests, successfulSubscribeRequests/totalSubscriptionRequests*100, subscribeSuccessTps)
-	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, successfulPublishRequests/totalPublishRequests*100, publishSuccessTps)
-	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", errorCounter.unavailable, errorCounter.unavailable/totalSubscriptionRequests*100)
-	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", errorCounter.timeout, errorCounter.timeout/totalSubscriptionRequests*100)
-	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", errorCounter.limitExceeded, errorCounter.limitExceeded/totalSubscriptionRequests*100)
+	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps)
+	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests))
 
+	fmt.Printf(
+		"%20s: %d (%d tps)\n",
+		"total publish requests",
+		totalPublishRequests,
+		totalPublishTps,
+	)
+	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps)
+	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests))
 	fmt.Printf(
 		"cumulative subscription latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
@@ -261,8 +286,17 @@ func printStats(subscribes *hdrhistogram.Histogram, publishes *hdrhistogram.Hist
 	)
 }
 
+func readablePercentage(numerator int64, denominator int64) int {
+	return int(math.Ceil(float64(numerator) / float64(denominator) * 100))
+}
+
 func timer(
-	ctx context.Context, subscribeChan chan int64, publishChan chan int64, errChan chan string, statsInterval time.Duration,
+	ctx context.Context,
+	subscribeChan chan int64,
+	publishChan chan int64,
+	subscribeErrChan chan string,
+	publishErrChan chan string,
+	statsInterval time.Duration,
 ) {
 	sf, err := os.Create("/tmp/subscribe-timing.dat")
 	pf, err := os.Create("/tmp/publish-timing.dat")
@@ -271,21 +305,22 @@ func timer(
 	}
 	subscribeHistogram := hdrhistogram.New(1, 5000, 1)
 	publishHistogram := hdrhistogram.New(1, 5000, 1)
-	errorCounter := ErrorCounter{}
+	subscribeErrorCounter := ErrorCounter{}
+	publishErrorCounter := ErrorCounter{}
 
 	startTime := hrtime.Now()
 	origStartTime := startTime
 
 	for {
 		if hrtime.Since(startTime) > statsInterval {
-			printStats(subscribeHistogram, publishHistogram, errorCounter, origStartTime)
+			printStats(subscribeHistogram, publishHistogram, subscribeErrorCounter, publishErrorCounter, origStartTime)
 			startTime = hrtime.Now()
 		}
 
 		select {
 		case <-ctx.Done():
 			fmt.Println("\n=====> run complete <=====")
-			printStats(subscribeHistogram, publishHistogram, errorCounter, origStartTime)
+			printStats(subscribeHistogram, publishHistogram, subscribeErrorCounter, publishErrorCounter, origStartTime)
 			return
 		case subscribeMessage := <-subscribeChan:
 			if _, err := sf.WriteString(fmt.Sprintf("%d\n", subscribeMessage)); err != nil {
@@ -301,8 +336,10 @@ func timer(
 			if err := publishHistogram.RecordValue(publishMessage); err != nil {
 				panic(err)
 			}
-		case errCode := <-errChan:
-			errorCounter.updateErrors(errCode)
+		case errCode := <-subscribeErrChan:
+			subscribeErrorCounter.updateErrors(errCode)
+		case errCode := <-publishErrChan:
+			publishErrorCounter.updateErrors(errCode)
 		default:
 			time.Sleep(time.Millisecond * 25)
 		}
@@ -316,12 +353,13 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 	var wg sync.WaitGroup
 	subscribeChan := make(chan int64, r.options.numberOfUsers)
 	publishChan := make(chan int64, r.options.numberOfUsers)
-	errChan := make(chan string, r.options.numberOfUsers)
+	subscribeErrChan := make(chan string, r.options.numberOfUsers)
+	publishErrChan := make(chan string, r.options.numberOfUsers)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		timer(cancelContext, subscribeChan, publishChan, errChan, r.options.showStatsInterval)
+		timer(cancelContext, subscribeChan, publishChan, subscribeErrChan, publishErrChan, r.options.showStatsInterval)
 	}()
 
 	// Launch and run users. Each user subscribes to a random topic over which it
@@ -345,7 +383,8 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 				i,
 				subscribeChan,
 				publishChan,
-				errChan,
+				subscribeErrChan,
+				publishErrChan,
 				client,
 				topicName,
 				r.messageValue,
@@ -364,15 +403,14 @@ func main() {
 		logLevel:          momento_default_logger.DEBUG,
 		showStatsInterval: time.Second * 5,
 		messageBytes:      500,
-		numberOfUsers:     100,
-		numberOfTopics:    2,
-		maxPublishTps:     10,
+		numberOfUsers:     50,
+		numberOfTopics:    25,
+		maxPublishTps:     1,
 		howLongToRun:      time.Second * 10,
 	}
 
 	maxSubscriptions := uint32(opts.numberOfUsers)
 	lgCfg := config.TopicsDefaultWithLogger(
-		//momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 		logger.NewNoopMomentoLoggerFactory(),
 	).WithMaxSubscriptions(maxSubscriptions)
 
