@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
@@ -399,23 +400,40 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 	wg.Wait()
 }
 
+type EnvConfig struct {
+	MessageBytes   int
+	NumberOfUsers  int
+	NumberOfTopics int
+	MaxPublishTps  int
+	HowLongToRun   int
+}
+
 func main() {
+	fmt.Println("\n\n\n\n\n\n\nDON'T FORGET THIS IS A MODIFIED VERSION FOR SDK 1.5.1!!!!!!!!")
+	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
 	ctx := context.Background()
+
+	configJson := os.Getenv("CONFIG_JSON")
+	var envConfig EnvConfig
+	err := json.Unmarshal([]byte(configJson), &envConfig)
+	if err != nil {
+		panic(err)
+	}
 
 	opts := topicsLoadGeneratorOptions{
 		logLevel:          momento_default_logger.DEBUG,
 		showStatsInterval: time.Second * 5,
-		messageBytes:      500,
-		numberOfUsers:     50,
-		numberOfTopics:    25,
-		maxPublishTps:     1,
-		howLongToRun:      time.Second * 60,
+		messageBytes:      envConfig.MessageBytes,
+		numberOfUsers:     envConfig.NumberOfUsers,
+		numberOfTopics:    envConfig.NumberOfTopics,
+		maxPublishTps:     envConfig.MaxPublishTps,
+		howLongToRun:      time.Second * time.Duration(envConfig.HowLongToRun),
 	}
 
-	maxSubscriptions := uint32(opts.numberOfUsers)
+	fmt.Printf("Running loadgen with options:\n%s\n", configJson)
 	lgCfg := config.TopicsDefaultWithLogger(
 		logger.NewNoopMomentoLoggerFactory(),
-	).WithMaxSubscriptions(maxSubscriptions)
+	)
 
 	loadGenerator := newLoadGenerator(lgCfg, opts)
 	client := loadGenerator.init(ctx)
@@ -425,4 +443,6 @@ func main() {
 	runTotal := time.Since(runStart)
 	fmt.Printf("completed in %f seconds\n", runTotal.Seconds())
 	client.Close()
+	fmt.Println("\n\n\n\n\n\n\nDON'T FORGET THIS IS A MODIFIED VERSION FOR SDK 1.5.1!!!!!!!!")
+	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
 }
