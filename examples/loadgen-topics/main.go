@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,14 +26,13 @@ const (
 )
 
 type topicsLoadGeneratorOptions struct {
-	logLevel                   momento_default_logger.LogLevel
-	showStatsInterval          time.Duration
-	messageBytes               int
-	numberOfPublishers         int
-	numberOfSubscribers        int
-	subscriptionsPerSubscriber int
-	maxPublishTps              int
-	howLongToRun               time.Duration
+	logLevel          momento_default_logger.LogLevel
+	showStatsInterval time.Duration
+	messageBytes      int
+	numberOfUsers     int
+	numberOfTopics    int
+	maxPublishTps     int
+	howLongToRun      time.Duration
 }
 
 type loadGenerator struct {
@@ -82,11 +83,10 @@ func (r *loadGenerator) init(ctx context.Context) momento.TopicClient {
 		panic(err)
 	}
 
-	numberOfConcurrentRequests := r.options.numberOfSubscribers * r.options.subscriptionsPerSubscriber
 	r.logger.Debug(
 		fmt.Sprintf(
-			"Running %d concurrent subscriptions for %d seconds",
-			numberOfConcurrentRequests,
+			"Running %d concurrent subscriptions for %d seconds\n",
+			r.options.numberOfUsers,
 			int(r.options.howLongToRun.Seconds())),
 	)
 
@@ -103,23 +103,59 @@ func (ec *ErrorCounter) updateErrors(err string) {
 	}
 }
 
-func worker(
+func user(
 	ctx context.Context,
 	id int,
 	subscribeChan chan int64,
+	publishChan chan int64,
 	errChan chan string,
 	client momento.TopicClient,
-	subscriptionsPerSubscriber int,
+	topicName string,
+	messageValue string,
+	publishTps int,
 ) {
-	for i := 0; i < subscriptionsPerSubscriber; i++ {
-		subscription, err := client.Subscribe(ctx, &momento.TopicSubscribeRequest{
-			CacheName: CacheName,
-			TopicName: fmt.Sprintf("topic-%d", i),
-		})
-		if err != nil {
-			panic(err)
+	subscription, err := client.Subscribe(ctx, &momento.TopicSubscribeRequest{
+		CacheName: CacheName,
+		TopicName: topicName,
+	})
+	if err != nil {
+		panic(err)
+	}
+	go func() { pollForMessages(ctx, id, subscription, subscribeChan, errChan) }()
+	go func() { publishMessages(ctx, id, publishChan, errChan, client, topicName, messageValue, publishTps) }()
+}
+
+func publishMessages(
+	ctx context.Context,
+	id int,
+	publishChan chan int64,
+	errChan chan string,
+	client momento.TopicClient,
+	topicName string,
+	messageValue string,
+	publishTps int,
+) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			publishStart := hrtime.Now()
+			_, err := client.Publish(ctx, &momento.TopicPublishRequest{
+				CacheName: CacheName,
+				TopicName: topicName,
+				Value: momento.String(
+					fmt.Sprintf("%s%s", strconv.FormatInt(time.Now().UnixMilli(), 10), messageValue),
+				),
+			})
+			if err != nil {
+				processError(err, errChan)
+			} else {
+				publishChan <- hrtime.Since(publishStart).Milliseconds()
+			}
+			sleepMillis := 1000 / publishTps
+			time.Sleep(time.Millisecond * time.Duration(sleepMillis))
 		}
-		go func() { pollForMessages(ctx, id, subscription, subscribeChan, errChan) }()
 	}
 }
 
@@ -128,7 +164,7 @@ func pollForMessages(ctx context.Context, id int, sub momento.TopicSubscription,
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("--> #%d returning from poller\n", id)
+			fmt.Printf("--> #%d stopping subscription\n", id)
 			return
 		default:
 			//fmt.Printf("%d getting item\n", id)
@@ -136,7 +172,7 @@ func pollForMessages(ctx context.Context, id int, sub momento.TopicSubscription,
 			item, err := sub.Item(ctx)
 			timestamp, err := strconv.ParseInt(fmt.Sprintf("%v", item)[0:timestampLength], 10, 64)
 			elapsed := time.Now().UnixMilli() - timestamp
-			//fmt.Printf("%d got item\n", id)
+			//fmt.Printf("%d got item %s\n", id, item)
 			if err != nil {
 				processError(err, errChan)
 			} else {
@@ -228,6 +264,11 @@ func printStats(subscribes *hdrhistogram.Histogram, publishes *hdrhistogram.Hist
 func timer(
 	ctx context.Context, subscribeChan chan int64, publishChan chan int64, errChan chan string, statsInterval time.Duration,
 ) {
+	sf, err := os.Create("/tmp/subscribe-timing.dat")
+	pf, err := os.Create("/tmp/publish-timing.dat")
+	if err != nil {
+		panic(err)
+	}
 	subscribeHistogram := hdrhistogram.New(1, 5000, 1)
 	publishHistogram := hdrhistogram.New(1, 5000, 1)
 	errorCounter := ErrorCounter{}
@@ -247,10 +288,16 @@ func timer(
 			printStats(subscribeHistogram, publishHistogram, errorCounter, origStartTime)
 			return
 		case subscribeMessage := <-subscribeChan:
+			if _, err := sf.WriteString(fmt.Sprintf("%d\n", subscribeMessage)); err != nil {
+				panic(err)
+			}
 			if err := subscribeHistogram.RecordValue(subscribeMessage); err != nil {
 				panic(err)
 			}
 		case publishMessage := <-publishChan:
+			if _, err := pf.WriteString(fmt.Sprintf("%d\n", publishMessage)); err != nil {
+				panic(err)
+			}
 			if err := publishHistogram.RecordValue(publishMessage); err != nil {
 				panic(err)
 			}
@@ -267,9 +314,9 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 	defer cancelFunction()
 
 	var wg sync.WaitGroup
-	subscribeChan := make(chan int64, r.options.numberOfSubscribers)
-	publishChan := make(chan int64, r.options.numberOfSubscribers*r.options.numberOfPublishers)
-	errChan := make(chan string, r.options.numberOfSubscribers)
+	subscribeChan := make(chan int64, r.options.numberOfUsers)
+	publishChan := make(chan int64, r.options.numberOfUsers)
+	errChan := make(chan string, r.options.numberOfUsers)
 
 	wg.Add(1)
 	go func() {
@@ -277,66 +324,33 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 		timer(cancelContext, subscribeChan, publishChan, errChan, r.options.showStatsInterval)
 	}()
 
-	// Launch and run subscriber workers
-	for i := 1; i <= r.options.numberOfSubscribers; i++ {
+	// Launch and run users. Each user subscribes to a random topic over which it
+	// publishes and receives.
+	randSeed := rand.NewSource(time.Now().UnixNano())
+	randGenerator := rand.New(randSeed)
+
+	for i := 1; i <= r.options.numberOfUsers; i++ {
 		wg.Add(1)
 
 		// avoid reuse of the same i value in each closure
 		i := i
 
+		// choose a topic at random
+		topicName := fmt.Sprintf("topic-%d", randGenerator.Intn(r.options.numberOfTopics))
+
 		go func() {
 			defer wg.Done()
-			worker(
+			user(
 				cancelContext,
 				i,
 				subscribeChan,
+				publishChan,
 				errChan,
 				client,
-				r.options.subscriptionsPerSubscriber,
+				topicName,
+				r.messageValue,
+				r.options.maxPublishTps,
 			)
-		}()
-	}
-
-	for i := 0; i < r.options.numberOfPublishers; i++ {
-		fmt.Printf("launching publisher #%d\n", i)
-		// Launch publisher worker
-		wg.Add(1)
-
-		i := i
-
-		go func() {
-			defer wg.Done()
-			tpsTimer := hrtime.Now()
-			transactions := 0
-			for {
-				select {
-				case <-cancelContext.Done():
-					fmt.Printf("returning from publisher #%d\n", i)
-					return
-				default:
-					for j := 0; j < r.options.subscriptionsPerSubscriber; j++ {
-						publishStart := hrtime.Now()
-						_, err := client.Publish(ctx, &momento.TopicPublishRequest{
-							CacheName: CacheName,
-							TopicName: fmt.Sprintf("topic-%d", i),
-							Value: momento.String(
-								fmt.Sprintf("%s%s", strconv.FormatInt(time.Now().UnixMilli(), 10), r.messageValue),
-							),
-						})
-						publishChan <- hrtime.Since(publishStart).Milliseconds()
-						// TODO: replace with error counter for publish
-						if err != nil {
-							panic(err)
-						}
-						transactions++
-						if (transactions >= r.options.maxPublishTps/r.options.numberOfPublishers) && (hrtime.Since(tpsTimer) <= time.Second) {
-							time.Sleep(time.Second - hrtime.Since(tpsTimer))
-							tpsTimer = hrtime.Now()
-							transactions = 0
-						}
-					}
-				}
-			}
 		}()
 	}
 
@@ -347,18 +361,16 @@ func main() {
 	ctx := context.Background()
 
 	opts := topicsLoadGeneratorOptions{
-		logLevel:                   momento_default_logger.DEBUG,
-		showStatsInterval:          time.Second * 5,
-		messageBytes:               500,
-		numberOfPublishers:         5,
-		numberOfSubscribers:        40,
-		subscriptionsPerSubscriber: 5,
-		maxPublishTps:              100,
-		howLongToRun:               time.Second * 10,
+		logLevel:          momento_default_logger.DEBUG,
+		showStatsInterval: time.Second * 5,
+		messageBytes:      500,
+		numberOfUsers:     100,
+		numberOfTopics:    2,
+		maxPublishTps:     10,
+		howLongToRun:      time.Second * 10,
 	}
 
-	maxSubscriptions := uint32(opts.numberOfSubscribers * opts.subscriptionsPerSubscriber)
-
+	maxSubscriptions := uint32(opts.numberOfUsers)
 	lgCfg := config.TopicsDefaultWithLogger(
 		//momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 		logger.NewNoopMomentoLoggerFactory(),
