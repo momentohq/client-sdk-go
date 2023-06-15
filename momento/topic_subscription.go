@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
 	"google.golang.org/grpc"
@@ -17,6 +18,7 @@ type TopicSubscription interface {
 }
 
 type topicSubscription struct {
+	topicManager            *grpcmanagers.TopicGrpcManager
 	grpcClient              grpc.ClientStream
 	momentoTopicClient      *pubSubClient
 	cacheName               string
@@ -59,8 +61,8 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context) {
-	// make sure the connection isnt ready, if its ready no need to reconnect
-	if s.momentoTopicClient.streamDataManager.Conn.GetState() == connectivity.Ready {
+	// make sure the connection isn't ready, if its ready no need to reconnect
+	if s.topicManager.Conn.GetState() == connectivity.Ready {
 		s.log.Debug("connection is in ready state, not reconnecting")
 		return
 	}
@@ -69,7 +71,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	for {
 		s.log.Debug("Attempting reconnecting to client stream")
 		time.Sleep(seconds)
-		newStream, err := s.momentoTopicClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+		newTopicManager, newStream, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
@@ -79,6 +81,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 			s.log.Debug("failed to reconnect to stream, will continue to try in %s seconds", fmt.Sprint(seconds))
 		} else {
 			s.log.Debug("successfully reconnected to subscription stream")
+			s.topicManager = newTopicManager
 			s.grpcClient = newStream
 			return
 		}

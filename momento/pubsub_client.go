@@ -2,6 +2,8 @@ package momento
 
 import (
 	"context"
+	"math"
+	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -13,20 +15,36 @@ import (
 )
 
 type pubSubClient struct {
-	streamDataManager *grpcmanagers.DataGrpcManager
-	unaryDataManager  *grpcmanagers.DataGrpcManager
-	streamGrpcClient  pb.PubsubClient
-	unaryGrpcClient   pb.PubsubClient
-	endpoint          string
+	streamTopicManagers []*grpcmanagers.TopicGrpcManager
+	unaryDataManager    *grpcmanagers.DataGrpcManager
+	unaryGrpcClient     pb.PubsubClient
+	endpoint            string
 }
 
+var streamTopicManagerCount uint64
+
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
-	streamDataManager, err := grpcmanagers.NewStreamDataGrpcManager(&models.DataStreamGrpcManagerRequest{
-		CredentialProvider: request.CredentialProvider,
-	})
-	if err != nil {
-		return nil, err
+	var numChannels uint32
+	numSubscriptions := float64(request.TopicsConfiguration.GetMaxSubscriptions())
+	if numSubscriptions > 0 {
+		// a single channel can support 100 streams, so we need to create enough
+		// channels to handle the maximum number of subscriptions
+		numChannels = uint32(math.Ceil(numSubscriptions / 100.0))
+	} else {
+		numChannels = 1
 	}
+	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
+
+	for i := 0; uint32(i) < numChannels; i++ {
+		streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
+			CredentialProvider: request.CredentialProvider,
+		})
+		if err != nil {
+			return nil, err
+		}
+		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
+	}
+
 	unaryDataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		RetryStrategy:      retry.NewNeverRetryStrategy(),
@@ -34,24 +52,32 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	if err != nil {
 		return nil, err
 	}
+
 	return &pubSubClient{
-		streamDataManager: streamDataManager,
-		unaryDataManager:  unaryDataManager,
-		streamGrpcClient:  pb.NewPubsubClient(streamDataManager.Conn),
-		unaryGrpcClient:   pb.NewPubsubClient(unaryDataManager.Conn),
-		endpoint:          request.CredentialProvider.GetCacheEndpoint(),
+		streamTopicManagers: streamTopicManagers,
+		unaryDataManager:    unaryDataManager,
+		unaryGrpcClient:     pb.NewPubsubClient(unaryDataManager.Conn),
+		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
 
-func (client *pubSubClient) TopicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (grpc.ClientStream, error) {
-	streamClient, err := client.streamGrpcClient.Subscribe(ctx, &pb.XSubscriptionRequest{
+func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcManager {
+	nextMangerIndex := atomic.AddUint64(&streamTopicManagerCount, 1)
+	topicManager := client.streamTopicManagers[nextMangerIndex%uint64(len(client.streamTopicManagers))]
+	return topicManager
+}
+
+func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, error) {
+	topicManager := client.getNextStreamTopicManager()
+	clientStream, err := topicManager.StreamClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 	})
-	return streamClient, err
+	return topicManager, clientStream, err
 }
-func (client *pubSubClient) TopicPublish(ctx context.Context, request *TopicPublishRequest) error {
+
+func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
 	switch value := request.Value.(type) {
 	case String:
 		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
@@ -83,11 +109,9 @@ func (client *pubSubClient) TopicPublish(ctx context.Context, request *TopicPubl
 	}
 }
 
-func (client *pubSubClient) Endpoint() string {
-	return client.endpoint
-}
-
-func (client *pubSubClient) Close() {
-	defer client.streamDataManager.Close()
+func (client *pubSubClient) close() {
+	for clientIndex := range client.streamTopicManagers {
+		defer client.streamTopicManagers[clientIndex].Close()
+	}
 	defer client.unaryDataManager.Close()
 }

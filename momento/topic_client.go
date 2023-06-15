@@ -21,7 +21,7 @@ type TopicClient interface {
 	Close()
 }
 
-// defaultScsClient represents all information needed for momento client to enable cache control and data operations.
+// defaultTopicClient represents all information needed for momento client to enable publish and subscribe operations.
 type defaultTopicClient struct {
 	credentialProvider auth.CredentialProvider
 	pubSubClient       *pubSubClient
@@ -57,7 +57,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, err
 	}
 
-	clientStream, err := c.pubSubClient.TopicSubscribe(ctx, &TopicSubscribeRequest{
+	topicManager, clientStream, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
 	})
@@ -83,6 +83,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	}
 
 	return &topicSubscription{
+		topicManager:       topicManager,
 		grpcClient:         clientStream,
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
@@ -108,7 +109,7 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 		)
 	}
 
-	err := c.pubSubClient.TopicPublish(ctx, &TopicPublishRequest{
+	err := c.pubSubClient.topicPublish(ctx, &TopicPublishRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
 		Value:     request.Value,
@@ -123,5 +124,5 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 }
 
 func (c defaultTopicClient) Close() {
-	defer c.pubSubClient.Close()
+	defer c.pubSubClient.close()
 }
