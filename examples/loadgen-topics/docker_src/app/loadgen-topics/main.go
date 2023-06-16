@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/loov/hrtime"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -443,6 +446,25 @@ func main() {
 	runTotal := time.Since(runStart)
 	fmt.Printf("completed in %f seconds\n", runTotal.Seconds())
 	client.Close()
+
+	sess := session.Must(session.NewSession())
+	uploader := s3manager.NewUploader(sess)
+
+	f, err := os.Open("/tmp/subscribe-timing.dat")
+	if err != nil {
+		panic(err)
+	}
+	result, err := uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
+		Key:    aws.String(os.Getenv("AWS_ACCESS_KEY")),
+		Body:   f,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Timing data uploaded to S3: %s\n", aws.StringValue(&result.Location))
+
 	fmt.Println("\n\n\n\n\n\n\nDON'T FORGET THIS IS A MODIFIED VERSION FOR SDK 1.5.1!!!!!!!!")
 	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
 }

@@ -1,0 +1,6 @@
+CONFIG_JSON={"messageBytes": 500, "numberOfUsers": 50, "numberOfTopics": 25, "maxPublishTps": 1, "howLongToRun": 10}
+MOMENTO_AUTH_TOKEN=
+AWS_ACCESS_KEY=
+AWS_SECRET_ACCESS_KEY=
+AWS_S3_BUCKET=
+AWS_REGION=
