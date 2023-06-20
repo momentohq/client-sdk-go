@@ -1,9 +1,9 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import {TokenVendingMachineStack} from '../lib/token-vending-machine-stack';
+import {GoTopicLoadgenStack} from '../lib/go-topic-loadgen-stack';
 
 const app = new cdk.App();
-new TokenVendingMachineStack(app, 'MomentoTokenVendingMachine', {
+new GoTopicLoadgenStack(app, 'GoTopicLoadgenStack', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

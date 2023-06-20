@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"math"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,10 +28,16 @@ import (
 
 const (
 	CacheItemTtlSeconds = 60
-	CacheName           = "topics-loadgen"
+)
+
+var (
+	subscribeTimingFile *os.File
+	publishTimingFile   *os.File
+	outputFile          *os.File
 )
 
 type topicsLoadGeneratorOptions struct {
+	cacheName         string
 	logLevel          momento_default_logger.LogLevel
 	showStatsInterval time.Duration
 	messageBytes      int
@@ -68,6 +76,7 @@ func newLoadGenerator(config config.TopicsConfiguration, options topicsLoadGener
 }
 
 func (r *loadGenerator) init(ctx context.Context) momento.TopicClient {
+	CacheName := r.options.cacheName
 	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
@@ -86,13 +95,6 @@ func (r *loadGenerator) init(ctx context.Context) momento.TopicClient {
 	if err != nil {
 		panic(err)
 	}
-
-	r.logger.Debug(
-		fmt.Sprintf(
-			"Running %d concurrent subscriptions for %d seconds\n",
-			r.options.numberOfUsers,
-			int(r.options.howLongToRun.Seconds())),
-	)
 
 	return client
 }
@@ -115,12 +117,13 @@ func user(
 	subscribeErrChan chan string,
 	publishErrChan chan string,
 	client momento.TopicClient,
+	cacheName string,
 	topicName string,
 	messageValue string,
 	publishTps int,
 ) {
 	subscription, err := client.Subscribe(ctx, &momento.TopicSubscribeRequest{
-		CacheName: CacheName,
+		CacheName: cacheName,
 		TopicName: topicName,
 	})
 	if err != nil {
@@ -128,7 +131,7 @@ func user(
 	}
 	go func() { pollForMessages(ctx, id, subscription, subscribeChan, subscribeErrChan) }()
 	go func() {
-		publishMessages(ctx, id, publishChan, publishErrChan, client, topicName, messageValue, publishTps)
+		publishMessages(ctx, id, publishChan, publishErrChan, client, cacheName, topicName, messageValue, publishTps)
 	}()
 }
 
@@ -138,6 +141,7 @@ func publishMessages(
 	publishChan chan int64,
 	publishErrChan chan string,
 	client momento.TopicClient,
+	cacheName string,
 	topicName string,
 	messageValue string,
 	publishTps int,
@@ -149,7 +153,7 @@ func publishMessages(
 		default:
 			publishStart := hrtime.Now()
 			_, err := client.Publish(ctx, &momento.TopicPublishRequest{
-				CacheName: CacheName,
+				CacheName: cacheName,
 				TopicName: topicName,
 				Value: momento.String(
 					fmt.Sprintf("%s%s", strconv.FormatInt(time.Now().UnixMilli(), 10), messageValue),
@@ -235,30 +239,30 @@ func printStats(
 	))
 	publishSuccessPct := readablePercentage(successfulPublishRequests, totalPublishRequests)
 
-	fmt.Println("==============================\ncumulative stats:")
-	fmt.Printf(
+	_, _ = outputFile.WriteString("==============================\ncumulative stats:")
+	_, _ = outputFile.WriteString(fmt.Sprintf(
 		"%20s: %d (%d tps)\n",
 		"total subscription requests",
 		totalSubscriptionRequests,
 		totalSubscriptionTps,
-	)
+	))
 
-	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps)
-	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests))
-	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests))
-	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests)))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests)))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests)))
 
-	fmt.Printf(
+	_, _ = outputFile.WriteString(fmt.Sprintf(
 		"%20s: %d (%d tps)\n",
 		"total publish requests",
 		totalPublishRequests,
 		totalPublishTps,
-	)
-	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps)
-	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests))
-	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests))
-	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests))
-	fmt.Printf(
+	))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests)))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests)))
+	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests)))
+	_, _ = outputFile.WriteString(fmt.Sprintf(
 		"cumulative subscription latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
 		subscribes.TotalCount(),
@@ -272,8 +276,8 @@ func printStats(
 		subscribes.ValueAtQuantile(99.9),
 		"max",
 		subscribes.Max(),
-	)
-	fmt.Printf(
+	))
+	_, _ = outputFile.WriteString(fmt.Sprintf(
 		"cumulative publish latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
 		publishes.TotalCount(),
@@ -287,7 +291,7 @@ func printStats(
 		publishes.ValueAtQuantile(99.9),
 		"max",
 		publishes.Max(),
-	)
+	))
 }
 
 func readablePercentage(numerator int64, denominator int64) int {
@@ -302,14 +306,6 @@ func timer(
 	publishErrChan chan string,
 	statsInterval time.Duration,
 ) {
-	sf, err := os.Create("/tmp/subscribe-timing.dat")
-	if err != nil {
-		panic(err)
-	}
-	pf, err := os.Create("/tmp/publish-timing.dat")
-	if err != nil {
-		panic(err)
-	}
 	subscribeHistogram := hdrhistogram.New(1, 5000, 1)
 	publishHistogram := hdrhistogram.New(1, 5000, 1)
 	subscribeErrorCounter := ErrorCounter{}
@@ -326,18 +322,18 @@ func timer(
 
 		select {
 		case <-ctx.Done():
-			fmt.Println("\n=====> run complete <=====")
+			_, _ = outputFile.WriteString("\n=====> run complete <=====\n")
 			printStats(subscribeHistogram, publishHistogram, subscribeErrorCounter, publishErrorCounter, origStartTime)
 			return
 		case subscribeMessage := <-subscribeChan:
-			if _, err := sf.WriteString(fmt.Sprintf("%d\n", subscribeMessage)); err != nil {
+			if _, err := subscribeTimingFile.WriteString(fmt.Sprintf("%d\n", subscribeMessage)); err != nil {
 				panic(err)
 			}
 			if err := subscribeHistogram.RecordValue(subscribeMessage); err != nil {
 				panic(err)
 			}
 		case publishMessage := <-publishChan:
-			if _, err := pf.WriteString(fmt.Sprintf("%d\n", publishMessage)); err != nil {
+			if _, err := publishTimingFile.WriteString(fmt.Sprintf("%d\n", publishMessage)); err != nil {
 				panic(err)
 			}
 			if err := publishHistogram.RecordValue(publishMessage); err != nil {
@@ -393,6 +389,7 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 				subscribeErrChan,
 				publishErrChan,
 				client,
+				r.options.cacheName,
 				topicName,
 				r.messageValue,
 				r.options.maxPublishTps,
@@ -416,14 +413,35 @@ func main() {
 	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
 	ctx := context.Background()
 
-	configJson := os.Getenv("CONFIG_JSON")
+	cacheName, ok := os.LookupEnv("CACHE_NAME")
+	if !ok {
+		panic("Missing CACHE_NAME environment variable")
+	}
+	runId := uuid.NewString()
+
+	var err error
+	if subscribeTimingFile, err = os.Create(fmt.Sprintf("/tmp/subscribe-timing-%s.dat", runId)); err != nil {
+		panic(err)
+	}
+	if publishTimingFile, err = os.Create(fmt.Sprintf("/tmp/publish-timing-%s.dat", runId)); err != nil {
+		panic(err)
+	}
+	if outputFile, err = os.Create(fmt.Sprintf("/tmp/output-%s.txt", runId)); err != nil {
+		panic(err)
+	}
+
+	configJson, ok := os.LookupEnv("CONFIG_JSON")
+	if !ok {
+		panic("Missing CONFIG_JSON environment variable")
+	}
 	var envConfig EnvConfig
-	err := json.Unmarshal([]byte(configJson), &envConfig)
+	err = json.Unmarshal([]byte(configJson), &envConfig)
 	if err != nil {
 		panic(err)
 	}
 
 	opts := topicsLoadGeneratorOptions{
+		cacheName:         cacheName,
 		logLevel:          momento_default_logger.DEBUG,
 		showStatsInterval: time.Second * 5,
 		messageBytes:      envConfig.MessageBytes,
@@ -433,7 +451,7 @@ func main() {
 		howLongToRun:      time.Second * time.Duration(envConfig.HowLongToRun),
 	}
 
-	fmt.Printf("Running loadgen with options:\n%s\n", configJson)
+	_, _ = outputFile.WriteString(fmt.Sprintf("Running loadgen with options:\n%s\n", configJson))
 	lgCfg := config.TopicsDefaultWithLogger(
 		logger.NewNoopMomentoLoggerFactory(),
 	)
@@ -444,26 +462,28 @@ func main() {
 	runStart := time.Now()
 	loadGenerator.run(ctx, client)
 	runTotal := time.Since(runStart)
-	fmt.Printf("completed in %f seconds\n", runTotal.Seconds())
+	_, _ = outputFile.WriteString(fmt.Sprintf("completed in %f seconds\n", runTotal.Seconds()))
 	client.Close()
 
 	sess := session.Must(session.NewSession())
 	uploader := s3manager.NewUploader(sess)
 
-	f, err := os.Open("/tmp/subscribe-timing.dat")
-	if err != nil {
-		panic(err)
+	outFiles := [3]os.File{*subscribeTimingFile, *publishTimingFile, *outputFile}
+	for _, file := range outFiles {
+		name := filepath.Base(file.Name())
+		f, err := os.Open(file.Name())
+		if err != nil {
+			panic(err)
+		}
+		_, err = uploader.Upload(&s3manager.UploadInput{
+			Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
+			Key:    aws.String(name),
+			Body:   f,
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
-	result, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
-		Key:    aws.String(os.Getenv("AWS_ACCESS_KEY")),
-		Body:   f,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Timing data uploaded to S3: %s\n", aws.StringValue(&result.Location))
 
 	fmt.Println("\n\n\n\n\n\n\nDON'T FORGET THIS IS A MODIFIED VERSION FOR SDK 1.5.1!!!!!!!!")
 	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
