@@ -75,7 +75,7 @@ func newLoadGenerator(config config.TopicsConfiguration, options topicsLoadGener
 	}
 }
 
-func (r *loadGenerator) init(ctx context.Context) momento.TopicClient {
+func (r *loadGenerator) init(ctx context.Context) {
 	CacheName := r.options.cacheName
 	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_AUTH_TOKEN")
 	if err != nil {
@@ -90,13 +90,6 @@ func (r *loadGenerator) init(ctx context.Context) momento.TopicClient {
 	if _, err := cacheClient.CreateCache(ctx, &momento.CreateCacheRequest{CacheName: CacheName}); err != nil {
 		panic(err)
 	}
-
-	client, err := momento.NewTopicClient(r.topicClientConfig, credentialProvider)
-	if err != nil {
-		panic(err)
-	}
-
-	return client
 }
 
 func (ec *ErrorCounter) updateErrors(err string) {
@@ -149,6 +142,7 @@ func publishMessages(
 	for {
 		select {
 		case <-ctx.Done():
+			client.Close()
 			return
 		default:
 			publishStart := hrtime.Now()
@@ -206,6 +200,11 @@ func processError(err error, errChan chan string) {
 	}
 }
 
+func tee(file *os.File, str string) {
+	_, _ = file.WriteString(str)
+	fmt.Println(str)
+}
+
 func printStats(
 	subscribes *hdrhistogram.Histogram,
 	publishes *hdrhistogram.Histogram,
@@ -239,30 +238,30 @@ func printStats(
 	))
 	publishSuccessPct := readablePercentage(successfulPublishRequests, totalPublishRequests)
 
-	_, _ = outputFile.WriteString("==============================\ncumulative stats:")
-	_, _ = outputFile.WriteString(fmt.Sprintf(
+	tee(outputFile, "==============================\ncumulative stats:")
+	tee(outputFile, fmt.Sprintf(
 		"%20s: %d (%d tps)\n",
 		"total subscription requests",
 		totalSubscriptionRequests,
 		totalSubscriptionTps,
 	))
 
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests)))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests)))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests)))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%)\n", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests)))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%)\n", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests)))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%)\n\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests)))
 
-	_, _ = outputFile.WriteString(fmt.Sprintf(
+	tee(outputFile, fmt.Sprintf(
 		"%20s: %d (%d tps)\n",
 		"total publish requests",
 		totalPublishRequests,
 		totalPublishTps,
 	))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests)))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests)))
-	_, _ = outputFile.WriteString(fmt.Sprintf("%20s: %d (%d%%)\n\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests)))
-	_, _ = outputFile.WriteString(fmt.Sprintf(
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%)\n", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests)))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%)\n", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests)))
+	tee(outputFile, fmt.Sprintf("%20s: %d (%d%%)\n\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests)))
+	tee(outputFile, fmt.Sprintf(
 		"cumulative subscription latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
 		subscribes.TotalCount(),
@@ -277,7 +276,7 @@ func printStats(
 		"max",
 		subscribes.Max(),
 	))
-	_, _ = outputFile.WriteString(fmt.Sprintf(
+	tee(outputFile, fmt.Sprintf(
 		"cumulative publish latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
 		publishes.TotalCount(),
@@ -349,7 +348,7 @@ func timer(
 	}
 }
 
-func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
+func (r *loadGenerator) run(ctx context.Context) {
 	cancelContext, cancelFunction := context.WithTimeout(ctx, r.options.howLongToRun)
 	defer cancelFunction()
 
@@ -370,6 +369,11 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 	randSeed := rand.NewSource(time.Now().UnixNano())
 	randGenerator := rand.New(randSeed)
 
+	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_AUTH_TOKEN")
+	if err != nil {
+		panic(err)
+	}
+
 	for i := 1; i <= r.options.numberOfUsers; i++ {
 		wg.Add(1)
 
@@ -378,6 +382,10 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 
 		// choose a topic at random
 		topicName := fmt.Sprintf("topic-%d", randGenerator.Intn(r.options.numberOfTopics))
+		client, err := momento.NewTopicClient(r.topicClientConfig, credentialProvider)
+		if err != nil {
+			panic(err)
+		}
 
 		go func() {
 			defer wg.Done()
@@ -455,13 +463,12 @@ func main() {
 	).WithMaxSubscriptions(uint32(envConfig.NumberOfUsers))
 
 	loadGenerator := newLoadGenerator(lgCfg, opts)
-	client := loadGenerator.init(ctx)
+	loadGenerator.init(ctx)
 
 	runStart := time.Now()
-	loadGenerator.run(ctx, client)
+	loadGenerator.run(ctx)
 	runTotal := time.Since(runStart)
 	_, _ = outputFile.WriteString(fmt.Sprintf("completed in %f seconds\n", runTotal.Seconds()))
-	client.Close()
 
 	sess := session.Must(session.NewSession())
 	uploader := s3manager.NewUploader(sess)
