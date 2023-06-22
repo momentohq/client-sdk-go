@@ -409,8 +409,6 @@ type EnvConfig struct {
 }
 
 func main() {
-	fmt.Println("\n\n\n\n\n\n\nDON'T FORGET THIS IS A MODIFIED VERSION FOR SDK 1.5.1!!!!!!!!")
-	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
 	ctx := context.Background()
 
 	cacheName, ok := os.LookupEnv("CACHE_NAME")
@@ -484,7 +482,4 @@ func main() {
 			panic(err)
 		}
 	}
-
-	fmt.Println("\n\n\n\n\n\n\nDON'T FORGET THIS IS A MODIFIED VERSION FOR SDK 1.5.1!!!!!!!!")
-	fmt.Println("Add 'WithMaxSubscriptions()' back in when 1.6.0 is up!!!!!")
 }
