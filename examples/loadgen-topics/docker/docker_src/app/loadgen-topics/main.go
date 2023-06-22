@@ -452,7 +452,7 @@ func main() {
 	_, _ = outputFile.WriteString(fmt.Sprintf("Running loadgen with options:\n%s\n", configJson))
 	lgCfg := config.TopicsDefaultWithLogger(
 		logger.NewNoopMomentoLoggerFactory(),
-	)
+	).WithMaxSubscriptions(uint32(envConfig.NumberOfUsers))
 
 	loadGenerator := newLoadGenerator(lgCfg, opts)
 	client := loadGenerator.init(ctx)
