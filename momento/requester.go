@@ -184,6 +184,7 @@ func prepareCollectionTtl(r hasCollectionTtl, defaultTtl time.Duration) (uint64,
 
 func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
 	ttl := r.ttl()
+
 	if r.ttl() == time.Duration(0) {
 		ttl = defaultTtl
 	}
@@ -192,6 +193,17 @@ func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
 			momentoerrors.InvalidArgumentError, "ttl must be a non-zero positive value", nil,
 		)
 	}
+
+	// case where the customer doesn't provide a unit for TTL. Go by default interprets Time
+	// as nanoseconds, so if a customer just gives the value "2", it gets interpreted as 0 milliseconds
+	// The service returns an ISE if we send 0 milliseconds to it.
+	if uint64(ttl.Milliseconds()) == 0 {
+		return 0, buildError(
+			momentoerrors.InvalidArgumentError, "ttl must greater than 0 when interpreting it as milliseconds."+
+				" The default unit is nanoseconds. Did you provide a unit while specifying the TTL?", nil,
+		)
+	}
+
 	return uint64(ttl.Milliseconds()), nil
 }
 
