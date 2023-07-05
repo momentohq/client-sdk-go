@@ -32,11 +32,13 @@ service Scs {
   rpc DictionarySet (_DictionarySetRequest) returns (_DictionarySetResponse) {}
   rpc DictionaryIncrement (_DictionaryIncrementRequest) returns (_DictionaryIncrementResponse) {}
   rpc DictionaryDelete (_DictionaryDeleteRequest) returns (_DictionaryDeleteResponse) {}
+  rpc DictionaryLength(_DictionaryLengthRequest) returns (_DictionaryLengthResponse) {}
 
   rpc SetFetch (_SetFetchRequest) returns (_SetFetchResponse) {}
   rpc SetUnion (_SetUnionRequest) returns (_SetUnionResponse) {}
   rpc SetDifference (_SetDifferenceRequest) returns (_SetDifferenceResponse) {}
   rpc SetContains (_SetContainsRequest) returns (_SetContainsResponse) {}
+  rpc SetLength(_SetLengthRequest) returns (_SetLengthResponse) {}
 
   rpc ListPushFront(_ListPushFrontRequest) returns (_ListPushFrontResponse) {}
   rpc ListPushBack(_ListPushBackRequest) returns (_ListPushBackResponse) {}
@@ -77,6 +79,10 @@ service Scs {
   rpc SortedSetIncrement(_SortedSetIncrementRequest) returns (_SortedSetIncrementResponse) {}
   // Gives the rank of an element.
   rpc SortedSetGetRank(_SortedSetGetRankRequest) returns (_SortedSetGetRankResponse) {}
+  // Returns length of the sorted set
+  rpc SortedSetLength(_SortedSetLengthRequest) returns (_SortedSetLengthResponse) {}
+  // Returns number of elements in the sorted set between a given min and max score
+  rpc SortedSetLengthByScore(_SortedSetLengthByScoreRequest) returns (_SortedSetLengthByScoreResponse) {}
 }
 
 message _GetRequest {
@@ -287,6 +293,23 @@ message _DictionaryDeleteRequest {
 
 message _DictionaryDeleteResponse {}
 
+message _DictionaryLengthRequest {
+  bytes dictionary_name = 1;
+}
+
+message _DictionaryLengthResponse {
+  message _Found {
+    uint32 length = 1;
+  }
+
+  message _Missing {}
+
+  oneof dictionary {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
 message _SetFetchRequest {
   bytes set_name = 1;
 }
@@ -361,6 +384,23 @@ message _SetContainsResponse {
     // This will be the same length as the elements passed in the request.
     // It represents whether each element is a member of the set, with indices corresponding to the request elements.
     repeated bool contains = 1;
+  }
+
+  message _Missing {}
+
+  oneof set {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _SetLengthRequest {
+  bytes set_name = 1;
+}
+
+message _SetLengthResponse {
+  message _Found {
+    uint32 length = 1;
   }
 
   message _Missing {}
@@ -864,5 +904,49 @@ message _SortedSetGetRankResponse {
   oneof rank {
     _RankResponsePart element_rank = 1;
     _SortedSetMissing missing = 2;
+  }
+}
+
+message _SortedSetLengthRequest {
+  bytes set_name = 1;
+}
+
+message _SortedSetLengthResponse {
+  message _Found {
+    uint32 length = 1;
+  }
+
+  message _Missing {}
+
+  oneof sorted_set {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+}
+
+message _SortedSetLengthByScoreRequest {
+  bytes set_name = 1;
+  oneof min {
+    double inclusive_min = 2;
+    double exclusive_min = 3;
+    _Unbounded unbounded_min = 4;
+  };
+  oneof max {
+    double inclusive_max = 5;
+    double exclusive_max = 6;
+    _Unbounded unbounded_max = 7;
+  }
+}
+
+message _SortedSetLengthByScoreResponse {
+  message _Found {
+    uint32 length = 1;
+  }
+
+  message _Missing {}
+
+  oneof sorted_set {
+    _Found found = 1;
+    _Missing missing = 2;
   }
 }
