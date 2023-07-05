@@ -82,6 +82,7 @@ var _ = Describe("Scalar methods", func() {
 			Expect(
 				setIfNotExistsResp,
 			).To(BeAssignableToTypeOf(&SetIfNotExistsStored{}))
+			Expect(err).To(BeNil())
 
 			// make sure we get a hit
 			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
@@ -107,6 +108,7 @@ var _ = Describe("Scalar methods", func() {
 			Expect(
 				setIfNotExistsRespNotStored,
 			).To(BeAssignableToTypeOf(&SetIfNotExistsNotStored{}))
+			Expect(err).To(BeNil())
 
 			// make sure we get a hit
 			getResp, err = client.Get(sharedContext.Ctx, &GetRequest{
