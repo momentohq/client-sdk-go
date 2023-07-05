@@ -101,6 +101,12 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
+				client.SortedSetLength(ctx, &SortedSetLengthRequest{
+					CacheName: cacheName, SetName: collectionName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
 				client.SortedSetPutElement(ctx, &SortedSetPutElementRequest{
 					CacheName: cacheName, SetName: collectionName, Value: value, Score: float64(1),
 				}),
@@ -449,6 +455,38 @@ var _ = Describe("SortedSet", func() {
 				Entry("equal negatives", int32(-5), int32(-5)),
 			)
 		})
+	})
+
+	It("returns the correct sorted set length", func() {
+		sortedSetElements := []SortedSetElement{
+			{Value: String("one"), Score: 9999},
+			{Value: String("two"), Score: 50},
+			{Value: String("three"), Score: 0},
+			{Value: String("four"), Score: -50},
+			{Value: String("five"), Score: -500},
+			{Value: String("six"), Score: -1000},
+		}
+		numElements := len(sortedSetElements)
+		putElements(sortedSetElements)
+		lengthResp, err := sharedContext.Client.SortedSetLength(sharedContext.Ctx, &SortedSetLengthRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   sharedContext.CollectionName,
+		})
+		Expect(err).To(BeNil())
+		switch result := lengthResp.(type) {
+		case *SortedSetLengthHit:
+			Expect(result.Length()).To(Equal(uint32(numElements)))
+		default:
+			Fail("expected a hit for sorted set length but got a miss")
+		}
+
+		// non-existing set will result in a Miss
+		notExistingSetlengthResp, err := sharedContext.Client.SortedSetLength(sharedContext.Ctx, &SortedSetLengthRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   "IdontExist",
+		})
+		Expect(err).To(BeNil())
+		Expect(notExistingSetlengthResp).To(BeAssignableToTypeOf(&SortedSetLengthMiss{}))
 	})
 
 	Describe("SortedSetFetchByScore", func() {

@@ -62,6 +62,8 @@ type CacheClient interface {
 	SortedSetRemoveElements(ctx context.Context, r *SortedSetRemoveElementsRequest) (responses.SortedSetRemoveElementsResponse, error)
 	// SortedSetGetRank looks up the rank of an element in the sorted set, by the value of the element.
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
+	// SortedSetLength gets the number of elements in the sorted set.
+	SortedSetLength(ctx context.Context, r *SortedSetLengthRequest) (responses.SortedSetLengthResponse, error)
 	// SortedSetIncrementScore increments the score of an element in the sorted set.
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
 
@@ -445,6 +447,14 @@ func (c defaultScsClient) SortedSetRemoveElements(ctx context.Context, r *Sorted
 }
 
 func (c defaultScsClient) SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SortedSetLength(ctx context.Context, r *SortedSetLengthRequest) (responses.SortedSetLengthResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
