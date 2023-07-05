@@ -22,7 +22,7 @@ func (r *DictionaryLengthRequest) cacheName() string { return r.CacheName }
 func (r *DictionaryLengthRequest) requestName() string { return "DictionaryLength" }
 
 func (r *DictionaryLengthRequest) initGrpcRequest(scsDataClient) error {
-	if _, err := prepareName(r.DictionaryName, "Set name"); err != nil {
+	if _, err := prepareName(r.DictionaryName, "Dictionary name"); err != nil {
 		return err
 	}
 
