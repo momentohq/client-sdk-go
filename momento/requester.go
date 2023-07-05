@@ -200,7 +200,7 @@ func prepareTtl(r hasTtl, defaultTtl time.Duration) (uint64, error) {
 	if uint64(ttl.Milliseconds()) == 0 {
 		return 0, buildError(
 			momentoerrors.InvalidArgumentError, "ttl must greater than 0 when interpreting it as milliseconds."+
-				" The default unit is nanoseconds. Did you provide a unit while specifying the TTL?", nil,
+				" The default unit is nanoseconds. Did you provide a unit while specifying the TTL, such as 60 * time.Second?", nil,
 		)
 	}
 
