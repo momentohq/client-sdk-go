@@ -77,9 +77,11 @@ func (r *SetIfNotExistsRequest) interpretGrpcResponse() error {
 
 	switch grpcResp.Result.(type) {
 	case *pb.XSetIfNotExistsResponse_Stored:
-		resp = responses.NewSetIfNotExistsStored(r.Key.asBytes(), r.Value.asBytes())
+		resp = &responses.SetIfNotExistsStored{}
 	case *pb.XSetIfNotExistsResponse_NotStored:
 		resp = &responses.SetIfNotExistsNotStored{}
+	default:
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 
 	r.response = resp
