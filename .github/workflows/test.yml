@@ -42,6 +42,14 @@ jobs:
           only-new-issues: true
           skip-pkg-cache: true
 
+      # If there are any diffs from goimports or go mod tidy, fail.
+      - name: Verify no changes from goimports and go mod tidy
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git diff
+            exit 1
+          fi
+
       - name: Build
         run: make build
 
@@ -50,13 +58,5 @@ jobs:
 
       - name: Run test
         run: make test
-
-      # If there are any diffs from goimports or go mod tidy, fail.
-      - name: Verify no changes from goimports and go mod tidy
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git diff
-            exit 1
-          fi
 
 
