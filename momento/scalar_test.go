@@ -249,6 +249,28 @@ var _ = Describe("Scalar methods", func() {
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 		})
 
+		It("Overrides the default TTL without unit and invalid", func() {
+			key := String("key")
+			value := String("value")
+
+			resp, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: sharedContext.CacheName,
+				Key:       key,
+				Value:     value,
+				Ttl:       2,
+			})
+
+			Expect(resp).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+
+			Expect(
+				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: sharedContext.CacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		})
+
 		It("returns an error for a nil value", func() {
 			key := String("key")
 			Expect(
