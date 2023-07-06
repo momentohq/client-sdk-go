@@ -64,7 +64,7 @@ type CacheClient interface {
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
 	// SortedSetLength gets the number of elements in the sorted set.
 	SortedSetLength(ctx context.Context, r *SortedSetLengthRequest) (responses.SortedSetLengthResponse, error)
-	// SortedSetLengthByScore gets the number of elements in the sorted set.
+	// SortedSetLengthByScore gets the number of elements in the sorted set by an optional score range.
 	SortedSetLengthByScore(ctx context.Context, r *SortedSetLengthByScoreRequest) (responses.SortedSetLengthByScoreResponse, error)
 	// SortedSetIncrementScore increments the score of an element in the sorted set.
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
@@ -75,7 +75,7 @@ type CacheClient interface {
 	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error)
 	// SetFetch fetches the requested set.
 	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
-	// SetLength gets the number of elements in the sorted set.
+	// SetLength gets the number of elements in the set.
 	SetLength(ctx context.Context, r *SetLengthRequest) (responses.SetLengthResponse, error)
 	// SetRemoveElement removes an element from the given set.
 	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)

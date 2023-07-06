@@ -693,7 +693,7 @@ var _ = Describe("SortedSet", func() {
 
 				switch result := resp.(type) {
 				case *SortedSetLengthByScoreHit:
-					// only 2 elements fit the score criteria
+					// only 3 elements fit the score criteria
 					Expect(result.Length()).To(Equal(uint32(3)))
 				default:
 					Fail("expected a hit for sorted set length by score but got a miss")
@@ -741,7 +741,7 @@ var _ = Describe("SortedSet", func() {
 
 				switch result := resp.(type) {
 				case *SortedSetLengthByScoreHit:
-					// only 2 elements fit the score criteria
+					// only 4 elements fit the score criteria
 					Expect(result.Length()).To(Equal(uint32(4)))
 				default:
 					Fail("expected a hit for sorted set length by score but got a miss")
