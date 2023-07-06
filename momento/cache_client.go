@@ -64,6 +64,8 @@ type CacheClient interface {
 	SortedSetGetRank(ctx context.Context, r *SortedSetGetRankRequest) (responses.SortedSetGetRankResponse, error)
 	// SortedSetLength gets the number of elements in the sorted set.
 	SortedSetLength(ctx context.Context, r *SortedSetLengthRequest) (responses.SortedSetLengthResponse, error)
+	// SortedSetLengthByScore gets the number of elements in the sorted set.
+	SortedSetLengthByScore(ctx context.Context, r *SortedSetLengthByScoreRequest) (responses.SortedSetLengthByScoreResponse, error)
 	// SortedSetIncrementScore increments the score of an element in the sorted set.
 	SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error)
 
@@ -73,6 +75,8 @@ type CacheClient interface {
 	SetAddElements(ctx context.Context, r *SetAddElementsRequest) (responses.SetAddElementsResponse, error)
 	// SetFetch fetches the requested set.
 	SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error)
+	// SetLength gets the number of elements in the sorted set.
+	SetLength(ctx context.Context, r *SetLengthRequest) (responses.SetLengthResponse, error)
 	// SetRemoveElement removes an element from the given set.
 	SetRemoveElement(ctx context.Context, r *SetRemoveElementRequest) (responses.SetRemoveElementResponse, error)
 	// SetRemoveElements removes multiple elements from the set.
@@ -106,6 +110,8 @@ type CacheClient interface {
 	DictionarySetFields(ctx context.Context, r *DictionarySetFieldsRequest) (responses.DictionarySetFieldsResponse, error)
 	// DictionaryFetch fetches all elements of the given dictionary.
 	DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error)
+	// DictionaryLength gets the number of items in the given dictionary.
+	DictionaryLength(ctx context.Context, r *DictionaryLengthRequest) (responses.DictionaryLengthResponse, error)
 	// DictionaryGetField gets the value stored for the given dictionary and field.
 	DictionaryGetField(ctx context.Context, r *DictionaryGetFieldRequest) (responses.DictionaryGetFieldResponse, error)
 	// DictionaryGetFields gets multiple values from the given dictionary.
@@ -462,6 +468,14 @@ func (c defaultScsClient) SortedSetLength(ctx context.Context, r *SortedSetLengt
 	return r.response, nil
 }
 
+func (c defaultScsClient) SortedSetLengthByScore(ctx context.Context, r *SortedSetLengthByScoreRequest) (responses.SortedSetLengthByScoreResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
 func (c defaultScsClient) SortedSetIncrementScore(ctx context.Context, r *SortedSetIncrementScoreRequest) (responses.SortedSetIncrementScoreResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
@@ -493,6 +507,14 @@ func (c defaultScsClient) SetAddElements(ctx context.Context, r *SetAddElementsR
 }
 
 func (c defaultScsClient) SetFetch(ctx context.Context, r *SetFetchRequest) (responses.SetFetchResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetLength(ctx context.Context, r *SetLengthRequest) (responses.SetLengthResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
@@ -637,6 +659,14 @@ func (c defaultScsClient) DictionarySetFields(ctx context.Context, r *Dictionary
 }
 
 func (c defaultScsClient) DictionaryFetch(ctx context.Context, r *DictionaryFetchRequest) (responses.DictionaryFetchResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) DictionaryLength(ctx context.Context, r *DictionaryLengthRequest) (responses.DictionaryLengthResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
 		return nil, err
