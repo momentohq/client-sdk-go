@@ -55,7 +55,7 @@ func (r *SortedSetLengthByScoreRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	r.grpcRequest = grpc_request
-
+  
 	return nil
 }
 
