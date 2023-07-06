@@ -171,13 +171,14 @@ var _ = Describe("Dictionary methods", func() {
 	})
 
 	It("returns the correct dictionary length", func() {
-		sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+		_, setErr := sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 			CacheName:      sharedContext.CacheName,
 			DictionaryName: sharedContext.CollectionName,
 			Elements: DictionaryElementsFromMapStringValue(
 				map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 			),
 		})
+		Expect(setErr).To(BeNil())
 		resp, err := sharedContext.Client.DictionaryLength(sharedContext.Ctx, &DictionaryLengthRequest{
 			CacheName:      sharedContext.CacheName,
 			DictionaryName: sharedContext.CollectionName,

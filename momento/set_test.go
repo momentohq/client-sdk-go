@@ -413,11 +413,12 @@ var _ = Describe("Set methods", func() {
 	It("Returns the correct Set length", func() {
 		elements := getElements(7)
 
-		sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+		_, err := sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 			CacheName: sharedContext.CacheName,
 			SetName:   sharedContext.CollectionName,
 			Elements:  elements,
 		})
+		Expect(err).To(BeNil())
 		resp, err := sharedContext.Client.SetLength(sharedContext.Ctx, &SetLengthRequest{
 			CacheName: sharedContext.CacheName,
 			SetName:   sharedContext.CollectionName,
