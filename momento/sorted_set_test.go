@@ -101,6 +101,12 @@ var _ = Describe("SortedSet", func() {
 			).Error().To(HaveMomentoErrorCode(expectedError))
 
 			Expect(
+				client.SortedSetLength(ctx, &SortedSetLengthRequest{
+					CacheName: cacheName, SetName: collectionName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedError))
+
+			Expect(
 				client.SortedSetPutElement(ctx, &SortedSetPutElementRequest{
 					CacheName: cacheName, SetName: collectionName, Value: value, Score: float64(1),
 				}),
@@ -451,6 +457,38 @@ var _ = Describe("SortedSet", func() {
 		})
 	})
 
+	It("returns the correct sorted set length", func() {
+		sortedSetElements := []SortedSetElement{
+			{Value: String("one"), Score: 9999},
+			{Value: String("two"), Score: 50},
+			{Value: String("three"), Score: 0},
+			{Value: String("four"), Score: -50},
+			{Value: String("five"), Score: -500},
+			{Value: String("six"), Score: -1000},
+		}
+		numElements := len(sortedSetElements)
+		putElements(sortedSetElements)
+		lengthResp, err := sharedContext.Client.SortedSetLength(sharedContext.Ctx, &SortedSetLengthRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   sharedContext.CollectionName,
+		})
+		Expect(err).To(BeNil())
+		switch result := lengthResp.(type) {
+		case *SortedSetLengthHit:
+			Expect(result.Length()).To(Equal(uint32(numElements)))
+		default:
+			Fail("expected a hit for sorted set length but got a miss")
+		}
+
+		// non-existing set will result in a Miss
+		notExistingSetlengthResp, err := sharedContext.Client.SortedSetLength(sharedContext.Ctx, &SortedSetLengthRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   "IdontExist",
+		})
+		Expect(err).To(BeNil())
+		Expect(notExistingSetlengthResp).To(BeAssignableToTypeOf(&SortedSetLengthMiss{}))
+	})
+
 	Describe("SortedSetFetchByScore", func() {
 		It("Misses if the set does not exist", func() {
 			Expect(
@@ -583,6 +621,155 @@ var _ = Describe("SortedSet", func() {
 						{Value: []byte("four"), Score: -50},
 					},
 				))
+			})
+		})
+	})
+
+	Describe("SortedSetLengthByScore", func() {
+		It("Misses if the set does not exist", func() {
+			Expect(
+				sharedContext.Client.SortedSetLengthByScore(
+					sharedContext.Ctx,
+					&SortedSetLengthByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+					},
+				),
+			).To(BeAssignableToTypeOf(&SortedSetLengthByScoreMiss{}))
+		})
+
+		Context("With a populated SortedSet", func() {
+			// We'll populate the SortedSet with these elements.
+			sortedSetElements := []SortedSetElement{
+				{Value: String("one"), Score: 9999},
+				{Value: String("two"), Score: 50},
+				{Value: String("three"), Score: 0},
+				{Value: String("four"), Score: -50},
+				{Value: String("five"), Score: -500},
+				{Value: String("six"), Score: -1000},
+			}
+
+			BeforeEach(func() {
+				putElements(sortedSetElements)
+			})
+
+			DescribeTable("With no extra args it returns length of everything",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					resp, err := client.SortedSetLengthByScore(
+						sharedContext.Ctx,
+						&SortedSetLengthByScoreRequest{
+							CacheName: cacheName,
+							SetName:   sharedContext.CollectionName,
+						},
+					)
+					Expect(err).To(BeNil())
+
+					switch result := resp.(type) {
+					case *SortedSetLengthByScoreHit:
+						Expect(result.Length()).To(Equal(uint32(len(sortedSetElements))))
+					default:
+						Fail("expected a hit for sorted set length by score but got a miss")
+					}
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cacha", WithDefaultCache),
+			)
+
+			It("Constraints by score", func() {
+				minScore := float64(-70)
+				maxScore := float64(101)
+
+				resp, err := sharedContext.Client.SortedSetLengthByScore(
+					sharedContext.Ctx,
+					&SortedSetLengthByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						MinScore:  &minScore,
+						MaxScore:  &maxScore,
+					},
+				)
+				Expect(err).To(BeNil())
+
+				switch result := resp.(type) {
+				case *SortedSetLengthByScoreHit:
+					// only 3 elements fit the score criteria
+					Expect(result.Length()).To(Equal(uint32(3)))
+				default:
+					Fail("expected a hit for sorted set length by score but got a miss")
+				}
+			})
+
+			It("Constraints by score min inclusive", func() {
+				minScore := float64(0)
+				maxScore := float64(101)
+
+				resp, err := sharedContext.Client.SortedSetLengthByScore(
+					sharedContext.Ctx,
+					&SortedSetLengthByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						MinScore:  &minScore,
+						MaxScore:  &maxScore,
+					},
+				)
+				Expect(err).To(BeNil())
+
+				switch result := resp.(type) {
+				case *SortedSetLengthByScoreHit:
+					// only 2 elements fit the score criteria
+					Expect(result.Length()).To(Equal(uint32(2)))
+				default:
+					Fail("expected a hit for sorted set length by score but got a miss")
+				}
+			})
+
+			It("Constraints by score max inclusive", func() {
+				minScore := float64(-70)
+				maxScore := float64(9999)
+
+				resp, err := sharedContext.Client.SortedSetLengthByScore(
+					sharedContext.Ctx,
+					&SortedSetLengthByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						MinScore:  &minScore,
+						MaxScore:  &maxScore,
+					},
+				)
+				Expect(err).To(BeNil())
+
+				switch result := resp.(type) {
+				case *SortedSetLengthByScoreHit:
+					// only 4 elements fit the score criteria
+					Expect(result.Length()).To(Equal(uint32(4)))
+				default:
+					Fail("expected a hit for sorted set length by score but got a miss")
+				}
+			})
+
+			It("Constraints by score both inclusive", func() {
+				minScore := float64(0)
+				maxScore := float64(50)
+
+				resp, err := sharedContext.Client.SortedSetLengthByScore(
+					sharedContext.Ctx,
+					&SortedSetLengthByScoreRequest{
+						CacheName: sharedContext.CacheName,
+						SetName:   sharedContext.CollectionName,
+						MinScore:  &minScore,
+						MaxScore:  &maxScore,
+					},
+				)
+				Expect(err).To(BeNil())
+
+				switch result := resp.(type) {
+				case *SortedSetLengthByScoreHit:
+					// only 2 elements fit the score criteria
+					Expect(result.Length()).To(Equal(uint32(2)))
+				default:
+					Fail("expected a hit for sorted set length by score but got a miss")
+				}
 			})
 		})
 	})

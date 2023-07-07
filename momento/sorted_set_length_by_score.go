@@ -28,9 +28,33 @@ func (r *SortedSetLengthByScoreRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	r.grpcRequest = &pb.XSortedSetLengthByScoreRequest{
+	grpc_request := &pb.XSortedSetLengthByScoreRequest{
 		SetName: []byte(r.SetName),
 	}
+
+	switch r.MaxScore {
+	case nil:
+		// if no score is provided, we take unbounded or inf by default
+		grpc_request.Max = &pb.XSortedSetLengthByScoreRequest_UnboundedMax{}
+	default:
+		// if a score is provided, it's inclusive by default
+		grpc_request.Max = &pb.XSortedSetLengthByScoreRequest_InclusiveMax{
+			InclusiveMax: *r.MaxScore,
+		}
+	}
+
+	switch r.MinScore {
+	case nil:
+		// if no score is provided, we take unbounded or -inf by default
+		grpc_request.Min = &pb.XSortedSetLengthByScoreRequest_UnboundedMin{}
+	default:
+		// if a score is provided, it's inclusive by default
+		grpc_request.Min = &pb.XSortedSetLengthByScoreRequest_InclusiveMin{
+			InclusiveMin: *r.MinScore,
+		}
+	}
+
+	r.grpcRequest = grpc_request
 
 	return nil
 }

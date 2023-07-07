@@ -75,6 +75,13 @@ var _ = Describe("Dictionary methods", func() {
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 
 			Expect(
+				sharedContext.Client.DictionaryLength(sharedContext.Ctx, &DictionaryLengthRequest{
+					CacheName:      cacheName,
+					DictionaryName: dictionaryName,
+				}),
+			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
+
+			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      cacheName,
 					DictionaryName: dictionaryName,
@@ -161,6 +168,35 @@ var _ = Describe("Dictionary methods", func() {
 				Ttl:            &CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+	})
+
+	It("returns the correct dictionary length", func() {
+		_, setErr := sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+			CacheName:      sharedContext.CacheName,
+			DictionaryName: sharedContext.CollectionName,
+			Elements: DictionaryElementsFromMapStringValue(
+				map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
+			),
+		})
+		Expect(setErr).To(BeNil())
+		resp, err := sharedContext.Client.DictionaryLength(sharedContext.Ctx, &DictionaryLengthRequest{
+			CacheName:      sharedContext.CacheName,
+			DictionaryName: sharedContext.CollectionName,
+		})
+		Expect(err).To(BeNil())
+		switch result := resp.(type) {
+		case *DictionaryLengthHit:
+			Expect(result.Length()).To(Equal(uint32(2)))
+		default:
+			Fail("expected a hit for dictionary length but got a miss")
+		}
+
+		resp, err = sharedContext.Client.DictionaryLength(sharedContext.Ctx, &DictionaryLengthRequest{
+			CacheName:      sharedContext.CacheName,
+			DictionaryName: "IdontExist",
+		})
+		Expect(err).To(BeNil())
+		Expect(resp).To(BeAssignableToTypeOf(&DictionaryLengthMiss{}))
 	})
 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",

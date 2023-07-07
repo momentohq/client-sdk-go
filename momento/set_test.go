@@ -63,6 +63,13 @@ var _ = Describe("Set methods", func() {
 			).Error().To(HaveMomentoErrorCode(NotFoundError))
 
 			Expect(
+				client.SetLength(sharedContext.Ctx, &SetLengthRequest{
+					CacheName: cacheName,
+					SetName:   setName,
+				}),
+			).Error().To(HaveMomentoErrorCode(NotFoundError))
+
+			Expect(
 				client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
 					CacheName: cacheName,
 					SetName:   setName,
@@ -97,7 +104,7 @@ var _ = Describe("Set methods", func() {
 				SetName:   setName,
 				Element:   String("hi"),
 			}),
-		)
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		Expect(
 			sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
@@ -105,7 +112,14 @@ var _ = Describe("Set methods", func() {
 				SetName:   setName,
 				Elements:  []Value{String("hi")},
 			}),
-		)
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
+
+		Expect(
+			sharedContext.Client.SetLength(sharedContext.Ctx, &SetLengthRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   setName,
+			}),
+		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		Expect(
 			sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
@@ -394,6 +408,35 @@ var _ = Describe("Set methods", func() {
 
 		})
 
+	})
+
+	It("Returns the correct Set length", func() {
+		elements := getElements(7)
+
+		_, err := sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   sharedContext.CollectionName,
+			Elements:  elements,
+		})
+		Expect(err).To(BeNil())
+		resp, err := sharedContext.Client.SetLength(sharedContext.Ctx, &SetLengthRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   sharedContext.CollectionName,
+		})
+		Expect(err).To(BeNil())
+		switch result := resp.(type) {
+		case *SetLengthHit:
+			Expect(result.Length()).To(Equal(uint32(len(elements))))
+		default:
+			Fail("expected a hit for set length but got a miss")
+		}
+
+		resp, err = sharedContext.Client.SetLength(sharedContext.Ctx, &SetLengthRequest{
+			CacheName: sharedContext.CacheName,
+			SetName:   "IdontExist",
+		})
+		Expect(err).To(BeNil())
+		Expect(resp).To(BeAssignableToTypeOf(&SetLengthMiss{}))
 	})
 
 	Describe("contain elements", func() {
