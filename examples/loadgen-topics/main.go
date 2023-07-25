@@ -53,7 +53,11 @@ func newLoadGenerator(config config.TopicsConfiguration, options topicsLoadGener
 	loggerFactory := config.GetLoggerFactory()
 	lgLogger := loggerFactory.GetLogger("topic-loadgen")
 	unixMilli := time.Now().UnixMilli()
-	messageValue := strings.Repeat("x", options.messageBytes-len(strconv.FormatInt(unixMilli, 10)))
+	timestampLength := len(strconv.FormatInt(unixMilli, 10))
+	if options.messageBytes < timestampLength {
+		panic(fmt.Sprintf("Error: messageBytes must be at least %d", timestampLength))
+	}
+	messageValue := strings.Repeat("x", options.messageBytes-timestampLength)
 	return &loadGenerator{
 		loggerFactory:     loggerFactory,
 		logger:            lgLogger,
@@ -397,9 +401,10 @@ func main() {
 		cacheName:         cacheName,
 		logLevel:          momento_default_logger.DEBUG,
 		showStatsInterval: time.Second * 5,
-		messageBytes:      100,
-		numberOfUsers:     10,
-		numberOfTopics:    5,
+		// must be at least 13 to accommodate an epoch timestamp value to calculate latency
+		messageBytes:   1,
+		numberOfUsers:  10,
+		numberOfTopics: 5,
 		// maxPublishTps is per-user
 		maxPublishTps: 1,
 		howLongToRun:  time.Second * 60,
