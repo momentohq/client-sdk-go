@@ -21,11 +21,11 @@ type scsDataClient struct {
 	endpoint       string
 }
 
-func newScsDataClient(request *models.DataClientRequest) (*scsDataClient, momentoerrors.MomentoSvcErr) {
+func newScsDataClient(request *models.DataClientRequest, eagerlyConnect bool) (*scsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
-	})
+	}, eagerlyConnect)
 	if err != nil {
 		return nil, err
 	}
@@ -78,4 +78,8 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	return nil
+}
+
+func (client scsDataClient) Connect() {
+	client.grpcManager.Conn.Connect()
 }

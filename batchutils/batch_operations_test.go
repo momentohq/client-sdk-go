@@ -36,6 +36,7 @@ var _ = Describe("Batch operations", func() {
 			config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()),
 			credentialProvider,
 			time.Second*60,
+			false,
 		)
 		if err != nil {
 			panic(err)

@@ -156,6 +156,7 @@ type CacheClientProps struct {
 	// CredentialProvider Momento credential provider.
 	CredentialProvider auth.CredentialProvider
 	DefaultTtl         time.Duration
+	EagerlyConnect     bool
 }
 
 func commonCacheClient(props CacheClientProps) (CacheClient, error) {
@@ -187,9 +188,12 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
 		DefaultTtl:         props.DefaultTtl,
-	})
+	}, props.EagerlyConnect)
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+	if props.EagerlyConnect {
+		dataClient.Connect()
 	}
 
 	pingClient, err := services.NewScsPingClient(&models.PingClientRequest{
@@ -209,21 +213,23 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 }
 
 // NewCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments.
-func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration) (CacheClient, error) {
+func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, eagerlyConnect bool) (CacheClient, error) {
 	props := CacheClientProps{
 		Configuration:      configuration,
 		CredentialProvider: credentialProvider,
 		DefaultTtl:         defaultTtl,
+		EagerlyConnect:     eagerlyConnect,
 	}
 	return commonCacheClient(props)
 }
 
-func NewCacheClientWithDefaultCache(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string) (CacheClient, error) {
+func NewCacheClientWithDefaultCache(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string, eagerlyConnect bool) (CacheClient, error) {
 	props := CacheClientProps{
 		CacheName:          cacheName,
 		Configuration:      configuration,
 		CredentialProvider: credentialProvider,
 		DefaultTtl:         defaultTtl,
+		EagerlyConnect:     eagerlyConnect,
 	}
 	return commonCacheClient(props)
 }

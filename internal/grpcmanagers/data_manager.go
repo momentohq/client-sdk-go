@@ -18,17 +18,30 @@ type DataGrpcManager struct {
 
 const CachePort = ":443"
 
-func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest, eagerlyConnect bool) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.Dial(
-		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
-	)
+
+	var conn *grpc.ClientConn
+	var err error
+	if eagerlyConnect {
+		conn, err = grpc.Dial(
+			endpoint,
+			grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`),
+			grpc.WithTransportCredentials(credentials.NewTLS(config)),
+			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
+		)
+	} else {
+		conn, err = grpc.Dial(
+			endpoint,
+			grpc.WithTransportCredentials(credentials.NewTLS(config)),
+			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
+		)
+	}
+
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}

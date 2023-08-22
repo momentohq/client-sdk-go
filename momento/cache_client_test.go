@@ -23,7 +23,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`errors on an invalid TTL`, func() {
 		sharedContext.DefaultTtl = 0 * time.Second
-		client, err := NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl)
+		client, err := NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, sharedContext.EagerlyConnect)
 
 		Expect(client).To(BeNil())
 		Expect(err).NotTo(BeNil())
@@ -37,7 +37,7 @@ var _ = Describe("CacheClient", func() {
 		badRequestTimeout := 0 * time.Second
 		sharedContext.Configuration = config.LaptopLatest().WithClientTimeout(badRequestTimeout)
 		Expect(
-			NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl),
+			NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, sharedContext.EagerlyConnect),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
@@ -46,6 +46,7 @@ var _ = Describe("CacheClient", func() {
 			config.LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
+			sharedContext.EagerlyConnect,
 		)
 		if err != nil {
 			panic(err)
@@ -57,6 +58,31 @@ var _ = Describe("CacheClient", func() {
 			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
+			sharedContext.EagerlyConnect,
+		)
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	It(`Supports constructing a Lambda config with a logger`, func() {
+		_, err := NewCacheClient(
+			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			sharedContext.CredentialProvider,
+			sharedContext.DefaultTtl,
+			sharedContext.EagerlyConnect,
+		)
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	It(`Supports constructing a Lambda config with a logger with eager connections`, func() {
+		_, err := NewCacheClient(
+			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			sharedContext.CredentialProvider,
+			sharedContext.DefaultTtl,
+			true,
 		)
 		if err != nil {
 			panic(err)
