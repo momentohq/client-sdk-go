@@ -213,23 +213,35 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 }
 
 // NewCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments.
-func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, eagerlyConnect bool) (CacheClient, error) {
+func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration) (CacheClient, error) {
 	props := CacheClientProps{
 		Configuration:      configuration,
 		CredentialProvider: credentialProvider,
 		DefaultTtl:         defaultTtl,
-		EagerlyConnect:     eagerlyConnect,
+		EagerlyConnect:     false,
 	}
 	return commonCacheClient(props)
 }
 
-func NewCacheClientWithDefaultCache(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string, eagerlyConnect bool) (CacheClient, error) {
+// NewEagerCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments,
+// as well as eagerly attempting to establish gRPC connections
+func NewEagerCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration) (CacheClient, error) {
+	props := CacheClientProps{
+		Configuration:      configuration,
+		CredentialProvider: credentialProvider,
+		DefaultTtl:         defaultTtl,
+		EagerlyConnect:     true,
+	}
+	return commonCacheClient(props)
+}
+
+func NewCacheClientWithDefaultCache(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string) (CacheClient, error) {
 	props := CacheClientProps{
 		CacheName:          cacheName,
 		Configuration:      configuration,
 		CredentialProvider: credentialProvider,
 		DefaultTtl:         defaultTtl,
-		EagerlyConnect:     eagerlyConnect,
+		EagerlyConnect:     false,
 	}
 	return commonCacheClient(props)
 }
