@@ -10,9 +10,7 @@
 
 ## Simple Get Lambda
 
-This repo contains an example lambda, built using AWS CDK, that repeatedly calls get on a Momento cache.
-
-The primary use is to provide a base for testing Momento performance in a lambda environment. The lambda creates a Momento client, and then calls get on a hard-coded key 100 times, with a 100ms wait between calls. The metric logging middleware is enabled, so detailed information about each call is logged.
+This repo contains an example AWS Lambda Function, built using AWS CDK, that sets and gets an item in a Momento cache.
 
 ## Prerequisites
 
@@ -38,7 +36,7 @@ npm install
 
 To deploy the CDK app you will need to have [configured your AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html#cli-chap-authentication-precedence).
 
-You will also need a superuser token generated from the [Momento Console](https://console.gomomento.com).
+You will also need a cache and superuser token generated from the [Momento Console](https://console.gomomento.com).
 
 Then run:
 
