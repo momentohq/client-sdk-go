@@ -79,6 +79,7 @@ var _ = Describe("CacheClient", func() {
 			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
+			30*time.Second,
 		)
 		if err != nil {
 			panic(err)
