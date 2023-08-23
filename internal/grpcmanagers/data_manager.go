@@ -1,13 +1,17 @@
 package grpcmanagers
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -18,7 +22,7 @@ type DataGrpcManager struct {
 
 const CachePort = ":443"
 
-func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest, eagerlyConnect bool) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest, eagerConnectTimeout time.Duration) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
@@ -27,7 +31,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest, eagerlyConn
 
 	var conn *grpc.ClientConn
 	var err error
-	if eagerlyConnect {
+	if eagerConnectTimeout > 0 {
 		conn, err = grpc.Dial(
 			endpoint,
 			grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`),
@@ -81,4 +85,33 @@ func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*Data
 
 func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 	return momentoerrors.ConvertSvcErr(dataManager.Conn.Close())
+}
+
+func (gm *DataGrpcManager) Connect(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			// Context timeout or cancellation occurred
+			return ctx.Err()
+		default:
+			// Check current state
+			state := gm.Conn.GetState()
+			switch state {
+			case connectivity.Ready:
+				// Connection is ready, exit the method
+				fmt.Println("connection is ready")
+				return nil
+			case connectivity.Idle, connectivity.Connecting:
+				fmt.Println("connection is " + state.String())
+				// If Idle or Connecting, wait for a state change
+				if !gm.Conn.WaitForStateChange(ctx, state) {
+					// Context was done while waiting
+					return ctx.Err()
+				}
+			default:
+				// For other states like TransientFailure, you might want to handle them differently
+				return errors.New("connection is in an unexpected state")
+			}
+		}
+	}
 }

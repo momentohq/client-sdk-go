@@ -48,7 +48,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	unaryDataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		RetryStrategy:      retry.NewNeverRetryStrategy(),
-	}, false)
+	}, 0)
 	if err != nil {
 		return nil, err
 	}

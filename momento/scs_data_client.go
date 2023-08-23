@@ -12,20 +12,22 @@ import (
 )
 
 const defaultRequestTimeout = 5 * time.Second
+const defaultEagerConnectTimeout = 30 * time.Second
 
 type scsDataClient struct {
-	grpcManager    *grpcmanagers.DataGrpcManager
-	grpcClient     pb.ScsClient
-	defaultTtl     time.Duration
-	requestTimeout time.Duration
-	endpoint       string
+	grpcManager         *grpcmanagers.DataGrpcManager
+	grpcClient          pb.ScsClient
+	defaultTtl          time.Duration
+	requestTimeout      time.Duration
+	endpoint            string
+	eagerConnectTimeout time.Duration
 }
 
-func newScsDataClient(request *models.DataClientRequest, eagerlyConnect bool) (*scsDataClient, momentoerrors.MomentoSvcErr) {
+func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout time.Duration) (*scsDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
-	}, eagerlyConnect)
+	}, eagerConnectTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -36,11 +38,12 @@ func newScsDataClient(request *models.DataClientRequest, eagerlyConnect bool) (*
 		timeout = request.Configuration.GetClientSideTimeout()
 	}
 	return &scsDataClient{
-		grpcManager:    dataManager,
-		grpcClient:     pb.NewScsClient(dataManager.Conn),
-		defaultTtl:     request.DefaultTtl,
-		requestTimeout: timeout,
-		endpoint:       request.CredentialProvider.GetCacheEndpoint(),
+		grpcManager:         dataManager,
+		grpcClient:          pb.NewScsClient(dataManager.Conn),
+		defaultTtl:          request.DefaultTtl,
+		requestTimeout:      timeout,
+		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
+		eagerConnectTimeout: eagerConnectTimeout,
 	}, nil
 }
 
@@ -80,6 +83,15 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	return nil
 }
 
-func (client scsDataClient) Connect() {
-	client.grpcManager.Conn.Connect()
+func (client scsDataClient) Connect() error {
+	timeout := defaultEagerConnectTimeout
+	if client.eagerConnectTimeout > 0 {
+		timeout = client.eagerConnectTimeout
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	err := client.grpcManager.Connect(ctx)
+	return err
 }

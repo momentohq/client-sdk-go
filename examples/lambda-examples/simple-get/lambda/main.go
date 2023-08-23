@@ -36,6 +36,8 @@ func handler() (string, error) {
 	cachedMomentoClient = cacheClient
 	ctx := context.Background()
 
+	measureLatency(cacheClient, ctx)
+
 	_, err = cacheClient.Set(ctx, &momento.SetRequest{
 		CacheName: CACHE_NAME,
 		Key:       momento.String(CACHE_KEY),
@@ -105,6 +107,29 @@ func getCacheClient() (momento.CacheClient, error) {
 		cachedMomentoClient = _cacheClient
 	}
 	return cachedMomentoClient, nil
+}
+
+// To measure the latency of 100 GET requests to your Momento cache,
+// just call this code in the handler function
+func measureLatency(cacheClient momento.CacheClient, ctx context.Context) {
+	fmt.Printf("\nMeasuring GET request latency:\n")
+	for i := 0; i < 100; i++ {
+		start := time.Now()
+		resp, _ := cacheClient.Get(ctx, &momento.GetRequest{
+			CacheName: CACHE_NAME,
+			Key:       momento.String(CACHE_KEY),
+		})
+		timeTaken := time.Since(start)
+
+		switch resp.(type) {
+		case *responses.GetHit:
+			fmt.Printf("response %d: Hit! | time: %v\n", i, timeTaken)
+		case *responses.GetMiss:
+			fmt.Printf("response %d: Miss! | time: %v\n", i, timeTaken)
+		}
+
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func main() {
