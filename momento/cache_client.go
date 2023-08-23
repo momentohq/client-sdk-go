@@ -192,8 +192,12 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
+
 	if props.EagerConnectTimeout > 0 {
-		dataClient.Connect()
+		err := dataClient.Connect()
+		if err != nil {
+			return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+		}
 	}
 
 	pingClient, err := services.NewScsPingClient(&models.PingClientRequest{

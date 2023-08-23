@@ -1,3 +1,5 @@
+GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/lambda-examples/simple-get/infrastructure/*")
+
 .PHONY: install-devtools
 install-devtools:
 	go install golang.org/x/tools/cmd/goimports@latest
@@ -6,11 +8,11 @@ install-devtools:
 
 .PHONY: format
 format:
-	gofmt -s -w .
+	gofmt -s -w ${GOFILES_NOT_NODE}
 
 .PHONY: imports
 imports:
-	goimports -l -w .
+	goimports -l -w ${GOFILES_NOT_NODE}
 
 .PHONY: tidy
 tidy:
