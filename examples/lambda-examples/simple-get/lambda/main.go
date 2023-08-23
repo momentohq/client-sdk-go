@@ -36,8 +36,6 @@ func handler() (string, error) {
 	cachedMomentoClient = cacheClient
 	ctx := context.Background()
 
-	measureLatency(cacheClient, ctx)
-
 	_, err = cacheClient.Set(ctx, &momento.SetRequest{
 		CacheName: CACHE_NAME,
 		Key:       momento.String(CACHE_KEY),
