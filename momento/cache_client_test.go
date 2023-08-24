@@ -65,7 +65,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a Lambda config with a logger`, func() {
 		_, err := NewCacheClient(
-			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 		)
@@ -76,7 +76,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a Lambda config with a logger with eager connections`, func() {
 		_, err := NewEagerCacheClient(
-			config.InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 			30*time.Second,
