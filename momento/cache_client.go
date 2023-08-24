@@ -235,14 +235,15 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		Configuration:       configuration,
 		CredentialProvider:  credentialProvider,
 		DefaultTtl:          defaultTtl,
-		EagerConnectTimeout: 0,
+		EagerConnectTimeout: 30 * time.Second,
 	}
 	return commonCacheClient(props)
 }
 
-// NewEagerCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments,
-// as well as eagerly attempting to establish gRPC connections
-func NewEagerCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, eagerConnectTimeout time.Duration) (CacheClient, error) {
+// NewCacheClientWithEagerConnectTimeout returns a new CacheClient with
+// provided configuration, credential provider, and default TTL seconds
+// arguments, as well as eagerly attempting to establish gRPC connections
+func NewCacheClientWithEagerConnectTimeout(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, eagerConnectTimeout time.Duration) (CacheClient, error) {
 	props := CacheClientProps{
 		Configuration:       configuration,
 		CredentialProvider:  credentialProvider,
@@ -258,7 +259,7 @@ func NewCacheClientWithDefaultCache(configuration config.Configuration, credenti
 		Configuration:       configuration,
 		CredentialProvider:  credentialProvider,
 		DefaultTtl:          defaultTtl,
-		EagerConnectTimeout: 0,
+		EagerConnectTimeout: 30 * time.Second,
 	}
 	return commonCacheClient(props)
 }
