@@ -29,22 +29,11 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest, eagerConnec
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 
-	var conn *grpc.ClientConn
-	var err error
-	if eagerConnectTimeout > 0 {
-		conn, err = grpc.Dial(
-			endpoint,
-			grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`),
-			grpc.WithTransportCredentials(credentials.NewTLS(config)),
-			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
-		)
-	} else {
-		conn, err = grpc.Dial(
-			endpoint,
-			grpc.WithTransportCredentials(credentials.NewTLS(config)),
-			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
-		)
-	}
+	conn, err := grpc.Dial(
+		endpoint,
+		grpc.WithTransportCredentials(credentials.NewTLS(config)),
+		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken)),
+	)
 
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -99,10 +88,8 @@ func (gm *DataGrpcManager) Connect(ctx context.Context) error {
 			switch state {
 			case connectivity.Ready:
 				// Connection is ready, exit the method
-				fmt.Println("connection is ready")
 				return nil
 			case connectivity.Idle, connectivity.Connecting:
-				fmt.Println("connection is " + state.String())
 				// If Idle or Connecting, wait for a state change
 				if !gm.Conn.WaitForStateChange(ctx, state) {
 					// Context was done while waiting

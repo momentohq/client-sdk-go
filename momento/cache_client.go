@@ -159,6 +159,13 @@ type CacheClientProps struct {
 	EagerConnectTimeout time.Duration
 }
 
+func validateEagerConnectionTimeout(timeout time.Duration) momentoerrors.MomentoSvcErr {
+	if timeout < 0*time.Second {
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "eager connection timeout must be greater than 0", nil)
+	}
+	return nil
+}
+
 func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
@@ -193,10 +200,16 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
+	err = validateEagerConnectionTimeout(props.EagerConnectTimeout)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
 	if props.EagerConnectTimeout > 0 {
 		err := dataClient.Connect()
 		if err != nil {
-			return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+			logger := props.Configuration.GetLoggerFactory().GetLogger("CacheClient")
+			logger.Debug("Failed to connect to the server within the given eager connection timeout:", err.Error())
 		}
 	}
 
