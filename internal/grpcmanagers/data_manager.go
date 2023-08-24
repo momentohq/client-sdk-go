@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -22,7 +21,7 @@ type DataGrpcManager struct {
 
 const CachePort = ":443"
 
-func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest, eagerConnectTimeout time.Duration) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
+func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
