@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import {MomentoLambdaStack} from '../lib/simple-get-stack';
+import {MomentoLambdaStack} from '../lib/momento-lambda-stack';
 
 const app = new cdk.App();
 new MomentoLambdaStack(app, 'MomentoLambdaStack', {
