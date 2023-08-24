@@ -5,7 +5,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as secrets from 'aws-cdk-lib/aws-secretsmanager';
 import * as go from '@aws-cdk/aws-lambda-go-alpha';
 
-export class SimpleGetStack extends cdk.Stack {
+export class MomentoLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -20,8 +20,8 @@ export class SimpleGetStack extends cdk.Stack {
       secretStringValue: new cdk.SecretValue(momentoAuthTokenParam.valueAsString),
     });
 
-    const getLambda = new go.GoFunction(this, 'MomentoSimpleGet', {
-      functionName: 'MomentoSimpleGet',
+    const getLambda = new go.GoFunction(this, 'MomentoLambdaExample', {
+      functionName: 'MomentoLambdaExample',
       runtime: lambda.Runtime.GO_1_X,
       entry: path.join(__dirname, '../../lambda'),
       timeout: cdk.Duration.seconds(30),

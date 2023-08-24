@@ -8,9 +8,9 @@
 
 <br>
 
-## Simple Get Lambda
+## How to use Momento Go SDK in AWS Lambda
 
-This repo contains an example AWS Lambda Function, built using AWS CDK, that sets and gets an item in a Momento cache.
+This directory contains an example Lambda function, built using AWS CDK, that sets and gets a hardcoded key-value pair in a Momento cache.
 
 ## Prerequisites
 
@@ -20,7 +20,6 @@ This repo contains an example AWS Lambda Function, built using AWS CDK, that set
 ## Deploying the Simple Get Lambda
 
 First make sure to start Docker and install the dependencies in the `lambda` directory, which is where the AWS Lambda Go handler function lives. 
-(TODO: correct make instruction)
 
 ```bash
 cd lambda
@@ -36,7 +35,7 @@ npm install
 
 To deploy the CDK app you will need to have [configured your AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html#cli-chap-authentication-precedence).
 
-You will also need a cache and superuser token generated from the [Momento Console](https://console.gomomento.com).
+You will also need a superuser token generated from the [Momento Console](https://console.gomomento.com).
 
 Then run:
 
@@ -46,20 +45,4 @@ npm run cdk -- deploy --parameters MomentoAuthToken=<YOUR_MOMENTO_AUTH_TOKEN>
 
 The lambda does not set up a way to access itself externally, so to run it, you will have to go to MomentoSimpleGet in AWS Lambda and run a test.
 
-The lambda is set up to make get calls for the key 'key' in the cache 'cache' by default. It does not create a cache or write anything to that key. While it still may give useful latency information if it can't find a cache or key, creating them will let you test in a more realistic way.
-
-If you have the [Momento CLI](https://github.com/momentohq/momento-cli) installed, you can create a cache like this:
-
-```commandline
-momento cache create cache
-```
-
-You can then set a value for the key:
-
-```commandline
-momento cache set key value
-```
-
-You can also create a cache and key using the [Momento Console](https://console.gomomento.com).
-
-Finally, you can edit [handler.ts](lambda/simple-get/handler.ts) to change the cache and key the lambda looks for.
+The lambda is set up to make get calls for the key 'key' in the cache 'cache' by default. You can play around with the code by changing the `lambda/main.go` file. Remember to update `lambda/go.mod` file if you add additional dependencies.

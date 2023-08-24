@@ -23,9 +23,8 @@ const (
 )
 
 var (
-	cachedAuthToken     string = ""
-	cachedMomentoClient momento.CacheClient
-	secretsClient, _    = secretcache.New()
+	cachedAuthToken  string = ""
+	secretsClient, _        = secretcache.New()
 )
 
 func handler() (string, error) {
@@ -33,8 +32,14 @@ func handler() (string, error) {
 	if err != nil {
 		return "Something went wrong getting the cache client", err
 	}
-	cachedMomentoClient = cacheClient
 	ctx := context.Background()
+
+	_, err = cacheClient.CreateCache(ctx, &momento.CreateCacheRequest{
+		CacheName: CACHE_NAME,
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	_, err = cacheClient.Set(ctx, &momento.SetRequest{
 		CacheName: CACHE_NAME,
@@ -82,29 +87,26 @@ func getSecret(secretName string) (string, error) {
 }
 
 func getCacheClient() (momento.CacheClient, error) {
-	if cachedMomentoClient == nil {
-		authToken, secretErr := getSecret("MOMENTO_AUTH_TOKEN_SECRET_NAME")
-		if secretErr != nil {
-			panic(secretErr)
-		}
-
-		credentialProvider, err := auth.NewStringMomentoTokenProvider(authToken)
-		if err != nil {
-			panic(err)
-		}
-
-		_cacheClient, initErr := momento.NewCacheClient(
-			config.LaptopLatest(),
-			credentialProvider,
-			60*time.Second,
-		)
-		if initErr != nil {
-			panic(initErr)
-		}
-
-		cachedMomentoClient = _cacheClient
+	authToken, secretErr := getSecret("MOMENTO_AUTH_TOKEN_SECRET_NAME")
+	if secretErr != nil {
+		panic(secretErr)
 	}
-	return cachedMomentoClient, nil
+
+	credentialProvider, err := auth.NewStringMomentoTokenProvider(authToken)
+	if err != nil {
+		panic(err)
+	}
+
+	cacheClient, initErr := momento.NewCacheClient(
+		config.LaptopLatest(),
+		credentialProvider,
+		60*time.Second,
+	)
+	if initErr != nil {
+		panic(initErr)
+	}
+
+	return cacheClient, nil
 }
 
 // To measure the latency of 100 GET requests to your Momento cache,
