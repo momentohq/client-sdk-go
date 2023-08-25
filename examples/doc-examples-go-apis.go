@@ -27,8 +27,9 @@ func example_API_InstantiateCacheClient() {
 		panic(err)
 	}
 	defaultTtl := time.Duration(9999)
+	eagerConnectTimeout := 30 * time.Second
 
-	client, err := momento.NewCacheClient(configuration, credentialProvider, defaultTtl)
+	client, err := momento.NewCacheClientWithEagerConnectTimeout(configuration, credentialProvider, defaultTtl, eagerConnectTimeout)
 	if err != nil {
 		panic(err)
 	}

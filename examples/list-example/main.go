@@ -150,10 +150,11 @@ func main() {
 	}
 
 	// Initializes Momento
-	client, err = momento.NewCacheClient(
+	client, err = momento.NewCacheClientWithEagerConnectTimeout(
 		config.LaptopLatest(),
 		credentialProvider,
 		itemDefaultTTLSeconds*time.Second,
+		30*time.Second,
 	)
 	if err != nil {
 		panic(err)

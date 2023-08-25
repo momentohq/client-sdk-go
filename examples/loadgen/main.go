@@ -64,7 +64,7 @@ func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Dur
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewCacheClient(r.momentoClientConfig, credentialProvider, time.Second*CacheItemTtlSeconds)
+	client, err := momento.NewCacheClientWithEagerConnectTimeout(r.momentoClientConfig, credentialProvider, time.Second*CacheItemTtlSeconds, 30*time.Second)
 	if err != nil {
 		panic(err)
 	}
