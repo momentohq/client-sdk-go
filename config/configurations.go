@@ -47,3 +47,22 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 		RetryStrategy: retry.NewFixedCountRetryStrategy(loggerFactory),
 	})
 }
+
+// Lambda provides defaults suitable for an environment where your client is running in
+// a serverless environment like AWS Lambda.
+
+func Lambda() Configuration {
+	return LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
+}
+
+func LambdaWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
+	return NewCacheConfiguration(&ConfigurationProps{
+		LoggerFactory: loggerFactory,
+		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
+			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
+				deadline: 1100 * time.Millisecond,
+			}),
+		}),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(loggerFactory),
+	})
+}

@@ -154,8 +154,16 @@ type CacheClientProps struct {
 	// Configuration to use for logging, transport, retries, and middlewares.
 	Configuration config.Configuration
 	// CredentialProvider Momento credential provider.
-	CredentialProvider auth.CredentialProvider
-	DefaultTtl         time.Duration
+	CredentialProvider  auth.CredentialProvider
+	DefaultTtl          time.Duration
+	EagerConnectTimeout time.Duration
+}
+
+func validateEagerConnectionTimeout(timeout time.Duration) momentoerrors.MomentoSvcErr {
+	if timeout < 0*time.Second {
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "eager connection timeout must be greater than 0", nil)
+	}
+	return nil
 }
 
 func commonCacheClient(props CacheClientProps) (CacheClient, error) {
@@ -187,9 +195,22 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 		CredentialProvider: props.CredentialProvider,
 		Configuration:      props.Configuration,
 		DefaultTtl:         props.DefaultTtl,
-	})
+	}, props.EagerConnectTimeout)
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
+	err = validateEagerConnectionTimeout(props.EagerConnectTimeout)
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
+	if props.EagerConnectTimeout > 0 {
+		err := dataClient.Connect()
+		if err != nil {
+			logger := props.Configuration.GetLoggerFactory().GetLogger("CacheClient")
+			logger.Debug("Failed to connect to the server within the given eager connection timeout:", err.Error())
+		}
 	}
 
 	pingClient, err := services.NewScsPingClient(&models.PingClientRequest{
@@ -211,19 +232,35 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 // NewCacheClient returns a new CacheClient with provided configuration, credential provider, and default TTL seconds arguments.
 func NewCacheClient(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration) (CacheClient, error) {
 	props := CacheClientProps{
-		Configuration:      configuration,
-		CredentialProvider: credentialProvider,
-		DefaultTtl:         defaultTtl,
+		Configuration:       configuration,
+		CredentialProvider:  credentialProvider,
+		DefaultTtl:          defaultTtl,
+		EagerConnectTimeout: 30 * time.Second,
+	}
+	return commonCacheClient(props)
+}
+
+// NewCacheClientWithEagerConnectTimeout returns a new CacheClient with
+// provided configuration, credential provider, and default TTL seconds
+// arguments, as well as eagerly attempting to establish gRPC connections.
+// A value of 0 for eagerConnectTimeout indicates no eager connections.
+func NewCacheClientWithEagerConnectTimeout(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, eagerConnectTimeout time.Duration) (CacheClient, error) {
+	props := CacheClientProps{
+		Configuration:       configuration,
+		CredentialProvider:  credentialProvider,
+		DefaultTtl:          defaultTtl,
+		EagerConnectTimeout: eagerConnectTimeout,
 	}
 	return commonCacheClient(props)
 }
 
 func NewCacheClientWithDefaultCache(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, cacheName string) (CacheClient, error) {
 	props := CacheClientProps{
-		CacheName:          cacheName,
-		Configuration:      configuration,
-		CredentialProvider: credentialProvider,
-		DefaultTtl:         defaultTtl,
+		CacheName:           cacheName,
+		Configuration:       configuration,
+		CredentialProvider:  credentialProvider,
+		DefaultTtl:          defaultTtl,
+		EagerConnectTimeout: 30 * time.Second,
 	}
 	return commonCacheClient(props)
 }
