@@ -242,7 +242,8 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 
 // NewCacheClientWithEagerConnectTimeout returns a new CacheClient with
 // provided configuration, credential provider, and default TTL seconds
-// arguments, as well as eagerly attempting to establish gRPC connections
+// arguments, as well as eagerly attempting to establish gRPC connections.
+// A value of 0 for eagerConnectTimeout indicates no eager connections.
 func NewCacheClientWithEagerConnectTimeout(configuration config.Configuration, credentialProvider auth.CredentialProvider, defaultTtl time.Duration, eagerConnectTimeout time.Duration) (CacheClient, error) {
 	props := CacheClientProps{
 		Configuration:       configuration,
