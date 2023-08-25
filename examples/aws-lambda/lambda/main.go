@@ -97,10 +97,11 @@ func getCacheClient() (momento.CacheClient, error) {
 		panic(err)
 	}
 
-	cacheClient, initErr := momento.NewCacheClient(
-		config.LaptopLatest(),
+	cacheClient, initErr := momento.NewCacheClientWithEagerConnectTimeout(
+		config.Lambda(),
 		credentialProvider,
 		60*time.Second,
+		30*time.Second,
 	)
 	if initErr != nil {
 		panic(initErr)

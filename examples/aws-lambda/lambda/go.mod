@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-secretsmanager-caching-go v1.1.2
-	github.com/momentohq/client-sdk-go v1.7.0
+	github.com/momentohq/client-sdk-go v1.8.0
 )
 
 require (
