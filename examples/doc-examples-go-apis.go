@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -21,7 +20,6 @@ var (
 
 func example_API_InstantiateCacheClient() {
 	context := context.Background()
-	configuration := config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
 	if err != nil {
 		panic(err)
@@ -29,7 +27,12 @@ func example_API_InstantiateCacheClient() {
 	defaultTtl := time.Duration(9999)
 	eagerConnectTimeout := 30 * time.Second
 
-	client, err := momento.NewCacheClientWithEagerConnectTimeout(configuration, credentialProvider, defaultTtl, eagerConnectTimeout)
+	client, err := momento.NewCacheClientWithEagerConnectTimeout(
+		config.LaptopLatest(),
+		credentialProvider,
+		defaultTtl,
+		eagerConnectTimeout,
+	)
 	if err != nil {
 		panic(err)
 	}
