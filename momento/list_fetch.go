@@ -9,8 +9,10 @@ import (
 )
 
 type ListFetchRequest struct {
-	CacheName string
-	ListName  string
+	CacheName  string
+	ListName   string
+	StartIndex *int32
+	EndIndex   *int32
 
 	grpcRequest  *pb.XListFetchRequest
 	grpcResponse *pb.XListFetchResponse
@@ -28,10 +30,25 @@ func (r *ListFetchRequest) initGrpcRequest(scsDataClient) error {
 		return err
 	}
 
-	r.grpcRequest = &pb.XListFetchRequest{
-		ListName: []byte(r.ListName),
+	grpcRequest := &pb.XListFetchRequest{
+		ListName:   []byte(r.ListName),
+		StartIndex: &pb.XListFetchRequest_UnboundedStart{},
+		EndIndex:   &pb.XListFetchRequest_UnboundedEnd{},
 	}
 
+	if r.StartIndex != nil {
+		grpcRequest.StartIndex = &pb.XListFetchRequest_InclusiveStart{
+			InclusiveStart: *r.StartIndex,
+		}
+	}
+
+	if r.EndIndex != nil {
+		grpcRequest.EndIndex = &pb.XListFetchRequest_ExclusiveEnd{
+			ExclusiveEnd: *r.EndIndex,
+		}
+	}
+
+	r.grpcRequest = grpcRequest
 	return nil
 }
 
