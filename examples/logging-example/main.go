@@ -25,10 +25,11 @@ application's logs.`)
 		panic(err)
 	}
 
-	client, err := momento.NewCacheClient(
+	client, err := momento.NewCacheClientWithEagerConnectTimeout(
 		config.LaptopLatestWithLogger(momento_logrus.NewLogrusMomentoLoggerFactory()),
 		creds,
 		60*time.Second,
+		30*time.Second,
 	)
 
 	if err != nil {
