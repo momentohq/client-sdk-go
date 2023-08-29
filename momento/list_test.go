@@ -29,6 +29,23 @@ func getValueAndExpectedValueLists(numItems int) ([]Value, []string) {
 	return values, expected
 }
 
+func getValueAndExpectedValueListsRange(start int, end int) ([]Value, []string) {
+	var values []Value
+	var expected []string
+	for i := start; i < end; i++ {
+		strVal := fmt.Sprintf("#%d", i)
+		var value Value
+		if i%2 == 0 {
+			value = String(strVal)
+		} else {
+			value = Bytes(strVal)
+		}
+		values = append(values, value)
+		expected = append(expected, strVal)
+	}
+	return values, expected
+}
+
 func populateList(sharedContext SharedContext, numItems int) []string {
 	values, expected := getValueAndExpectedValueLists(numItems)
 	Expect(
@@ -804,4 +821,229 @@ var _ = Describe("List methods", func() {
 
 	})
 
+	Describe("list fetch", func() {
+
+		When("provided no start and end to fetch fetches all results", func() {
+
+			DescribeTable("pushes strings and bytes on the happy path",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					numItems := 10
+					values, expected := getValueAndExpectedValueLists(numItems)
+					sort.Sort(sort.Reverse(sort.StringSlice(expected)))
+					for _, value := range values {
+						Expect(
+							client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
+								CacheName: cacheName,
+								ListName:  sharedContext.CollectionName,
+								Value:     value,
+							}),
+						).To(BeAssignableToTypeOf(&ListPushFrontSuccess{}))
+					}
+					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+						CacheName: cacheName,
+						ListName:  sharedContext.CollectionName,
+					})
+					Expect(err).To(BeNil())
+					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
+					Expect(fetchResp).To(HaveListLength(numItems))
+					switch result := fetchResp.(type) {
+					case *ListFetchHit:
+						Expect(result.ValueList()).To(Equal(expected))
+					}
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cache", WithDefaultCache),
+			)
+		})
+
+		When("provides no start and 0 as end yields no result", func() {
+
+			DescribeTable("pushes strings and bytes on the happy path",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					numItems := 5
+					values, _ := getValueAndExpectedValueLists(numItems)
+					for _, value := range values {
+						Expect(
+							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+								CacheName: cacheName,
+								ListName:  sharedContext.CollectionName,
+								Value:     value,
+							}),
+						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+					}
+
+					endIndex := int32(0)
+					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+						CacheName: cacheName,
+						ListName:  sharedContext.CollectionName,
+						EndIndex:  &endIndex,
+					})
+
+					Expect(err).To(BeNil())
+					// start and end are 0; no result
+					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchMiss{}))
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cache", WithDefaultCache),
+			)
+		})
+
+		When("provides explicit start to list but nil end gets all results", func() {
+
+			DescribeTable("pushes strings and bytes on the happy path",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					numItems := 10
+					values, _ := getValueAndExpectedValueLists(numItems)
+					for _, value := range values {
+						Expect(
+							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+								CacheName: cacheName,
+								ListName:  sharedContext.CollectionName,
+								Value:     value,
+							}),
+						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+					}
+
+					startIndex := int32(1)
+					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+						CacheName:  cacheName,
+						ListName:   sharedContext.CollectionName,
+						StartIndex: &startIndex,
+					})
+
+					Expect(err).To(BeNil())
+					Expect(fetchResp).To(HaveListLength(numItems - 1))
+					_, expectedVals := getValueAndExpectedValueListsRange(1, numItems)
+
+					switch result := fetchResp.(type) {
+					case *ListFetchHit:
+						Expect(result.ValueList()).To(Equal(expectedVals))
+					}
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cache", WithDefaultCache),
+			)
+		})
+
+		When("provides explicit end to list", func() {
+
+			DescribeTable("pushes strings and bytes on the happy path",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					numItems := 5
+					values, _ := getValueAndExpectedValueLists(numItems)
+					for _, value := range values {
+						Expect(
+							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+								CacheName: cacheName,
+								ListName:  sharedContext.CollectionName,
+								Value:     value,
+							}),
+						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+					}
+
+					endIndex := int32(3)
+					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+						CacheName: cacheName,
+						ListName:  sharedContext.CollectionName,
+						EndIndex:  &endIndex,
+					})
+
+					Expect(err).To(BeNil())
+					Expect(fetchResp).To(HaveListLength(int(endIndex)))
+					_, expectedVals := getValueAndExpectedValueListsRange(0, int(endIndex))
+
+					switch result := fetchResp.(type) {
+					case *ListFetchHit:
+						Expect(result.ValueList()).To(Equal(expectedVals))
+					}
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cache", WithDefaultCache),
+			)
+		})
+
+		When("provides explicit start and end to list", func() {
+
+			DescribeTable("pushes strings and bytes on the happy path",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					numItems := 5
+					values, _ := getValueAndExpectedValueLists(numItems)
+					for _, value := range values {
+						Expect(
+							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+								CacheName: cacheName,
+								ListName:  sharedContext.CollectionName,
+								Value:     value,
+							}),
+						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+					}
+
+					startIndex := int32(1)
+					endIndex := int32(3)
+					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+						CacheName:  cacheName,
+						ListName:   sharedContext.CollectionName,
+						StartIndex: &startIndex,
+						EndIndex:   &endIndex,
+					})
+
+					Expect(err).To(BeNil())
+					Expect(fetchResp).To(HaveListLength(int(endIndex - startIndex)))
+					_, expectedVals := getValueAndExpectedValueListsRange(int(startIndex), int(endIndex))
+
+					switch result := fetchResp.(type) {
+					case *ListFetchHit:
+						Expect(result.ValueList()).To(Equal(expectedVals))
+					}
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cache", WithDefaultCache),
+			)
+		})
+
+		When("provides negative start and unbounded end to list", func() {
+
+			DescribeTable("pushes strings and bytes on the happy path",
+				func(clientType string) {
+					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+					numItems := 5
+					values, _ := getValueAndExpectedValueLists(numItems)
+
+					for _, value := range values {
+						Expect(
+							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
+								CacheName: cacheName,
+								ListName:  sharedContext.CollectionName,
+								Value:     value,
+							}),
+						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
+					}
+
+					startIndex := int32(-2)
+					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
+						CacheName:  cacheName,
+						ListName:   sharedContext.CollectionName,
+						StartIndex: &startIndex,
+					})
+
+					Expect(err).To(BeNil())
+					Expect(fetchResp).To(HaveListLength(2))
+					_, expectedVals := getValueAndExpectedValueListsRange(3, 5)
+
+					switch result := fetchResp.(type) {
+					case *ListFetchHit:
+						Expect(result.ValueList()).To(Equal(expectedVals))
+					}
+				},
+				Entry("with default client", DefaultClient),
+				Entry("with client with default cache", WithDefaultCache),
+			)
+		})
+
+	})
 })
