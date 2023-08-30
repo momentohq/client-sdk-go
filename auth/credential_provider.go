@@ -94,7 +94,6 @@ func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, err
 			errors.New("invalid argument"),
 		)
 	}
-	print(authToken)
 	return NewStringMomentoTokenProvider(authToken)
 }
 
