@@ -3,6 +3,7 @@ package batchutils
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/momento"
 )
@@ -15,16 +16,23 @@ func deleteWorker(
 	cacheName string,
 	keyChan chan momento.Key,
 	errChan chan *errKeyVal,
+	timeout time.Duration,
 ) {
 	for {
 		myKey := <-keyChan
 		if myKey == nil {
 			return
 		}
-		_, err := client.Delete(ctx, &momento.DeleteRequest{
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+
+		_, err := client.Delete(timeoutCtx, &momento.DeleteRequest{
 			CacheName: cacheName,
 			Key:       myKey,
 		})
+
+		cancel()
+
 		if err != nil {
 			errChan <- &errKeyVal{
 				key:   myKey,
@@ -41,6 +49,8 @@ type BatchDeleteRequest struct {
 	CacheName            string
 	Keys                 []momento.Key
 	MaxConcurrentDeletes int
+	// timeout for individual requests, defaults to 10 seconds
+	RequestTimeout *time.Duration
 }
 
 // BatchDeleteError contains a map associating failing cache keys with their specific errors.
@@ -81,7 +91,7 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteErr
 
 		go func() {
 			defer wg.Done()
-			deleteWorker(ctx, props.Client, props.CacheName, keyChan, errChan)
+			deleteWorker(ctx, props.Client, props.CacheName, keyChan, errChan, getRequestTimeout(props.RequestTimeout))
 		}()
 	}
 
