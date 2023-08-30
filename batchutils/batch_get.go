@@ -2,9 +2,10 @@ package batchutils
 
 import (
 	"context"
+	"sync"
+
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
-	"sync"
 )
 
 type getKeyResp struct {

@@ -2,10 +2,11 @@ package batchutils
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/momentohq/client-sdk-go/responses"
 	"sync"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 const maxConcurrentSets = 5

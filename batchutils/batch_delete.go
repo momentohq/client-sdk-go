@@ -2,8 +2,9 @@ package batchutils
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/momento"
 	"sync"
+
+	"github.com/momentohq/client-sdk-go/momento"
 )
 
 const maxConcurrentDeletes = 5
