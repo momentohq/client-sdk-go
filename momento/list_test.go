@@ -1025,10 +1025,12 @@ var _ = Describe("List methods", func() {
 					}
 
 					startIndex := int32(-2)
+					endIndex := int32(-1)
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName:  cacheName,
 						ListName:   sharedContext.CollectionName,
 						StartIndex: &startIndex,
+						EndIndex:   &endIndex,
 					})
 
 					Expect(err).To(BeNil())
