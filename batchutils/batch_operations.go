@@ -6,8 +6,6 @@ import (
 	"github.com/momentohq/client-sdk-go/momento"
 )
 
-const maxConcurrentGets = 5
-
 func keyDistributor(ctx context.Context, keys []momento.Key, keyChan chan momento.Key) {
 	for _, k := range keys {
 		keyChan <- k

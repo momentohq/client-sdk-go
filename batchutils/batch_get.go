@@ -8,6 +8,8 @@ import (
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
+const maxConcurrentGets = 5
+
 type getKeyResp struct {
 	key  momento.Value
 	resp responses.GetResponse
