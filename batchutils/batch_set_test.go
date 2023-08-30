@@ -27,7 +27,7 @@ var _ = Describe("Batch set operations", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
-		credentialProvider, err := auth.FromEnvironmentVariable("TEST_AUTH_TOKEN")
+		credentialProvider, err := auth.FromString("eyJlbmRwb2ludCI6ImNlbGwtNC11cy13ZXN0LTItMS5wcm9kLmEubW9tZW50b2hxLmNvbSIsImFwaV9rZXkiOiJleUpoYkdjaU9pSklVekkxTmlKOS5leUp6ZFdJaU9pSndjbUYwYVd0QWJXOXRaVzUwYjJoeExtTnZiU0lzSW5abGNpSTZNU3dpY0NJNklrTkJRVDBpTENKbGVIQWlPakUyT1RVNE1qQTFNREI5Lk50cVdwYVBpNnNBVmd1WFNlVDg4OFFVa3JDOW5ldVlqbFk2TXp4ZW9DUVkifQ==")
 		if err != nil {
 			panic(err)
 		}
@@ -251,5 +251,35 @@ var _ = Describe("Batch set operations", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
 			}
 		})
+
+		It("super small request timeout test", func() {
+			var items []batchutils.BatchSetItem
+
+			for i := 0; i < 10; i++ {
+				key := String(fmt.Sprintf("MSETk%d", i))
+				item := batchutils.BatchSetItem{
+					Key:   key,
+					Value: String(fmt.Sprintf("MSETv%d", i)),
+					Ttl:   1 * time.Second,
+				}
+				items = append(items, item)
+			}
+
+			timeout := 1 * time.Millisecond
+			setBatchResp, setErrors := batchutils.BatchSet(ctx, &batchutils.BatchSetRequest{
+				Client:         client,
+				CacheName:      cacheName,
+				Items:          items,
+				RequestTimeout: &timeout,
+			})
+
+			Expect(setBatchResp).To(BeNil())
+			Expect(len(setErrors.Errors())).To(Equal(len(items)))
+			for _, err := range setErrors.Errors() {
+				Expect(err.Error()).To(ContainSubstring("TimeoutError: context deadline exceeded"))
+			}
+
+		})
+
 	})
 })

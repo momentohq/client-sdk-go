@@ -23,18 +23,25 @@ func setWorker(
 	itemChan chan BatchSetItem,
 	errChan chan *errKeyVal,
 	setChan chan *setKeyResp,
+	timeout time.Duration,
 ) {
 	for {
 		item := <-itemChan
 		if item.Key == nil {
 			return
 		}
-		setResponse, err := client.Set(ctx, &momento.SetRequest{
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+
+		setResponse, err := client.Set(timeoutCtx, &momento.SetRequest{
 			CacheName: cacheName,
 			Key:       item.Key,
 			Value:     item.Value,
 			Ttl:       item.Ttl,
 		})
+
+		cancel()
+
 		if err != nil {
 			setChan <- nil
 			errChan <- &errKeyVal{
@@ -56,6 +63,8 @@ type BatchSetRequest struct {
 	CacheName         string
 	Items             []BatchSetItem
 	MaxConcurrentSets int
+	// timeout for individual requests, defaults to 10 seconds
+	RequestTimeout *time.Duration
 }
 
 type BatchSetItem struct {
@@ -128,7 +137,7 @@ func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *
 
 		go func() {
 			defer wg.Done()
-			setWorker(ctx, props.Client, props.CacheName, itemChan, errChan, setChan)
+			setWorker(ctx, props.Client, props.CacheName, itemChan, errChan, setChan, getRequestTimeout(props.RequestTimeout))
 		}()
 	}
 
