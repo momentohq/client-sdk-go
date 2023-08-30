@@ -28,7 +28,7 @@ var _ = Describe("Batch operations", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
-		credentialProvider, err := auth.FromString("eyJlbmRwb2ludCI6ImNlbGwtNC11cy13ZXN0LTItMS5wcm9kLmEubW9tZW50b2hxLmNvbSIsImFwaV9rZXkiOiJleUpoYkdjaU9pSklVekkxTmlKOS5leUp6ZFdJaU9pSndjbUYwYVd0QWJXOXRaVzUwYjJoeExtTnZiU0lzSW5abGNpSTZNU3dpY0NJNklrTkJRVDBpTENKbGVIQWlPakUyT1RVNE1qQTFNREI5Lk50cVdwYVBpNnNBVmd1WFNlVDg4OFFVa3JDOW5ldVlqbFk2TXp4ZW9DUVkifQ==")
+		credentialProvider, err := auth.FromEnvironmentVariable("TEST_AUTH_TOKEN")
 		if err != nil {
 			panic(err)
 		}
