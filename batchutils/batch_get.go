@@ -20,8 +20,7 @@ func getWorker(
 	client momento.CacheClient,
 	cacheName string,
 	keyChan chan momento.Key,
-	errChan chan *errKeyVal,
-	getChan chan *getKeyResp,
+	resultChan chan *getResultOrError,
 ) {
 	for {
 		myKey := <-keyChan
@@ -33,17 +32,15 @@ func getWorker(
 			Key:       myKey,
 		})
 		if err != nil {
-			getChan <- nil
-			errChan <- &errKeyVal{
+			resultChan <- &getResultOrError{err: &errKeyVal{
 				key:   myKey,
 				error: err,
-			}
+			}}
 		} else {
-			errChan <- nil
-			getChan <- &getKeyResp{
+			resultChan <- &getResultOrError{result: &getKeyResp{
 				key:  myKey,
 				resp: getResponse,
-			}
+			}}
 		}
 	}
 }
@@ -61,6 +58,11 @@ type BatchGetRequest struct {
 // errors := (err.(*BatchGetError)).Errors()
 type BatchGetError struct {
 	errors map[momento.Value]error
+}
+
+type getResultOrError struct {
+	result *getKeyResp
+	err    *errKeyVal
 }
 
 func (e *BatchGetError) Error() string {
@@ -95,15 +97,14 @@ func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *
 		props.MaxConcurrentGets = len(props.Keys)
 	}
 	keyChan := make(chan momento.Key, props.MaxConcurrentGets)
-	errChan := make(chan *errKeyVal, len(props.Keys))
-	getChan := make(chan *getKeyResp, len(props.Keys))
+	resultChan := make(chan *getResultOrError, len(props.Keys))
 
 	for i := 0; i < props.MaxConcurrentGets; i++ {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			getWorker(ctx, props.Client, props.CacheName, keyChan, errChan, getChan)
+			getWorker(ctx, props.Client, props.CacheName, keyChan, resultChan)
 		}()
 	}
 
@@ -115,12 +116,11 @@ func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *
 	var errors = make(map[momento.Value]error, 0)
 	var results = make(map[momento.Value]responses.GetResponse, 0)
 	for i := 0; i < len(props.Keys); i++ {
-		res := <-getChan
-		err := <-errChan
-		if res != nil {
-			results[res.key] = res.resp
-		} else if err != nil {
-			errors[err.key] = err.error
+		resOrError := <-resultChan
+		if resOrError.result != nil {
+			results[resOrError.result.key] = resOrError.result.resp
+		} else if resOrError.err != nil {
+			errors[resOrError.err.key] = resOrError.err.error
 		}
 	}
 

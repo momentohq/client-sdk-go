@@ -189,6 +189,7 @@ var _ = Describe("Batch set operations", func() {
 				Items:     items,
 			})
 
+			Expect(len(setBatch.Responses())).To(Equal(len(batchSetSuccessfulKeys)))
 			// Assuming errors is an instance of *BatchSetError
 			Expect(len(errors.Errors())).To(Equal(len(batchSetErrorKeys)))
 			for v, e := range errors.Errors() {

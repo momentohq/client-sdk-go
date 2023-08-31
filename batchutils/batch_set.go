@@ -21,8 +21,7 @@ func setWorker(
 	client momento.CacheClient,
 	cacheName string,
 	itemChan chan BatchSetItem,
-	errChan chan *errKeyVal,
-	setChan chan *setKeyResp,
+	resultChan chan *setResultOrError,
 ) {
 	for {
 		item := <-itemChan
@@ -35,18 +34,17 @@ func setWorker(
 			Value:     item.Value,
 			Ttl:       item.Ttl,
 		})
+
 		if err != nil {
-			setChan <- nil
-			errChan <- &errKeyVal{
+			resultChan <- &setResultOrError{err: &errKeyVal{
 				key:   item.Key,
 				error: err,
-			}
+			}}
 		} else {
-			errChan <- nil
-			setChan <- &setKeyResp{
+			resultChan <- &setResultOrError{result: &setKeyResp{
 				key:  item.Key,
 				resp: setResponse,
-			}
+			}}
 		}
 	}
 }
@@ -62,6 +60,11 @@ type BatchSetItem struct {
 	Key   momento.Key
 	Value momento.Value
 	Ttl   time.Duration
+}
+
+type setResultOrError struct {
+	result *setKeyResp
+	err    *errKeyVal
 }
 
 // BatchSetError contains a map associating failing cache keys with their specific errors.
@@ -120,15 +123,14 @@ func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *
 		props.MaxConcurrentSets = len(props.Items)
 	}
 	itemChan := make(chan BatchSetItem, props.MaxConcurrentSets)
-	errChan := make(chan *errKeyVal, len(props.Items))
-	setChan := make(chan *setKeyResp, len(props.Items))
+	resultChan := make(chan *setResultOrError, len(props.Items))
 
 	for i := 0; i < props.MaxConcurrentSets; i++ {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			setWorker(ctx, props.Client, props.CacheName, itemChan, errChan, setChan)
+			setWorker(ctx, props.Client, props.CacheName, itemChan, resultChan)
 		}()
 	}
 
@@ -139,13 +141,13 @@ func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *
 
 	var errors = make(map[momento.Value]error, 0)
 	var results = make(map[momento.Value]responses.SetResponse, 0)
+
 	for i := 0; i < len(props.Items); i++ {
-		res := <-setChan
-		err := <-errChan
-		if res != nil {
-			results[res.key] = res.resp
-		} else if err != nil {
-			errors[err.key] = err.error
+		resOrErr := <-resultChan
+		if resOrErr.result != nil {
+			results[resOrErr.result.key] = resOrErr.result.resp
+		} else if resOrErr.err != nil {
+			errors[resOrErr.err.key] = resOrErr.err.error
 		}
 	}
 
