@@ -3,6 +3,7 @@ package batchutils
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
@@ -21,16 +22,23 @@ func getWorker(
 	cacheName string,
 	keyChan chan momento.Key,
 	resultChan chan *getResultOrError,
+	timeout time.Duration,
 ) {
 	for {
 		myKey := <-keyChan
 		if myKey == nil {
 			return
 		}
-		getResponse, err := client.Get(ctx, &momento.GetRequest{
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+
+		getResponse, err := client.Get(timeoutCtx, &momento.GetRequest{
 			CacheName: cacheName,
 			Key:       myKey,
 		})
+
+		cancel()
+
 		if err != nil {
 			resultChan <- &getResultOrError{err: &errKeyVal{
 				key:   myKey,
@@ -50,6 +58,8 @@ type BatchGetRequest struct {
 	CacheName         string
 	Keys              []momento.Key
 	MaxConcurrentGets int
+	// timeout for individual requests, defaults to 10 seconds
+	RequestTimeout *time.Duration
 }
 
 // BatchGetError contains a map associating failing cache keys with their specific errors.
@@ -104,7 +114,7 @@ func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *
 
 		go func() {
 			defer wg.Done()
-			getWorker(ctx, props.Client, props.CacheName, keyChan, resultChan)
+			getWorker(ctx, props.Client, props.CacheName, keyChan, resultChan, getRequestTimeout(props.RequestTimeout))
 		}()
 	}
 

@@ -103,6 +103,21 @@ var _ = Describe("Batch operations", func() {
 			})
 			Expect(errors).To(BeNil())
 		})
+
+		It("super small request timeout test", func() {
+			timeout := 1 * time.Millisecond
+			errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
+				Client:         client,
+				CacheName:      cacheName,
+				Keys:           keys[5:21],
+				RequestTimeout: &timeout,
+			})
+
+			Expect(len(errors.Errors())).To(Equal(16))
+			for _, err := range errors.Errors() {
+				Expect(err.Error()).To(ContainSubstring("TimeoutError: context deadline exceeded"))
+			}
+		})
 	})
 
 	Describe("batch get", func() {
@@ -156,6 +171,22 @@ var _ = Describe("Batch operations", func() {
 				} else {
 					Expect(resp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
 				}
+			}
+		})
+
+		It("super small request timeout test", func() {
+			timeout := 1 * time.Millisecond
+			getBatch, errors := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:         client,
+				CacheName:      cacheName,
+				Keys:           keys[5:21],
+				RequestTimeout: &timeout,
+			})
+
+			Expect(getBatch).To(BeNil())
+			Expect(len(errors.Errors())).To(Equal(16))
+			for _, err := range errors.Errors() {
+				Expect(err.Error()).To(ContainSubstring("TimeoutError: context deadline exceeded"))
 			}
 		})
 	})
