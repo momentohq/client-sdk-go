@@ -29,10 +29,31 @@ type topicSubscription struct {
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 	for {
+		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
+		// item, so we should check that here.
+		select {
+		case <-ctx.Done():
+			// Context has been canceled, return an error
+			return nil, ctx.Err()
+		default:
+			// Proceed as is
+		}
+
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 			s.log.Error("stream disconnected, attempting to reconnect err:", fmt.Sprint(err))
-			s.attemptReconnect(ctx)
+
+			// Check if the context has been canceled before attempting to reconnect as the client
+			// might have given up on the context
+			select {
+			case <-ctx.Done():
+				// Context has been canceled, return an error
+				return nil, ctx.Err()
+			default:
+				// Attempt to reconnect
+				s.attemptReconnect(ctx)
+			}
+
 			// retry getting the latest item
 			continue
 		}
