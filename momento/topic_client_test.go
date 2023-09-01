@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -99,6 +100,41 @@ var _ = Describe("Pubsub", func() {
 		cancelFunction()
 
 		Expect(receivedValues).To(Equal(publishedValues))
+	})
+
+	It("Cancels the context immediataly after subscribing and asserts as such", func() {
+
+		sub, _ := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: sharedContext.CollectionName,
+		})
+
+		// Create a new context with a timeout
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+		defer cancel()
+
+		done := make(chan bool)
+
+		// Run Item function in a goroutine
+		go func() {
+			_, err := sub.Item(ctx)
+			if err == nil {
+				fmt.Println("Expected an error due to context cancellation, got nil")
+			}
+			close(done)
+		}()
+
+		// immediately cancel the context
+		cancel()
+
+		// Wait for either the Item function to return or the test to timeout
+		select {
+		case <-done:
+			// Test passed
+		case <-time.After(time.Second * 2):
+			Fail("Test timed out, likely due to infinite loop in Item function")
+		}
+
 	})
 
 	It("returns an error when trying to publish a nil topic value", func() {
