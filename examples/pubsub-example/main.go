@@ -47,12 +47,19 @@ func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("received message: '%v'\n", item)
+		switch msg := item.(type) {
+		case momento.String:
+			fmt.Printf("received message as string: '%v'\n", msg)
+			continue
+		case momento.Bytes:
+			fmt.Printf("received message as bytes: '%v'\n", msg)
+			continue
+		}
 	}
 }
 
 func getTopicClient() momento.TopicClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +74,7 @@ func getTopicClient() momento.TopicClient {
 }
 
 func getCacheClient() momento.CacheClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
@@ -93,12 +100,24 @@ func setupCache(client momento.CacheClient, ctx context.Context) {
 }
 
 func publishMessages(client momento.TopicClient, ctx context.Context) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 5; i++ {
 		fmt.Printf("publishing message %d\n", i)
 		_, err := client.Publish(ctx, &momento.TopicPublishRequest{
 			CacheName: cacheName,
 			TopicName: topicName,
 			Value:     momento.String(fmt.Sprintf("hello %d", i)),
+		})
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Second)
+	}
+	for i := 0; i < 5; i++ {
+		fmt.Printf("publishing message %d\n", i)
+		_, err := client.Publish(ctx, &momento.TopicPublishRequest{
+			CacheName: cacheName,
+			TopicName: topicName,
+			Value:     momento.Bytes(fmt.Sprintf("hello %d", i)),
 		})
 		if err != nil {
 			panic(err)

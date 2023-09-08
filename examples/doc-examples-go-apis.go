@@ -20,7 +20,7 @@ var (
 
 func example_API_InstantiateCacheClient() {
 	context := context.Background()
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
