@@ -15,7 +15,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}

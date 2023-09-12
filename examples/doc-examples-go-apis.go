@@ -21,7 +21,7 @@ var (
 
 func example_API_InstantiateCacheClient() {
 	context := context.Background()
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
@@ -114,7 +114,7 @@ func example_API_Delete() {
 }
 
 func example_API_InstantiateTopicClient() {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
