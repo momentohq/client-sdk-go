@@ -60,7 +60,7 @@ func newLoadGenerator(config config.Configuration, options loadGeneratorOptions)
 }
 
 func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Duration) {
-	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_AUTH_TOKEN")
+	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}

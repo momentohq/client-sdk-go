@@ -87,7 +87,7 @@ func getSecret(secretName string) (string, error) {
 }
 
 func getCacheClient() (momento.CacheClient, error) {
-	authToken, secretErr := getSecret("MOMENTO_AUTH_TOKEN_SECRET_NAME")
+	authToken, secretErr := getSecret("MOMENTO_API_KEY_SECRET_NAME")
 	if secretErr != nil {
 		panic(secretErr)
 	}

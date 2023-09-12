@@ -20,7 +20,7 @@ choice, so that Momento's logs will be written to the same destinations as the r
 application's logs.`)
 	fmt.Println("")
 
-	creds, err := auth.FromEnvironmentVariable("MOMENTO_AUTH_TOKEN")
+	creds, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
