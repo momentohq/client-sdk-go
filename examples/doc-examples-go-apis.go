@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -109,5 +110,64 @@ func example_API_Delete() {
 	})
 	if err != nil {
 		panic(err)
+	}
+}
+
+func example_API_InstantiateTopicClient() {
+	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_AUTH_TOKEN")
+	if err != nil {
+		panic(err)
+	}
+
+	topicClient, err := momento.NewTopicClient(
+		config.TopicsDefault(),
+		credProvider,
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_TopicPublish(client momento.TopicClient) {
+	_, err := client.Publish(ctx, &momento.TopicPublishRequest{
+		CacheName: "test-cache",
+		TopicName: "test-topic",
+		Value:     momento.String("test-message"),
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_TopicSubscribe(client momento.TopicClient) {
+	// Instantiate subscriber
+	sub, subErr := client.Subscribe(ctx, &momento.TopicSubscribeRequest{
+		CacheName: "test-cache",
+		TopicName: "test-topic",
+	})
+	if subErr != nil {
+		panic(subErr)
+	}
+
+	time.Sleep(time.Second)
+	_, pubErr := client.Publish(ctx, &momento.TopicPublishRequest{
+		CacheName: "test-cache",
+		TopicName: "test-topic",
+		Value:     momento.String("test-message"),
+	})
+	if pubErr != nil {
+		panic(pubErr)
+	}
+	time.Sleep(time.Second)
+
+	item, err := sub.Item(ctx)
+	if err != nil {
+		panic(err)
+	}
+	switch msg := item.(type) {
+	case momento.String:
+		fmt.Printf("received message as string: '%v'\n", msg)
+	case momento.Bytes:
+		fmt.Printf("received message as bytes: '%v'\n", msg)
 	}
 }
