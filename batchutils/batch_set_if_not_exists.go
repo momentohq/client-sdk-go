@@ -3,6 +3,7 @@ package batchutils
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/momento"
@@ -48,7 +49,8 @@ func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest)
 			}
 		}
 	default:
-		return nil, nil, err
+		var message = fmt.Sprintf("Unexpected KeysExistResponse type: %T\n", resp)
+		return nil, nil, momento.NewMomentoError(momento.ClientSdkError, message, errors.New(message))
 	}
 
 	// If none of the keys exist, set the items using BatchSet
