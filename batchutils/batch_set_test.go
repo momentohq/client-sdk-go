@@ -2,6 +2,7 @@ package batchutils_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/batchutils"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
@@ -282,5 +284,112 @@ var _ = Describe("Batch set operations", func() {
 
 		})
 
+	})
+
+	Describe("batch set if not exists", func() {
+		It("happy path", func() {
+			var batchSetKeys []Key
+			var items []batchutils.BatchSetItem
+
+			for i := 0; i < 10; i++ {
+				key := String(fmt.Sprintf("MSETNXk%d", i))
+				batchSetKeys = append(batchSetKeys, key)
+				item := batchutils.BatchSetItem{
+					Key:   key,
+					Value: String(fmt.Sprintf("MSETNXv%d", i)),
+					Ttl:   1 * time.Second,
+				}
+				items = append(items, item)
+			}
+
+			setBatchResponse, _, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Items:     items,
+			})
+
+			Expect(err).To(BeNil())
+
+			setResponses := setBatchResponse.Responses()
+			Expect(len(setResponses)).To(Equal(len(items)))
+			for _, resp := range setResponses {
+				Expect(resp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
+			}
+
+			getBatch, _ := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Keys:      batchSetKeys,
+			})
+
+			getBatchResponses := getBatch.Responses()
+			for i := 0; i < len(batchSetKeys); i++ {
+				switch r := getBatchResponses[batchSetKeys[i]].(type) {
+				case *responses.GetHit:
+					Expect(r.ValueString()).To(Equal(fmt.Sprintf("MSETNXv%d", i)))
+				case *responses.GetMiss:
+					Fail("expected a hit but got a MISS")
+				default:
+					Fail(fmt.Sprintf("failed on %d", i))
+				}
+			}
+		})
+
+		It("some keys already exist", func() {
+			var batchSetKeys []Key
+			var unsetKeys []Key
+			var items []batchutils.BatchSetItem
+			var setItems []batchutils.BatchSetItem
+
+			for i := 0; i < 10; i++ {
+				key := String(fmt.Sprintf("MSETNXk%d", i))
+				batchSetKeys = append(batchSetKeys, key)
+				item := batchutils.BatchSetItem{
+					Key:   key,
+					Value: String(fmt.Sprintf("MSETNXv%d", i)),
+					Ttl:   1 * time.Second,
+				}
+				items = append(items, item)
+				if i%2 == 0 {
+					setItems = append(setItems, item)
+				} else {
+					unsetKeys = append(unsetKeys, key)
+				}
+			}
+
+			setBatch, _ := batchutils.BatchSet(ctx, &batchutils.BatchSetRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Items:     setItems,
+			})
+			setResponses := setBatch.Responses()
+			Expect(len(setResponses)).To(Equal(len(setItems)))
+
+			_, _, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Items:     items,
+			})
+
+			Expect(err).To(Equal(momento.NewMomentoError(momento.AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))))
+
+			getBatch, _ := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:    client,
+				CacheName: cacheName,
+				Keys:      unsetKeys,
+			})
+
+			getBatchResponses := getBatch.Responses()
+			for i := 0; i < len(unsetKeys); i++ {
+				switch getBatchResponses[unsetKeys[i]].(type) {
+				case *responses.GetMiss:
+					continue
+				case *responses.GetHit:
+					Fail("expected a MISS but got a HIT")
+				default:
+					Fail(fmt.Sprintf("failed on %d", i))
+				}
+			}
+		})
 	})
 })
