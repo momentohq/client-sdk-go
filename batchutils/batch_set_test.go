@@ -11,7 +11,6 @@ import (
 	"github.com/momentohq/client-sdk-go/batchutils"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
-	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
@@ -336,14 +335,12 @@ var _ = Describe("Batch set operations", func() {
 		})
 
 		It("some keys already exist", func() {
-			var batchSetKeys []Key
 			var unsetKeys []Key
 			var items []batchutils.BatchSetItem
 			var setItems []batchutils.BatchSetItem
 
 			for i := 0; i < 10; i++ {
 				key := String(fmt.Sprintf("MSETNXk%d", i))
-				batchSetKeys = append(batchSetKeys, key)
 				item := batchutils.BatchSetItem{
 					Key:   key,
 					Value: String(fmt.Sprintf("MSETNXv%d", i)),
@@ -371,7 +368,7 @@ var _ = Describe("Batch set operations", func() {
 				Items:     items,
 			})
 
-			Expect(err).To(Equal(momento.NewMomentoError(momento.AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))))
+			Expect(err).To(Equal(NewMomentoError(AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))))
 
 			getBatch, _ := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
 				Client:    client,
