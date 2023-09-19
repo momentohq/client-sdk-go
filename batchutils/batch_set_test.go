@@ -307,7 +307,7 @@ var _ = Describe("Batch set operations", func() {
 				Items:     items,
 			})
 
-			Expect(errors.Unwrap(err)).To(BeNil())
+			Expect(err).To(BeNil())
 
 			setResponses := setBatchResponse.Responses()
 			Expect(len(setResponses)).To(Equal(len(items)))
@@ -368,7 +368,12 @@ var _ = Describe("Batch set operations", func() {
 				Items:     items,
 			})
 
-			Expect(err).To(Equal(NewMomentoError(AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))))
+			Expect(len(err.Errors())).To(Equal(len(items)))
+			Expect(err.Error()).To(Equal("Errors occurred during BatchSetIfNotExists; call Errors() to get a map of key -> errorType"))
+			for i := 0; i < 10; i++ {
+				var key = items[i].Key
+				Expect(err.Errors()[key]).To(Equal(NewMomentoError(AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))))
+			}
 
 			getBatch, _ := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
 				Client:    client,
