@@ -301,13 +301,13 @@ var _ = Describe("Batch set operations", func() {
 				items = append(items, item)
 			}
 
-			setBatchResponse, _, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
+			setBatchResponse, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
 				Client:    client,
 				CacheName: cacheName,
 				Items:     items,
 			})
 
-			Expect(err).To(BeNil())
+			Expect(errors.Unwrap(err)).To(BeNil())
 
 			setResponses := setBatchResponse.Responses()
 			Expect(len(setResponses)).To(Equal(len(items)))
@@ -362,7 +362,7 @@ var _ = Describe("Batch set operations", func() {
 			setResponses := setBatch.Responses()
 			Expect(len(setResponses)).To(Equal(len(setItems)))
 
-			_, _, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
+			_, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
 				Client:    client,
 				CacheName: cacheName,
 				Items:     items,

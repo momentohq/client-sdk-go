@@ -30,14 +30,14 @@ func ExtractKeys(items Items) []momento.Key {
 }
 
 // BatchSetIfNotExists will set the key-value pairs ONLY if all keys don't already exist
-func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest) (*BatchSetResponse, *BatchSetError, error) {
+func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest) (*BatchSetResponse, error) {
 	// First check if all keys exist or not
 	resp, err := props.Client.KeysExist(ctx, &momento.KeysExistRequest{
 		CacheName: props.CacheName,
 		Keys:      ExtractKeys(props.Items),
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	switch result := resp.(type) {
@@ -45,12 +45,12 @@ func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest)
 		// Check if any of the keys already exist
 		for _, keyExists := range result.Exists() {
 			if keyExists {
-				return nil, nil, momento.NewMomentoError(momento.AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))
+				return nil, momento.NewMomentoError(momento.AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))
 			}
 		}
 	default:
 		var message = fmt.Sprintf("Unexpected KeysExistResponse type: %T\n", resp)
-		return nil, nil, momento.NewMomentoError(momento.ClientSdkError, message, errors.New(message))
+		return nil, momento.NewMomentoError(momento.ClientSdkError, message, errors.New(message))
 	}
 
 	// If none of the keys exist, set the items using BatchSet
@@ -59,5 +59,6 @@ func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest)
 		CacheName: props.CacheName,
 		Items:     props.Items,
 	})
-	return setBatchResponse, setBatchError, nil
+	// Join will return nil if there are no errors in setBatchError
+	return setBatchResponse, errors.Join(setBatchError)
 }
