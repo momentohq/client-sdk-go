@@ -2,7 +2,6 @@ package batchutils_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -308,11 +307,17 @@ var _ = Describe("Batch set operations", func() {
 			})
 
 			Expect(err).To(BeNil())
-
-			setResponses := setBatchResponse.Responses()
-			Expect(len(setResponses)).To(Equal(len(items)))
-			for _, resp := range setResponses {
-				Expect(resp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
+			switch (*setBatchResponse).(type) {
+			case batchutils.BatchSetIfNotExistsStored:
+				var setResponses = (*setBatchResponse).(batchutils.BatchSetIfNotExistsStored).Responses()
+				Expect(len(setResponses)).To(Equal(len(items)))
+				for _, resp := range setResponses {
+					Expect(resp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
+				}
+			case batchutils.BatchSetIfNotExistsNotStored:
+				Fail("expected a STORED response but got NOT STORED")
+			default:
+				Fail("expected STORED response but got ERROR")
 			}
 
 			getBatch, _ := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
@@ -362,17 +367,19 @@ var _ = Describe("Batch set operations", func() {
 			setResponses := setBatch.Responses()
 			Expect(len(setResponses)).To(Equal(len(setItems)))
 
-			_, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
+			setBatchResponse, err := batchutils.BatchSetIfNotExists(ctx, &batchutils.BatchSetIfNotExistsRequest{
 				Client:    client,
 				CacheName: cacheName,
 				Items:     items,
 			})
 
-			Expect(len(err.Errors())).To(Equal(len(items)))
-			Expect(err.Error()).To(Equal("Errors occurred during BatchSetIfNotExists; call Errors() to get a map of key -> errorType"))
-			for i := 0; i < 10; i++ {
-				var key = items[i].Key
-				Expect(err.Errors()[key]).To(Equal(NewMomentoError(AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))))
+			Expect(err).To(BeNil())
+			switch (*setBatchResponse).(type) {
+			case batchutils.BatchSetIfNotExistsStored:
+				Fail("expected a NOT STORED response but got STORED")
+			case batchutils.BatchSetIfNotExistsNotStored:
+			default:
+				Fail("expected STORED response but got ERROR")
 			}
 
 			getBatch, _ := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{

@@ -19,6 +19,27 @@ type BatchSetIfNotExistsRequest struct {
 	RequestTimeout *time.Duration
 }
 
+// BatchSetIfNotExistsResponse is the base response type for a BatchSetIfNotExists request
+type BatchSetIfNotExistsResponse interface {
+	isBatchSetIfNotExistsResponse()
+}
+
+// BatchSetIfNotExistsNotStored indicates a successful set request where the value was already present.
+type BatchSetIfNotExistsNotStored struct{}
+
+func (BatchSetIfNotExistsNotStored) isBatchSetIfNotExistsResponse() {}
+
+// BatchSetIfNotExistsStored indicates a successful set request where the value was stored.
+type BatchSetIfNotExistsStored struct {
+	responses map[momento.Value]responses.SetResponse
+}
+
+func (BatchSetIfNotExistsStored) isBatchSetIfNotExistsResponse() {}
+
+func (e BatchSetIfNotExistsStored) Responses() map[momento.Value]responses.SetResponse {
+	return e.responses
+}
+
 type Items []BatchSetItem
 
 func ExtractKeys(items Items) []momento.Key {
@@ -56,7 +77,7 @@ func CreateErrorMapping(keys []momento.Key, err error) map[momento.Key]error {
 }
 
 // BatchSetIfNotExists will set the key-value pairs ONLY if all keys don't already exist
-func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest) (*BatchSetResponse, *BatchSetIfNotExistsError) {
+func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest) (*BatchSetIfNotExistsResponse, *BatchSetIfNotExistsError) {
 	// First check if all keys exist or not
 	keys := ExtractKeys(props.Items)
 	resp, err := props.Client.KeysExist(ctx, &momento.KeysExistRequest{
@@ -73,9 +94,8 @@ func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest)
 		// Check if any of the keys already exist
 		for _, keyExists := range result.Exists() {
 			if keyExists {
-				var momentoError = momento.NewMomentoError(momento.AlreadyExistsError, "At least one key already exists", errors.New("at least one key already exists"))
-				var atLeastOneKeyExistsError = &BatchSetIfNotExistsError{errors: CreateErrorMapping(keys, momentoError)}
-				return nil, atLeastOneKeyExistsError
+				var keysExistResponse BatchSetIfNotExistsResponse = BatchSetIfNotExistsNotStored{}
+				return &keysExistResponse, nil
 			}
 		}
 	default:
@@ -94,5 +114,6 @@ func BatchSetIfNotExists(ctx context.Context, props *BatchSetIfNotExistsRequest)
 	if setBatchError != nil {
 		return nil, &BatchSetIfNotExistsError{errors: setBatchError.Errors()}
 	}
-	return setBatchResponse, nil
+	var keysStoredResponse BatchSetIfNotExistsResponse = BatchSetIfNotExistsStored{responses: setBatchResponse.Responses()}
+	return &keysStoredResponse, nil
 }
