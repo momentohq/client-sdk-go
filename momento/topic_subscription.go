@@ -10,7 +10,6 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 )
 
 type TopicSubscription interface {
@@ -82,11 +81,6 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context) {
-	// make sure the connection isn't ready, if its ready no need to reconnect
-	if s.topicManager.Conn.GetState() == connectivity.Ready {
-		s.log.Debug("connection is in ready state, not reconnecting")
-		return
-	}
 	// try and reconnect every n seconds. This will attempt to reconnect indefinetly
 	seconds := 5 * time.Second
 	for {
