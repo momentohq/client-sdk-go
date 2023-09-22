@@ -676,10 +676,10 @@ var _ = Describe("Set methods", func() {
 			var count uint32
 
 			// Pop one item from the set (1 is the default), 9 should remain
-			sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+			Expect(sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   sharedContext.CollectionName,
-			})
+			})).Error().To(BeNil())
 			Expect(
 				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
@@ -689,11 +689,11 @@ var _ = Describe("Set methods", func() {
 
 			// Pop 4 items from the set, 5 should remain
 			count = 4
-			sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+			Expect(sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   sharedContext.CollectionName,
 				Count:     &count,
-			})
+			})).Error().To(BeNil())
 			Expect(
 				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
@@ -703,11 +703,11 @@ var _ = Describe("Set methods", func() {
 
 			// Pop 5 items from the set, none should remain
 			count = 5
-			sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+			Expect(sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
 				SetName:   sharedContext.CollectionName,
 				Count:     &count,
-			})
+			})).Error().To(BeNil())
 			Expect(
 				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
