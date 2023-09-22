@@ -1,4 +1,4 @@
-GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/lambda-examples/simple-get/infrastructure/*")
+GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aws-lambda/infrastructure/*")
 
 .PHONY: install-devtools
 install-devtools:
