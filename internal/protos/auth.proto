@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "permissionmessages.proto";
+
 option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
 option java_multiple_files = true;
 option java_package = "momento.auth";
@@ -69,83 +71,9 @@ message _GenerateApiTokenRequest {
         Expires expires = 2;
     }
 
-    // Aliases for categories of functionality.
-    enum CacheRole {
-      CachePermitNone = 0;
-      // Restricts access to apis that read and write data from caches: No higher level resource description or modification.
-      CacheReadWrite = 1;
-      // Restricts access to apis that read from caches: No higher level resource description or modification.
-      CacheReadOnly = 2;
-    }
-
-    // Aliases for categories of functionality.
-    enum TopicRole {
-      TopicPermitNone = 0;
-      // Restricts access to apis that read and write data from topics: No higher level resource description or modification.
-      TopicReadWrite = 1;
-      // Restricts access to apis that read from topics: No higher level resource description or modification.
-      TopicReadOnly = 2;
-    }
-
     string auth_token = 3;
 
-    enum SuperUserPermissions {
-      SuperUser = 0;
-    }
-
-    message Permissions {
-      oneof kind {
-        SuperUserPermissions super_user = 1;
-        ExplicitPermissions explicit = 2;
-      }
-    }
-
-    message ExplicitPermissions {
-      repeated PermissionsType permissions = 1;
-    }
-
-    message PermissionsType {
-      oneof kind {
-        CachePermissions cache_permissions = 1;
-        TopicPermissions topic_permissions = 2;
-      }
-
-      message All {}
-
-      message CacheSelector {
-        oneof kind {
-          string cache_name = 1;
-        }
-      }
-
-      message CachePermissions {
-        CacheRole role = 1;
-        oneof cache {
-          All all_caches = 2;
-          CacheSelector cache_selector = 3;
-        } 
-      }
-
-      message TopicSelector {
-        oneof kind {
-          string topic_name = 1;
-        }
-      }
-
-      message TopicPermissions {
-        TopicRole role = 1;
-        oneof cache {
-          All all_caches = 2;
-          CacheSelector cache_selector = 3;
-        }
-        oneof topic {
-          All all_topics = 4;
-          TopicSelector topic_selector = 5;
-        }        
-      }
-    }
-
-    Permissions permissions = 4;
+    permission_messages.Permissions permissions = 4;
 }
 
 message _GenerateApiTokenResponse {

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+import "permissionmessages.proto";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "momento.token";
+option csharp_namespace = "Momento.Protos.TokenClient";
+
+package token;
+
+service Token {
+  rpc GenerateDisposableToken (_GenerateDisposableTokenRequest) returns (_GenerateDisposableTokenResponse) {}
+}
+
+message _GenerateDisposableTokenRequest {
+    // generate a token that has an expiry
+    message Expires {
+        // how many seconds do you want the api token to be valid for?
+        uint32 valid_for_seconds = 1;
+    }
+
+    Expires expires = 1;
+
+  string auth_token = 2;
+
+  permission_messages.Permissions permissions = 3;
+}
+
+message _GenerateDisposableTokenResponse {
+  // the new api key used for authentication against Momento backend
+  string api_key = 1;
+  // the Momento endpoint that this token is allowed to make requests against
+  string endpoint = 2;
+  // epoch seconds when the api token expires
+  uint64 valid_until = 3;
+
+}

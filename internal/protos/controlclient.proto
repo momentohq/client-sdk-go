@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+
 option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
 option java_multiple_files = true;
 option java_package = "grpc.control_client";
@@ -15,6 +16,31 @@ service ScsControl {
   rpc CreateSigningKey (_CreateSigningKeyRequest) returns (_CreateSigningKeyResponse) {}
   rpc RevokeSigningKey (_RevokeSigningKeyRequest) returns (_RevokeSigningKeyResponse) {}
   rpc ListSigningKeys (_ListSigningKeysRequest) returns (_ListSigningKeysResponse) {}
+  rpc CreateIndex (_CreateIndexRequest) returns (_CreateIndexResponse) {}
+  rpc DeleteIndex(_DeleteIndexRequest) returns (_DeleteIndexResponse) {}
+  rpc ListIndexes(_ListIndexesRequest) returns (_ListIndexesResponse) {}
+}
+
+message _CreateIndexRequest {
+  string index_name = 1;
+  uint64 num_dimensions = 2;
+}
+
+message _CreateIndexResponse {
+}
+
+message _DeleteIndexRequest {
+  string index_name = 1;
+}
+
+message _DeleteIndexResponse {
+}
+
+message _ListIndexesRequest {
+}
+
+message _ListIndexesResponse {
+  repeated string index_names = 1;
 }
 
 message _DeleteCacheRequest {
@@ -35,8 +61,30 @@ message _ListCachesRequest {
   string next_token = 1;
 }
 
+message _CacheLimits {
+  // The amount of transactions per second that can be exercised
+  uint32 max_traffic_rate = 1; 
+  // The amount of traffic per second that can be exercised in KiB
+  uint32 max_throughput_kbps = 2;
+  // The maximum size of a single item in KiB
+  uint32 max_item_size_kb = 3;
+  // The maximum TTL allowed for a single item, in seconds
+  uint64 max_ttl_seconds = 4;
+}
+
+message _TopicLimits {
+  // The amount of messages that can be published per second
+  uint32 max_publish_rate = 1;
+  // The maximum amount of active subscriptions per cache
+  uint32 max_subscription_count = 2;
+  // The maximum size of a single publish message, in KiB
+  uint32 max_publish_message_size_kb = 3;
+}
+
 message _Cache {
   string cache_name = 1;
+  _CacheLimits cache_limits = 2;
+  _TopicLimits topic_limits = 3;
 }
 
 message _ListCachesResponse {
