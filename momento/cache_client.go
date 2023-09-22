@@ -3,6 +3,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -83,6 +84,8 @@ type CacheClient interface {
 	SetRemoveElements(ctx context.Context, r *SetRemoveElementsRequest) (responses.SetRemoveElementsResponse, error)
 	// SetContainsElements checks if provided elements are in the given set.
 	SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error)
+	// SetPop removes one or more random elements from the set.
+	SetPop(ctx context.Context, r *SetPopRequest) (responses.SetPopResponse, error)
 
 	// ListPushFront adds an element to the front of the given list. Creates the list if it does not already exist.
 	ListPushFront(ctx context.Context, r *ListPushFrontRequest) (responses.ListPushFrontResponse, error)
@@ -583,6 +586,15 @@ func (c defaultScsClient) SetRemoveElements(ctx context.Context, r *SetRemoveEle
 func (c defaultScsClient) SetContainsElements(ctx context.Context, r *SetContainsElementsRequest) (responses.SetContainsElementsResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetPop(ctx context.Context, r *SetPopRequest) (responses.SetPopResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.dataClient.makeRequest(ctx, r); err != nil {
+		fmt.Printf("cache_client.go SetPop error: %s\n", err.Error())
 		return nil, err
 	}
 	return r.response, nil

@@ -39,6 +39,7 @@ service Scs {
   rpc SetDifference (_SetDifferenceRequest) returns (_SetDifferenceResponse) {}
   rpc SetContains (_SetContainsRequest) returns (_SetContainsResponse) {}
   rpc SetLength(_SetLengthRequest) returns (_SetLengthResponse) {}
+  rpc SetPop(_SetPopRequest) returns (_SetPopResponse) {}
 
   rpc ListPushFront(_ListPushFrontRequest) returns (_ListPushFrontResponse) {}
   rpc ListPushBack(_ListPushBackRequest) returns (_ListPushBackResponse) {}
@@ -409,6 +410,24 @@ message _SetLengthResponse {
     _Found found = 1;
     _Missing missing = 2;
   }
+}
+
+message _SetPopRequest {
+  bytes set_name = 1;
+  uint32 count = 2;
+}
+
+message _SetPopResponse {
+  message _Found {
+    repeated bytes elements = 1;
+  }
+
+  message _Missing {}
+
+  oneof set {
+    _Found found = 1;
+    _Missing missing = 2;
+  } 
 }
 
 message _ListConcatenateFrontRequest {
