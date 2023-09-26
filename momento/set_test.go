@@ -651,4 +651,85 @@ var _ = Describe("Set methods", func() {
 			})
 		})
 	})
+
+	Describe("set pop", func() {
+		BeforeEach(func() {
+			elements := getElements(10)
+			Expect(
+				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+					Elements:  elements,
+				}),
+			).Error().To(BeNil())
+		})
+
+		It("gets a miss on a nonexistent set", func() {
+			resp, err := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   uuid.NewString(),
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&SetPopMiss{}))
+		})
+
+		It("pops elements off until empty", func() {
+			var count uint32
+
+			// Pop one item from the set (1 is the default), 9 should remain
+			resp1, err1 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+			})
+			Expect(err1).To(BeNil())
+			Expect(resp1).To(BeAssignableToTypeOf(&SetPopHit{}))
+			Expect(
+				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				}),
+			).To(HaveSetLength(9))
+
+			// Pop 4 items from the set, 5 should remain
+			count = 4
+			resp2, err2 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Count:     &count,
+			})
+			Expect(err2).To(BeNil())
+			Expect(resp2).To(BeAssignableToTypeOf(&SetPopHit{}))
+			Expect(
+				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				}),
+			).To(HaveSetLength(5))
+
+			// Pop 5 items from the set, none should remain
+			count = 5
+			resp3, err3 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+				Count:     &count,
+			})
+			Expect(err3).To(BeNil())
+			Expect(resp3).To(BeAssignableToTypeOf(&SetPopHit{}))
+			Expect(
+				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
+					CacheName: sharedContext.CacheName,
+					SetName:   sharedContext.CollectionName,
+				}),
+			).To(BeAssignableToTypeOf(&SetFetchMiss{}))
+
+			// Expect a miss when set is empty
+			resp4, err4 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
+				CacheName: sharedContext.CacheName,
+				SetName:   sharedContext.CollectionName,
+			})
+			Expect(err4).To(BeNil())
+			Expect(resp4).To(BeAssignableToTypeOf(&SetPopMiss{}))
+		})
+
+	})
 })
