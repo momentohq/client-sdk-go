@@ -25,10 +25,6 @@ func (r *SetPopRequest) requestName() string { return "SetPop" }
 func (r *SetPopRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
-	if _, err = prepareCacheName(r); err != nil {
-		return err
-	}
-
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
 		return err
 	}
