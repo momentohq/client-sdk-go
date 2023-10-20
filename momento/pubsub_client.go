@@ -9,14 +9,12 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"google.golang.org/grpc"
 )
 
 type pubSubClient struct {
 	streamTopicManagers []*grpcmanagers.TopicGrpcManager
-	unaryDataManager    *grpcmanagers.DataGrpcManager
 	unaryGrpcClient     pb.PubsubClient
 	endpoint            string
 }
@@ -29,7 +27,8 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	if numSubscriptions > 0 {
 		// a single channel can support 100 streams, so we need to create enough
 		// channels to handle the maximum number of subscriptions
-		numChannels = uint32(math.Ceil(numSubscriptions / 100.0))
+		// plus one for the publishing channel
+		numChannels = uint32(math.Ceil((numSubscriptions + 1) / 100.0))
 	} else {
 		numChannels = 1
 	}
@@ -44,19 +43,11 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		}
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
-
-	unaryDataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
-		CredentialProvider: request.CredentialProvider,
-		RetryStrategy:      retry.NewNeverRetryStrategy(),
-	})
-	if err != nil {
-		return nil, err
-	}
+	lastStreamTopicManager := streamTopicManagers[numChannels-1]
 
 	return &pubSubClient{
 		streamTopicManagers: streamTopicManagers,
-		unaryDataManager:    unaryDataManager,
-		unaryGrpcClient:     pb.NewPubsubClient(unaryDataManager.Conn),
+		unaryGrpcClient:     lastStreamTopicManager.StreamClient,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
@@ -113,5 +104,4 @@ func (client *pubSubClient) close() {
 	for clientIndex := range client.streamTopicManagers {
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
-	defer client.unaryDataManager.Close()
 }
