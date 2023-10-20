@@ -27,6 +27,7 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+		grpc.WithChainUnaryInterceptor(interceptor.AddHeadersInterceptor(authToken)),
 	)
 
 	if err != nil {
