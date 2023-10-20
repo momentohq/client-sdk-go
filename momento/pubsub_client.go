@@ -15,7 +15,6 @@ import (
 
 type pubSubClient struct {
 	streamTopicManagers []*grpcmanagers.TopicGrpcManager
-	unaryGrpcClient     pb.PubsubClient
 	endpoint            string
 }
 
@@ -43,11 +42,9 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		}
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
-	lastStreamTopicManager := streamTopicManagers[numChannels-1]
 
 	return &pubSubClient{
 		streamTopicManagers: streamTopicManagers,
-		unaryGrpcClient:     lastStreamTopicManager.StreamClient,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 	}, nil
 }
@@ -69,9 +66,10 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
+	topicManager := client.getNextStreamTopicManager()
 	switch value := request.Value.(type) {
 	case String:
-		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
@@ -82,7 +80,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 		})
 		return err
 	case Bytes:
-		_, err := client.unaryGrpcClient.Publish(ctx, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
