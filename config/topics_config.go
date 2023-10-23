@@ -28,12 +28,12 @@ type TopicsConfiguration interface {
 	// Deprecated: Use GetNumGrpcChannels instead.
 	GetMaxSubscriptions() uint32
 
-	// Deprecated: using maxSubscriptions can result in edge cases where the topics client could
-	// bottleneck the publishing a large volume of messages as each GRPC connection can multiplex
-	// only 100 requests and only one multiplex stream would be available for the publisher.
+	// Deprecated: maxSubscriptions is currently implemented to create one GRPC connection for every
+	// 100 subscribers. Can result in edge cases where subscribers and publishers are in contention
+	// and may bottleneck a large volume of publish requests.
 	//
-	// Please use WithNumGrpcChannels instead as per your use case. One GRPC connection can
-	// support 100 subscribers/publishers.
+	// Please use WithNumGrpcChannels instead as per your use case.
+	// One GRPC connection can multiplex 100 subscribers/publishers.
 	WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration
 
 	// GetNumGrpcChannels Returns the configuration option for the number of GRPC channels
