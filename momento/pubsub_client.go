@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sync/atomic"
 
@@ -19,9 +20,10 @@ type pubSubClient struct {
 }
 
 var streamTopicManagerCount uint64
+var numGrpcStreams int64
+var numChannels uint32
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
-	var numChannels uint32
 	numSubscriptions := float64(request.TopicsConfiguration.GetMaxSubscriptions())
 	numGrpcChannels := request.TopicsConfiguration.GetNumGrpcChannels()
 
@@ -60,22 +62,47 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 }
 
 func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcManager {
-	nextMangerIndex := atomic.AddUint64(&streamTopicManagerCount, 1)
-	topicManager := client.streamTopicManagers[nextMangerIndex%uint64(len(client.streamTopicManagers))]
+	nextManagerIndex := atomic.AddUint64(&streamTopicManagerCount, 1)
+	topicManager := client.streamTopicManagers[nextManagerIndex%uint64(len(client.streamTopicManagers))]
 	return topicManager
 }
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, error) {
+
+	err := checkNumConcurrentStreams()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	atomic.AddInt64(&numGrpcStreams, 1)
+
 	topicManager := client.getNextStreamTopicManager()
 	clientStream, err := topicManager.StreamClient.Subscribe(ctx, &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 	})
+
+	if err != nil {
+		atomic.AddInt64(&numGrpcStreams, -1)
+		return nil, nil, err
+	}
+
+	if numGrpcStreams > 0 && (int64(numChannels*100)-numGrpcStreams < 10) {
+		fmt.Printf("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100)
+	}
+
 	return topicManager, clientStream, err
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
+	err := checkNumConcurrentStreams()
+	if err != nil {
+		return err
+	}
+
+	atomic.AddInt64(&numGrpcStreams, 1)
+
 	topicManager := client.getNextStreamTopicManager()
 	switch value := request.Value.(type) {
 	case String:
@@ -88,6 +115,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 				},
 			},
 		})
+		atomic.AddInt64(&numGrpcStreams, -1)
 		return err
 	case Bytes:
 		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
@@ -99,8 +127,10 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 				},
 			},
 		})
+		atomic.AddInt64(&numGrpcStreams, -1)
 		return err
 	default:
+		atomic.AddInt64(&numGrpcStreams, -1)
 		return momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"error encoding topic value only support []byte or string currently", nil,
@@ -109,7 +139,15 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 }
 
 func (client *pubSubClient) close() {
+	atomic.AddInt64(&numGrpcStreams, (0 - numGrpcStreams))
 	for clientIndex := range client.streamTopicManagers {
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
+}
+
+func checkNumConcurrentStreams() error {
+	if numGrpcStreams > 0 && numGrpcStreams == int64(numChannels*100) {
+		return NewMomentoError(momentoerrors.LimitExceededError, "Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests", nil)
+	}
+	return nil
 }
