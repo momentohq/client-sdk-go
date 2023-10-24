@@ -23,7 +23,17 @@ var streamTopicManagerCount uint64
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	var numChannels uint32
 	numSubscriptions := float64(request.TopicsConfiguration.GetMaxSubscriptions())
-	if numSubscriptions > 0 {
+	numGrpcChannels := request.TopicsConfiguration.GetNumGrpcChannels()
+
+	// numSubscriptions is deprecated. Nevertheless, check that numGrpcChannels and numSubscriptions
+	// are not both set. They should be mutually exclusive configs.
+	if numGrpcChannels > 0 && numSubscriptions > 0 {
+		return nil, NewMomentoError(momentoerrors.InvalidArgumentError, "Cannot accept both maxSubscriptions and numGrpcChannels as arguments; please use numGrpcChannels as maxSubscriptions is deprecated", nil)
+	}
+
+	if numGrpcChannels > 0 {
+		numChannels = numGrpcChannels
+	} else if numSubscriptions > 0 {
 		// a single channel can support 100 streams, so we need to create enough
 		// channels to handle the maximum number of subscriptions
 		// plus one for the publishing channel
