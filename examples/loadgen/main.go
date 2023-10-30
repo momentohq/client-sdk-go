@@ -24,9 +24,11 @@ const (
 )
 
 type loadGeneratorOptions struct {
-	logLevel                   momento_default_logger.LogLevel
-	showStatsInterval          time.Duration
-	cacheItemPayloadBytes      int
+	logLevel              momento_default_logger.LogLevel
+	showStatsInterval     time.Duration
+	cacheItemPayloadBytes int
+	// Note: You are likely to see degraded performance if you increase this above 50
+	// and observe elevated client-side latencies.
 	numberOfConcurrentRequests int
 	maxRequestsPerSecond       int
 	howLongToRun               time.Duration
@@ -303,9 +305,11 @@ func main() {
 	ctx := context.Background()
 
 	opts := loadGeneratorOptions{
-		logLevel:                   momento_default_logger.DEBUG,
-		showStatsInterval:          time.Second * 5,
-		cacheItemPayloadBytes:      100,
+		logLevel:              momento_default_logger.DEBUG,
+		showStatsInterval:     time.Second * 5,
+		cacheItemPayloadBytes: 100,
+		// Note: You are likely to see degraded performance if you increase this above 50
+		// and observe elevated client-side latencies.
 		numberOfConcurrentRequests: 50,
 		maxRequestsPerSecond:       100,
 		howLongToRun:               time.Minute,
