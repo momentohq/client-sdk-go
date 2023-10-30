@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -61,6 +62,7 @@ type DataClientRequest struct {
 type PubSubClientRequest struct {
 	TopicsConfiguration config.TopicsConfiguration
 	CredentialProvider  auth.CredentialProvider
+	Log                 logger.MomentoLogger
 }
 
 type PingClientRequest struct {

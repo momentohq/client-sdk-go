@@ -6,6 +6,7 @@ import (
 	"math"
 	"sync/atomic"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -17,6 +18,7 @@ import (
 type pubSubClient struct {
 	streamTopicManagers []*grpcmanagers.TopicGrpcManager
 	endpoint            string
+	log                 logger.MomentoLogger
 }
 
 var streamTopicManagerCount uint64
@@ -58,6 +60,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	return &pubSubClient{
 		streamTopicManagers: streamTopicManagers,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
+		log:                 request.Log,
 	}, nil
 }
 
@@ -69,10 +72,7 @@ func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcM
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, error) {
 
-	err := checkNumConcurrentStreams()
-	if err != nil {
-		return nil, nil, err
-	}
+	checkNumConcurrentStreams(client.log)
 
 	atomic.AddInt64(&numGrpcStreams, 1)
 
@@ -96,10 +96,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
-	err := checkNumConcurrentStreams()
-	if err != nil {
-		return err
-	}
+	checkNumConcurrentStreams(client.log)
 
 	atomic.AddInt64(&numGrpcStreams, 1)
 
@@ -139,15 +136,14 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 }
 
 func (client *pubSubClient) close() {
-	atomic.AddInt64(&numGrpcStreams, (0 - numGrpcStreams))
+	atomic.AddInt64(&numGrpcStreams, -numGrpcStreams)
 	for clientIndex := range client.streamTopicManagers {
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
 }
 
-func checkNumConcurrentStreams() error {
-	if numGrpcStreams > 0 && numGrpcStreams == int64(numChannels*100) {
-		return NewMomentoError(momentoerrors.LimitExceededError, "Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests", nil)
+func checkNumConcurrentStreams(log logger.MomentoLogger) {
+	if numGrpcStreams > 0 && numGrpcStreams >= int64(numChannels*100) {
+		log.Debug("Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests")
 	}
-	return nil
 }
