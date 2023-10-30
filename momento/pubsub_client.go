@@ -89,7 +89,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	}
 
 	if numGrpcStreams > 0 && (int64(numChannels*100)-numGrpcStreams < 10) {
-		fmt.Printf("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100)
+		client.log.Info(fmt.Sprintf("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100))
 	}
 
 	return topicManager, clientStream, err
@@ -98,11 +98,10 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
 	checkNumConcurrentStreams(client.log)
 
-	atomic.AddInt64(&numGrpcStreams, 1)
-
 	topicManager := client.getNextStreamTopicManager()
 	switch value := request.Value.(type) {
 	case String:
+		atomic.AddInt64(&numGrpcStreams, 1)
 		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -115,6 +114,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 		atomic.AddInt64(&numGrpcStreams, -1)
 		return err
 	case Bytes:
+		atomic.AddInt64(&numGrpcStreams, 1)
 		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -127,7 +127,6 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 		atomic.AddInt64(&numGrpcStreams, -1)
 		return err
 	default:
-		atomic.AddInt64(&numGrpcStreams, -1)
 		return momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"error encoding topic value only support []byte or string currently", nil,
@@ -144,6 +143,6 @@ func (client *pubSubClient) close() {
 
 func checkNumConcurrentStreams(log logger.MomentoLogger) {
 	if numGrpcStreams > 0 && numGrpcStreams >= int64(numChannels*100) {
-		log.Debug("Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests")
+		log.Info("Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests")
 	}
 }
