@@ -92,7 +92,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	}
 
 	if numGrpcStreams > 0 && (int64(numChannels*100)-numGrpcStreams < 10) {
-		client.log.Info(fmt.Sprintf("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100))
+		client.log.Warn(fmt.Sprintf("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100))
 	}
 
 	return topicManager, clientStream, cancelContext, cancelFunction, err
