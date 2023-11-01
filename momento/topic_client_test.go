@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
@@ -205,9 +204,9 @@ var _ = Describe("Pubsub", func() {
 			panic(err)
 		}
 		switch msg := item.(type) {
-		case momento.String:
+		case String:
 			Expect(msg).To(Equal(String("hello-1")))
-		case momento.Bytes:
+		case Bytes:
 			Fail("Expected topic item to be a string")
 		}
 
@@ -216,9 +215,9 @@ var _ = Describe("Pubsub", func() {
 			panic(err)
 		}
 		switch msg := item.(type) {
-		case momento.String:
+		case String:
 			Expect(msg).To(Equal(String("hello-2")))
-		case momento.Bytes:
+		case Bytes:
 			Fail("Expected topic item to be a string")
 		}
 
@@ -254,9 +253,9 @@ var _ = Describe("Pubsub", func() {
 			panic(err)
 		}
 		switch msg := item.(type) {
-		case momento.String:
+		case String:
 			Expect(msg).To(Equal(String("hello-again-2")))
-		case momento.Bytes:
+		case Bytes:
 			Fail("Expected topic item to be a string")
 		}
 	})
