@@ -70,14 +70,16 @@ func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcM
 	return topicManager
 }
 
-func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, error) {
+func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, context.Context, context.CancelFunc, error) {
 
 	checkNumConcurrentStreams(client.log)
 
-	atomic.AddInt64(&numGrpcStreams, 1)
+	// try withCancel on context
+	cancelContext, cancelFunction := context.WithCancel(ctx)
 
+	atomic.AddInt64(&numGrpcStreams, 1)
 	topicManager := client.getNextStreamTopicManager()
-	clientStream, err := topicManager.StreamClient.Subscribe(ctx, &pb.XSubscriptionRequest{
+	clientStream, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
@@ -85,14 +87,15 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 
 	if err != nil {
 		atomic.AddInt64(&numGrpcStreams, -1)
-		return nil, nil, err
+		cancelFunction()
+		return nil, nil, nil, nil, err
 	}
 
 	if numGrpcStreams > 0 && (int64(numChannels*100)-numGrpcStreams < 10) {
 		client.log.Info(fmt.Sprintf("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100))
 	}
 
-	return topicManager, clientStream, err
+	return topicManager, clientStream, cancelContext, cancelFunction, err
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {

@@ -58,7 +58,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, err
 	}
 
-	topicManager, clientStream, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+	topicManager, clientStream, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
 	})
@@ -90,6 +90,8 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
 		log:                c.log,
+		cancelContext:      cancelContext,
+		cancelFunction:     cancelFunction,
 	}, nil
 }
 

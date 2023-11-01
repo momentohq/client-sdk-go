@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
@@ -156,5 +157,107 @@ var _ = Describe("Pubsub", func() {
 				}),
 			).Error().NotTo(HaveOccurred())
 		})
+	})
+
+	It("Can close individual topics subscriptions without closing the grpc channel", func() {
+		topic1 := fmt.Sprintf("golang-topics-test-%s", uuid.NewString())
+		topic2 := fmt.Sprintf("golang-topics-test-%s", uuid.NewString())
+
+		// subscribe to one topic
+		sub1, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: topic1,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		// subscribe to another topic
+		sub2, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: topic2,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		// publish messages to both
+		_, err = sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: topic1,
+			Value:     String("hello-1"),
+		})
+		if err != nil {
+			panic(err)
+		}
+		_, err = sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: topic2,
+			Value:     String("hello-2"),
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		// expect two Item() successes
+		item, err := sub1.Item(sharedContext.Ctx)
+		if err != nil {
+			panic(err)
+		}
+		switch msg := item.(type) {
+		case momento.String:
+			Expect(msg).To(Equal(String("hello-1")))
+		case momento.Bytes:
+			Fail("Expected topic item to be a string")
+		}
+
+		item, err = sub2.Item(sharedContext.Ctx)
+		if err != nil {
+			panic(err)
+		}
+		switch msg := item.(type) {
+		case momento.String:
+			Expect(msg).To(Equal(String("hello-2")))
+		case momento.Bytes:
+			Fail("Expected topic item to be a string")
+		}
+
+		// close one subscription
+		sub1.Close()
+
+		// publish messages to both
+		_, err = sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: topic1,
+			Value:     String("hello-again-1"),
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: topic2,
+			Value:     String("hello-again-2"),
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		// expect one Item() success and one failure
+		item, err = sub1.Item(sharedContext.Ctx)
+		Expect(item).To(BeNil())
+		Expect(err.Error()).To(Equal("context canceled"))
+
+		item, err = sub2.Item(sharedContext.Ctx)
+		if err != nil {
+			panic(err)
+		}
+		switch msg := item.(type) {
+		case momento.String:
+			Expect(msg).To(Equal(String("hello-again-2")))
+		case momento.Bytes:
+			Fail("Expected topic item to be a string")
+		}
 	})
 })

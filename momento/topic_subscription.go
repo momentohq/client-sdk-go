@@ -14,6 +14,7 @@ import (
 
 type TopicSubscription interface {
 	Item(ctx context.Context) (TopicValue, error)
+	Close()
 }
 
 type topicSubscription struct {
@@ -24,6 +25,8 @@ type topicSubscription struct {
 	topicName               string
 	log                     logger.MomentoLogger
 	lastKnownSequenceNumber uint64
+	cancelContext           context.Context
+	cancelFunction          context.CancelFunc
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -34,6 +37,9 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		case <-ctx.Done():
 			// Context has been canceled, return an error
 			return nil, ctx.Err()
+		case <-s.cancelContext.Done():
+			// Context has been canceled, return an error
+			return nil, s.cancelContext.Err()
 		default:
 			// Proceed as is
 		}
@@ -86,7 +92,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	for {
 		s.log.Debug("Attempting reconnecting to client stream")
 		time.Sleep(seconds)
-		newTopicManager, newStream, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		newTopicManager, newStream, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
@@ -98,7 +104,13 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 			s.log.Debug("successfully reconnected to subscription stream")
 			s.topicManager = newTopicManager
 			s.grpcClient = newStream
+			s.cancelContext = cancelContext
+			s.cancelFunction = cancelFunction
 			return
 		}
 	}
+}
+
+func (s *topicSubscription) Close() {
+	s.cancelFunction()
 }
