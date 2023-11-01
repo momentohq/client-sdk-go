@@ -146,6 +146,6 @@ func (client *pubSubClient) close() {
 
 func checkNumConcurrentStreams(log logger.MomentoLogger) {
 	if numGrpcStreams > 0 && numGrpcStreams >= int64(numChannels*100) {
-		log.Info("Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests")
+		log.Warn("Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests")
 	}
 }
