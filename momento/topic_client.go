@@ -38,6 +38,7 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
 		CredentialProvider:  credentialProvider,
 		TopicsConfiguration: topicsConfiguration,
+		Log:                 client.log,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
@@ -57,7 +58,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, err
 	}
 
-	topicManager, clientStream, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+	topicManager, clientStream, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 		CacheName: request.CacheName,
 		TopicName: request.TopicName,
 	})
@@ -89,6 +90,8 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
 		log:                c.log,
+		cancelContext:      cancelContext,
+		cancelFunction:     cancelFunction,
 	}, nil
 }
 
