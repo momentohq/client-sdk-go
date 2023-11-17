@@ -9,8 +9,6 @@ jobs:
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
 
       - name: Generate README
         uses: momentohq/standards-and-practices/github-actions/generate-and-commit-oss-readme@gh-actions-v2
@@ -35,8 +33,47 @@ jobs:
           dev_docs_slug: go
 
   test:
-    needs: [readme]
-    uses: ./.github/workflows/test.yml
-    secrets:
-      auth-token: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
-      github-token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      TEST_AUTH_TOKEN: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Install devtools
+        run: make install-devtools
+
+      - name: Lint
+        run: make lint
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          only-new-issues: true
+          skip-pkg-cache: true
+
+      # If there are any diffs from goimports or go mod tidy, fail.
+      - name: Verify no changes from goimports and go mod tidy
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git diff
+            exit 1
+          fi
+
+      - name: Build
+        run: make build
+
+      - name: Build examples
+        run: make build-examples
+
+      - name: Run test
+        run: make test
