@@ -854,4 +854,390 @@ var _ = Describe("AuthClient", func() {
 			assertSubscribeFailure(tc, "w00t", sharedContext.CacheName)
 		})
 	})
+
+	Describe("TopicSubscribeOnly tokens", func() {
+		It(`Generates disposable token TopicSubscribeOnly for a specific cache, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := TopicSubscribeOnly(CacheName{Name: sharedContext.CacheName}, TopicName{Name: topicName})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we cannot read the key
+			assertGetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key
+			assertSetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot write a prefixed key
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			// make sure cannot publish to topic
+			assertPublishFailure(tc, topicName, sharedContext.CacheName)
+			// make sure cannot publish to prefixed topic
+			assertPublishFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure cannot publish to topic in another cache
+			assertPublishFailure(tc, topicName, sharedContext.DefaultCacheName)
+			// make sure cannot publish to a topic with a different prefix
+			assertPublishFailure(tc, "w00t", sharedContext.CacheName)
+			// make sure can subscribe to topic
+			assertSubscribeSuccess(tc, topicName, sharedContext.CacheName)
+			// make sure cannot subscribe to prefixed topic
+			assertSubscribeFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure cannot subscribe to topic in another cache
+			assertSubscribeFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.DefaultCacheName)
+			// make sure cannot subscribe to a topic with a different prefix
+			assertSubscribeFailure(tc, "w00t", sharedContext.CacheName)
+		})
+
+		It(`Generates disposable token TopicSubscribeOnly for all caches and all topics, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := TopicSubscribeOnly(AllCaches{}, AllTopics{})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we cannot read the key
+			assertGetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key
+			assertSetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot write a prefixed key
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			// make sure cannot publish to topic
+			assertPublishFailure(tc, topicName, sharedContext.CacheName)
+			// make sure cannot publish to prefixed topic
+			assertPublishFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure cannot publish to topic in another cache
+			assertPublishFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.DefaultCacheName)
+			// make sure cannot publish to a topic with a different prefix
+			assertPublishFailure(tc, "w00t", sharedContext.CacheName)
+			// make sure can subscribe to topic
+			assertSubscribeSuccess(tc, topicName, sharedContext.CacheName)
+			// make sure can subscribe to prefixed topic
+			assertSubscribeSuccess(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure can subscribe to topic in another cache
+			assertSubscribeSuccess(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.DefaultCacheName)
+			// make sure can subscribe to a topic with a different prefix
+			assertSubscribeSuccess(tc, "w00t", sharedContext.CacheName)
+		})
+	})
+
+	Describe("TopicPublishSubscribe tokens", func() {
+		It(`Generates disposable token TopicPublishSubscribe for a specific cache, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := TopicPublishSubscribe(CacheName{Name: sharedContext.CacheName}, TopicName{Name: topicName})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we cannot read the key
+			assertGetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key
+			assertSetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot write a prefixed key
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			// make sure can publish to topic
+			assertPublishSuccess(tc, topicName, sharedContext.CacheName)
+			// make sure cannot publish to prefixed topic
+			assertPublishFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure cannot publish to topic in another cache
+			assertPublishFailure(tc, topicName, sharedContext.DefaultCacheName)
+			// make sure cannot publish to a topic with a different prefix
+			assertPublishFailure(tc, "w00t", sharedContext.CacheName)
+			// make sure can subscribe to topic
+			assertSubscribeSuccess(tc, topicName, sharedContext.CacheName)
+			// make sure cannot subscribe to prefixed topic
+			assertSubscribeFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure cannot subscribe to topic in another cache
+			assertSubscribeFailure(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.DefaultCacheName)
+			// make sure cannot subscribe to a topic with a different prefix
+			assertSubscribeFailure(tc, "w00t", sharedContext.CacheName)
+		})
+
+		It(`Generates disposable token TopicPublishSubscribe for all caches and all topics, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := TopicPublishSubscribe(AllCaches{}, AllTopics{})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we cannot read the key
+			assertGetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key
+			assertSetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot write a prefixed key
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			// make sure can publish to topic
+			assertPublishSuccess(tc, topicName, sharedContext.CacheName)
+			// make sure can publish to prefixed topic
+			assertPublishSuccess(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure can publish to topic in another cache
+			assertPublishSuccess(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.DefaultCacheName)
+			// make sure can publish to a topic with a different prefix
+			assertPublishSuccess(tc, "w00t", sharedContext.CacheName)
+			// make sure can subscribe to topic
+			assertSubscribeSuccess(tc, topicName, sharedContext.CacheName)
+			// make sure can subscribe to prefixed topic
+			assertSubscribeSuccess(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.CacheName)
+			// make sure can subscribe to topic in another cache
+			assertSubscribeSuccess(tc, fmt.Sprintf("%sw00t", topicName), sharedContext.DefaultCacheName)
+			// make sure can subscribe to a topic with a different prefix
+			assertSubscribeSuccess(tc, "w00t", sharedContext.CacheName)
+		})
+	})
+
+	Describe("CacheReadWrite tokens", func() {
+		It(`Generates disposable token CacheReadWrite for a specific cache, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := CacheReadWrite(CacheName{Name: sharedContext.CacheName})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we can read the key
+			assertGetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we cannot read the key for another cache
+			assertGetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can read a prefixed key
+			assertGetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot read a prefixed key for another cache
+			assertGetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write the key
+			assertSetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can write a prefixed key
+			assertSetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot write a prefixed key in another cache
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write a key with another prefix
+			assertSetSuccess(cc, String("w00t"), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
+			assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+		})
+
+		It(`Generates disposable token TopicPublishSubscribe for all caches, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := CacheReadWrite(AllCaches{})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we can read the key
+			assertGetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we can read the key for another cache
+			assertGetSuccess(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can read a prefixed key
+			assertGetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we can read a prefixed key for another cache
+			assertGetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write the key
+			assertSetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we can write the key in another cache
+			assertSetSuccess(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can write a prefixed key
+			assertSetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we can write a prefixed key in another cache
+			assertSetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write a key with another prefix
+			assertSetSuccess(cc, String("w00t"), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
+			assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+		})
+	})
+
+	Describe("CacheReadOnly tokens", func() {
+		It(`Generates disposable token CacheReadOnly for a specific cache, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := CacheReadOnly(CacheName{Name: sharedContext.CacheName})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we can read the key
+			assertGetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we cannot read the key for another cache
+			assertGetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can read a prefixed key
+			assertGetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot read a prefixed key for another cache
+			assertGetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we cannot write the key
+			assertSetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot write a prefixed key
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot write a prefixed key in another cache
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we cannot write a key with another prefix
+			assertSetFailure(cc, String("w00t"), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
+			assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+		})
+
+		It(`Generates disposable token CacheReadOnly for all caches, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := CacheReadOnly(AllCaches{})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we can read the key
+			assertGetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we can read the key for another cache
+			assertGetSuccess(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can read a prefixed key
+			assertGetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we can read a prefixed key for another cache
+			assertGetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we cannot write the key
+			assertSetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot write a prefixed key
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot write a prefixed key in another cache
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we cannot write a key with another prefix
+			assertSetFailure(cc, String("w00t"), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
+			assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+		})
+	})
+
+	Describe("CacheWriteOnly tokens", func() {
+		It(`Generates disposable token CacheWriteOnly for a specific cache, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := CacheWriteOnly(CacheName{Name: sharedContext.CacheName})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we cannot read the key
+			assertGetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot read the key for another cache
+			assertGetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot read a prefixed key
+			assertGetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot read a prefixed key for another cache
+			assertGetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write the key
+			assertSetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we cannot write the key in another cache
+			assertSetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can write a prefixed key
+			assertSetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot write a prefixed key in another cache
+			assertSetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write a key with another prefix
+			assertSetSuccess(cc, String("w00t"), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
+			assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+		})
+
+		It(`Generates disposable token CacheWriteOnly for all caches, and validates its permissions`, func() {
+			topicName := uuid.NewString()
+			key := String(topicName)
+			scope := CacheWriteOnly(AllCaches{})
+			resp := generateDisposableTokenSuccess(sharedContext, scope)
+			credProvider := credProviderFromDisposableToken(resp)
+
+			// assert cache permissions
+			cc := newCacheClient(sharedContext, credProvider)
+			defer cc.Close()
+			// make sure that we cannot read the key
+			assertGetFailure(cc, key, sharedContext.CacheName)
+			// make sure that we cannot read the key for another cache
+			assertGetFailure(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we cannot read a prefixed key
+			assertGetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we cannot read a prefixed key for another cache
+			assertGetFailure(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write the key
+			assertSetSuccess(cc, key, sharedContext.CacheName)
+			// make sure that we can write the key in another cache
+			assertSetSuccess(cc, key, sharedContext.DefaultCacheName)
+			// make sure that we can write a prefixed key
+			assertSetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.CacheName)
+			// make sure that we can write a prefixed key in another cache
+			assertSetSuccess(cc, String(fmt.Sprintf("%sw00t", key)), sharedContext.DefaultCacheName)
+			// make sure that we can write a key with another prefix
+			assertSetSuccess(cc, String("w00t"), sharedContext.CacheName)
+
+			// asserting topic permissions
+			tc := newTopicClient(sharedContext, credProvider)
+			defer tc.Close()
+			assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
+			assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+		})
+	})
 })

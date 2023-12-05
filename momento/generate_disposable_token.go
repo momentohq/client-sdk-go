@@ -9,5 +9,3 @@ type GenerateDisposableTokenRequest struct {
 	Scope     DisposableTokenScope
 	Props     DisposableTokenProps
 }
-
-func (r *GenerateDisposableTokenRequest) requestName() string { return "GenerateDisposableToken" }
