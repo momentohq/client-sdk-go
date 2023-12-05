@@ -25,6 +25,8 @@ message _GenerateDisposableTokenRequest {
   string auth_token = 2;
 
   permission_messages.Permissions permissions = 3;
+
+  string token_id = 4;
 }
 
 message _GenerateDisposableTokenResponse {
