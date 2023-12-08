@@ -29,6 +29,8 @@ type SharedContext struct {
 	Configuration              config.Configuration
 	TopicConfigration          config.TopicsConfiguration
 	CredentialProvider         auth.CredentialProvider
+	AuthClient                 momento.AuthClient
+	AuthConfiguration          config.AuthConfiguration
 }
 
 func NewSharedContext() SharedContext {
@@ -42,6 +44,7 @@ func NewSharedContext() SharedContext {
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	shared.TopicConfigration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
@@ -62,10 +65,16 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
+	authClient, err := momento.NewAuthClient(shared.AuthConfiguration, shared.CredentialProvider)
+	if err != nil {
+		panic(err)
+	}
+
 	shared.Client = client
 	shared.ClientWithDefaultCacheName = clientDefaultCacheName
 	shared.DefaultCacheName = defaultCacheName
 	shared.TopicClient = topicClient
+	shared.AuthClient = authClient
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 	shared.CollectionName = uuid.NewString()

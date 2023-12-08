@@ -66,7 +66,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
-			s.log.Debug("recieved discontinuity item")
+			s.log.Debug("received discontinuity item")
 			continue
 		case *pb.XSubscriptionItem_Item:
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
@@ -77,7 +77,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 				return Bytes(subscriptionItem.Binary), nil
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
-			s.log.Debug("recieved heartbeat item")
+			s.log.Debug("received heartbeat item")
 			continue
 		default:
 			s.log.Trace("Unrecognized response detected.",

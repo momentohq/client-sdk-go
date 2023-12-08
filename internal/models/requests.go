@@ -20,6 +20,10 @@ type DataGrpcManagerRequest struct {
 	RetryStrategy      retry.Strategy
 }
 
+type TokenGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+}
+
 type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 }
@@ -63,6 +67,16 @@ type PubSubClientRequest struct {
 	TopicsConfiguration config.TopicsConfiguration
 	CredentialProvider  auth.CredentialProvider
 	Log                 logger.MomentoLogger
+}
+
+type TopicClientRequest struct {
+	CredentialProvider auth.CredentialProvider
+	Log                logger.MomentoLogger
+}
+
+type TokenClientRequest struct {
+	CredentialProvider auth.CredentialProvider
+	Log                logger.MomentoLogger
 }
 
 type PingClientRequest struct {
