@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/utils"
 	"log"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
+	auth_resp "github.com/momentohq/client-sdk-go/responses/auth"
 )
 
 var (
@@ -169,5 +171,28 @@ func example_API_TopicSubscribe(client momento.TopicClient) {
 		fmt.Printf("received message as string: '%v'\n", msg)
 	case momento.Bytes:
 		fmt.Printf("received message as bytes: '%v'\n", msg)
+	}
+}
+
+func example_API_GenerateDisposableToken(client momento.AuthClient) {
+	tokenId := "a token id"
+	resp, err := client.GenerateDisposableToken(ctx, &momento.GenerateDisposableTokenRequest{
+		ExpiresIn: utils.ExpiresInSeconds(10),
+		Scope: momento.TopicSubscribeOnly(
+			momento.CacheName{Name: "a cache"},
+			momento.TopicName{Name: "a topic"},
+		),
+		Props: momento.DisposableTokenProps{
+			TokenId: &tokenId,
+		},
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	switch r := resp.(type) {
+	case *auth_resp.GenerateDisposableTokenSuccess:
+		log.Printf("Successfully generated a disposable token for endpoint=%s with tokenId=%s\n", r.Endpoint, tokenId)
 	}
 }
