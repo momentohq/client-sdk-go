@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/momentohq/client-sdk-go/utils"
 	"log"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
