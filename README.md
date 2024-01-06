@@ -24,15 +24,6 @@ To get started with Momento you will need a Momento Auth Token. You can get one 
 The Momento Golang SDK is available here on github: [momentohq/client-sdk-go](https://github.com/momentohq/client-sdk-go).
 
 ```bash
-# Create a new module directory if you dont already have one
-mkdir my-example-project
-cd my-example-project
-
-# Create a module with go.mod file in the directory.
-# See https://go.dev/doc/modules/gomod-ref for full docs on go mod
-go mod init example/my-example-project
-
-# Then, run go get to add the Momento SDK to your module.
 go get github.com/momentohq/client-sdk-go
 ```
 
