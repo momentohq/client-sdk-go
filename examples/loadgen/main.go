@@ -27,6 +27,7 @@ type loadGeneratorOptions struct {
 	logLevel              momento_default_logger.LogLevel
 	showStatsInterval     time.Duration
 	cacheItemPayloadBytes int
+	clientCount           int
 	// Note: You are likely to see degraded performance if you increase this above 50
 	// and observe elevated client-side latencies.
 	numberOfConcurrentRequests int
@@ -61,16 +62,21 @@ func newLoadGenerator(config config.Configuration, options loadGeneratorOptions)
 	}
 }
 
-func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Duration) {
+func (r *loadGenerator) init(ctx context.Context) ([]momento.CacheClient, time.Duration) {
 	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewCacheClientWithEagerConnectTimeout(r.momentoClientConfig, credentialProvider, time.Second*CacheItemTtlSeconds, 30*time.Second)
-	if err != nil {
-		panic(err)
+	var clients []momento.CacheClient
+	for i := 0; i < r.options.clientCount; i++ {
+		client, err := momento.NewCacheClientWithEagerConnectTimeout(r.momentoClientConfig, credentialProvider, time.Second*CacheItemTtlSeconds, 30*time.Second)
+		if err != nil {
+			panic(err)
+		}
+		clients = append(clients, client)
 	}
-	if _, err := client.CreateCache(ctx, &momento.CreateCacheRequest{CacheName: CacheName}); err != nil {
+
+	if _, err := clients[0].CreateCache(ctx, &momento.CreateCacheRequest{CacheName: CacheName}); err != nil {
 		panic(err)
 	}
 
@@ -93,7 +99,7 @@ func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Dur
 			int(r.options.howLongToRun.Seconds())),
 	)
 
-	return client, delay
+	return clients, delay
 }
 
 func processError(err error, errChan chan string) {
@@ -269,7 +275,7 @@ func timer(ctx context.Context, getChan chan int64, setChan chan int64, errChan 
 	}
 }
 
-func (r *loadGenerator) run(ctx context.Context, client momento.CacheClient, workerDelayBetweenRequests time.Duration) {
+func (r *loadGenerator) run(ctx context.Context, clients []momento.CacheClient, workerDelayBetweenRequests time.Duration) {
 	cancelCtx, cancelFunction := context.WithTimeout(ctx, r.options.howLongToRun)
 	defer cancelFunction()
 
@@ -293,7 +299,7 @@ func (r *loadGenerator) run(ctx context.Context, client momento.CacheClient, wor
 
 		go func() {
 			defer wg.Done()
-			worker(cancelCtx, i, getChan, setChan, errChan, client, workerDelayBetweenRequests, r.cacheValue)
+			worker(cancelCtx, i, getChan, setChan, errChan, clients[i%r.options.clientCount], workerDelayBetweenRequests, r.cacheValue)
 		}()
 	}
 
@@ -311,15 +317,16 @@ func main() {
 		// Note: You are likely to see degraded performance if you increase this above 50
 		// and observe elevated client-side latencies.
 		numberOfConcurrentRequests: 50,
+		clientCount:                4,
 		maxRequestsPerSecond:       100,
 		howLongToRun:               time.Minute,
 	}
 
 	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
-	client, workerDelayBetweenRequests := loadGenerator.init(ctx)
+	clients, workerDelayBetweenRequests := loadGenerator.init(ctx)
 
 	runStart := time.Now()
-	loadGenerator.run(ctx, client, workerDelayBetweenRequests)
+	loadGenerator.run(ctx, clients, workerDelayBetweenRequests)
 	runTotal := time.Since(runStart)
 
 	fmt.Printf("completed in %f seconds\n", runTotal.Seconds())
