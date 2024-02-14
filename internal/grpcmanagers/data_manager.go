@@ -31,7 +31,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddHeadersInterceptor(authToken, request.ReadConcern)),
+		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
 	)
 
 	if err != nil {
