@@ -18,6 +18,7 @@ type ControlGrpcManagerRequest struct {
 type DataGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 	RetryStrategy      retry.Strategy
+	ReadConcern        config.ReadConcern
 }
 
 type TokenGrpcManagerRequest struct {
