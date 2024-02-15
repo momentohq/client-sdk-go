@@ -11,9 +11,12 @@ import (
 type ReadConcern string
 
 const (
-	BALANCED   ReadConcern = "balanced"
+	// BALANCED is the default read concern for the cache client.
+	BALANCED ReadConcern = "balanced"
+	// CONSISTENT read concern guarantees read after write consistency.
 	CONSISTENT ReadConcern = "consistent"
-	EXPRESS    ReadConcern = "express"
+	// EXPRESS read concern optimizes for low latency at the cost of consistency.
+	EXPRESS ReadConcern = "express"
 )
 
 type ConfigurationProps struct {
