@@ -27,6 +27,7 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 	dataManager, err := grpcmanagers.NewUnaryDataGrpcManager(&models.DataGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
+		ReadConcern:        request.Configuration.GetReadConcern(),
 	})
 	if err != nil {
 		return nil, err

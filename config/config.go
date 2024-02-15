@@ -8,6 +8,17 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
+type ReadConcern string
+
+const (
+	// BALANCED is the default read concern for the cache client.
+	BALANCED ReadConcern = "balanced"
+	// CONSISTENT read concern guarantees read after write consistency.
+	CONSISTENT ReadConcern = "consistent"
+	// EXPRESS read concern optimizes for low latency at the cost of consistency.
+	EXPRESS ReadConcern = "express"
+)
+
 type ConfigurationProps struct {
 	// LoggerFactory represents a type used to configure the Momento logging system.
 	LoggerFactory logger.MomentoLoggerFactory
@@ -17,6 +28,8 @@ type ConfigurationProps struct {
 	RetryStrategy retry.Strategy
 	// NumGrpcChannels is the number of GRPC channels the client should open and work with.
 	NumGrpcChannels uint32
+	// ReadConcern is the read concern for the cache client.
+	ReadConcern ReadConcern
 }
 
 type Configuration interface {
@@ -36,6 +49,8 @@ type Configuration interface {
 	// the cache client should open and work with.
 	GetNumGrpcChannels() uint32
 
+	GetReadConcern() ReadConcern
+
 	// WithRetryStrategy Copy constructor for overriding TransportStrategy returns a new Configuration object
 	// with the specified momento.TransportStrategy
 	WithRetryStrategy(retryStrategy retry.Strategy) Configuration
@@ -51,6 +66,10 @@ type Configuration interface {
 	// WithNumGrpcChannels Copy constructor for overriding NumGrpcChannels returns a new Configuration object
 	// with the specified NumGrpcChannels
 	WithNumGrpcChannels(numGrpcChannels uint32) Configuration
+
+	// WithReadConcern Copy constructor for overriding ReadConcern returns a new Configuration object
+	// with the specified ReadConcern
+	WithReadConcern(readConcern ReadConcern) Configuration
 }
 
 type cacheConfiguration struct {
@@ -58,6 +77,7 @@ type cacheConfiguration struct {
 	transportStrategy TransportStrategy
 	retryStrategy     retry.Strategy
 	numGrpcChannels   uint32
+	readConcern       ReadConcern
 }
 
 func (s *cacheConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
@@ -74,6 +94,7 @@ func NewCacheConfiguration(props *ConfigurationProps) Configuration {
 		transportStrategy: props.TransportStrategy,
 		retryStrategy:     props.RetryStrategy,
 		numGrpcChannels:   props.NumGrpcChannels,
+		readConcern:       props.ReadConcern,
 	}
 }
 
@@ -89,12 +110,17 @@ func (s *cacheConfiguration) GetNumGrpcChannels() uint32 {
 	return s.numGrpcChannels
 }
 
+func (s *cacheConfiguration) GetReadConcern() ReadConcern {
+	return s.readConcern
+}
+
 func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
 	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithClientTimeout(clientTimeout),
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   s.numGrpcChannels,
+		readConcern:       s.readConcern,
 	}
 }
 
@@ -104,6 +130,7 @@ func (s *cacheConfiguration) WithRetryStrategy(strategy retry.Strategy) Configur
 		transportStrategy: s.transportStrategy,
 		retryStrategy:     strategy,
 		numGrpcChannels:   s.numGrpcChannels,
+		readConcern:       s.readConcern,
 	}
 }
 
@@ -113,6 +140,7 @@ func (s *cacheConfiguration) WithTransportStrategy(transportStrategy TransportSt
 		transportStrategy: transportStrategy,
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   s.numGrpcChannels,
+		readConcern:       s.readConcern,
 	}
 }
 
@@ -122,5 +150,16 @@ func (s *cacheConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) Configu
 		transportStrategy: s.transportStrategy,
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   numGrpcChannels,
+		readConcern:       s.readConcern,
+	}
+}
+
+func (s *cacheConfiguration) WithReadConcern(readConcern ReadConcern) Configuration {
+	return &cacheConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		retryStrategy:     s.retryStrategy,
+		numGrpcChannels:   s.numGrpcChannels,
+		readConcern:       readConcern,
 	}
 }

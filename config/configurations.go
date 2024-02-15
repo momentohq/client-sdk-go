@@ -27,6 +27,7 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,
+		ReadConcern:     BALANCED,
 	})
 }
 
@@ -47,6 +48,7 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,
+		ReadConcern:     BALANCED,
 	})
 }
 
@@ -67,5 +69,6 @@ func LambdaWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,
+		ReadConcern:     BALANCED,
 	})
 }
