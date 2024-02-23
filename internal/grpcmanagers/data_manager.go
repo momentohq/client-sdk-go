@@ -2,7 +2,6 @@ package grpcmanagers
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -22,16 +20,15 @@ type DataGrpcManager struct {
 const CachePort = ":443"
 
 func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	conn, err := grpc.Dial(
 		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+		AllDialOptions(
+			request.GrpcConfiguration,
+			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+		)...,
 	)
 
 	if err != nil {
@@ -41,15 +38,14 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 }
 
 func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.Dial(
 		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+		AllDialOptions(
+			request.GrpcConfiguration,
+			grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+		)...,
 	)
 
 	if err != nil {

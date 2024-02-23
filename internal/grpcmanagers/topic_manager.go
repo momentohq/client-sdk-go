@@ -1,7 +1,6 @@
 package grpcmanagers
 
 import (
-	"crypto/tls"
 	"fmt"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
@@ -9,7 +8,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type TopicGrpcManager struct {
@@ -18,16 +16,15 @@ type TopicGrpcManager struct {
 }
 
 func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.Dial(
 		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
-		grpc.WithChainUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+		AllDialOptions(
+			request.GrpcConfiguration,
+			grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+			grpc.WithChainUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+		)...,
 	)
 
 	if err != nil {

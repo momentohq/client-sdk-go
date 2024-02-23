@@ -21,6 +21,7 @@ func NewScsControlClient(request *models.ControlClientRequest) (*ScsControlClien
 	controlManager, err := grpcmanagers.NewScsControlGrpcManager(&models.ControlGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
+		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

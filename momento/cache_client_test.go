@@ -85,4 +85,28 @@ var _ = Describe("CacheClient", func() {
 			panic(err)
 		}
 	})
+
+	It(`Constructs Lambda config with keepalive turned off`, func() {
+		config := config.Lambda()
+		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
+		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeFalse())
+		// If grpc's PermitWithoutStream setting is false, when there are no active RPCs,
+		// Time and Timeout will be ignored and no keepalive pings will be sent.
+	})
+
+	It(`Constructs InRegionLatest config with keepalive turned on`, func() {
+		config := config.InRegionLatest()
+		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
+		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeTrue())
+		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(5000 * time.Millisecond))
+		Expect(grpcConfig.GetKeepAliveTimeout()).To(Equal(1000 * time.Millisecond))
+	})
+
+	It(`Constructs LaptopLatest config with keepalive turned on`, func() {
+		config := config.LaptopLatest()
+		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
+		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeTrue())
+		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(5000 * time.Millisecond))
+		Expect(grpcConfig.GetKeepAliveTimeout()).To(Equal(1000 * time.Millisecond))
+	})
 })

@@ -19,6 +19,7 @@ type ScsPingClient struct {
 func NewScsPingClient(request *models.PingClientRequest) (*ScsPingClient, momentoerrors.MomentoSvcErr) {
 	pingManager, err := grpcmanagers.NewPingGrpcManager(&models.PingGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
+		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
 	})
 	if err != nil {
 		return nil, err

@@ -13,28 +13,34 @@ import (
 type ControlGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 	RetryStrategy      retry.Strategy
+	GrpcConfiguration  config.GrpcConfiguration
 }
 
 type DataGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 	RetryStrategy      retry.Strategy
 	ReadConcern        config.ReadConcern
+	GrpcConfiguration  config.GrpcConfiguration
 }
 
 type TokenGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
 }
 
 type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
 }
 
 type TopicStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
 }
 
 type PingGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
 }
 
 type LocalDataGrpcManagerRequest struct {

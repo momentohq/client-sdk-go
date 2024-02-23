@@ -26,12 +26,22 @@ type TransportStrategy interface {
 }
 
 type StaticGrpcConfiguration struct {
-	deadline time.Duration
+	deadline                    time.Duration
+	keepAlivePermitWithoutCalls bool
+	keepAliveTimeout            time.Duration
+	keepAliveTime               time.Duration
+	maxSendMessageLength        int
+	maxReceiveMessageLength     int
 }
 
 func NewStaticGrpcConfiguration(grpcConfiguration *GrpcConfigurationProps) *StaticGrpcConfiguration {
 	return &StaticGrpcConfiguration{
-		deadline: grpcConfiguration.deadline,
+		deadline:                    grpcConfiguration.deadline,
+		keepAlivePermitWithoutCalls: grpcConfiguration.keepAlivePermitWithoutCalls,
+		keepAliveTimeout:            grpcConfiguration.keepAliveTimeout,
+		keepAliveTime:               grpcConfiguration.keepAliveTime,
+		maxSendMessageLength:        grpcConfiguration.maxSendMessageLength,
+		maxReceiveMessageLength:     grpcConfiguration.maxReceiveMessageLength,
 	}
 }
 
@@ -39,9 +49,34 @@ func (s *StaticGrpcConfiguration) GetDeadline() time.Duration {
 	return s.deadline
 }
 
+func (s *StaticGrpcConfiguration) GetKeepAlivePermitWithoutCalls() bool {
+	return s.keepAlivePermitWithoutCalls
+}
+
+func (s *StaticGrpcConfiguration) GetKeepAliveTimeout() time.Duration {
+	return s.keepAliveTimeout
+}
+
+func (s *StaticGrpcConfiguration) GetKeepAliveTime() time.Duration {
+	return s.keepAliveTime
+}
+
+func (s *StaticGrpcConfiguration) GetMaxSendMessageLength() int {
+	return s.maxSendMessageLength
+}
+
+func (s *StaticGrpcConfiguration) GetMaxReceiveMessageLength() int {
+	return s.maxReceiveMessageLength
+}
+
 func (s *StaticGrpcConfiguration) WithDeadline(deadline time.Duration) GrpcConfiguration {
 	return &StaticGrpcConfiguration{
-		deadline: deadline,
+		deadline:                    deadline,
+		keepAlivePermitWithoutCalls: s.keepAlivePermitWithoutCalls,
+		keepAliveTimeout:            s.keepAliveTimeout,
+		keepAliveTime:               s.keepAliveTime,
+		maxSendMessageLength:        s.maxSendMessageLength,
+		maxReceiveMessageLength:     s.maxReceiveMessageLength,
 	}
 }
 
