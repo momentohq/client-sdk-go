@@ -11,10 +11,6 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-// The default value for max_send_message_length is 4mb.  We need to increase this to 5mb in order to
-// support cases where users have requested a limit increase up to our maximum item size of 5mb.
-const DEFAULT_MAX_MESSAGE_SIZE = 5_243_000
-
 // LaptopLatest provides defaults suitable for a medium-to-high-latency dev environment.
 // Permissive timeouts, retries, and relaxed latency and throughput targets.
 func LaptopLatest() Configuration {
@@ -27,8 +23,6 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline:                    5 * time.Second,
-				maxSendMessageLength:        DEFAULT_MAX_MESSAGE_SIZE,
-				maxReceiveMessageLength:     DEFAULT_MAX_MESSAGE_SIZE,
 				keepAlivePermitWithoutCalls: true,
 				keepAliveTime:               5000 * time.Millisecond,
 				keepAliveTimeout:            1000 * time.Millisecond,
@@ -53,8 +47,6 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline:                    1100 * time.Millisecond,
-				maxSendMessageLength:        DEFAULT_MAX_MESSAGE_SIZE,
-				maxReceiveMessageLength:     DEFAULT_MAX_MESSAGE_SIZE,
 				keepAlivePermitWithoutCalls: true,
 				keepAliveTime:               5000 * time.Millisecond,
 				keepAliveTimeout:            1000 * time.Millisecond,
@@ -78,9 +70,7 @@ func LambdaWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline:                1100 * time.Millisecond,
-				maxSendMessageLength:    DEFAULT_MAX_MESSAGE_SIZE,
-				maxReceiveMessageLength: DEFAULT_MAX_MESSAGE_SIZE,
+				deadline: 1100 * time.Millisecond,
 			}),
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),

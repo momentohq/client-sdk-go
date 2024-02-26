@@ -50,6 +50,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	for i := 0; uint32(i) < numChannels; i++ {
 		streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
 			CredentialProvider: request.CredentialProvider,
+			GrpcConfiguration:  nil,
 		})
 		if err != nil {
 			return nil, err
