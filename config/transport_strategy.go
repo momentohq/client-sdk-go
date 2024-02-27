@@ -51,24 +51,24 @@ func (s *StaticGrpcConfiguration) GetDeadline() time.Duration {
 	return s.deadline
 }
 
-func (s *StaticGrpcConfiguration) GetKeepAlivePermitWithoutCalls() *bool {
-	return &s.keepAlivePermitWithoutCalls
+func (s *StaticGrpcConfiguration) GetKeepAlivePermitWithoutCalls() bool {
+	return s.keepAlivePermitWithoutCalls
 }
 
-func (s *StaticGrpcConfiguration) GetKeepAliveTimeout() *time.Duration {
-	return &s.keepAliveTimeout
+func (s *StaticGrpcConfiguration) GetKeepAliveTimeout() time.Duration {
+	return s.keepAliveTimeout
 }
 
-func (s *StaticGrpcConfiguration) GetKeepAliveTime() *time.Duration {
-	return &s.keepAliveTime
+func (s *StaticGrpcConfiguration) GetKeepAliveTime() time.Duration {
+	return s.keepAliveTime
 }
 
-func (s *StaticGrpcConfiguration) GetMaxSendMessageLength() *int {
-	return &s.maxSendMessageLength
+func (s *StaticGrpcConfiguration) GetMaxSendMessageLength() int {
+	return s.maxSendMessageLength
 }
 
-func (s *StaticGrpcConfiguration) GetMaxReceiveMessageLength() *int {
-	return &s.maxReceiveMessageLength
+func (s *StaticGrpcConfiguration) GetMaxReceiveMessageLength() int {
+	return s.maxReceiveMessageLength
 }
 
 func (s *StaticGrpcConfiguration) WithDeadline(deadline time.Duration) GrpcConfiguration {

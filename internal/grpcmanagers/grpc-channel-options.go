@@ -27,13 +27,13 @@ func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.GrpcConfiguration) []grp
 	options := make([]grpc.DialOption, 0, 2)
 
 	max_send_length := DEFAULT_MAX_MESSAGE_SIZE
-	if *grpcConfig.GetMaxSendMessageLength() > 0 {
-		max_send_length = *grpcConfig.GetMaxSendMessageLength()
+	if grpcConfig.GetMaxSendMessageLength() > 0 {
+		max_send_length = grpcConfig.GetMaxSendMessageLength()
 	}
 
 	max_receive_length := DEFAULT_MAX_MESSAGE_SIZE
-	if *grpcConfig.GetMaxReceiveMessageLength() > 0 {
-		max_receive_length = *grpcConfig.GetMaxReceiveMessageLength()
+	if grpcConfig.GetMaxReceiveMessageLength() > 0 {
+		max_receive_length = grpcConfig.GetMaxReceiveMessageLength()
 	}
 
 	options = append(options, grpc.WithDefaultCallOptions(
@@ -41,18 +41,21 @@ func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.GrpcConfiguration) []grp
 		grpc.MaxCallSendMsgSize(max_send_length),
 	))
 
-	// If keepAlivePermitWithoutCalls is not defined in the config, a default value
-	// of false is used. We will only set the keepalive settings if keepAlivePermitWithoutCalls
-	// is set to true.
-	if *grpcConfig.GetKeepAlivePermitWithoutCalls() {
-		options = append(options, grpc.WithKeepaliveParams(
-			keepalive.ClientParameters{
-				Time:                *grpcConfig.GetKeepAliveTime(),
-				Timeout:             *grpcConfig.GetKeepAliveTimeout(),
-				PermitWithoutStream: *grpcConfig.GetKeepAlivePermitWithoutCalls(),
-			},
-		))
+	keepaliveOptions := keepalive.ClientParameters{}
+
+	if grpcConfig.GetKeepAlivePermitWithoutCalls() {
+		keepaliveOptions.PermitWithoutStream = true
 	}
+
+	if grpcConfig.GetKeepAliveTime() > 0 {
+		keepaliveOptions.Time = grpcConfig.GetKeepAliveTime()
+	}
+
+	if grpcConfig.GetKeepAliveTimeout() > 0 {
+		keepaliveOptions.Timeout = grpcConfig.GetKeepAliveTimeout()
+	}
+
+	options = append(options, grpc.WithKeepaliveParams(keepaliveOptions))
 
 	return options
 }

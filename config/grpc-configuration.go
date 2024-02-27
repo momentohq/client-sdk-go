@@ -61,7 +61,7 @@ type GrpcConfiguration interface {
 	// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
-	GetKeepAlivePermitWithoutCalls() *bool
+	GetKeepAlivePermitWithoutCalls() bool
 
 	// Returns number of milliseconds the client will wait for a response from a keepalive or ping.
 	//
@@ -70,7 +70,7 @@ type GrpcConfiguration interface {
 	// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
-	GetKeepAliveTimeout() *time.Duration
+	GetKeepAliveTimeout() time.Duration
 
 	// Returns the interval at which to send the keepalive or ping.
 	//
@@ -79,13 +79,13 @@ type GrpcConfiguration interface {
 	// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
-	GetKeepAliveTime() *time.Duration
+	GetKeepAliveTime() time.Duration
 
 	// The maximum message length the client can send to the server.  If the client attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
-	GetMaxSendMessageLength() *int
+	GetMaxSendMessageLength() int
 
 	// The maximum message length the client can receive from the server.  If the server attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
-	GetMaxReceiveMessageLength() *int
+	GetMaxReceiveMessageLength() int
 }
