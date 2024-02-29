@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+
+package common;
+
+message Present { }
+
+message PresentAndNotEqual {
+  bytes value_to_check = 1;
+}
+
+message Absent { }
+
+message Equal {
+  bytes value_to_check = 1;
+}
+
+message AbsentOrEqual {
+  bytes value_to_check = 1;
+}
+
+message NotEqual {
+  bytes value_to_check = 1;
+}

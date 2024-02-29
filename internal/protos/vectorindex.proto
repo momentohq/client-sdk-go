@@ -1,0 +1,264 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+
+package vectorindex;
+
+service VectorIndex {
+    rpc UpsertItemBatch(_UpsertItemBatchRequest) returns (_UpsertItemBatchResponse) {}
+    rpc DeleteItemBatch(_DeleteItemBatchRequest) returns (_DeleteItemBatchResponse) {}
+    rpc Search(_SearchRequest) returns (_SearchResponse) {}
+    rpc SearchAndFetchVectors(_SearchAndFetchVectorsRequest) returns (_SearchAndFetchVectorsResponse) {}
+    rpc GetItemMetadataBatch(_GetItemMetadataBatchRequest) returns (_GetItemMetadataBatchResponse) {}
+    rpc GetItemBatch(_GetItemBatchRequest) returns (_GetItemBatchResponse) {}
+    rpc CountItems(_CountItemsRequest) returns (_CountItemsResponse) {}
+}
+
+message _Item {
+    string id = 1;
+    _Vector vector = 2;
+    repeated _Metadata metadata = 3;
+}
+
+message _UpsertItemBatchRequest {
+    string index_name = 1;
+    repeated _Item items = 2;
+}
+
+message _UpsertItemBatchResponse {
+    repeated uint32 error_indices = 1;
+}
+
+message _DeleteItemBatchRequest {
+    string index_name = 1;
+    repeated string ids = 2; // TODO: reserve after migration
+    _FilterExpression filter = 3;
+}
+
+message _DeleteItemBatchResponse {
+}
+
+message _Vector {
+    repeated float elements = 1;
+}
+
+message _Metadata {
+    string field = 1;
+
+    message _ListOfStrings {
+        repeated string values = 1;
+    }
+
+    oneof value {
+        string string_value = 2;
+        int64 integer_value = 3;
+        double double_value = 4;
+        bool boolean_value = 5;
+        _ListOfStrings list_of_strings_value = 6;
+    }
+}
+
+message _MetadataRequest {
+    message Some {
+        repeated string fields = 1;
+    }
+    message All {}
+
+    oneof kind {
+        Some some = 2;
+        All all = 3;
+    }
+}
+
+message _AndExpression {
+    _FilterExpression first_expression = 1;
+    _FilterExpression second_expression = 2;
+}
+
+message _OrExpression {
+    _FilterExpression first_expression = 1;
+    _FilterExpression second_expression = 2;
+}
+
+message _NotExpression {
+    _FilterExpression expression_to_negate = 1;
+}
+
+message _EqualsExpression {
+    string field = 1;
+    oneof value {
+        string string_value = 2;
+        int64 integer_value = 3;
+        float float_value = 4;
+        bool boolean_value = 5;
+    }
+}
+
+message _GreaterThanExpression {
+    string field = 1;
+    oneof value {
+        int64 integer_value = 2;
+        float float_value = 3;
+    }
+}
+
+message _GreaterThanOrEqualExpression {
+    string field = 1;
+    oneof value {
+        int64 integer_value = 2;
+        float float_value = 3;
+    }
+}
+
+message _LessThanExpression {
+    string field = 1;
+    oneof value {
+        int64 integer_value = 2;
+        float float_value = 3;
+    }
+}
+
+message _LessThanOrEqualExpression {
+    string field = 1;
+    oneof value {
+        int64 integer_value = 2;
+        float float_value = 3;
+    }
+}
+
+message _ListContainsExpression {
+    string field = 1;
+    oneof value {
+        string string_value = 2;
+    }
+}
+
+message _IdInSetExpression {
+    repeated string ids = 1;
+}
+
+message _FilterExpression {
+    oneof expression {
+        _EqualsExpression equals_expression = 1;
+        _AndExpression and_expression = 2;
+        _OrExpression or_expression = 3;
+        _NotExpression not_expression = 4;
+        _GreaterThanExpression greater_than_expression = 5;
+        _GreaterThanOrEqualExpression greater_than_or_equal_expression = 6;
+        _LessThanExpression less_than_expression = 7;
+        _LessThanOrEqualExpression less_than_or_equal_expression = 8;
+        _ListContainsExpression list_contains_expression = 9;
+        _IdInSetExpression id_in_set_expression = 10;
+    }
+}
+
+message _NoScoreThreshold {}
+
+message _SearchRequest {
+    string index_name = 1;
+    uint32 top_k = 2;
+    _Vector query_vector = 3;
+    _MetadataRequest metadata_fields = 4;
+    oneof threshold {
+        float score_threshold = 5;
+        _NoScoreThreshold no_score_threshold = 6;
+    }
+    _FilterExpression filter = 7;
+}
+
+message _SearchAndFetchVectorsRequest {
+    string index_name = 1;
+    uint32 top_k = 2;
+    _Vector query_vector = 3;
+    _MetadataRequest metadata_fields = 4;
+    oneof threshold {
+        float score_threshold = 5;
+        _NoScoreThreshold no_score_threshold = 6;
+    }
+    _FilterExpression filter = 7;
+}
+
+message _SearchHit {
+    string id = 1;
+    float score = 2;
+    repeated _Metadata metadata = 3;
+}
+
+message _SearchAndFetchVectorsHit {
+    string id = 1;
+    float score = 2;
+    repeated _Metadata metadata = 3;
+    _Vector vector = 4;
+}
+
+message _SearchResponse {
+    repeated _SearchHit hits = 1;
+}
+
+message _SearchAndFetchVectorsResponse {
+    repeated _SearchAndFetchVectorsHit hits = 1;
+}
+
+message _GetItemMetadataBatchRequest {
+    string index_name = 1;
+    repeated string ids = 2; // TODO: reserve after migration
+    _MetadataRequest metadata_fields = 3;
+    _FilterExpression filter = 4;
+}
+
+message _ItemMetadataResponse {
+    message _Miss {}
+    message _Hit {
+        string id = 1;
+        repeated _Metadata metadata = 2;
+    }
+    oneof response {
+        _Miss miss = 1; // TODO: reserve after migration
+        _Hit hit = 2; // TODO: reserve after migration
+    }
+    string id = 3;
+    repeated _Metadata metadata = 4;
+}
+
+message _GetItemMetadataBatchResponse {
+    repeated _ItemMetadataResponse item_metadata_response = 1;
+}
+
+message _GetItemBatchRequest {
+    string index_name = 1;
+    repeated string ids = 2;
+    _MetadataRequest metadata_fields = 3;
+    _FilterExpression filter = 4;
+}
+
+message _ItemResponse {
+    message _Miss {}
+    message _Hit {
+        string id = 1;
+        _Vector vector = 2;
+        repeated _Metadata metadata = 3;
+    }
+    oneof response {
+        _Miss miss = 1; // TODO: reserve after migration
+        _Hit hit = 2; // TODO: reserve after migration
+    }
+    string id = 3;
+    _Vector vector = 4;
+    repeated _Metadata metadata = 5;
+}
+
+message _GetItemBatchResponse {
+    repeated _ItemResponse item_response = 1;
+}
+
+message _CountItemsRequest {
+    message All {}
+    string index_name = 1;
+    oneof filter {
+        All all = 2;
+    }
+}
+
+message _CountItemsResponse {
+    uint64 item_count = 1;
+}
