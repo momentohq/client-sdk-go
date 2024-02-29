@@ -152,6 +152,140 @@ var _ = Describe("Scalar methods", func() {
 		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
 	)
 
+	DescribeTable("Set if present",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			setIfPresentResp, err := client.SetIfPresent(sharedContext.Ctx, &SetIfPresentRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(
+				setIfPresentResp,
+			).To(BeAssignableToTypeOf(&SetIfPresentNotStored{}))
+			Expect(err).To(BeNil())
+
+			// add the value for the key
+			setResponse, err := client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     String("initial value will be replaced"),
+			})
+			Expect(setResponse).To(BeAssignableToTypeOf(&SetSuccess{}))
+			Expect(err).To(BeNil())
+
+			setIfPresentResp2, err := client.SetIfPresent(sharedContext.Ctx, &SetIfPresentRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(
+				setIfPresentResp2,
+			).To(BeAssignableToTypeOf(&SetIfPresentStored{}))
+			Expect(err).To(BeNil())
+
+			// make sure the value has been overwritten
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+		},
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
+	)
+
+	DescribeTable("Set if absent",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			setIfAbsentResp, err := client.SetIfAbsent(sharedContext.Ctx, &SetIfAbsentRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(
+				setIfAbsentResp,
+			).To(BeAssignableToTypeOf(&SetIfAbsentStored{}))
+			Expect(err).To(BeNil())
+
+			// make sure we get a hit
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// we make another call and make sure that the value is not stored again
+			setIfAbsentRespNotStored, err := client.SetIfAbsent(sharedContext.Ctx, &SetIfAbsentRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(
+				setIfAbsentRespNotStored,
+			).To(BeAssignableToTypeOf(&SetIfAbsentNotStored{}))
+			Expect(err).To(BeNil())
+
+			// make sure we get a hit
+			getResp, err = client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			Expect(
+				client.Delete(sharedContext.Ctx, &DeleteRequest{
+					CacheName: cacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&DeleteSuccess{}))
+
+			Expect(
+				client.Get(sharedContext.Ctx, &GetRequest{
+					CacheName: cacheName,
+					Key:       key,
+				}),
+			).To(BeAssignableToTypeOf(&GetMiss{}))
+		},
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
+	)
+
 	DescribeTable("errors when the cache is missing",
 		func(clientType string) {
 			client, _ := sharedContext.GetClientPrereqsForType(clientType)

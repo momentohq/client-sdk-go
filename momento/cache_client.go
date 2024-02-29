@@ -32,8 +32,12 @@ type CacheClient interface {
 	Increment(ctx context.Context, r *IncrementRequest) (responses.IncrementResponse, error)
 	// Set sets the value in cache with a given time to live (TTL)
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
-	// Set sets the value in cache with a given time to live (TTL) if not already present
+	// SetIfNotExists sets the value in cache with a given time to live (TTL) if key is not already present
 	SetIfNotExists(ctx context.Context, r *SetIfNotExistsRequest) (responses.SetIfNotExistsResponse, error)
+	// SetIfAbsent sets the value in cache with a given time to live (TTL) if key is not already present
+	SetIfAbsent(ctx context.Context, r *SetIfAbsentRequest) (responses.SetIfAbsentResponse, error)
+	// SetIfPresent sets the value in cache with a given time to live (TTL) if key is present
+	SetIfPresent(ctx context.Context, r *SetIfPresentRequest) (responses.SetIfPresentResponse, error)
 	// Get gets the cache value stored for the given key.
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
 	// Delete removes the key from the cache.
@@ -363,8 +367,24 @@ func (c defaultScsClient) SetIfNotExists(ctx context.Context, r *SetIfNotExistsR
 		return nil, err
 	}
 	return r.response, nil
-
 }
+
+func (c defaultScsClient) SetIfAbsent(ctx context.Context, r *SetIfAbsentRequest) (responses.SetIfAbsentResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfPresent(ctx context.Context, r *SetIfPresentRequest) (responses.SetIfPresentResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
 func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
