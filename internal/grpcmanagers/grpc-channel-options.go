@@ -2,6 +2,7 @@ package grpcmanagers
 
 import (
 	"crypto/tls"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -15,14 +16,24 @@ import (
 const DEFAULT_MAX_MESSAGE_SIZE = 5_243_000
 
 func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.GrpcConfiguration) []grpc.DialOption {
+	// If no grpc config is provided, we default to 5mb message sizes and keepalive turned on.
 	if grpcConfig == nil {
 		return []grpc.DialOption{
 			grpc.WithDefaultCallOptions(
 				grpc.MaxCallRecvMsgSize(DEFAULT_MAX_MESSAGE_SIZE),
 				grpc.MaxCallSendMsgSize(DEFAULT_MAX_MESSAGE_SIZE),
 			),
+			grpc.WithKeepaliveParams(
+				keepalive.ClientParameters{
+					PermitWithoutStream: true,
+					Time:                5000 * time.Millisecond,
+					Timeout:             1000 * time.Millisecond,
+				},
+			),
 		}
 	}
+
+	// Otherwise construct the options from the provided config.
 
 	options := make([]grpc.DialOption, 0, 2)
 
