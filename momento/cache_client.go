@@ -33,6 +33,8 @@ type CacheClient interface {
 	// Set sets the value in cache with a given time to live (TTL)
 	Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error)
 	// SetIfNotExists sets the value in cache with a given time to live (TTL) if key is not already present
+	//
+	// Deprecated: Use SetIfAbsent instead.
 	SetIfNotExists(ctx context.Context, r *SetIfNotExistsRequest) (responses.SetIfNotExistsResponse, error)
 	// SetIfAbsent sets the value in cache with a given time to live (TTL) if key is not already present
 	SetIfAbsent(ctx context.Context, r *SetIfAbsentRequest) (responses.SetIfAbsentResponse, error)

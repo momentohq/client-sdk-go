@@ -20,8 +20,8 @@ type SetIfAbsentRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
+	grpcRequest  *pb.XSetIfNotExistsRequest
+	grpcResponse *pb.XSetIfNotExistsResponse
 	response     responses.SetIfAbsentResponse
 }
 
@@ -53,18 +53,17 @@ func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	r.grpcRequest = &pb.XSetIfRequest{
+	r.grpcRequest = &pb.XSetIfNotExistsRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
-		Condition:       &pb.XSetIfRequest_Absent{},
 	}
 
 	return nil
 }
 
 func (r *SetIfAbsentRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
-	resp, err := client.grpcClient.SetIf(metadata, r.grpcRequest)
+	resp, err := client.grpcClient.SetIfNotExists(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +76,9 @@ func (r *SetIfAbsentRequest) interpretGrpcResponse() error {
 	var resp responses.SetIfAbsentResponse
 
 	switch grpcResp.Result.(type) {
-	case *pb.XSetIfResponse_Stored:
+	case *pb.XSetIfNotExistsResponse_Stored:
 		resp = &responses.SetIfAbsentStored{}
-	case *pb.XSetIfResponse_NotStored:
+	case *pb.XSetIfNotExistsResponse_NotStored:
 		resp = &responses.SetIfAbsentNotStored{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
