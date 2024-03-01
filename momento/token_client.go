@@ -19,6 +19,7 @@ type tokenClient struct {
 func newTokenClient(request *models.TokenClientRequest) (*tokenClient, momentoerrors.MomentoSvcErr) {
 	tokenManager, err := grpcmanagers.NewTokenGrpcManager(&models.TokenGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
+		GrpcConfiguration:  nil,
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

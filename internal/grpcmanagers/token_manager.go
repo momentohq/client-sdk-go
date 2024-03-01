@@ -23,7 +23,7 @@ func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcMan
 	conn, err := grpc.Dial(
 		endpoint,
 		AllDialOptions(
-			nil,
+			request.GrpcConfiguration,
 			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
 		)...,
 	)
