@@ -20,6 +20,8 @@ type SetIfAbsentRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
+	// We issue a SetIfNotExists request to the server instead of a SetIf request because
+	// the backend implementation of SetIfNotExists is more efficient than SetIf.
 	grpcRequest  *pb.XSetIfNotExistsRequest
 	grpcResponse *pb.XSetIfNotExistsResponse
 	response     responses.SetIfAbsentResponse
