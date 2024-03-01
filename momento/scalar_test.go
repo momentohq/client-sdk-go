@@ -334,7 +334,7 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			// make sure we error when NotEqual is nil
-			setIfResp, err = client.SetIfPresentAndNotEqual(sharedContext.Ctx, &SetIfPresentAndNotEqualRequest{
+			_, err = client.SetIfPresentAndNotEqual(sharedContext.Ctx, &SetIfPresentAndNotEqualRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -413,7 +413,7 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			// make sure we error when Equal is nil
-			setIfResp, err = client.SetIfEqual(sharedContext.Ctx, &SetIfEqualRequest{
+			_, err = client.SetIfEqual(sharedContext.Ctx, &SetIfEqualRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -497,7 +497,7 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			// make sure we error when Equal is nil
-			setIfResp, err = client.SetIfAbsentOrEqual(sharedContext.Ctx, &SetIfAbsentOrEqualRequest{
+			_, err = client.SetIfAbsentOrEqual(sharedContext.Ctx, &SetIfAbsentOrEqualRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -581,7 +581,7 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			// make sure we error when Equal is nil
-			setIfResp, err = client.SetIfNotEqual(sharedContext.Ctx, &SetIfNotEqualRequest{
+			_, err = client.SetIfNotEqual(sharedContext.Ctx, &SetIfNotEqualRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
