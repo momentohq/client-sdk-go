@@ -82,10 +82,10 @@ var _ = Describe("Scalar methods", func() {
 				Key:       key,
 				Value:     value,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				setIfNotExistsResp,
 			).To(BeAssignableToTypeOf(&SetIfNotExistsStored{}))
-			Expect(err).To(BeNil())
 
 			// make sure we get a hit
 			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
@@ -108,10 +108,10 @@ var _ = Describe("Scalar methods", func() {
 				Key:       key,
 				Value:     value,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				setIfNotExistsRespNotStored,
 			).To(BeAssignableToTypeOf(&SetIfNotExistsNotStored{}))
-			Expect(err).To(BeNil())
 
 			// make sure we get a hit
 			getResp, err = client.Get(sharedContext.Ctx, &GetRequest{
@@ -160,10 +160,10 @@ var _ = Describe("Scalar methods", func() {
 				Key:       key,
 				Value:     value,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				setIfPresentResp,
 			).To(BeAssignableToTypeOf(&SetIfPresentNotStored{}))
-			Expect(err).To(BeNil())
 
 			// add the value for the key
 			setResponse, err := client.Set(sharedContext.Ctx, &SetRequest{
@@ -171,18 +171,18 @@ var _ = Describe("Scalar methods", func() {
 				Key:       key,
 				Value:     String("initial value will be replaced"),
 			})
-			Expect(setResponse).To(BeAssignableToTypeOf(&SetSuccess{}))
 			Expect(err).To(BeNil())
+			Expect(setResponse).To(BeAssignableToTypeOf(&SetSuccess{}))
 
-			setIfPresentResp2, err := client.SetIfPresent(sharedContext.Ctx, &SetIfPresentRequest{
+			setIfPresentResp, err = client.SetIfPresent(sharedContext.Ctx, &SetIfPresentRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
 			})
-			Expect(
-				setIfPresentResp2,
-			).To(BeAssignableToTypeOf(&SetIfPresentStored{}))
 			Expect(err).To(BeNil())
+			Expect(
+				setIfPresentResp,
+			).To(BeAssignableToTypeOf(&SetIfPresentStored{}))
 
 			// make sure the value has been overwritten
 			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
@@ -211,15 +211,15 @@ var _ = Describe("Scalar methods", func() {
 	DescribeTable("Set if absent",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-			setIfAbsentResp, err := client.SetIfAbsent(sharedContext.Ctx, &SetIfAbsentRequest{
+			setIfResp, err := client.SetIfAbsent(sharedContext.Ctx, &SetIfAbsentRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
 			})
-			Expect(
-				setIfAbsentResp,
-			).To(BeAssignableToTypeOf(&SetIfAbsentStored{}))
 			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfAbsentStored{}))
 
 			// make sure we get a hit
 			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
@@ -237,15 +237,15 @@ var _ = Describe("Scalar methods", func() {
 			}
 
 			// we make another call and make sure that the value is not stored again
-			setIfAbsentRespNotStored, err := client.SetIfAbsent(sharedContext.Ctx, &SetIfAbsentRequest{
+			setIfResp, err = client.SetIfAbsent(sharedContext.Ctx, &SetIfAbsentRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
 			})
-			Expect(
-				setIfAbsentRespNotStored,
-			).To(BeAssignableToTypeOf(&SetIfAbsentNotStored{}))
 			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfAbsentNotStored{}))
 
 			// make sure we get a hit
 			getResp, err = client.Get(sharedContext.Ctx, &GetRequest{
@@ -261,20 +261,333 @@ var _ = Describe("Scalar methods", func() {
 			default:
 				Fail("Unexpected type from Get")
 			}
+		},
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
+	)
 
+	DescribeTable("Set if present and not equal",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			setIfResp, err := client.SetIfPresentAndNotEqual(sharedContext.Ctx, &SetIfPresentAndNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				NotEqual:  String("not the initial value"),
+			})
+			Expect(err).To(BeNil())
 			Expect(
-				client.Delete(sharedContext.Ctx, &DeleteRequest{
-					CacheName: cacheName,
-					Key:       key,
-				}),
-			).To(BeAssignableToTypeOf(&DeleteSuccess{}))
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfPresentAndNotEqualNotStored{}))
 
+			// add the value for the key
+			setResponse, err := client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     String("initial value"),
+			})
+			Expect(err).To(BeNil())
+			Expect(setResponse).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			// make sure we don't overwrite the value when current value is the same as NotEqual
+			setIfResp, err = client.SetIfPresentAndNotEqual(sharedContext.Ctx, &SetIfPresentAndNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				NotEqual:  String("initial value"),
+			})
+			Expect(err).To(BeNil())
 			Expect(
-				client.Get(sharedContext.Ctx, &GetRequest{
-					CacheName: cacheName,
-					Key:       key,
-				}),
-			).To(BeAssignableToTypeOf(&GetMiss{}))
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfPresentAndNotEqualNotStored{}))
+
+			// make sure we overwrite the value when the current value is different from NotEqual
+			setIfResp, err = client.SetIfPresentAndNotEqual(sharedContext.Ctx, &SetIfPresentAndNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				NotEqual:  String("not the initial value"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfPresentAndNotEqualStored{}))
+
+			// make sure the value has been overwritten
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// make sure we error when NotEqual is nil
+			setIfResp, err = client.SetIfPresentAndNotEqual(sharedContext.Ctx, &SetIfPresentAndNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+		},
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
+	)
+
+	DescribeTable("Set if equal",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			setIfResp, err := client.SetIfEqual(sharedContext.Ctx, &SetIfEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				Equal:     String("i am irrelevant"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfEqualNotStored{}))
+
+			// add the value for the key
+			setResponse, err := client.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     String("initial value will be replaced"),
+			})
+			Expect(err).To(BeNil())
+			Expect(setResponse).To(BeAssignableToTypeOf(&SetSuccess{}))
+
+			// make sure we don't overwrite the value when current value is different from Equal
+			setIfResp, err = client.SetIfEqual(sharedContext.Ctx, &SetIfEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				Equal:     String("i won't match"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfEqualNotStored{}))
+
+			// make sure we overwrite the value when the current value is the same as Equal
+			setIfResp, err = client.SetIfEqual(sharedContext.Ctx, &SetIfEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				Equal:     String("initial value will be replaced"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfEqualStored{}))
+
+			// make sure the value has been overwritten
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// make sure we error when Equal is nil
+			setIfResp, err = client.SetIfEqual(sharedContext.Ctx, &SetIfEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+
+		},
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
+	)
+
+	DescribeTable("Set if absent or equal",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			// make sure nonexistent key is set
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			setIfResp, err := client.SetIfAbsentOrEqual(sharedContext.Ctx, &SetIfAbsentOrEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				Equal:     String("i am irrelevant"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfAbsentOrEqualStored{}))
+
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// make sure we don't overwrite the value when current value is different from Equal
+			setIfResp, err = client.SetIfAbsentOrEqual(sharedContext.Ctx, &SetIfAbsentOrEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				Equal:     String("i won't match"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfAbsentOrEqualNotStored{}))
+
+			// make sure we overwrite the value when the current value is the same as Equal
+			setIfResp, err = client.SetIfAbsentOrEqual(sharedContext.Ctx, &SetIfAbsentOrEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     String("overwritten value"),
+				Equal:     value,
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfAbsentOrEqualStored{}))
+
+			// make sure the value has been overwritten
+			getResp, err = client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueString()).To(Equal("overwritten value"))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// make sure we error when Equal is nil
+			setIfResp, err = client.SetIfAbsentOrEqual(sharedContext.Ctx, &SetIfAbsentOrEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+
+		},
+		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, String("key"), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, String("key"), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, String("key"), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
+	)
+
+	DescribeTable("Set if not equal",
+		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
+			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			// make sure nonexistent key is set
+			setIfResp, err := client.SetIfNotEqual(sharedContext.Ctx, &SetIfNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+				NotEqual:  String("i am irrelevant"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfNotEqualStored{}))
+
+			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueByte()).To(Equal(expectedBytes))
+				Expect(result.ValueString()).To(Equal(expectedString))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// make sure we don't overwrite the value when current value is the same as from NotEqual
+			setIfResp, err = client.SetIfNotEqual(sharedContext.Ctx, &SetIfNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     String("i shouldn't be"),
+				NotEqual:  value,
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfNotEqualNotStored{}))
+
+			// make sure we overwrite the value when the current value is different from NotEqual
+			setIfResp, err = client.SetIfNotEqual(sharedContext.Ctx, &SetIfNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     String("bingo!"),
+				NotEqual:  String("i don't match"),
+			})
+			Expect(err).To(BeNil())
+			Expect(
+				setIfResp,
+			).To(BeAssignableToTypeOf(&SetIfNotEqualStored{}))
+
+			// make sure the value has been overwritten
+			getResp, err = client.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: cacheName,
+				Key:       key,
+			})
+			Expect(err).To(BeNil())
+			switch result := getResp.(type) {
+			case *GetHit:
+				Expect(result.ValueString()).To(Equal("bingo!"))
+			default:
+				Fail("Unexpected type from Get")
+			}
+
+			// make sure we error when Equal is nil
+			setIfResp, err = client.SetIfNotEqual(sharedContext.Ctx, &SetIfNotEqualRequest{
+				CacheName: cacheName,
+				Key:       key,
+				Value:     value,
+			})
+			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+
 		},
 		Entry("when the key and value are strings", DefaultClient, String("key"), String("value"), "value", []byte("value")),
 		Entry("when the key and value are bytes", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
@@ -794,10 +1107,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    41,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(42)))
@@ -810,10 +1123,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    -1042,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(-1000)))
@@ -830,10 +1143,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    1,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(1)))
@@ -846,10 +1159,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    41,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(42)))
@@ -862,10 +1175,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    -1042,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(-1000)))
@@ -884,10 +1197,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    0,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(10)))
@@ -900,10 +1213,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    90,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(100)))
@@ -919,10 +1232,10 @@ var _ = Describe("Scalar methods", func() {
 				Field:     field,
 				Amount:    0,
 			})
+			Expect(err).To(BeNil())
 			Expect(
 				resp,
 			).To(BeAssignableToTypeOf(&IncrementSuccess{}))
-			Expect(err).To(BeNil())
 			switch result := resp.(type) {
 			case *IncrementSuccess:
 				Expect(result.Value()).To(Equal(int64(0)))

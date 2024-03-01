@@ -38,6 +38,14 @@ type CacheClient interface {
 	SetIfAbsent(ctx context.Context, r *SetIfAbsentRequest) (responses.SetIfAbsentResponse, error)
 	// SetIfPresent sets the value in cache with a given time to live (TTL) if key is present
 	SetIfPresent(ctx context.Context, r *SetIfPresentRequest) (responses.SetIfPresentResponse, error)
+	// SetIfPresentAndNotEqual sets the value in cache with a given time to live (TTL) if key is present and its value is not equal to the given value
+	SetIfPresentAndNotEqual(ctx context.Context, r *SetIfPresentAndNotEqualRequest) (responses.SetIfPresentAndNotEqualResponse, error)
+	// SetIfEqual sets the value in cache with a given time to live (TTL) if key is present and its value is equal to the given value
+	SetIfEqual(ctx context.Context, r *SetIfEqualRequest) (responses.SetIfEqualResponse, error)
+	// SetIfAbsentOrEqual sets the value in cache with a given time to live (TTL) if key is present and its value is equal to the given value
+	SetIfAbsentOrEqual(ctx context.Context, r *SetIfAbsentOrEqualRequest) (responses.SetIfAbsentOrEqualResponse, error)
+	// SetIfNotEqual sets the value in cache with a given time to live (TTL) if key is present and its value is not equal to the given value
+	SetIfNotEqual(ctx context.Context, r *SetIfNotEqualRequest) (responses.SetIfNotEqualResponse, error)
 	// Get gets the cache value stored for the given key.
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
 	// Delete removes the key from the cache.
@@ -378,6 +386,38 @@ func (c defaultScsClient) SetIfAbsent(ctx context.Context, r *SetIfAbsentRequest
 }
 
 func (c defaultScsClient) SetIfPresent(ctx context.Context, r *SetIfPresentRequest) (responses.SetIfPresentResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfPresentAndNotEqual(ctx context.Context, r *SetIfPresentAndNotEqualRequest) (responses.SetIfPresentAndNotEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfEqual(ctx context.Context, r *SetIfEqualRequest) (responses.SetIfEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfAbsentOrEqual(ctx context.Context, r *SetIfAbsentOrEqualRequest) (responses.SetIfAbsentOrEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfNotEqual(ctx context.Context, r *SetIfNotEqualRequest) (responses.SetIfNotEqualResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
 		return nil, err

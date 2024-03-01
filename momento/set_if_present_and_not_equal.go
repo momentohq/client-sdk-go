@@ -1,0 +1,104 @@
+package momento
+
+import (
+	"context"
+	"time"
+
+	"github.com/momentohq/client-sdk-go/responses"
+
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+)
+
+type SetIfPresentAndNotEqualRequest struct {
+	// Name of the cache to store the item in.
+	CacheName string
+	// string or byte key to be used to store item.
+	Key Key
+	// string ot byte value to be stored.
+	Value Value
+	// string or byte value to compare with the existing value in the cache.
+	NotEqual Value
+	// Optional Time to live in cache in seconds.
+	// If not provided, then default TTL for the cache client instance is used.
+	Ttl time.Duration
+
+	grpcRequest  *pb.XSetIfRequest
+	grpcResponse *pb.XSetIfResponse
+	response     responses.SetIfPresentAndNotEqualResponse
+}
+
+func (r *SetIfPresentAndNotEqualRequest) cacheName() string { return r.CacheName }
+
+func (r *SetIfPresentAndNotEqualRequest) key() Key { return r.Key }
+
+func (r *SetIfPresentAndNotEqualRequest) value() Value { return r.Value }
+
+func (r *SetIfPresentAndNotEqualRequest) notEqual() Value { return r.NotEqual }
+
+func (r *SetIfPresentAndNotEqualRequest) ttl() time.Duration { return r.Ttl }
+
+func (r *SetIfPresentAndNotEqualRequest) requestName() string { return "SetIfNotExists" }
+
+func (r *SetIfPresentAndNotEqualRequest) initGrpcRequest(client scsDataClient) error {
+	var err error
+
+	var key []byte
+	if key, err = prepareKey(r); err != nil {
+		return err
+	}
+
+	var value []byte
+	if value, err = prepareValue(r); err != nil {
+		return err
+	}
+
+	var notEqual []byte
+	if notEqual, err = prepareNotEqual(r); err != nil {
+		return err
+	}
+
+	var ttl uint64
+	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
+		return err
+	}
+
+	var condition = &pb.XSetIfRequest_PresentAndNotEqual{
+		PresentAndNotEqual: &pb.PresentAndNotEqual{
+			ValueToCheck: notEqual,
+		},
+	}
+	r.grpcRequest = &pb.XSetIfRequest{
+		CacheKey:        key,
+		CacheBody:       value,
+		TtlMilliseconds: ttl,
+		Condition:       condition,
+	}
+
+	return nil
+}
+
+func (r *SetIfPresentAndNotEqualRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.SetIf(metadata, r.grpcRequest)
+	if err != nil {
+		return nil, err
+	}
+	r.grpcResponse = resp
+	return resp, nil
+}
+
+func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse() error {
+	grpcResp := r.grpcResponse
+	var resp responses.SetIfPresentAndNotEqualResponse
+
+	switch grpcResp.Result.(type) {
+	case *pb.XSetIfResponse_Stored:
+		resp = &responses.SetIfPresentAndNotEqualStored{}
+	case *pb.XSetIfResponse_NotStored:
+		resp = &responses.SetIfPresentAndNotEqualNotStored{}
+	default:
+		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+	}
+
+	r.response = resp
+	return nil
+}
