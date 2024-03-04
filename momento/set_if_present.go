@@ -9,7 +9,7 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-type SetIfNotExistsRequest struct {
+type SetIfPresentRequest struct {
 	// Name of the cache to store the item in.
 	CacheName string
 	// string or byte key to be used to store item.
@@ -22,20 +22,20 @@ type SetIfNotExistsRequest struct {
 
 	grpcRequest  *pb.XSetIfRequest
 	grpcResponse *pb.XSetIfResponse
-	response     responses.SetIfNotExistsResponse
+	response     responses.SetIfPresentResponse
 }
 
-func (r *SetIfNotExistsRequest) cacheName() string { return r.CacheName }
+func (r *SetIfPresentRequest) cacheName() string { return r.CacheName }
 
-func (r *SetIfNotExistsRequest) key() Key { return r.Key }
+func (r *SetIfPresentRequest) key() Key { return r.Key }
 
-func (r *SetIfNotExistsRequest) value() Value { return r.Value }
+func (r *SetIfPresentRequest) value() Value { return r.Value }
 
-func (r *SetIfNotExistsRequest) ttl() time.Duration { return r.Ttl }
+func (r *SetIfPresentRequest) ttl() time.Duration { return r.Ttl }
 
-func (r *SetIfNotExistsRequest) requestName() string { return "SetIfNotExists" }
+func (r *SetIfPresentRequest) requestName() string { return "SetIfNotExists" }
 
-func (r *SetIfNotExistsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfPresentRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
 
 	var key []byte
@@ -53,20 +53,17 @@ func (r *SetIfNotExistsRequest) initGrpcRequest(client scsDataClient) error {
 		return err
 	}
 
-	condition := &pb.XSetIfRequest_Absent{
-		Absent: &pb.Absent{},
-	}
 	r.grpcRequest = &pb.XSetIfRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
-		Condition:       condition,
+		Condition:       &pb.XSetIfRequest_Present{},
 	}
 
 	return nil
 }
 
-func (r *SetIfNotExistsRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+func (r *SetIfPresentRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
 	resp, err := client.grpcClient.SetIf(metadata, r.grpcRequest)
 	if err != nil {
 		return nil, err
@@ -75,15 +72,15 @@ func (r *SetIfNotExistsRequest) makeGrpcRequest(metadata context.Context, client
 	return resp, nil
 }
 
-func (r *SetIfNotExistsRequest) interpretGrpcResponse() error {
+func (r *SetIfPresentRequest) interpretGrpcResponse() error {
 	grpcResp := r.grpcResponse
-	var resp responses.SetIfNotExistsResponse
+	var resp responses.SetIfPresentResponse
 
 	switch grpcResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfNotExistsStored{}
+		resp = &responses.SetIfPresentStored{}
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfNotExistsNotStored{}
+		resp = &responses.SetIfPresentNotStored{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
