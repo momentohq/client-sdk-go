@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "common.proto";
 import "extensions.proto";
 
 option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
@@ -35,7 +36,7 @@ service Pubsub {
   // practice it should almost always deliver to subscribers.
   //
   // REQUIRES HEADER authorization: Momento auth token
-  rpc Publish(_PublishRequest) returns (_Empty);
+  rpc Publish(_PublishRequest) returns (common._Empty);
 
   // Subscribe to notifications from a topic.
   //
@@ -45,8 +46,6 @@ service Pubsub {
   // REQUIRES HEADER authorization: Momento auth token
   rpc Subscribe(_SubscriptionRequest) returns (stream _SubscriptionItem);
 }
-
-message _Empty {}
 
 // A value to publish through a topic.
 message _PublishRequest {

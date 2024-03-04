@@ -721,15 +721,13 @@ message _ListRemoveResponse {
   list_size_one_[0:-1] == []
  */
 
-message _Unbounded { }
-
 message _ListFetchRequest {
   bytes list_name = 1;
   // Inclusive.
   // If unbounded, 0 (start of list) by default
   // A negative index counts from the end of the list
   oneof start_index {
-    _Unbounded unbounded_start = 2;
+    common._Unbounded unbounded_start = 2;
     sint32 inclusive_start = 3;
   }
   // Exclusive.
@@ -737,7 +735,7 @@ message _ListFetchRequest {
   // If end_index is > the number of elements to return, return as much as you can
   // A negative index counts from the end of the list
   oneof end_index {
-    _Unbounded unbounded_end = 4;
+    common._Unbounded unbounded_end = 4;
     sint32 exclusive_end = 5;
   }
 }
@@ -745,11 +743,11 @@ message _ListFetchRequest {
 message _ListRetainRequest {
   bytes list_name = 1;
   oneof start_index {
-    _Unbounded unbounded_start = 2;
+    common._Unbounded unbounded_start = 2;
     sint32 inclusive_start = 3;
   }
   oneof end_index {
-    _Unbounded unbounded_end = 4;
+    common._Unbounded unbounded_end = 4;
     sint32 exclusive_end = 5;
   }
   uint64 ttl_milliseconds = 6;
@@ -827,13 +825,13 @@ message _SortedSetFetchRequest {
     // Start is inclusive.
     // Unbounded is treated as 0.
     oneof start {
-      _Unbounded unbounded_start = 1;
+      common._Unbounded unbounded_start = 1;
       sint32 inclusive_start_index = 2;
     }
     // End is exclusive.
     // Unbounded is treated as the number of elements in the sorted set.
     oneof end {
-      _Unbounded unbounded_end = 3;
+      common._Unbounded unbounded_end = 3;
       sint32 exclusive_end_index = 4;
     }
   }
@@ -845,11 +843,11 @@ message _SortedSetFetchRequest {
     }
 
     oneof min {
-      _Unbounded unbounded_min = 1;
+      common._Unbounded unbounded_min = 1;
       _Score min_score = 2;
     }
     oneof max {
-      _Unbounded unbounded_max = 3;
+      common._Unbounded unbounded_max = 3;
       _Score max_score = 4;
     }
     // Offset and count are used to only get a range of the matching elements,
@@ -1002,12 +1000,12 @@ message _SortedSetLengthByScoreRequest {
   oneof min {
     double inclusive_min = 2;
     double exclusive_min = 3;
-    _Unbounded unbounded_min = 4;
+    common._Unbounded unbounded_min = 4;
   };
   oneof max {
     double inclusive_max = 5;
     double exclusive_max = 6;
-    _Unbounded unbounded_max = 7;
+    common._Unbounded unbounded_max = 7;
   }
 }
 
