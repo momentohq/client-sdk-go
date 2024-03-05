@@ -24,10 +24,7 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline:                    5 * time.Second,
-				keepAlivePermitWithoutCalls: true,
-				keepAliveTime:               5000 * time.Millisecond,
-				keepAliveTimeout:            1000 * time.Millisecond,
+				deadline: 5 * time.Second,
 			}),
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
@@ -50,10 +47,7 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline:                    1100 * time.Millisecond,
-				keepAlivePermitWithoutCalls: true,
-				keepAliveTime:               5000 * time.Millisecond,
-				keepAliveTimeout:            1000 * time.Millisecond,
+				deadline: 1100 * time.Millisecond,
 			}),
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
@@ -80,7 +74,7 @@ func LambdaLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 1100 * time.Millisecond,
-			}),
+			}).WithKeepAliveDisabled(),
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,

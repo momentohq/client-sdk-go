@@ -63,6 +63,9 @@ type GrpcConfiguration interface {
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
 	GetKeepAlivePermitWithoutCalls() bool
 
+	// WithKeepAlivePermitWithoutCalls Copy constructor for overriding the keepalive permit without calls.
+	WithKeepAlivePermitWithoutCalls(keepAlivePermitWithoutCalls bool) GrpcConfiguration
+
 	// Returns number of milliseconds the client will wait for a response from a keepalive or ping.
 	//
 	// NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
@@ -72,6 +75,9 @@ type GrpcConfiguration interface {
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
 	GetKeepAliveTimeout() time.Duration
 
+	// WithKeepAliveTimeout Copy constructor for overriding the keepalive timeout.
+	WithKeepAliveTimeout(keepAliveTimeout time.Duration) GrpcConfiguration
+
 	// Returns the interval at which to send the keepalive or ping.
 	//
 	// NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
@@ -80,6 +86,13 @@ type GrpcConfiguration interface {
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
 	GetKeepAliveTime() time.Duration
+
+	// WithKeepAliveTime Copy constructor for overriding the keepalive time.
+	WithKeepAliveTime(keepAliveTime time.Duration) GrpcConfiguration
+
+	// WithKeepAlivePermitWithoutCalls Copy constructor for overriding the keepalive permit without calls.
+	// Returns a new GrpcConfiguration with keepalive settings disabled (they're enabled by default)
+	WithKeepAliveDisabled() GrpcConfiguration
 
 	// The maximum message length the client can send to the server.  If the client attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.

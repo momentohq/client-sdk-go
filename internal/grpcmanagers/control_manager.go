@@ -3,6 +3,7 @@ package grpcmanagers
 import (
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -19,10 +20,14 @@ const ControlPort = ":443"
 func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsControlGrpcManager, momentoerrors.MomentoSvcErr) {
 	authToken := request.CredentialProvider.GetAuthToken()
 	endpoint := fmt.Sprint(request.CredentialProvider.GetControlEndpoint(), ControlPort)
+
+	// Override grpc config to disable keepalives
+	controlConfig := config.NewStaticGrpcConfiguration(&config.GrpcConfigurationProps{}).WithKeepAliveDisabled()
+
 	conn, err := grpc.Dial(
 		endpoint,
 		AllDialOptions(
-			request.GrpcConfiguration,
+			controlConfig,
 			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
 		)...,
 	)
