@@ -65,7 +65,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a Lambda config with a logger`, func() {
 		_, err := NewCacheClient(
-			config.LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 		)
@@ -76,7 +76,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a Lambda config with a logger with eager connections`, func() {
 		_, err := NewCacheClientWithEagerConnectTimeout(
-			config.LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 			30*time.Second,
@@ -87,7 +87,7 @@ var _ = Describe("CacheClient", func() {
 	})
 
 	It(`Constructs Lambda config with keepalive turned off`, func() {
-		config := config.Lambda()
+		config := config.LambdaLatest()
 		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
 		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeFalse())
 		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(0 * time.Second))

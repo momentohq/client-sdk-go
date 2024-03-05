@@ -98,11 +98,11 @@ func InRegionLatestWithLoggerAndKeepalive(loggerFactory logger.MomentoLoggerFact
 // from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 // Therefore, keep-alives should be disabled in lambda and similar environments.
 
-func Lambda() Configuration {
-	return LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
+func LambdaLatest() Configuration {
+	return LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
-func LambdaWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
+func LambdaLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
