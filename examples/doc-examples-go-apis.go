@@ -197,3 +197,97 @@ func example_API_GenerateDisposableToken(client momento.AuthClient) {
 		log.Printf("Successfully generated a disposable token for endpoint=%s with tokenId=%s\n", r.Endpoint, tokenId)
 	}
 }
+
+func example_API_SetIfPresent() {
+	resp, err := client.SetIfPresent(ctx, &momento.SetIfPresentRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetIfPresentStored:
+		log.Printf("Successfully set key in cache\n")
+	}
+}
+
+func example_API_SetIfAbsent() {
+	resp, err := client.SetIfAbsent(ctx, &momento.SetIfAbsentRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetIfAbsentStored:
+		log.Printf("Successfully set key in cache\n")
+	}
+}
+
+func example_API_SetIfEqual() {
+	resp, err := client.SetIfEqual(ctx, &momento.SetIfEqualRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		Equal:     momento.String("current-value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetIfEqualStored:
+		log.Printf("Successfully set key in cache\n")
+	}
+}
+
+func example_API_SetIfNotEqual() {
+	resp, err := client.SetIfNotEqual(ctx, &momento.SetIfNotEqualRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		NotEqual:  momento.String("current-value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetIfNotEqualStored:
+		log.Printf("Successfully set key in cache\n")
+	}
+}
+
+func example_API_SetIfPresentAndNotEqual() {
+	resp, err := client.SetIfPresentAndNotEqual(ctx, &momento.SetIfPresentAndNotEqualRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		NotEqual:  momento.String("current-value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetIfPresentAndNotEqualStored:
+		log.Printf("Successfully set key in cache\n")
+	}
+}
+
+func example_API_SetIfAbsentOrEqual() {
+	resp, err := client.SetIfAbsentOrEqual(ctx, &momento.SetIfAbsentOrEqualRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		Equal:     momento.String("current-value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetIfAbsentOrEqualStored:
+		log.Printf("Successfully set key in cache\n")
+	}
+}
