@@ -16,24 +16,10 @@ import (
 // It enables keep-alive pings by default because they are very important for long-lived server
 // environments where there may be periods of time when the connection is idle.
 func LaptopLatest() Configuration {
-	return LaptopWithLoggerAndKeepalive(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
+	return LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
 func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
-	return NewCacheConfiguration(&ConfigurationProps{
-		LoggerFactory: loggerFactory,
-		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
-			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline: 5 * time.Second,
-			}),
-		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
-		NumGrpcChannels: 1,
-		ReadConcern:     BALANCED,
-	})
-}
-
-func LaptopWithLoggerAndKeepalive(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
@@ -56,24 +42,10 @@ func LaptopWithLoggerAndKeepalive(loggerFactory logger.MomentoLoggerFactory) Con
 // environments where there may be periods of time when the connection is idle.
 
 func InRegionLatest() Configuration {
-	return InRegionLatestWithLoggerAndKeepalive(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
+	return InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
 func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
-	return NewCacheConfiguration(&ConfigurationProps{
-		LoggerFactory: loggerFactory,
-		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
-			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline: 1100 * time.Millisecond,
-			}),
-		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
-		NumGrpcChannels: 1,
-		ReadConcern:     BALANCED,
-	})
-}
-
-func InRegionLatestWithLoggerAndKeepalive(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
