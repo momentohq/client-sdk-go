@@ -43,3 +43,13 @@ func (client *ScsPingClient) Ping(ctx context.Context) momentoerrors.MomentoSvcE
 	}
 	return nil
 }
+
+func (client *ScsPingClient) Connect() error {
+	timeout := 30 * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	err := grpcmanagers.Connect(ctx, client.grpcManager.Conn)
+	return err
+}

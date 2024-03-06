@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"google.golang.org/grpc/connectivity"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -93,6 +94,10 @@ func (client scsDataClient) Connect() error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	err := client.grpcManager.Connect(ctx)
+	err := grpcmanagers.Connect(ctx, client.grpcManager.Conn)
 	return err
+}
+
+func (client scsDataClient) IsConnected() bool {
+	return client.grpcManager.Conn.GetState() == connectivity.Ready
 }

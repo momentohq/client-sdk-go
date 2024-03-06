@@ -23,7 +23,7 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.NewClient(
+	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),

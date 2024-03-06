@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"google.golang.org/grpc/connectivity"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -60,4 +61,18 @@ func (client *ScsControlClient) ListCaches(ctx context.Context, request *models.
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return models.NewListCacheResponse(resp), nil
+}
+
+func (client *ScsControlClient) Connect() error {
+	timeout := ControlCtxTimeout
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	err := grpcmanagers.Connect(ctx, client.grpcManager.Conn)
+	return err
+}
+
+func (client *ScsControlClient) IsConnected() bool {
+	return client.grpcManager.Conn.GetState() == connectivity.Ready
 }

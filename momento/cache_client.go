@@ -300,6 +300,12 @@ func (c defaultScsClient) getCacheNameForRequest(request hasCacheName) string {
 func (c defaultScsClient) getNextDataClient() *scsDataClient {
 	nextClientIndex := atomic.AddUint64(&dataClientCount, 1)
 	dataClient := c.dataClients[nextClientIndex%uint64(len(c.dataClients))]
+	if !dataClient.IsConnected() {
+		err := dataClient.Connect()
+		if err != nil {
+			c.logger.Debug("Failed to connect to the server within the given eager connection timeout:", err.Error())
+		}
+	}
 	return dataClient
 }
 

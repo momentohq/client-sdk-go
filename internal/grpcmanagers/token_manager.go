@@ -25,7 +25,7 @@ func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcMan
 	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetTokenEndpoint(), TokenPort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.NewClient(
+	conn, err := grpc.Dial(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
