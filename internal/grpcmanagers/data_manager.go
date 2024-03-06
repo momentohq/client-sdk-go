@@ -28,7 +28,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
@@ -46,7 +46,7 @@ func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*Da
 	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		endpoint,
 		grpc.WithTransportCredentials(credentials.NewTLS(config)),
 		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
@@ -59,7 +59,7 @@ func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*Da
 }
 
 func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		request.Endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDisableRetry(),
