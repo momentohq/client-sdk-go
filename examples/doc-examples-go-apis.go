@@ -44,6 +44,28 @@ func example_API_InstantiateCacheClient() {
 	client.Ping(context)
 }
 
+func example_API_InstantiateCacheClientWithReadConcern() {
+	context := context.Background()
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	if err != nil {
+		panic(err)
+	}
+	defaultTtl := time.Duration(9999)
+	eagerConnectTimeout := 30 * time.Second
+
+	client, err := momento.NewCacheClientWithEagerConnectTimeout(
+		config.LaptopLatest().WithReadConcern(config.CONSISTENT),
+		credentialProvider,
+		defaultTtl,
+		eagerConnectTimeout,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	client.Ping(context)
+}
+
 func example_API_ListCaches() {
 	resp, err := client.ListCaches(ctx, &momento.ListCachesRequest{})
 	if err != nil {
