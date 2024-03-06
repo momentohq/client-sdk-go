@@ -2,8 +2,9 @@ package momento
 
 import (
 	"context"
-	"google.golang.org/grpc/connectivity"
 	"time"
+
+	"google.golang.org/grpc/connectivity"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"

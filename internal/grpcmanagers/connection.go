@@ -3,6 +3,7 @@ package grpcmanagers
 import (
 	"context"
 	"errors"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 )
