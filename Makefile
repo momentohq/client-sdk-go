@@ -51,7 +51,7 @@ precommit: lint test
 
 .PHONY: test
 test:
-	ginkgo momento/ auth/ batchutils/
+	ginkgo -v momento/ auth/ batchutils/
 
 .PHONY: vendor
 vendor:
