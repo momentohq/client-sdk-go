@@ -39,7 +39,7 @@ type GrpcConfiguration interface {
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
 	WithKeepAlivePermitWithoutCalls(keepAlivePermitWithoutCalls bool) GrpcConfiguration
 
-	// Returns number of milliseconds the client will wait for a response from a keepalive or ping.
+	// GetKeepAliveTimeout returns number of milliseconds the client will wait for a response from a keepalive or ping.
 	GetKeepAliveTimeout() time.Duration
 
 	// WithKeepAliveTime Copy constructor for overriding the keepalive timeout. After waiting for a duration of this time,
