@@ -73,7 +73,7 @@ type GrpcConfiguration interface {
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
 	GetMaxSendMessageLength() int
 
-	// The maximum message length the client can receive from the server.  If the server attempts to send a message
+	// GetMaxReceiveMessageLength is the maximum message length the client can receive from the server.  If the server attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
 	GetMaxReceiveMessageLength() int
 }
