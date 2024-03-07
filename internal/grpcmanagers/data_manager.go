@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type DataGrpcManager struct {
@@ -28,42 +27,21 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 
-	conn, err := grpc.Dial(
-		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
-	)
-
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+	var conn *grpc.ClientConn
+	var err error
+	if request.EagerConnect {
+		conn, err = grpc.Dial(
+			endpoint,
+			grpc.WithTransportCredentials(credentials.NewTLS(config)),
+			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+		)
+	} else {
+		conn, err = grpc.NewClient(
+			endpoint,
+			grpc.WithTransportCredentials(credentials.NewTLS(config)),
+			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+		)
 	}
-	return &DataGrpcManager{Conn: conn}, nil
-}
-
-func NewStreamDataGrpcManager(request *models.DataStreamGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
-	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
-	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.Dial(
-		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
-	)
-
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
-	}
-	return &DataGrpcManager{Conn: conn}, nil
-}
-
-func NewLocalDataGrpcManager(request *models.LocalDataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	conn, err := grpc.Dial(
-		request.Endpoint,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDisableRetry(),
-	)
 
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
