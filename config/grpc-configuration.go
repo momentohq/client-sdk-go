@@ -65,7 +65,7 @@ type GrpcConfiguration interface {
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
 	WithKeepAliveTime(keepAliveTime time.Duration) GrpcConfiguration
 
-	// WithKeepAlivePermitWithoutCalls Copy constructor for overriding the keepalive permit without calls.
+	// WithKeepAliveDisabled disables grpc keepalives```
 	// Returns a new GrpcConfiguration with keepalive settings disabled (they're enabled by default)
 	WithKeepAliveDisabled() GrpcConfiguration
 
