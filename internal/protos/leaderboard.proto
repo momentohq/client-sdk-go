@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+import "common.proto";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "grpc.leaderboard";
+option csharp_namespace = "Momento.Protos.Leaderboard";
+
+package leaderboard;
+
+// Like a sorted set, but for leaderboards!
+//
+// Elements in a leaderboard are keyed by an ID, which is an unsigned 64 bit integer.
+// Scores are single-precision floating point numbers.
+//
+// Each ID can have only 1 score.
+//
+// For batchy, multi-element apis, limits are 8192 elements per api call.
+//
+// Scores are IEEE 754 single-precision floating point numbers. This has a few
+// implications you should be aware of, but the one most likely to affect you is that
+// below -16777216 and above 16777216, not all integers are able to be represented.
+service Leaderboard {
+  // Deletes a leaderboard. After this call, you're not incurring storage cost for this leaderboard anymore.
+  rpc DeleteLeaderboard(_DeleteLeaderboardRequest) returns (common._Empty);
+
+  // Insert or update elements in a leaderboard. You can do up to 8192 elements per call.
+  // There is no partial failure: Upsert succeeds or fails.
+  rpc UpsertElements(_UpsertElementsRequest) returns (common._Empty);
+
+  // Remove up to 8192 elements at a time from a leaderboard. Elements are removed by id.
+  rpc RemoveElements(_RemoveElementsRequest) returns (common._Empty);
+
+  // Returns the length of a leaderboard in terms of ID count.
+  rpc GetLeaderboardLength(_GetLeaderboardLengthRequest) returns (_GetLeaderboardLengthResponse);
+
+  // Get a range of elements.
+  // * Ordinal, 0-based rank.
+  // * Range can span up to 8192 elements.
+  // See RankRange for details about permissible ranges.
+  rpc GetByRank(_GetByRankRequest) returns (_GetByRankResponse);
+
+  // Get the rank of a list of particular ids in the leaderboard.
+  // * Ordinal, 0-based rank.
+  rpc GetRank(_GetRankRequest) returns (_GetRankResponse);
+
+  // Get a range of elements by a score range.
+  // * Ordinal, 0-based rank.
+  //
+  // You can request up to 8192 elements at a time. To page through many elements that all
+  // fall into a score range you can repeatedly invoke this api with the offset parameter.
+  rpc GetByScore(_GetByScoreRequest) returns (_GetByScoreResponse);
+}
+
+// Leaderboards are made up of many of these.
+message _Element {
+  // A player identifier, session identifier, browser identifier or whatever other kind of
+  // identifier you use for this scoreboard. The full unsigned 64 bit range is allowed here,
+  // between 0 and 2^63-1 inclusive.
+  // An id can only appear in a leaderboard one time. You can't have 2 scores for 1 player,
+  // unless that player has 2 ids!
+  uint32 id = 1;
+
+  // The value by which this element is sorted within the leaderboard.
+  double score = 3;
+
+  reserved 2;
+}
+
+// Query APIs returning RankedElement offer the familiar Element id and score tuple, but they
+// also include the rank per the individual API's ranking semantic.
+message _RankedElement {
+  uint32 id = 1;
+  uint32 rank = 3;
+  double score = 4;
+
+  reserved 2;
+}
+
+// Query APIs using RankRange expect a limit of 8192 elements. Requesting a range wider than
+// that is expected to return an error.
+//
+// RankRange models half-open ranges: 0..4 refers to elements 0, 1, 2 and 3.
+//
+// Example permissible ranges:
+// * 0..8192
+// * 1..8193
+// * 123..8315
+// * 0..1
+// * 1..4
+// * 13..17
+//
+// Example error ranges:
+// * 0..0
+// * 4..3
+// * 0..8193
+message _RankRange {
+  uint32 start_inclusive = 1;
+  uint32 end_exclusive = 2;
+}
+
+// Query APIs using ScoreRange may match more than the limit of 8192 elements. These apis will
+// include an offset and limit parameter pair, which can be used to page through score ranges
+// matching many elements.
+//
+// ScoreRange models half-open ranges: 0..4 refers to scores 0, 1.1234, 2.5 and 3.999.
+message _ScoreRange {
+  oneof min {
+    common._Unbounded unbounded_min = 1;
+    // IEEE 754 single precision 64 bit floating point number.
+    // Momento does not support NaN or Inf in leaderboards.
+    double min_inclusive = 5;
+  }
+  oneof max {
+    common._Unbounded unbounded_max = 3;
+    // IEEE 754 single precision 64 bit floating point number.
+    // Momento does not support NaN or Inf in leaderboards.
+    double max_exclusive = 6;
+  }
+
+  reserved 2, 4;
+}
+
+enum _Order {
+  // Ascending order (0 is the lowest-scoring rank)
+  ASCENDING = 0;
+  // Descending order (0 is the highest-scoring rank)
+  DESCENDING = 1;
+}
+
+message _DeleteLeaderboardRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+}
+
+message _GetLeaderboardLengthRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+}
+
+message _GetLeaderboardLengthResponse {
+  uint32 count = 1;
+}
+
+message _UpsertElementsRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+  // You can have up to 8192 elements in this list.
+  repeated _Element elements = 3;
+}
+
+message _GetByRankRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+  _RankRange rank_range = 3;
+  _Order order = 4;
+}
+
+message _GetByRankResponse {
+  repeated _RankedElement elements = 1;
+}
+
+message _GetRankRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+  repeated uint32 ids = 3;
+  _Order order = 4;
+}
+
+message _GetRankResponse {
+  repeated _RankedElement elements = 1;
+}
+
+message _RemoveElementsRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+  // You can have up to 8192 ids in this list.
+  repeated uint32 ids = 3;
+}
+
+message _GetByScoreRequest {
+  string cache_name = 1;
+  string leaderboard = 2;
+  _ScoreRange score_range = 3;
+  // Where should we start returning scores from in the elements within this range?
+  uint32 offset = 4;
+  // How many elements should we limit to returning? (8192 max)
+  uint32 limit_elements = 5;
+  _Order order = 6;
+}
+
+message _GetByScoreResponse {
+  repeated _RankedElement elements = 1;
+}

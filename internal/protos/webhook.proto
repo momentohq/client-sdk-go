@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+option go_package = "github.com/momentohq/client-sdk-go;client_sdk_go";
+option java_multiple_files = true;
+option java_package = "grpc.webhook";
+option csharp_namespace = "Momento.Protos.Webhook";
+
+package webhook;
+
+// A Webhook is a mechanism to consume messages on a Topic.
+// The primary purpose of webhooks in Momento is to enable
+// Lambda to be a subscriber to the messages sent on a topic.
+// Secondarily, webhooks open us up to a whole lot of integrations
+// (slack, discord, event bridge, etc).
+service Webhook {
+  rpc PutWebhook(_PutWebhookRequest) returns (_PutWebhookResponse) {}
+  rpc DeleteWebhook(_DeleteWebhookRequest) returns (_DeleteWebhookResponse) {}
+  rpc ListWebhooks(_ListWebhookRequest) returns (_ListWebhooksResponse) {}
+  rpc GetWebhookSecret(_GetWebhookSecretRequest) returns (_GetWebhookSecretResponse) {}
+  rpc RotateWebhookSecret(_RotateWebhookSecretRequest) returns (_RotateWebhookSecretResponse) {}
+}
+
+message _WebhookId {
+  string cache_name = 1;
+  // This is limited to 128 chars.
+  string webhook_name = 2;
+}
+
+message _Webhook {
+  _WebhookId webhook_id = 1;
+  string topic_name = 2;
+  _WebhookDestination destination = 3;
+}
+
+message _PutWebhookRequest {
+  _Webhook webhook = 1;
+}
+
+message _PutWebhookResponse {
+  string secret_string = 1;
+}
+
+message _DeleteWebhookRequest {
+  _WebhookId webhook_id = 1;
+}
+
+message _DeleteWebhookResponse {
+}
+
+message _ListWebhookRequest {
+  string cache_name = 1;
+}
+
+message _ListWebhooksResponse {
+  repeated _Webhook webhook = 1;
+}
+
+message _GetWebhookSecretRequest {
+  string cache_name = 1;
+  string webhook_name = 2;
+}
+
+message _GetWebhookSecretResponse {
+  string cache_name = 1;
+  string webhook_name = 2;
+  string secret_string = 3;
+}
+
+message _WebhookDestination {
+  oneof kind {
+    string post_url = 1;
+  }
+}
+
+message _RotateWebhookSecretRequest {
+  _WebhookId webhook_id = 1;
+}
+
+message _RotateWebhookSecretResponse {
+  string secret_string = 1;
+}

@@ -59,6 +59,14 @@ type hasValues interface {
 	values() []Value
 }
 
+type hasNotEqual interface {
+	notEqual() Value
+}
+
+type hasEqual interface {
+	equal() Value
+}
+
 type hasField interface {
 	field() Value
 }
@@ -155,6 +163,20 @@ func prepareValues(r hasValues) ([][]byte, error) {
 		return [][]byte{}, err
 	}
 	return values, nil
+}
+
+func prepareNotEqual(r hasNotEqual) ([]byte, error) {
+	if err := validateNotNil(r.notEqual(), "notEqual"); err != nil {
+		return []byte{}, err
+	}
+	return r.notEqual().asBytes(), nil
+}
+
+func prepareEqual(r hasEqual) ([]byte, error) {
+	if err := validateNotNil(r.equal(), "equal"); err != nil {
+		return []byte{}, err
+	}
+	return r.equal().asBytes(), nil
 }
 
 func prepareDictionaryElements(r hasDictionaryElements) ([]DictionaryElement, error) {

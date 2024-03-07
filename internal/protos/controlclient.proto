@@ -21,9 +21,27 @@ service ScsControl {
   rpc ListIndexes(_ListIndexesRequest) returns (_ListIndexesResponse) {}
 }
 
+message _SimilarityMetric {
+  message _EuclideanSimilarity {
+  }
+
+  message _InnerProduct {
+  }
+
+  message _CosineSimilarity {
+  }
+
+  oneof similarity_metric {
+    _EuclideanSimilarity euclidean_similarity = 1;
+    _InnerProduct inner_product = 2;
+    _CosineSimilarity cosine_similarity = 3;
+  }
+}
+
 message _CreateIndexRequest {
   string index_name = 1;
   uint64 num_dimensions = 2;
+  _SimilarityMetric similarity_metric = 3;
 }
 
 message _CreateIndexResponse {
@@ -40,7 +58,12 @@ message _ListIndexesRequest {
 }
 
 message _ListIndexesResponse {
-  repeated string index_names = 1;
+  message _Index {
+    string index_name = 1;
+    uint64 num_dimensions = 2;
+    _SimilarityMetric similarity_metric = 3;
+  }
+  repeated _Index indexes = 1;
 }
 
 message _DeleteCacheRequest {
