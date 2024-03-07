@@ -26,7 +26,7 @@ type GrpcConfiguration interface {
 	// with the specified client-side deadline
 	WithDeadline(deadline time.Duration) GrpcConfiguration
 
-	// Returns bool indicating if it is permissible to send keepalive pings from the client without any outstanding calls.
+	// GetKeepAlivePermitWithoutCalls returns bool indicating if it is permissible to send keepalive pings from the client without any outstanding calls.
 	GetKeepAlivePermitWithoutCalls() bool
 
 	// WithKeepAlivePermitWithoutCalls Copy constructor for overriding the keepalive permit without calls.
