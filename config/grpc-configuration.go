@@ -52,7 +52,7 @@ type GrpcConfiguration interface {
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
 	WithKeepAliveTimeout(keepAliveTimeout time.Duration) GrpcConfiguration
 
-	// Returns the interval at which to send the keepalive or ping.
+	// GetKeepAliveTime returns the interval at which to send the keepalive or ping.
 	GetKeepAliveTime() time.Duration
 
 	// WithKeepAliveTimeout Copy constructor for overriding the keepalive time.
