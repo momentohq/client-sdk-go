@@ -56,7 +56,7 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 	})
 }
 
-// Lambda provides defaults suitable for an environment where your client is running in
+// LambdaLatest provides defaults suitable for an environment where your client is running in
 // a serverless environment like AWS Lambda.
 // NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
 // when the connection is idle. However, they are very problematic for lambda environments where the lambda
