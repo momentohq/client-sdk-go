@@ -19,6 +19,7 @@ type DataGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 	RetryStrategy      retry.Strategy
 	ReadConcern        config.ReadConcern
+	EagerConnect       bool
 }
 
 type TokenGrpcManagerRequest struct {
