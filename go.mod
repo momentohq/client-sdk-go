@@ -21,4 +21,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace google.golang.org/grpc => github.com/bruuuuuuuce/grpc-go v1.61.0-dev.0.20240306220430-6ad501388d03
+replace google.golang.org/grpc => github.com/momentohq/grpc-go v1.61.0-dev.0.20240306220430-6ad501388d03
