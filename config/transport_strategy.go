@@ -44,7 +44,7 @@ type StaticGrpcConfiguration struct {
 	maxReceiveMessageLength     int
 }
 
-// Constructs new GrpcConfiguration to tune lower-level grpc settings.
+// NewStaticGrpcConfiguration constructs a new GrpcConfiguration to tune lower-level grpc settings.
 // Note: keepalive settings are enabled by default, use WithKeepAliveDisabled() to disable all of them,
 // or use the appropriate copy constructor to override individual settings.
 func NewStaticGrpcConfiguration(grpcConfiguration *GrpcConfigurationProps) *StaticGrpcConfiguration {
