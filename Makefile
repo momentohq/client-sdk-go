@@ -51,7 +51,7 @@ precommit: lint test
 
 .PHONY: test
 test:
-	ginkgo -v momento/ auth/ batchutils/
+	GRPC_TRACE=connectivity_state,channel,http,tcp GRPC_VERBOSITY=debug ginkgo -v momento/ auth/ batchutils/
 
 .PHONY: vendor
 vendor:
