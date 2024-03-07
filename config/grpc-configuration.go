@@ -69,7 +69,7 @@ type GrpcConfiguration interface {
 	// Returns a new GrpcConfiguration with keepalive settings disabled (they're enabled by default)
 	WithKeepAliveDisabled() GrpcConfiguration
 
-	// The maximum message length the client can send to the server.  If the client attempts to send a message
+	// GetMaxSendMessageLength is the maximum message length the client can send to the server.  If the client attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
 	GetMaxSendMessageLength() int
 
