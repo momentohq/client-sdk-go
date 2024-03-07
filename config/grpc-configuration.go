@@ -55,7 +55,7 @@ type GrpcConfiguration interface {
 	// GetKeepAliveTime returns the interval at which to send the keepalive or ping.
 	GetKeepAliveTime() time.Duration
 
-	// WithKeepAliveTimeout Copy constructor for overriding the keepalive time.
+	// WithKeepAliveTime Copy constructor for overriding the keepalive time.
 	// After a duration of this time the client/server pings its peer to see if the transport is still alive.
 	//
 	// NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
