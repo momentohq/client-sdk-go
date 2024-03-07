@@ -42,7 +42,7 @@ type GrpcConfiguration interface {
 	// GetKeepAliveTimeout returns number of milliseconds the client will wait for a response from a keepalive or ping.
 	GetKeepAliveTimeout() time.Duration
 
-	// WithKeepAliveTime Copy constructor for overriding the keepalive timeout. After waiting for a duration of this time,
+	// WithKeepAliveTimeout Copy constructor for overriding the keepalive timeout. After waiting for a duration of this time,
 	// if the keepalive ping sender does not receive the ping ack, it will close the transport.
 	//
 	// NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
