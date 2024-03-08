@@ -95,9 +95,6 @@ func (e *BatchGetResponse) Responses() map[momento.Value]responses.GetResponse {
 // BatchGet gets a slice of keys from the cache, returning a map from failing cache keys to their specific errors.
 func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *BatchGetError) {
 	// initialize return value
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	// stop the key distributor when we return
-	defer cancelFunc()
 	var wg sync.WaitGroup
 
 	if props.MaxConcurrentGets == 0 {
@@ -106,7 +103,7 @@ func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *
 	if len(props.Keys) < props.MaxConcurrentGets {
 		props.MaxConcurrentGets = len(props.Keys)
 	}
-	keyChan := make(chan momento.Key, props.MaxConcurrentGets)
+	keyChan := make(chan momento.Key, len(props.Keys))
 	resultChan := make(chan *getResultOrError, len(props.Keys))
 
 	for i := 0; i < props.MaxConcurrentGets; i++ {
@@ -118,7 +115,18 @@ func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *
 		}()
 	}
 
-	go keyDistributor(cancelCtx, props.Client.Logger(), props.MaxConcurrentGets, props.Keys, keyChan)
+	for _, k := range props.Keys {
+		keyChan <- k
+	}
+
+	props.Client.Logger().Trace("BatchGet: put all of the keys on the channel")
+
+	// after we have put all the keys onto the channel, we add one nil for each worker to signal that they should exit
+	for i := 0; i < props.MaxConcurrentGets; i++ {
+		keyChan <- nil
+	}
+
+	props.Client.Logger().Trace("BatchGet: put a nil on the channel for each worker")
 
 	// wait for the workers to return
 	wg.Wait()
