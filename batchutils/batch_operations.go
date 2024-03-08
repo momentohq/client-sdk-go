@@ -2,8 +2,9 @@ package batchutils
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
 
 	"github.com/momentohq/client-sdk-go/momento"
 )
