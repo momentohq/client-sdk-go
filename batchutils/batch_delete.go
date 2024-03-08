@@ -95,7 +95,7 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteErr
 		}()
 	}
 
-	go keyDistributor(cancelCtx, props.Keys, keyChan)
+	go keyDistributor(cancelCtx, props.Client.Logger(), props.MaxConcurrentDeletes, props.Keys, keyChan)
 
 	// wait for the workers to return
 	wg.Wait()

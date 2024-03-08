@@ -21,6 +21,8 @@ import (
 var dataClientCount uint64
 
 type CacheClient interface {
+	Logger() logger.MomentoLogger
+
 	// CreateCache Creates a cache if it does not exist.
 	CreateCache(ctx context.Context, request *CreateCacheRequest) (responses.CreateCacheResponse, error)
 	// DeleteCache deletes a cache and all the items within it.
@@ -288,6 +290,10 @@ func NewCacheClientWithDefaultCache(configuration config.Configuration, credenti
 		EagerConnectTimeout: 30 * time.Second,
 	}
 	return commonCacheClient(props)
+}
+
+func (c defaultScsClient) Logger() logger.MomentoLogger {
+	return c.logger
 }
 
 func (c defaultScsClient) getCacheNameForRequest(request hasCacheName) string {
