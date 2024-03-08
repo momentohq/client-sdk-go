@@ -118,7 +118,7 @@ func BatchGet(ctx context.Context, props *BatchGetRequest) (*BatchGetResponse, *
 		}()
 	}
 
-	go keyDistributor(cancelCtx, props.Keys, keyChan)
+	go keyDistributor(cancelCtx, props.Client.Logger(), props.MaxConcurrentGets, props.Keys, keyChan)
 
 	// wait for the workers to return
 	wg.Wait()

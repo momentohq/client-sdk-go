@@ -2,6 +2,7 @@ package batchutils
 
 import (
 	"context"
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"sync"
 	"time"
 
@@ -101,17 +102,25 @@ func (e *BatchSetResponse) Responses() map[momento.Value]responses.SetResponse {
 	return e.responses
 }
 
-func itemDistributor(ctx context.Context, items []BatchSetItem, itemChan chan BatchSetItem) {
+func itemDistributor(ctx context.Context, logger logger.MomentoLogger, numWorkers int, items []BatchSetItem, itemChan chan BatchSetItem) {
 	for _, item := range items {
 		itemChan <- item
 	}
 
+	logger.Trace("itemDistributor has put all of the items on the channel")
+
+	// after we have put all the keys onto the channel, we add one nil for each worker to signal that they should exit
+	for i := 0; i < numWorkers; i++ {
+		itemChan <- BatchSetItem{}
+	}
+
+	logger.Trace("itemDistributor has put a nil on the channel for each worker")
+
 	for {
 		select {
 		case <-ctx.Done():
+			logger.Trace("itemDistributor context done, exiting for loop")
 			return
-		default:
-			itemChan <- BatchSetItem{}
 		}
 	}
 }
@@ -142,7 +151,7 @@ func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *
 		}()
 	}
 
-	go itemDistributor(cancelCtx, props.Items, itemChan)
+	go itemDistributor(cancelCtx, props.Client.Logger(), props.MaxConcurrentSets, props.Items, itemChan)
 
 	// wait for the workers to return
 	wg.Wait()
