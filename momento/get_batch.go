@@ -1,0 +1,84 @@
+package momento
+
+import (
+	"context"
+	"io"
+
+	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/responses"
+)
+
+type GetBatchRequest struct {
+	CacheName string
+	Keys      []Value
+
+	grpcRequest *pb.XGetBatchRequest
+	grpcStream  pb.Scs_GetBatchClient // or should it be grpc.ClientStream?
+	response    responses.GetBatchResponse
+	byteKeys    [][]byte
+}
+
+func (r *GetBatchRequest) cacheName() string { return r.CacheName }
+
+func (r *GetBatchRequest) keys() []Value { return r.Keys }
+
+func (r *GetBatchRequest) requestName() string { return "GetBatch" }
+
+func (r *GetBatchRequest) initGrpcRequest(scsDataClient) error {
+	var err error
+
+	if _, err = prepareName(r.CacheName, "Cache name"); err != nil {
+		return err
+	}
+
+	// For each key, prepare a GetRequest
+	var getRequests []*pb.XGetRequest
+	for _, key := range r.Keys {
+		var byteKey = key.asBytes()
+		r.byteKeys = append(r.byteKeys, byteKey)
+		getRequests = append(getRequests, &pb.XGetRequest{
+			CacheKey: byteKey,
+		})
+	}
+
+	r.grpcRequest = &pb.XGetBatchRequest{
+		Items: getRequests,
+	}
+
+	return nil
+}
+
+func (r *GetBatchRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
+	resp, err := client.grpcClient.GetBatch(metadata, r.grpcRequest)
+	if err != nil {
+		return nil, err
+	}
+	r.grpcStream = resp
+	// Not sure what to return here, don't think it's even used
+	return nil, nil
+}
+
+func (r *GetBatchRequest) interpretGrpcResponse() error {
+	var getResponses []responses.GetResponse
+	for {
+		rawMsg := new(pb.XGetResponse)
+		err := r.grpcStream.RecvMsg(rawMsg)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			switch rawMsg.Result {
+			case pb.ECacheResult_Hit:
+				var getHit = responses.NewGetHit(rawMsg.CacheBody)
+				getResponses = append(getResponses, getHit)
+			case pb.ECacheResult_Miss:
+				getResponses = append(getResponses, &responses.GetMiss{})
+			default:
+				return errUnexpectedGrpcResponse(r, rawMsg)
+			}
+		}
+	}
+
+	r.response = responses.NewGetBatchSuccess(getResponses, r.byteKeys)
+	return nil
+}

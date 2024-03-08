@@ -40,6 +40,12 @@ type DictionaryElement struct {
 	Field, Value Value
 }
 
+// Type to hold key-value pairs to set in a batch set request.
+type BatchSetItem struct {
+	Key   Key
+	Value Value
+}
+
 // DictionaryElementsFromMap converts a map[string]string to an array of momento DictionaryElements.
 //
 //	DictionaryElements are used as input to DictionarySetFields.
