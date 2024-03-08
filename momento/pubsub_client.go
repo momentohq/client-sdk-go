@@ -6,6 +6,7 @@ import (
 	"math"
 	"sync/atomic"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -47,9 +48,13 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 
+	// NOTE: This is hard-coded for now but we may want to expose it via TopicConfiguration in the future,
+	// as we do with some of the other clients. Defaults to keep-alive pings enabled.
+	grpcConfig := config.NewStaticGrpcConfiguration(&config.GrpcConfigurationProps{})
 	for i := 0; uint32(i) < numChannels; i++ {
 		streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
 			CredentialProvider: request.CredentialProvider,
+			GrpcConfiguration:  grpcConfig,
 		})
 		if err != nil {
 			return nil, err

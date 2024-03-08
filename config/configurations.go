@@ -12,11 +12,20 @@ import (
 )
 
 // LaptopLatest provides defaults suitable for a medium-to-high-latency dev environment.
+//
 // Permissive timeouts, retries, and relaxed latency and throughput targets.
+// It enables keep-alive pings by default because they are very important for long-lived server
+// environments where there may be periods of time when the connection is idle.
 func LaptopLatest() Configuration {
 	return LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
+// LaptopLatestWithLogger provides defaults suitable for a medium-to-high-latency dev environment
+// and uses the specified logger.
+//
+// Permissive timeouts, retries, and relaxed latency and throughput targets.
+// It enables keep-alive pings by default because they are very important for long-lived server
+// environments where there may be periods of time when the connection is idle.
 func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: loggerFactory,
@@ -32,12 +41,20 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 }
 
 // InRegionLatest provides defaults suitable for an environment where your client is running in the same region as the Momento service.
+//
 // It has more aggressive timeouts and retry behavior than the Laptop config.
-
+// It enables keep-alive pings by default because they are very important for long-lived server
+// environments where there may be periods of time when the connection is idle.
 func InRegionLatest() Configuration {
 	return InRegionLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
+// InRegionLatestWithLogger provides defaults suitable for an environment where your client is running in the same
+// region as the Momento service and uses the specified logger.
+//
+// It has more aggressive timeouts and retry behavior than the Laptop config.
+// It enables keep-alive pings by default because they are very important for long-lived server
+// environments where there may be periods of time when the connection is idle.
 func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: loggerFactory,
@@ -52,20 +69,33 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 	})
 }
 
-// Lambda provides defaults suitable for an environment where your client is running in
+// LambdaLatest provides defaults suitable for an environment where your client is running in
 // a serverless environment like AWS Lambda.
-
-func Lambda() Configuration {
-	return LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
+//
+// NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
+// when the connection is idle. However, they are very problematic for lambda environments where the lambda
+// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
+// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
+// Therefore, keep-alives should be disabled in lambda and similar environments.
+func LambdaLatest() Configuration {
+	return LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
-func LambdaWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
+// LambdaLatestWithLogger provides defaults suitable for an environment where your client is running in
+// a serverless environment like AWS Lambda and uses the specified logger.
+//
+// NOTE: keep-alives are very important for long-lived server environments where there may be periods of time
+// when the connection is idle. However, they are very problematic for lambda environments where the lambda
+// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
+// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
+// Therefore, keep-alives should be disabled in lambda and similar environments.
+func LambdaLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configuration {
 	return NewCacheConfiguration(&ConfigurationProps{
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
 				deadline: 1100 * time.Millisecond,
-			}),
+			}).WithKeepAliveDisabled(),
 		}),
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,

@@ -1,15 +1,14 @@
 package grpcmanagers
 
 import (
-	"crypto/tls"
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type ScsControlGrpcManager struct {
@@ -19,15 +18,18 @@ type ScsControlGrpcManager struct {
 const ControlPort = ":443"
 
 func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsControlGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
 	authToken := request.CredentialProvider.GetAuthToken()
 	endpoint := fmt.Sprint(request.CredentialProvider.GetControlEndpoint(), ControlPort)
+
+	// Override grpc config to disable keepalives
+	controlConfig := config.NewStaticGrpcConfiguration(&config.GrpcConfigurationProps{}).WithKeepAliveDisabled()
+
 	conn, err := grpc.NewClient(
 		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+		AllDialOptions(
+			controlConfig,
+			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+		)...,
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

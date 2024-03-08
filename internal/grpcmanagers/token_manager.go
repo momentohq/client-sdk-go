@@ -1,7 +1,6 @@
 package grpcmanagers
 
 import (
-	"crypto/tls"
 	"fmt"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
@@ -9,7 +8,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type TokenGrpcManager struct {
@@ -20,15 +18,14 @@ type TokenGrpcManager struct {
 const TokenPort = ":443"
 
 func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetTokenEndpoint(), TokenPort)
 	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.NewClient(
 		endpoint,
-		grpc.WithTransportCredentials(credentials.NewTLS(config)),
-		grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+		AllDialOptions(
+			request.GrpcConfiguration,
+			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+		)...,
 	)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

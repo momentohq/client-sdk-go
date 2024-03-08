@@ -2,7 +2,6 @@ package grpcmanagers
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials"
 )
 
 type DataGrpcManager struct {
@@ -21,9 +19,6 @@ type DataGrpcManager struct {
 const CachePort = ":443"
 
 func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	config := &tls.Config{
-		InsecureSkipVerify: false,
-	}
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 
@@ -32,14 +27,18 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	if request.EagerConnect {
 		conn, err = grpc.Dial(
 			endpoint,
-			grpc.WithTransportCredentials(credentials.NewTLS(config)),
-			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+			AllDialOptions(
+				request.GrpcConfiguration,
+				grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+			)...,
 		)
 	} else {
 		conn, err = grpc.NewClient(
 			endpoint,
-			grpc.WithTransportCredentials(credentials.NewTLS(config)),
-			grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+			AllDialOptions(
+				request.GrpcConfiguration,
+				grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+			)...,
 		)
 	}
 

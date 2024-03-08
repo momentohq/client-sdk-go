@@ -65,7 +65,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a Lambda config with a logger`, func() {
 		_, err := NewCacheClient(
-			config.LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 		)
@@ -76,7 +76,7 @@ var _ = Describe("CacheClient", func() {
 
 	It(`Supports constructing a Lambda config with a logger with eager connections`, func() {
 		_, err := NewCacheClientWithEagerConnectTimeout(
-			config.LambdaWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
 			30*time.Second,
@@ -84,5 +84,29 @@ var _ = Describe("CacheClient", func() {
 		if err != nil {
 			panic(err)
 		}
+	})
+
+	It(`Constructs Lambda config with keepalive turned off`, func() {
+		config := config.LambdaLatest()
+		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
+		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeFalse())
+		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(0 * time.Second))
+		Expect(grpcConfig.GetKeepAliveTimeout()).To(Equal(0 * time.Second))
+	})
+
+	It(`Constructs InRegionLatest config with keepalive turned on`, func() {
+		config := config.InRegionLatest()
+		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
+		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeTrue())
+		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(5000 * time.Millisecond))
+		Expect(grpcConfig.GetKeepAliveTimeout()).To(Equal(1000 * time.Millisecond))
+	})
+
+	It(`Constructs LaptopLatest config with keepalive turned on`, func() {
+		config := config.LaptopLatest()
+		grpcConfig := config.GetTransportStrategy().GetGrpcConfig()
+		Expect(grpcConfig.GetKeepAlivePermitWithoutCalls()).To(BeTrue())
+		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(5000 * time.Millisecond))
+		Expect(grpcConfig.GetKeepAliveTimeout()).To(Equal(1000 * time.Millisecond))
 	})
 })
