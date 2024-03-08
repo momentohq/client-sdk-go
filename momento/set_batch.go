@@ -21,8 +21,6 @@ type SetBatchRequest struct {
 
 func (r *SetBatchRequest) cacheName() string { return r.CacheName }
 
-func (r *SetBatchRequest) items() []BatchSetItem { return r.Items }
-
 func (r *SetBatchRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetBatchRequest) requestName() string { return "SetBatch" }
