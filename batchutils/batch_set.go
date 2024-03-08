@@ -2,7 +2,6 @@ package batchutils
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"sync"
 	"time"
 
@@ -102,35 +101,32 @@ func (e *BatchSetResponse) Responses() map[momento.Value]responses.SetResponse {
 	return e.responses
 }
 
-func itemDistributor(ctx context.Context, logger logger.MomentoLogger, numWorkers int, items []BatchSetItem, itemChan chan BatchSetItem) {
-	for _, item := range items {
-		itemChan <- item
-	}
-
-	logger.Trace("itemDistributor has put all of the items on the channel")
-
-	// after we have put all the keys onto the channel, we add one nil for each worker to signal that they should exit
-	for i := 0; i < numWorkers; i++ {
-		itemChan <- BatchSetItem{}
-	}
-
-	logger.Trace("itemDistributor has put a nil on the channel for each worker")
-
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Trace("itemDistributor context done, exiting for loop")
-			return
-		}
-	}
-}
+//func itemDistributor(ctx context.Context, logger logger.MomentoLogger, numWorkers int, items []BatchSetItem, itemChan chan BatchSetItem) {
+//	for _, item := range items {
+//		itemChan <- item
+//	}
+//
+//	logger.Trace("itemDistributor has put all of the items on the channel")
+//
+//	// after we have put all the keys onto the channel, we add one nil for each worker to signal that they should exit
+//	for i := 0; i < numWorkers; i++ {
+//		itemChan <- BatchSetItem{}
+//	}
+//
+//	logger.Trace("itemDistributor has put a nil on the channel for each worker")
+//
+//	for {
+//		select {
+//		case <-ctx.Done():
+//			logger.Trace("itemDistributor context done, exiting for loop")
+//			return
+//		}
+//	}
+//}
 
 // BatchSet sets a slice of keys to the cache, returning a map from failing cache keys to their specific errors.
 func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *BatchSetError) {
 	// initialize return value
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	// stop the key distributor when we return
-	defer cancelFunc()
 	var wg sync.WaitGroup
 
 	if props.MaxConcurrentSets == 0 {
@@ -139,7 +135,7 @@ func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *
 	if len(props.Items) < props.MaxConcurrentSets {
 		props.MaxConcurrentSets = len(props.Items)
 	}
-	itemChan := make(chan BatchSetItem, props.MaxConcurrentSets)
+	itemChan := make(chan BatchSetItem, len(props.Items))
 	resultChan := make(chan *setResultOrError, len(props.Items))
 
 	for i := 0; i < props.MaxConcurrentSets; i++ {
@@ -151,7 +147,18 @@ func BatchSet(ctx context.Context, props *BatchSetRequest) (*BatchSetResponse, *
 		}()
 	}
 
-	go itemDistributor(cancelCtx, props.Client.Logger(), props.MaxConcurrentSets, props.Items, itemChan)
+	for _, k := range props.Items {
+		itemChan <- k
+	}
+
+	props.Client.Logger().Trace("BatchSet: put all of the items on the channel")
+
+	// after we have put all the keys onto the channel, we add one nil for each worker to signal that they should exit
+	for i := 0; i < props.MaxConcurrentSets; i++ {
+		itemChan <- BatchSetItem{}
+	}
+
+	props.Client.Logger().Trace("BatchSet: put a nil on the channel for each worker")
 
 	// wait for the workers to return
 	wg.Wait()
