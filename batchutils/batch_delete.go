@@ -72,9 +72,6 @@ func (e *BatchDeleteError) Errors() map[momento.Value]error {
 // BatchDelete deletes a slice of keys from the cache, returning a map from failing cache keys to their specific errors.
 func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteError {
 	// initialize return value
-	cancelCtx, cancelFunc := context.WithCancel(ctx)
-	// stop the key distributor when we return
-	defer cancelFunc()
 	var wg sync.WaitGroup
 
 	if props.MaxConcurrentDeletes == 0 {
@@ -95,7 +92,18 @@ func BatchDelete(ctx context.Context, props *BatchDeleteRequest) *BatchDeleteErr
 		}()
 	}
 
-	go keyDistributor(cancelCtx, props.Client.Logger(), props.MaxConcurrentDeletes, props.Keys, keyChan)
+	for _, k := range props.Keys {
+		keyChan <- k
+	}
+
+	props.Client.Logger().Trace("BatchDelete: put all of the keys on the channel")
+
+	// after we have put all the keys onto the channel, we add one nil for each worker to signal that they should exit
+	for i := 0; i < props.MaxConcurrentDeletes; i++ {
+		keyChan <- nil
+	}
+
+	props.Client.Logger().Trace("BatchDelete: put a nil on the channel for each worker")
 
 	// wait for the workers to return
 	wg.Wait()
