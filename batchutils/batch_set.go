@@ -116,12 +116,9 @@ func itemDistributor(ctx context.Context, logger logger.MomentoLogger, numWorker
 
 	logger.Trace("itemDistributor has put a nil on the channel for each worker")
 
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Trace("itemDistributor context done, exiting for loop")
-			return
-		}
+	for range ctx.Done() {
+		logger.Trace("itemDistributor context done, exiting for loop")
+		return
 	}
 }
 

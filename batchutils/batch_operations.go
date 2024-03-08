@@ -33,12 +33,9 @@ func keyDistributor(ctx context.Context, logger logger.MomentoLogger, numWorkers
 
 	logger.Trace("keyDistributor has put a nil on the channel for each worker")
 
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Trace("keyDistributor context done, exiting for loop")
-			return
-		}
+	for range ctx.Done() {
+		logger.Trace("keyDistributor context done, exiting for loop")
+		return
 	}
 }
 
