@@ -80,6 +80,6 @@ func (r *GetBatchRequest) interpretGrpcResponse() error {
 		}
 	}
 
-	r.response = responses.NewGetBatchSuccess(getResponses, r.byteKeys)
+	r.response = *responses.NewGetBatchSuccess(getResponses, r.byteKeys)
 	return nil
 }

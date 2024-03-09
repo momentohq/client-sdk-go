@@ -82,6 +82,6 @@ func (r *SetBatchRequest) interpretGrpcResponse() error {
 		}
 	}
 
-	r.response = responses.NewSetBatchSuccess(setResponses)
+	r.response = *responses.NewSetBatchSuccess(setResponses)
 	return nil
 }
