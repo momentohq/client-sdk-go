@@ -57,7 +57,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Keys:      batchSetKeys,
 			})
 			Expect(getBatchErr).To(BeNil())
-			Expect(getBatchResp).To(BeAssignableToTypeOf(&responses.GetBatchSuccess{}))
+			Expect(getBatchResp).To(BeAssignableToTypeOf(responses.GetBatchSuccess{}))
 
 			getResponses := getBatchResp.(responses.GetBatchSuccess).Results()
 			Expect(len(getResponses)).To(Equal(len(batchSetKeys)))
@@ -83,7 +83,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Items:     items,
 			})
 			Expect(setBatchErr).To(BeNil())
-			Expect(setBatchResp).To(BeAssignableToTypeOf(&responses.SetBatchSuccess{}))
+			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
 			setResponses := setBatchResp.(responses.SetBatchSuccess).Results()
 			Expect(len(setResponses)).To(Equal(len(items)))
 			for _, setResp := range setResponses {
@@ -111,7 +111,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Ttl:       5 * time.Second,
 			})
 			Expect(setBatchErr).To(BeNil())
-			Expect(setBatchResp).To(BeAssignableToTypeOf(&responses.SetBatchSuccess{}))
+			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
 			setResponses := setBatchResp.(responses.SetBatchSuccess).Results()
 			Expect(len(setResponses)).To(Equal(len(items)))
 			for _, setResp := range setResponses {
@@ -125,7 +125,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Keys:      batchSetKeys,
 			})
 			Expect(getBatchErr).To(BeNil())
-			Expect(getBatchResp).To(BeAssignableToTypeOf(&responses.GetBatchSuccess{}))
+			Expect(getBatchResp).To(BeAssignableToTypeOf(responses.GetBatchSuccess{}))
 			getResponses := getBatchResp.(responses.GetBatchSuccess).Results()
 			Expect(len(getResponses)).To(Equal(len(batchSetKeys)))
 			for _, getResp := range getResponses {
@@ -139,12 +139,12 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			var items []BatchSetItem
 
 			for i := 0; i < 10; i++ {
-				key := fmt.Sprintf("Batch-key-%d", i)
+				key := fmt.Sprintf("All-hits-%d", i)
 				batchSetKeysString = append(batchSetKeysString, key)
 				batchSetKeys = append(batchSetKeys, String(key))
 				item := BatchSetItem{
 					Key:   String(key),
-					Value: String(fmt.Sprintf("Batch-value-%d", i)),
+					Value: String(fmt.Sprintf("All-hits-%d", i)),
 				}
 				items = append(items, item)
 			}
@@ -152,10 +152,10 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			setBatchResp, setBatchErr := sharedContext.Client.SetBatch(sharedContext.Ctx, &SetBatchRequest{
 				CacheName: sharedContext.DefaultCacheName,
 				Items:     items,
-				Ttl:       1 * time.Second,
+				Ttl:       10 * time.Second,
 			})
 			Expect(setBatchErr).To(BeNil())
-			Expect(setBatchResp).To(BeAssignableToTypeOf(&responses.SetBatchSuccess{}))
+			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
 			setResponses := setBatchResp.(responses.SetBatchSuccess).Results()
 			Expect(len(setResponses)).To(Equal(len(items)))
 			for _, setResp := range setResponses {
@@ -167,7 +167,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Keys:      batchSetKeys,
 			})
 			Expect(getBatchErr).To(BeNil())
-			Expect(getBatchResp).To(BeAssignableToTypeOf(&responses.GetBatchSuccess{}))
+			Expect(getBatchResp).To(BeAssignableToTypeOf(responses.GetBatchSuccess{}))
 			getResponses := getBatchResp.(responses.GetBatchSuccess).Results()
 			Expect(len(getResponses)).To(Equal(len(batchSetKeys)))
 			for _, getResp := range getResponses {
@@ -176,7 +176,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			getValueMap := getBatchResp.(responses.GetBatchSuccess).ValueMap()
 			for i := 0; i < len(batchSetKeysString); i++ {
 				fetchedValue := getValueMap[batchSetKeysString[i]]
-				Expect(fetchedValue).To(Equal(fmt.Sprintf("Batch-value-%d", i)))
+				Expect(fetchedValue).To(Equal(fmt.Sprintf("All-hits-%d", i)))
 			}
 		})
 
@@ -185,18 +185,18 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			var items []BatchSetItem
 
 			for i := 0; i < 10; i++ {
-				key := String(fmt.Sprintf("Batch-key-%d", i))
+				key := String(fmt.Sprintf("Some-hits-%d", i))
 
 				if i < 5 {
 					batchSetKeys = append(batchSetKeys, key)
 				} else {
-					differentKey := String(fmt.Sprintf("Batch-key-%d-miss", i))
+					differentKey := String(fmt.Sprintf("Some-hits-%d-miss", i))
 					batchSetKeys = append(batchSetKeys, differentKey)
 				}
 
 				item := BatchSetItem{
 					Key:   String(key),
-					Value: String(fmt.Sprintf("Batch-value-%d", i)),
+					Value: String(fmt.Sprintf("Some-hits-%d", i)),
 				}
 				items = append(items, item)
 			}
@@ -204,10 +204,10 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			setBatchResp, setBatchErr := sharedContext.Client.SetBatch(sharedContext.Ctx, &SetBatchRequest{
 				CacheName: sharedContext.DefaultCacheName,
 				Items:     items,
-				Ttl:       1 * time.Second,
+				Ttl:       10 * time.Second,
 			})
 			Expect(setBatchErr).To(BeNil())
-			Expect(setBatchResp).To(BeAssignableToTypeOf(&responses.SetBatchSuccess{}))
+			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
 			setResponses := setBatchResp.(responses.SetBatchSuccess).Results()
 			Expect(len(setResponses)).To(Equal(len(items)))
 			for _, setResp := range setResponses {
@@ -219,12 +219,13 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Keys:      batchSetKeys,
 			})
 			Expect(getBatchErr).To(BeNil())
-			Expect(getBatchResp).To(BeAssignableToTypeOf(&responses.GetBatchSuccess{}))
+			Expect(getBatchResp).To(BeAssignableToTypeOf(responses.GetBatchSuccess{}))
 			getResponses := getBatchResp.(responses.GetBatchSuccess).Results()
 			Expect(len(getResponses)).To(Equal(len(batchSetKeys)))
 			for i, getResp := range getResponses {
 				if i < 5 {
 					Expect(getResp).To(BeAssignableToTypeOf(&responses.GetHit{}))
+					Expect(getResp.(*responses.GetHit).ValueString()).To(Equal(fmt.Sprintf("Some-hits-%d", i)))
 				} else {
 					Expect(getResp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
 				}
