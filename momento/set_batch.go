@@ -5,6 +5,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -15,7 +16,7 @@ type SetBatchRequest struct {
 	Ttl       time.Duration
 
 	grpcRequest *pb.XSetBatchRequest
-	grpcStream  pb.Scs_SetBatchClient // or should it be grpc.ClientStream?
+	grpcStream  pb.Scs_SetBatchClient
 	response    responses.SetBatchResponse
 }
 
@@ -66,18 +67,18 @@ func (r *SetBatchRequest) makeGrpcRequest(metadata context.Context, client scsDa
 func (r *SetBatchRequest) interpretGrpcResponse() error {
 	var setResponses []responses.SetResponse
 	for {
-		rawMsg := new(pb.XSetResponse)
-		err := r.grpcStream.RecvMsg(rawMsg)
+		resp, err := r.grpcStream.Recv()
 		if err == io.EOF {
 			break
-		}
-		if err != nil {
-			switch rawMsg.Result {
+		} else if err == nil {
+			switch resp.Result {
 			case pb.ECacheResult_Ok:
 				setResponses = append(setResponses, &responses.SetSuccess{})
 			default:
-				return errUnexpectedGrpcResponse(r, rawMsg)
+				return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
 			}
+		} else {
+			return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
 		}
 	}
 

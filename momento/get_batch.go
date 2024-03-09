@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -13,7 +14,7 @@ type GetBatchRequest struct {
 	Keys      []Value
 
 	grpcRequest *pb.XGetBatchRequest
-	grpcStream  pb.Scs_GetBatchClient // or should it be grpc.ClientStream?
+	grpcStream  pb.Scs_GetBatchClient
 	response    responses.GetBatchResponse
 	byteKeys    [][]byte
 }
@@ -61,21 +62,21 @@ func (r *GetBatchRequest) makeGrpcRequest(metadata context.Context, client scsDa
 func (r *GetBatchRequest) interpretGrpcResponse() error {
 	var getResponses []responses.GetResponse
 	for {
-		rawMsg := new(pb.XGetResponse)
-		err := r.grpcStream.RecvMsg(rawMsg)
+		resp, err := r.grpcStream.Recv()
 		if err == io.EOF {
 			break
-		}
-		if err != nil {
-			switch rawMsg.Result {
+		} else if err == nil {
+			switch resp.Result {
 			case pb.ECacheResult_Hit:
-				var getHit = responses.NewGetHit(rawMsg.CacheBody)
+				var getHit = responses.NewGetHit(resp.CacheBody)
 				getResponses = append(getResponses, getHit)
 			case pb.ECacheResult_Miss:
 				getResponses = append(getResponses, &responses.GetMiss{})
 			default:
-				return errUnexpectedGrpcResponse(r, rawMsg)
+				return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
 			}
+		} else {
+			return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
 		}
 	}
 
