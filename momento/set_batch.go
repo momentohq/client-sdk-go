@@ -75,10 +75,10 @@ func (r *SetBatchRequest) interpretGrpcResponse() error {
 			case pb.ECacheResult_Ok:
 				setResponses = append(setResponses, &responses.SetSuccess{})
 			default:
-				return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
+				return momentoerrors.ConvertSvcErr(err)
 			}
 		} else {
-			return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
+			return momentoerrors.ConvertSvcErr(err)
 		}
 	}
 

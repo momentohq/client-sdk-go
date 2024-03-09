@@ -73,10 +73,10 @@ func (r *GetBatchRequest) interpretGrpcResponse() error {
 			case pb.ECacheResult_Miss:
 				getResponses = append(getResponses, &responses.GetMiss{})
 			default:
-				return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
+				return momentoerrors.ConvertSvcErr(err)
 			}
 		} else {
-			return NewMomentoError(momentoerrors.UnknownServiceError, err.Error(), err)
+			return momentoerrors.ConvertSvcErr(err)
 		}
 	}
 
