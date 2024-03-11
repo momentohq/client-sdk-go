@@ -108,7 +108,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			setBatchResp, setBatchErr := sharedContext.Client.SetBatch(sharedContext.Ctx, &SetBatchRequest{
 				CacheName: sharedContext.DefaultCacheName,
 				Items:     items,
-				Ttl:       5 * time.Second,
+				Ttl:       1 * time.Second,
 			})
 			Expect(setBatchErr).To(BeNil())
 			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
@@ -118,7 +118,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 				Expect(setResp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
 			}
 
-			time.Sleep(10 * time.Second)
+			time.Sleep(3 * time.Second)
 
 			getBatchResp, getBatchErr := sharedContext.Client.GetBatch(sharedContext.Ctx, &GetBatchRequest{
 				CacheName: sharedContext.DefaultCacheName,
