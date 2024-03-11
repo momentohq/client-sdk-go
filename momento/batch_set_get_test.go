@@ -182,13 +182,15 @@ var _ = Describe("GetBatch and SetBatch", func() {
 
 		It("GetBatch happy path with some hits and some misses", func() {
 			var batchSetKeys []Value
+			var batchSetKeysString []string
 			var items []BatchSetItem
 
 			for i := 0; i < 10; i++ {
-				key := String(fmt.Sprintf("Some-hits-%d", i))
+				key := fmt.Sprintf("Some-hits-%d", i)
 
 				if i < 5 {
-					batchSetKeys = append(batchSetKeys, key)
+					batchSetKeys = append(batchSetKeys, String(key))
+					batchSetKeysString = append(batchSetKeysString, key)
 				} else {
 					differentKey := String(fmt.Sprintf("Some-hits-%d-miss", i))
 					batchSetKeys = append(batchSetKeys, differentKey)
@@ -228,6 +230,18 @@ var _ = Describe("GetBatch and SetBatch", func() {
 					Expect(getResp.(*responses.GetHit).ValueString()).To(Equal(fmt.Sprintf("Some-hits-%d", i)))
 				} else {
 					Expect(getResp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
+				}
+			}
+
+			getValuesMap := getBatchResp.(responses.GetBatchSuccess).ValueMap()
+			// for each key, check if the value is as expected
+			for i, key := range batchSetKeysString {
+				value, ok := getValuesMap[key]
+				if i < 5 {
+					Expect(ok).To(BeTrue())
+					Expect(value).To(Equal(fmt.Sprintf("Some-hits-%d", i)))
+				} else {
+					Expect(ok).To(BeFalse())
 				}
 			}
 		})

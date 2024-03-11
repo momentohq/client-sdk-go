@@ -31,8 +31,6 @@ func (resp GetBatchSuccess) ValueMapStringString() map[string]string {
 	ret := make(map[string]string)
 	for idx, element := range resp.responses {
 		switch e := element.(type) {
-		case *GetMiss:
-			ret[string(resp.keys[idx])] = ""
 		case *GetHit:
 			ret[string(resp.keys[idx])] = e.ValueString()
 		}
@@ -47,8 +45,6 @@ func (resp GetBatchSuccess) ValueMapStringBytes() map[string][]byte {
 	ret := make(map[string][]byte)
 	for idx, element := range resp.responses {
 		switch e := element.(type) {
-		case *GetMiss:
-			ret[string(resp.keys[idx])] = nil
 		case *GetHit:
 			ret[string(resp.keys[idx])] = e.ValueByte()
 		}
