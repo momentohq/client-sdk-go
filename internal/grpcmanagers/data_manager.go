@@ -30,6 +30,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 			AllDialOptions(
 				request.GrpcConfiguration,
 				grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+				grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 			)...,
 		)
 	} else {
@@ -38,6 +39,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 			AllDialOptions(
 				request.GrpcConfiguration,
 				grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+				grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 			)...,
 		)
 	}

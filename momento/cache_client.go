@@ -50,8 +50,12 @@ type CacheClient interface {
 	SetIfAbsentOrEqual(ctx context.Context, r *SetIfAbsentOrEqualRequest) (responses.SetIfAbsentOrEqualResponse, error)
 	// SetIfNotEqual sets the value in cache with a given time to live (TTL) if key is present and its value is not equal to the given value
 	SetIfNotEqual(ctx context.Context, r *SetIfNotEqualRequest) (responses.SetIfNotEqualResponse, error)
+	// SetBatch sets multiple values in cache with a given time to live (TTL)
+	SetBatch(ctx context.Context, r *SetBatchRequest) (responses.SetBatchResponse, error)
 	// Get gets the cache value stored for the given key.
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
+	// GetBatch gets the cache values stored for the given keys.
+	GetBatch(ctx context.Context, r *GetBatchRequest) (responses.GetBatchResponse, error)
 	// Delete removes the key from the cache.
 	Delete(ctx context.Context, r *DeleteRequest) (responses.DeleteResponse, error)
 	// KeysExist checks if provided keys exist in the cache.
@@ -433,7 +437,23 @@ func (c defaultScsClient) SetIfNotEqual(ctx context.Context, r *SetIfNotEqualReq
 	return r.response, nil
 }
 
+func (c defaultScsClient) SetBatch(ctx context.Context, r *SetBatchRequest) (responses.SetBatchResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
 func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) GetBatch(ctx context.Context, r *GetBatchRequest) (responses.GetBatchResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
 		return nil, err
