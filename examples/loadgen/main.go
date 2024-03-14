@@ -43,9 +43,10 @@ type loadGenerator struct {
 }
 
 type ErrorCounter struct {
-	unavailable   int64
-	timeout       int64
-	limitExceeded int64
+	unavailable    int64
+	timeout        int64
+	limitExceeded  int64
+	cancelledError int64
 }
 
 func newLoadGenerator(config config.Configuration, options loadGeneratorOptions) *loadGenerator {
@@ -101,7 +102,9 @@ func processError(err error, errChan chan string) {
 	case momento.MomentoError:
 		if mErr.Code() == momento.ServerUnavailableError ||
 			mErr.Code() == momento.TimeoutError ||
-			mErr.Code() == momento.LimitExceededError {
+			mErr.Code() == momento.LimitExceededError ||
+			mErr.Code() == momento.CanceledError {
+			fmt.Printf("Error: %s", mErr.Message())
 			errChan <- mErr.Code()
 		} else {
 			panic(fmt.Sprintf("unrecognized result: %T", mErr))
@@ -173,7 +176,9 @@ func printStats(gets *hdrhistogram.Histogram, sets *hdrhistogram.Histogram, erro
 	totalTps := int(math.Round(
 		float64(totalRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
 	))
-	fmt.Println("==============================\ncumulative stats:")
+	currentTime := time.Now().UTC()
+	timeString := currentTime.Format("2006-01-02 15:04:05 MST")
+	fmt.Printf("==============================\n%s\ncumulative stats:\n", timeString)
 	fmt.Printf(
 		"%20s: %d (%d tps)\n",
 		"total requests",
@@ -188,7 +193,8 @@ func printStats(gets *hdrhistogram.Histogram, sets *hdrhistogram.Histogram, erro
 	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "success", successfulRequests, successfulRequests/totalRequests*100, successTps)
 	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", errorCounter.unavailable, errorCounter.unavailable/totalRequests*100)
 	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", errorCounter.timeout, errorCounter.timeout/totalRequests*100)
-	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", errorCounter.limitExceeded, errorCounter.limitExceeded/totalRequests*100)
+	fmt.Printf("%20s: %d (%d%%)\n", "limit exceeded", errorCounter.limitExceeded, errorCounter.limitExceeded/totalRequests*100)
+	fmt.Printf("%20s: %d (%d%%)\n\n", "cancelled error", errorCounter.cancelledError, errorCounter.cancelledError/totalRequests*100)
 
 	fmt.Printf(
 		"cumulative get latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
@@ -230,12 +236,14 @@ func (ec *ErrorCounter) updateErrors(err string) {
 		ec.timeout++
 	} else if err == momento.LimitExceededError {
 		ec.limitExceeded++
+	} else if err == momento.CanceledError {
+		ec.cancelledError++
 	}
 }
 
 func timer(ctx context.Context, getChan chan int64, setChan chan int64, errChan chan string, statsInterval time.Duration) {
-	getHistogram := hdrhistogram.New(1, 1000, 1)
-	setHistogram := hdrhistogram.New(1, 1000, 1)
+	getHistogram := hdrhistogram.New(1, 100000, 1)
+	setHistogram := hdrhistogram.New(1, 100000, 1)
 	errorCounter := ErrorCounter{}
 
 	startTime := hrtime.Now()
@@ -312,10 +320,10 @@ func main() {
 		// and observe elevated client-side latencies.
 		numberOfConcurrentRequests: 50,
 		maxRequestsPerSecond:       100,
-		howLongToRun:               time.Minute,
+		howLongToRun:               time.Hour * 3,
 	}
 
-	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
+	loadGenerator := newLoadGenerator(config.LaptopLatest().WithTransportStrategy(), opts)
 	client, workerDelayBetweenRequests := loadGenerator.init(ctx)
 
 	runStart := time.Now()
