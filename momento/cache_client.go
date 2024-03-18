@@ -267,7 +267,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		Configuration:       configuration,
 		CredentialProvider:  credentialProvider,
 		DefaultTtl:          defaultTtl,
-		EagerConnectTimeout: 3 * time.Second,
+		EagerConnectTimeout: 30 * time.Second,
 	}
 	return commonCacheClient(props)
 }
