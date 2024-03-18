@@ -240,6 +240,7 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 			if err != nil {
 				logger := props.Configuration.GetLoggerFactory().GetLogger("CacheClient")
 				logger.Debug("Failed to connect to the server within the given eager connection timeout:", err.Error())
+				return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 			}
 		}
 	}
@@ -266,7 +267,7 @@ func NewCacheClient(configuration config.Configuration, credentialProvider auth.
 		Configuration:       configuration,
 		CredentialProvider:  credentialProvider,
 		DefaultTtl:          defaultTtl,
-		EagerConnectTimeout: 30 * time.Second,
+		EagerConnectTimeout: 3 * time.Second,
 	}
 	return commonCacheClient(props)
 }
