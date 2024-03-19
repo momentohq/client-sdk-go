@@ -50,6 +50,8 @@ const (
 	InternalServerErrorMessage = "CacheService failed with an internal error"
 	// ClientSdkErrorMessage is the message for when SDK Failed to process the request.
 	ClientSdkErrorMessage = "SDK Failed to process the request."
+	// ConnectionError occurs when there is an error connecting to Momento servers.
+	ConnectionError = "ConnectionError"
 )
 
 // ConvertSvcErr converts gRPC error to MomentoSvcErr.
@@ -93,4 +95,8 @@ func ConvertSvcErr(err error) MomentoSvcErr {
 		}
 	}
 	return NewMomentoSvcErr(ClientSdkError, ClientSdkErrorMessage, err)
+}
+
+func NewConnectionError(err error) MomentoSvcErr {
+	return NewMomentoSvcErr(ConnectionError, "Connection is in an unexpected state", err)
 }
