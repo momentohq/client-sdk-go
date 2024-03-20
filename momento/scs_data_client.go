@@ -96,5 +96,8 @@ func (client scsDataClient) Connect() error {
 	defer cancel()
 
 	err := client.grpcManager.Connect(ctx)
+	if err != nil {
+		client.grpcManager.Close()
+	}
 	return err
 }

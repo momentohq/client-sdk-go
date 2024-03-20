@@ -109,4 +109,20 @@ var _ = Describe("CacheClient", func() {
 		Expect(grpcConfig.GetKeepAliveTime()).To(Equal(5000 * time.Millisecond))
 		Expect(grpcConfig.GetKeepAliveTimeout()).To(Equal(1000 * time.Millisecond))
 	})
+
+	It(`Returns error when eager connection fails`, func() {
+		client, err := NewCacheClientWithEagerConnectTimeout(
+			config.LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			sharedContext.CredentialProvider,
+			sharedContext.DefaultTtl,
+			1*time.Millisecond,
+		)
+
+		Expect(client).To(BeNil())
+		Expect(err).NotTo(BeNil())
+		var momentoErr MomentoError
+		if errors.As(err, &momentoErr) {
+			Expect(momentoErr.Code()).To(Equal(ConnectionError))
+		}
+	})
 })

@@ -34,6 +34,8 @@ const (
 	ServerUnavailableError = "ServerUnavailableError"
 	// FailedPreconditionError occurs when the system is not in a state required for the operation's execution.
 	FailedPreconditionError = "FailedPreconditionError"
+	// ConnectionError occurs when there is an error connecting to Momento servers.
+	ConnectionError = "ConnectionError"
 )
 
 type MomentoError interface {
