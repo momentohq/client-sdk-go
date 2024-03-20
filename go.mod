@@ -8,8 +8,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.8.1
 	github.com/onsi/gomega v1.26.0
 	golang.org/x/net v0.21.0
-	google.golang.org/grpc v1.61.1
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/grpc v1.61.0-dev.0.20240319220640-4ffccf1a5f97
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
@@ -20,5 +20,3 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace google.golang.org/grpc => github.com/momentohq/grpc-go v1.61.0-dev.0.20240306220430-6ad501388d03
