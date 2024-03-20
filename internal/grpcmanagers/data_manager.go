@@ -59,7 +59,7 @@ func (gm *DataGrpcManager) Connect(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			// Context timeout or cancellation occurred
-			return momentoerrors.NewConnectionError(ctx.Err())
+			return ctx.Err()
 		default:
 			// Check current state
 			state := gm.Conn.GetState()
@@ -71,11 +71,11 @@ func (gm *DataGrpcManager) Connect(ctx context.Context) error {
 				// If Idle or Connecting, wait for a state change
 				if !gm.Conn.WaitForStateChange(ctx, state) {
 					// Context was done while waiting
-					return momentoerrors.NewConnectionError(ctx.Err())
+					return ctx.Err()
 				}
 			default:
 				// For other states like TransientFailure, you might want to handle them differently
-				return momentoerrors.NewConnectionError(errors.New("connection is in an unexpected state"))
+				return errors.New("connection is in an unexpected state")
 			}
 		}
 	}
