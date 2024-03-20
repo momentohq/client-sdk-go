@@ -25,7 +25,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	var conn *grpc.ClientConn
 	var err error
 	if request.EagerConnect {
-		// nolint:staticcheck
+		//lint:ignore SA1019 ingore this for now
 		conn, err = grpc.Dial(
 			endpoint,
 			AllDialOptions(
