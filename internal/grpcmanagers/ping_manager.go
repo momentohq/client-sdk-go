@@ -19,7 +19,8 @@ const PingPort = ":443"
 func NewPingGrpcManager(request *models.PingGrpcManagerRequest) (*PingGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), PingPort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.NewClient(
+	// TODO make NewClient
+	conn, err := grpc.Dial(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,

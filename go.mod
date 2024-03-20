@@ -14,11 +14,10 @@ require (
 
 require (
 	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace google.golang.org/grpc => github.com/momentohq/grpc-go v1.61.0-dev.0.20240306220430-6ad501388d03
