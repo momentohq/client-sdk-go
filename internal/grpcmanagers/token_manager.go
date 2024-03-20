@@ -20,7 +20,8 @@ const TokenPort = ":443"
 func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetTokenEndpoint(), TokenPort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	conn, err := grpc.NewClient(
+	// TODO make NewClient
+	conn, err := grpc.Dial(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,

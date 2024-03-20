@@ -24,7 +24,8 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	// Override grpc config to disable keepalives
 	controlConfig := config.NewStaticGrpcConfiguration(&config.GrpcConfigurationProps{}).WithKeepAliveDisabled()
 
-	conn, err := grpc.NewClient(
+	// TODO make NewClient
+	conn, err := grpc.Dial(
 		endpoint,
 		AllDialOptions(
 			controlConfig,

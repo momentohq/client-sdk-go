@@ -34,7 +34,8 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 			)...,
 		)
 	} else {
-		conn, err = grpc.NewClient(
+		// TODO make NewClient
+		conn, err = grpc.Dial(
 			endpoint,
 			AllDialOptions(
 				request.GrpcConfiguration,
