@@ -21,7 +21,7 @@ type previewLeaderboardClient struct {
 	log                   logger.MomentoLogger
 }
 
-func NewLeaderboardClient(leaderboardConfiguration config.LeaderboardConfiguration, credentialProvider auth.CredentialProvider) (LeaderboardClient, error) {
+func NewPreviewLeaderboardClient(leaderboardConfiguration config.LeaderboardConfiguration, credentialProvider auth.CredentialProvider) (LeaderboardClient, error) {
 	dataClient, err := NewLeaderboardDataClient(&models.LeaderboardClientRequest{
 		CredentialProvider: credentialProvider,
 		Configuration:      leaderboardConfiguration,
