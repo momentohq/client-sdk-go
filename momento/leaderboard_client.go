@@ -21,8 +21,8 @@ type previewLeaderboardClient struct {
 	log                   logger.MomentoLogger
 }
 
-func NewPreviewLeaderboardClient(leaderboardConfiguration config.LeaderboardConfiguration, credentialProvider auth.CredentialProvider) (LeaderboardClient, error) {
-	dataClient, err := NewLeaderboardDataClient(&models.LeaderboardClientRequest{
+func NewPreviewLeaderboardClient(leaderboardConfiguration config.LeaderboardConfiguration, credentialProvider auth.CredentialProvider) (PreviewLeaderboardClient, error) {
+	dataClient, err := newLeaderboardDataClient(&models.LeaderboardClientRequest{
 		CredentialProvider: credentialProvider,
 		Configuration:      leaderboardConfiguration,
 	})
@@ -54,5 +54,5 @@ func (c previewLeaderboardClient) Leaderboard(ctx context.Context, request *Lead
 }
 
 func (c previewLeaderboardClient) Close() {
-	c.leaderboardDataClient.Close()
+	c.leaderboardDataClient.close()
 }

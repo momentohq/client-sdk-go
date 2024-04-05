@@ -10,17 +10,6 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
-type LeaderboardDataClient interface {
-	Close() momentoerrors.MomentoSvcErr
-	Delete(ctx context.Context, request *LeaderboardInternalDeleteRequest) momentoerrors.MomentoSvcErr
-	FetchByRank(ctx context.Context, request *LeaderboardInternalFetchByRankRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr)
-	FetchByScore(ctx context.Context, request *LeaderboardInternalFetchByScoreRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr)
-	GetRank(ctx context.Context, request *LeaderboardInternalGetRankRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr)
-	Length(ctx context.Context, request *LeaderboardInternalLengthRequest) (uint32, momentoerrors.MomentoSvcErr)
-	RemoveElements(ctx context.Context, request *LeaderboardInternalRemoveElementsRequest) momentoerrors.MomentoSvcErr
-	Upsert(ctx context.Context, request *LeaderboardInternalUpsertRequest) momentoerrors.MomentoSvcErr
-}
-
 type leaderboardDataClient struct {
 	requestTimeout         time.Duration
 	leaderboardGrpcManager *grpcmanagers.LeaderboardGrpcManager
@@ -42,11 +31,11 @@ func newLeaderboardDataClient(request *models.LeaderboardClientRequest) (*leader
 	}, nil
 }
 
-func (client *leaderboardDataClient) Close() momentoerrors.MomentoSvcErr {
+func (client *leaderboardDataClient) close() momentoerrors.MomentoSvcErr {
 	return client.leaderboardGrpcManager.Close()
 }
 
-func (client *leaderboardDataClient) Delete(ctx context.Context, request *LeaderboardInternalDeleteRequest) momentoerrors.MomentoSvcErr {
+func (client *leaderboardDataClient) delete(ctx context.Context, request *LeaderboardInternalDeleteRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 	_, err := client.leaderboardClient.DeleteLeaderboard(ctx, &pb.XDeleteLeaderboardRequest{
@@ -59,7 +48,7 @@ func (client *leaderboardDataClient) Delete(ctx context.Context, request *Leader
 	return nil
 }
 
-func (client *leaderboardDataClient) FetchByRank(ctx context.Context, request *LeaderboardInternalFetchByRankRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
+func (client *leaderboardDataClient) fetchByRank(ctx context.Context, request *LeaderboardInternalFetchByRankRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -85,7 +74,7 @@ func (client *leaderboardDataClient) FetchByRank(ctx context.Context, request *L
 	return result.Elements, nil
 }
 
-func (client *leaderboardDataClient) FetchByScore(ctx context.Context, request *LeaderboardInternalFetchByScoreRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
+func (client *leaderboardDataClient) fetchByScore(ctx context.Context, request *LeaderboardInternalFetchByScoreRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -132,7 +121,7 @@ func (client *leaderboardDataClient) FetchByScore(ctx context.Context, request *
 	return result.Elements, nil
 }
 
-func (client *leaderboardDataClient) GetRank(ctx context.Context, request *LeaderboardInternalGetRankRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
+func (client *leaderboardDataClient) getRank(ctx context.Context, request *LeaderboardInternalGetRankRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -153,7 +142,7 @@ func (client *leaderboardDataClient) GetRank(ctx context.Context, request *Leade
 	return result.Elements, nil
 }
 
-func (client *leaderboardDataClient) Length(ctx context.Context, request *LeaderboardInternalLengthRequest) (uint32, momentoerrors.MomentoSvcErr) {
+func (client *leaderboardDataClient) length(ctx context.Context, request *LeaderboardInternalLengthRequest) (uint32, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -167,7 +156,7 @@ func (client *leaderboardDataClient) Length(ctx context.Context, request *Leader
 	return result.Count, nil
 }
 
-func (client *leaderboardDataClient) RemoveElements(ctx context.Context, request *LeaderboardInternalRemoveElementsRequest) momentoerrors.MomentoSvcErr {
+func (client *leaderboardDataClient) removeElements(ctx context.Context, request *LeaderboardInternalRemoveElementsRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -182,7 +171,7 @@ func (client *leaderboardDataClient) RemoveElements(ctx context.Context, request
 	return nil
 }
 
-func (client *leaderboardDataClient) Upsert(ctx context.Context, request *LeaderboardInternalUpsertRequest) momentoerrors.MomentoSvcErr {
+func (client *leaderboardDataClient) upsert(ctx context.Context, request *LeaderboardInternalUpsertRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 

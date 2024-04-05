@@ -35,7 +35,7 @@ type SharedContext struct {
 	CredentialProvider              auth.CredentialProvider
 	AuthClient                      momento.AuthClient
 	AuthConfiguration               config.AuthConfiguration
-	LeaderboardClient               momento.LeaderboardClient
+	LeaderboardClient               momento.PreviewLeaderboardClient
 	LeaderboardConfiguration        config.LeaderboardConfiguration
 }
 
@@ -91,7 +91,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
-	leaderboardClient, err := momento.NewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProvider)
+	leaderboardClient, err := momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}

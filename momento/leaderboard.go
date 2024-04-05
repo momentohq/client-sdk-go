@@ -30,7 +30,7 @@ func (l *leaderboard) Delete(ctx context.Context) (responses.LeaderboardDeleteRe
 		CacheName:       l.cacheName,
 		LeaderboardName: l.leaderboardName,
 	}
-	if err := l.leaderboardDataClient.Delete(ctx, r); err != nil {
+	if err := l.leaderboardDataClient.delete(ctx, r); err != nil {
 		return nil, err
 	}
 	return &responses.LeaderboardDeleteSuccess{}, nil
@@ -48,7 +48,7 @@ func (l *leaderboard) FetchByRank(ctx context.Context, request LeaderboardFetchB
 		EndRank:         request.EndRank,
 		Order:           request.Order,
 	}
-	elements, err := l.leaderboardDataClient.FetchByRank(ctx, r)
+	elements, err := l.leaderboardDataClient.fetchByRank(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (l *leaderboard) FetchByScore(ctx context.Context, request LeaderboardFetch
 		Count:           request.Count,
 		Order:           request.Order,
 	}
-	elements, err := l.leaderboardDataClient.FetchByScore(ctx, r)
+	elements, err := l.leaderboardDataClient.fetchByScore(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (l *leaderboard) GetRank(ctx context.Context, request LeaderboardGetRankReq
 		Ids:             request.Ids,
 		Order:           request.Order,
 	}
-	elements, err := l.leaderboardDataClient.GetRank(ctx, r)
+	elements, err := l.leaderboardDataClient.getRank(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (l *leaderboard) Length(ctx context.Context) (responses.LeaderboardLengthRe
 		CacheName:       l.cacheName,
 		LeaderboardName: l.leaderboardName,
 	}
-	length, err := l.leaderboardDataClient.Length(ctx, r)
+	length, err := l.leaderboardDataClient.length(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (l *leaderboard) RemoveElements(ctx context.Context, request LeaderboardRem
 		LeaderboardName: l.leaderboardName,
 		Ids:             request.Ids,
 	}
-	if err := l.leaderboardDataClient.RemoveElements(ctx, r); err != nil {
+	if err := l.leaderboardDataClient.removeElements(ctx, r); err != nil {
 		return nil, err
 	}
 	return &responses.LeaderboardRemoveElementsSuccess{}, nil
@@ -130,7 +130,7 @@ func (l *leaderboard) Upsert(ctx context.Context, request LeaderboardUpsertReque
 		LeaderboardName: l.leaderboardName,
 		Elements:        request.Elements,
 	}
-	if err := l.leaderboardDataClient.Upsert(ctx, r); err != nil {
+	if err := l.leaderboardDataClient.upsert(ctx, r); err != nil {
 		return nil, err
 	}
 	return &responses.LeaderboardUpsertSuccess{}, nil
