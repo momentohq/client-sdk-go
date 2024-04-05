@@ -10,7 +10,7 @@ import (
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
-type LeaderboardClient interface {
+type PreviewLeaderboardClient interface {
 	Leaderboard(ctx context.Context, request *LeaderboardRequest) (Leaderboard, error)
 	Close()
 }
