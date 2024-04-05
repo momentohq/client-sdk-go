@@ -27,7 +27,7 @@ type leaderboardDataClient struct {
 	leaderboardClient      pb.LeaderboardClient
 }
 
-func NewLeaderboardDataClient(request *models.LeaderboardClientRequest) (*leaderboardDataClient, momentoerrors.MomentoSvcErr) {
+func newLeaderboardDataClient(request *models.LeaderboardClientRequest) (*leaderboardDataClient, momentoerrors.MomentoSvcErr) {
 	grpcManager, err := grpcmanagers.NewLeaderboardGrpcManager(&models.LeaderboardGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
