@@ -55,6 +55,10 @@ func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (gm *DataGrpcManager) Connect(ctx context.Context) error {
+	// Dial would connect in the background, but NewClient remains in IDLE until first RPC
+	// or until we actually call Connect here
+	gm.Conn.Connect()
+
 	for {
 		select {
 		case <-ctx.Done():
