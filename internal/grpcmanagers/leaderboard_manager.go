@@ -19,8 +19,7 @@ const LeaderboardPort = ":443"
 func NewLeaderboardGrpcManager(request *models.LeaderboardGrpcManagerRequest) (*LeaderboardGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), LeaderboardPort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	// TODO make NewClient
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
