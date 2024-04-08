@@ -11,9 +11,9 @@ import (
 )
 
 type PreviewLeaderboardClient interface {
-	// Creates a new leaderboard object in a given cache with the provided leaderboard name.
+	// Leaderboard creates a new leaderboard object in a given cache with the provided leaderboard name.
 	Leaderboard(ctx context.Context, request *LeaderboardRequest) (Leaderboard, error)
-	// Closes the leaderboard client.
+	// Close will shut down the leaderboard client and related resources.
 	Close()
 }
 
@@ -23,7 +23,7 @@ type previewLeaderboardClient struct {
 	log                   logger.MomentoLogger
 }
 
-// Creates a new instance of a Preview Leaderboard Client.
+// NewPreviewLeaderboardClient creates a new instance of a Preview Leaderboard Client.
 func NewPreviewLeaderboardClient(leaderboardConfiguration config.LeaderboardConfiguration, credentialProvider auth.CredentialProvider) (PreviewLeaderboardClient, error) {
 	dataClient, err := newLeaderboardDataClient(&models.LeaderboardClientRequest{
 		CredentialProvider: credentialProvider,
@@ -41,7 +41,7 @@ func NewPreviewLeaderboardClient(leaderboardConfiguration config.LeaderboardConf
 	return client, nil
 }
 
-// Creates a new leaderboard object in a given cache with the provided leaderboard name.
+// Leaderboard creates a new leaderboard object in a given cache with the provided leaderboard name.
 func (c previewLeaderboardClient) Leaderboard(ctx context.Context, request *LeaderboardRequest) (Leaderboard, error) {
 	if err := utils.ValidateName(request.CacheName, "cache name"); err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (c previewLeaderboardClient) Leaderboard(ctx context.Context, request *Lead
 	return newLeaderboard, nil
 }
 
-// Closes the leaderboard client.
+// Close will shut down the leaderboard client and related resources.
 func (c previewLeaderboardClient) Close() {
 	c.leaderboardDataClient.close()
 }
