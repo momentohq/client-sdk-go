@@ -35,6 +35,8 @@ type SharedContext struct {
 	CredentialProvider              auth.CredentialProvider
 	AuthClient                      momento.AuthClient
 	AuthConfiguration               config.AuthConfiguration
+	LeaderboardClient               momento.PreviewLeaderboardClient
+	LeaderboardConfiguration        config.LeaderboardConfiguration
 }
 
 func NewSharedContext() SharedContext {
@@ -49,6 +51,7 @@ func NewSharedContext() SharedContext {
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	shared.TopicConfigration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.LeaderboardConfiguration = config.LeaderboardDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
@@ -88,6 +91,11 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
+	leaderboardClient, err := momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProvider)
+	if err != nil {
+		panic(err)
+	}
+
 	shared.Client = client
 	shared.ClientWithDefaultCacheName = clientDefaultCacheName
 	shared.ClientWithConsistentReadConcern = consistentReadConcernClient
@@ -95,6 +103,7 @@ func NewSharedContext() SharedContext {
 	shared.DefaultCacheName = defaultCacheName
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
+	shared.LeaderboardClient = leaderboardClient
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 	shared.CollectionName = uuid.NewString()
@@ -145,4 +154,7 @@ func (shared SharedContext) Close() {
 	}
 
 	shared.Client.Close()
+	shared.TopicClient.Close()
+	shared.AuthClient.Close()
+	shared.LeaderboardClient.Close()
 }

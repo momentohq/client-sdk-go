@@ -120,3 +120,10 @@ func SortedSetElementsFromMap(theMap map[string]float64) []SortedSetElement {
 	}
 	return elements
 }
+
+type LeaderboardOrder = SortedSetOrder
+
+type LeaderboardUpsertElement struct {
+	Id    uint32
+	Score float64
+}

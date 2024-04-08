@@ -44,6 +44,11 @@ type PingGrpcManagerRequest struct {
 	GrpcConfiguration  config.GrpcConfiguration
 }
 
+type LeaderboardGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
+}
+
 type LocalDataGrpcManagerRequest struct {
 	Endpoint string
 }
@@ -89,5 +94,10 @@ type TokenClientRequest struct {
 
 type PingClientRequest struct {
 	Configuration      config.Configuration
+	CredentialProvider auth.CredentialProvider
+}
+
+type LeaderboardClientRequest struct {
+	Configuration      config.LeaderboardConfiguration
 	CredentialProvider auth.CredentialProvider
 }
