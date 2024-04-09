@@ -87,6 +87,15 @@ func example_API_CreateCache() {
 	}
 }
 
+func example_API_DeleteCache() {
+	_, err := client.DeleteCache(ctx, &momento.DeleteCacheRequest{
+		CacheName: "cache-name",
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func example_API_Get() {
 	key := uuid.NewString()
 	resp, err := client.Get(ctx, &momento.GetRequest{
@@ -311,5 +320,158 @@ func example_API_SetIfAbsentOrEqual() {
 	switch resp.(type) {
 	case *responses.SetIfAbsentOrEqualStored:
 		log.Printf("Successfully set key in cache\n")
+	}
+}
+
+func example_API_KeysExist() {
+	keys := []momento.Value{momento.String("key1"), momento.String("key2")}
+	resp, err := client.KeysExist(ctx, &momento.KeysExistRequest{
+		CacheName: "cache-name",
+		Keys:      keys,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.KeysExistSuccess:
+		log.Printf("Does each key exist in cache?\n")
+		for _, exists := range r.Exists() {
+			log.Printf("key exists=%v\n", exists)
+		}
+	}
+}
+
+func example_API_ItemGetType() {
+	resp, err := client.ItemGetType(ctx, &momento.ItemGetTypeRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.ItemGetTypeHit:
+		log.Printf("Type of item is %v\n", r.Type())
+	case *responses.ItemGetTypeMiss:
+		log.Printf("Item does not exist in cache\n")
+	}
+}
+
+func example_API_UpdateTtl() {
+	resp, err := client.UpdateTtl(ctx, &momento.UpdateTtlRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Ttl:       time.Duration(9999),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.UpdateTtlSet:
+		log.Printf("Successfully updated TTL for key\n")
+	case *responses.UpdateTtlMiss:
+		log.Printf("Key does not exist in cache\n")
+	}
+}
+
+func example_API_IncreaseTtl() {
+	resp, err := client.IncreaseTtl(ctx, &momento.IncreaseTtlRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Ttl:       time.Duration(9999),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.IncreaseTtlSet:
+		log.Printf("Successfully increased TTL for key\n")
+	case *responses.IncreaseTtlMiss:
+		log.Printf("Key does not exist in cache\n")
+	}
+}
+
+func example_API_DecreaseTtl() {
+	resp, err := client.DecreaseTtl(ctx, &momento.DecreaseTtlRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+		Ttl:       time.Duration(9999),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.DecreaseTtlSet:
+		log.Printf("Successfully decreased TTL for key\n")
+	case *responses.DecreaseTtlMiss:
+		log.Printf("Key does not exist in cache\n")
+	}
+}
+
+func example_API_ItemGetTtl() {
+	resp, err := client.ItemGetTtl(ctx, &momento.ItemGetTtlRequest{
+		CacheName: "cache-name",
+		Key:       momento.String("key"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.ItemGetTtlHit:
+		log.Printf("TTL for key is %d\n", r.RemainingTtl().Milliseconds())
+	case *responses.ItemGetTtlMiss:
+		log.Printf("Key does not exist in cache\n")
+	}
+}
+
+func example_API_Increment() {
+	resp, err := client.Increment(ctx, &momento.IncrementRequest{
+		CacheName: "cache-name",
+		Field:     momento.String("key"),
+		Amount:    1,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.IncrementSuccess:
+		log.Printf("Incremented value is %d\n", r.Value())
+	}
+}
+
+func example_API_GetBatch() {
+	resp, err := client.GetBatch(ctx, &momento.GetBatchRequest{
+		CacheName: "cache-name",
+		Keys:      []momento.Value{momento.String("key1"), momento.String("key2")},
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.GetBatchSuccess:
+		log.Printf("Found values %+v\n", r.ValueMap())
+	}
+}
+
+func example_API_SetBatch() {
+	resp, err := client.SetBatch(ctx, &momento.SetBatchRequest{
+		CacheName: "cache-name",
+		Items: []momento.BatchSetItem{
+			{
+				Key:   momento.String("key1"),
+				Value: momento.String("value1"),
+			},
+			{
+				Key:   momento.String("key2"),
+				Value: momento.String("value2"),
+			},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch resp.(type) {
+	case *responses.SetBatchSuccess:
+		log.Printf("Successfully set keys in cache\n")
 	}
 }
