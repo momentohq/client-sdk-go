@@ -25,7 +25,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	var conn *grpc.ClientConn
 	var err error
 	if request.EagerConnect {
-		conn, err = grpc.Dial(
+		conn, err = grpc.NewClient(
 			endpoint,
 			AllDialOptions(
 				request.GrpcConfiguration,
@@ -34,8 +34,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 			)...,
 		)
 	} else {
-		// TODO make NewClient
-		conn, err = grpc.Dial(
+		conn, err = grpc.NewClient(
 			endpoint,
 			AllDialOptions(
 				request.GrpcConfiguration,
@@ -56,6 +55,10 @@ func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (gm *DataGrpcManager) Connect(ctx context.Context) error {
+	// Dial would connect in the background, but NewClient remains in IDLE until first RPC
+	// or until we actually call Connect here
+	gm.Conn.Connect()
+
 	for {
 		select {
 		case <-ctx.Done():

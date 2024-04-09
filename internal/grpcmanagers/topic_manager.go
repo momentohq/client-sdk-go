@@ -18,8 +18,7 @@ type TopicGrpcManager struct {
 func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
-	// TODO make NewClient
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
