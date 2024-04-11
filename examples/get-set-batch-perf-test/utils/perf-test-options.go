@@ -1,27 +1,27 @@
 package utils
 
 import (
-	hdr "github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/HdrHistogram/hdrhistogram-go"
 	"time"
 )
 
 type PerfTestContext struct {
 	StartTime          time.Time
 	TotalItemSizeBytes int64
-	AsyncGetLatencies  *hdr.Histogram
-	AsyncSetLatencies  *hdr.Histogram
-	SetBatchLatencies  *hdr.Histogram
-	GetBatchLatencies  *hdr.Histogram
+	AsyncGetLatencies  *hdrhistogram.Histogram
+	AsyncSetLatencies  *hdrhistogram.Histogram
+	SetBatchLatencies  *hdrhistogram.Histogram
+	GetBatchLatencies  *hdrhistogram.Histogram
 }
 
 func InitiatePerfTestContext() *PerfTestContext {
 	return &PerfTestContext{
 		StartTime:          time.Now(),
 		TotalItemSizeBytes: 0,
-		AsyncGetLatencies:  hdr.New(1, 10000000, 3),
-		AsyncSetLatencies:  hdr.New(1, 10000000, 3),
-		SetBatchLatencies:  hdr.New(1, 10000000, 3),
-		GetBatchLatencies:  hdr.New(1, 10000000, 3),
+		AsyncGetLatencies:  hdrhistogram.New(1, 1000, 1),
+		AsyncSetLatencies:  hdrhistogram.New(1, 1000, 1),
+		SetBatchLatencies:  hdrhistogram.New(1, 1000, 1),
+		GetBatchLatencies:  hdrhistogram.New(1, 1000, 1),
 	}
 }
 

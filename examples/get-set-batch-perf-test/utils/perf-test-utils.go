@@ -2,12 +2,12 @@ package utils
 
 import (
 	"fmt"
-	hdr "github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/HdrHistogram/hdrhistogram-go"
 	"os"
 	"strings"
 )
 
-func outputHistogramSummary(histogram *hdr.Histogram) string {
+func outputHistogramSummary(histogram *hdrhistogram.Histogram) string {
 	return fmt.Sprintf(`
     count: %d
     min: %d
@@ -20,7 +20,7 @@ func outputHistogramSummary(histogram *hdr.Histogram) string {
 }
 
 func CalculateSummary(context *PerfTestContext, batchSize int, itemSizeBytes int, requestType RequestType) {
-	var histogram *hdr.Histogram
+	var histogram *hdrhistogram.Histogram
 	switch requestType {
 	case ASYNC_SETS:
 		histogram = context.AsyncSetLatencies
@@ -41,7 +41,7 @@ func CalculateSummary(context *PerfTestContext, batchSize int, itemSizeBytes int
 	writeStatsToCSV(requestType, batchSize, itemSizeBytes, histogram, context.TotalItemSizeBytes)
 }
 
-func generateSummaryMessage(requestType RequestType, histogram *hdr.Histogram, batchSize int, itemSizeBytes int, totalItemSizeBytes int64) string {
+func generateSummaryMessage(requestType RequestType, histogram *hdrhistogram.Histogram, batchSize int, itemSizeBytes int, totalItemSizeBytes int64) string {
 	summaryTitle := fmt.Sprintf("======= Summary of %s requests for batch size %d and item size %d bytes =======", requestType, batchSize, itemSizeBytes)
 	histogramSummary := fmt.Sprintf("Cumulative latencies: %s", outputHistogramSummary(histogram))
 	totalItemSize := fmt.Sprintf("Total item size in bytes: %d bytes", totalItemSizeBytes)
@@ -50,7 +50,7 @@ func generateSummaryMessage(requestType RequestType, histogram *hdr.Histogram, b
 	return fmt.Sprintf("%s\n%s\n%s\n%s\n", summaryTitle, histogramSummary, totalItemSize, separator)
 }
 
-func writeStatsToCSV(requestType RequestType, batchSize int, itemSize int, histogram *hdr.Histogram, totalItemSizeBytes int64) {
+func writeStatsToCSV(requestType RequestType, batchSize int, itemSize int, histogram *hdrhistogram.Histogram, totalItemSizeBytes int64) {
 	filename := "perf_test_stats.csv"
 	header := "requestType,BatchSize,itemSize,TotalCount,Min,p50,p90,p99,p99.9,Max,TotalItemSizeBytes\n"
 	stats := fmt.Sprintf("%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", requestType, batchSize, itemSize, histogram.TotalCount(), histogram.Min(), histogram.ValueAtPercentile(50), histogram.ValueAtPercentile(90), histogram.ValueAtPercentile(99), histogram.ValueAtPercentile(99.9), histogram.Max(), totalItemSizeBytes)
