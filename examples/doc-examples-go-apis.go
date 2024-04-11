@@ -531,13 +531,12 @@ func example_API_LeaderboardFetchByScore() {
 	})
 	if err != nil {
 		panic(err)
-	} else {
-		switch r := fetchByScoreResponse.(type) {
-		case *responses.LeaderboardFetchSuccess:
-			fmt.Printf("Successfully fetched elements by score:\n")
-			for _, element := range r.Values() {
-				fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
-			}
+	}
+	switch r := fetchByScoreResponse.(type) {
+	case *responses.LeaderboardFetchSuccess:
+		fmt.Printf("Successfully fetched elements by score:\n")
+		for _, element := range r.Values() {
+			fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
 		}
 	}
 }
@@ -551,13 +550,12 @@ func example_API_LeaderboardFetchByRank() {
 	})
 	if err != nil {
 		panic(err)
-	} else {
-		switch r := fetchByRankResponse.(type) {
-		case *responses.LeaderboardFetchSuccess:
-			fmt.Printf("Successfully fetched elements by rank:\n")
-			for _, element := range r.Values() {
-				fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
-			}
+	}
+	switch r := fetchByRankResponse.(type) {
+	case *responses.LeaderboardFetchSuccess:
+		fmt.Printf("Successfully fetched elements by rank:\n")
+		for _, element := range r.Values() {
+			fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
 		}
 	}
 }
@@ -568,13 +566,12 @@ func example_API_LeaderboardGetRank() {
 	})
 	if err != nil {
 		panic(err)
-	} else {
-		switch r := getRankResponse.(type) {
-		case *responses.LeaderboardFetchSuccess:
-			fmt.Printf("Successfully fetched elements by ID:\n")
-			for _, element := range r.Values() {
-				fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
-			}
+	}
+	switch r := getRankResponse.(type) {
+	case *responses.LeaderboardFetchSuccess:
+		fmt.Printf("Successfully fetched elements by ID:\n")
+		for _, element := range r.Values() {
+			fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
 		}
 	}
 }
@@ -583,11 +580,10 @@ func example_API_LeaderboardLength() {
 	lengthResponse, err := leaderboard.Length(ctx)
 	if err != nil {
 		panic(err)
-	} else {
-		switch r := lengthResponse.(type) {
-		case *responses.LeaderboardLengthSuccess:
-			fmt.Printf("Leaderboard length: %d\n", r.Length())
-		}
+	}
+	switch r := lengthResponse.(type) {
+	case *responses.LeaderboardLengthSuccess:
+		fmt.Printf("Leaderboard length: %d\n", r.Length())
 	}
 }
 
