@@ -18,8 +18,11 @@ import (
 )
 
 var (
-	ctx    context.Context
-	client momento.CacheClient
+	ctx               context.Context
+	client            momento.CacheClient
+	cacheName         string
+	leaderboardClient momento.PreviewLeaderboardClient
+	leaderboard       momento.Leaderboard
 )
 
 func example_API_InstantiateCacheClient() {
@@ -473,5 +476,127 @@ func example_API_SetBatch() {
 	switch resp.(type) {
 	case *responses.SetBatchSuccess:
 		log.Printf("Successfully set keys in cache\n")
+	}
+}
+
+func example_API_InstantiateLeaderboardClient() {
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	if err != nil {
+		panic(err)
+	}
+
+	leaderboardClient, err = momento.NewPreviewLeaderboardClient(
+		config.LeaderboardDefault(),
+		credentialProvider,
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CreateLeaderboard() {
+	leaderboard, err := leaderboardClient.Leaderboard(ctx, &momento.LeaderboardRequest{
+		CacheName:       cacheName,
+		LeaderboardName: "leaderboard",
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_LeaderboardUpsert() {
+	upsertElements := []momento.LeaderboardUpsertElement{
+		{Id: 123, Score: 10.33},
+		{Id: 456, Score: 3333},
+		{Id: 789, Score: 5678.9},
+	}
+	_, err := leaderboard.Upsert(ctx, momento.LeaderboardUpsertRequest{Elements: upsertElements})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_LeaderboardFetchByScore() {
+	minScore := 150.0
+	maxScore := 3000.0
+	offset := uint32(1)
+	count := uint32(2)
+	fetchOrder := momento.ASCENDING
+	fetchByScoreResponse, err := leaderboard.FetchByScore(ctx, momento.LeaderboardFetchByScoreRequest{
+		MinScore: &minScore,
+		MaxScore: &maxScore,
+		Offset:   &offset,
+		Count:    &count,
+		Order:    &fetchOrder,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := fetchByScoreResponse.(type) {
+	case *responses.LeaderboardFetchSuccess:
+		fmt.Printf("Successfully fetched elements by score:\n")
+		for _, element := range r.Values() {
+			fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
+		}
+	}
+}
+
+func example_API_LeaderboardFetchByRank() {
+	fetchOrder := momento.ASCENDING
+	fetchByRankResponse, err := leaderboard.FetchByRank(ctx, momento.LeaderboardFetchByRankRequest{
+		StartRank: 0,
+		EndRank:   100,
+		Order:     &fetchOrder,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := fetchByRankResponse.(type) {
+	case *responses.LeaderboardFetchSuccess:
+		fmt.Printf("Successfully fetched elements by rank:\n")
+		for _, element := range r.Values() {
+			fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
+		}
+	}
+}
+
+func example_API_LeaderboardGetRank() {
+	getRankResponse, err := leaderboard.GetRank(ctx, momento.LeaderboardGetRankRequest{
+		Ids: []uint32{123, 456},
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := getRankResponse.(type) {
+	case *responses.LeaderboardFetchSuccess:
+		fmt.Printf("Successfully fetched elements by ID:\n")
+		for _, element := range r.Values() {
+			fmt.Printf("ID: %d, Score: %f, Rank: %d\n", element.Id, element.Score, element.Rank)
+		}
+	}
+}
+
+func example_API_LeaderboardLength() {
+	lengthResponse, err := leaderboard.Length(ctx)
+	if err != nil {
+		panic(err)
+	}
+	switch r := lengthResponse.(type) {
+	case *responses.LeaderboardLengthSuccess:
+		fmt.Printf("Leaderboard length: %d\n", r.Length())
+	}
+}
+
+func example_API_LeaderboardRemoveElements() {
+	_, err := leaderboard.RemoveElements(ctx, momento.LeaderboardRemoveElementsRequest{Ids: []uint32{123, 456}})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_LeaderboardDelete() {
+	_, err := leaderboard.Delete(ctx)
+	if err != nil {
+		panic(err)
 	}
 }
