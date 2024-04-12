@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/loov/hrtime"
-	"github.com/momentohq/client-sdk-go/responses"
-	"github.com/momentohq/go-example/get-set-batch-perf-test/utils"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/loov/hrtime"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/go-example/get-set-batch-perf-test/utils"
 )
 
 const (
