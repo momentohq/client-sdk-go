@@ -2,11 +2,12 @@ package utils
 
 import (
 	"github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/loov/hrtime"
 	"time"
 )
 
 type PerfTestContext struct {
-	StartTime          time.Time
+	StartTime          time.Duration
 	TotalItemSizeBytes int64
 	AsyncGetLatencies  *hdrhistogram.Histogram
 	AsyncSetLatencies  *hdrhistogram.Histogram
@@ -16,7 +17,7 @@ type PerfTestContext struct {
 
 func InitiatePerfTestContext() *PerfTestContext {
 	return &PerfTestContext{
-		StartTime:          time.Now(),
+		StartTime:          hrtime.Now(),
 		TotalItemSizeBytes: 0,
 		AsyncGetLatencies:  hdrhistogram.New(1, 1000, 1),
 		AsyncSetLatencies:  hdrhistogram.New(1, 1000, 1),
@@ -28,10 +29,10 @@ func InitiatePerfTestContext() *PerfTestContext {
 type RequestType string
 
 const (
-	ASYNC_GETS RequestType = "ASYNC_GETS"
-	ASYNC_SETS RequestType = "ASYNC_SETS"
-	GET_BATCH  RequestType = "GET_BATCH"
-	SET_BATCH  RequestType = "SET_BATCH"
+	AsyncGets RequestType = "ASYNC_GETS"
+	AsyncSets RequestType = "ASYNC_SETS"
+	GetBatch  RequestType = "GET_BATCH"
+	SetBatch  RequestType = "SET_BATCH"
 )
 
 type PerfTestOptions struct {

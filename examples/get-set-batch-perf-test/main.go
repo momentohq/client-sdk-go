@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/loov/hrtime"
 	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/go-example/get-set-batch-perf-test/utils"
 	"strings"
@@ -74,11 +75,11 @@ func initializeMomentoClient(ctx context.Context, credentialProvider auth.Creden
 func runAsyncSetRequests(ctx context.Context, client momento.CacheClient, testConfiguration utils.PerfTestConfiguration) {
 	for _, setConfig := range testConfiguration.Sets {
 		perfTestContext := utils.InitiatePerfTestContext()
-		for time.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
+		for hrtime.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
 			sendAsyncSetRequests(ctx, client, perfTestContext, setConfig)
 		}
 		fmt.Printf("Completed async set requests with batch size %d and item size %d\n", setConfig.BatchSize, setConfig.ItemSizeBytes)
-		utils.CalculateSummary(perfTestContext, setConfig.BatchSize, setConfig.ItemSizeBytes, utils.ASYNC_SETS)
+		utils.CalculateSummary(perfTestContext, setConfig.BatchSize, setConfig.ItemSizeBytes, utils.AsyncSets)
 	}
 }
 
@@ -86,22 +87,22 @@ func runAsyncGetRequests(ctx context.Context, client momento.CacheClient, testCo
 	for _, getConfig := range testConfiguration.Gets {
 		ensureCacheIsPopulated(ctx, client, getConfig)
 		perfTestContext := utils.InitiatePerfTestContext()
-		for time.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
+		for hrtime.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
 			sendAsyncGetRequests(ctx, client, perfTestContext, getConfig)
 		}
 		fmt.Printf("Completed async get requests with batch size %d and item size %d\n", getConfig.BatchSize, getConfig.ItemSizeBytes)
-		utils.CalculateSummary(perfTestContext, getConfig.BatchSize, getConfig.ItemSizeBytes, utils.ASYNC_GETS)
+		utils.CalculateSummary(perfTestContext, getConfig.BatchSize, getConfig.ItemSizeBytes, utils.AsyncGets)
 	}
 }
 
 func runSetBatchRequests(ctx context.Context, client momento.CacheClient, testConfiguration utils.PerfTestConfiguration) {
 	for _, setConfig := range testConfiguration.Sets {
 		perfTestContext := utils.InitiatePerfTestContext()
-		for time.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
+		for hrtime.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
 			sendSetBatchRequests(ctx, client, perfTestContext, setConfig)
 		}
 		fmt.Printf("Completed set batch requests with batch size %d and item size %d\n", setConfig.BatchSize, setConfig.ItemSizeBytes)
-		utils.CalculateSummary(perfTestContext, setConfig.BatchSize, setConfig.ItemSizeBytes, utils.SET_BATCH)
+		utils.CalculateSummary(perfTestContext, setConfig.BatchSize, setConfig.ItemSizeBytes, utils.SetBatch)
 	}
 }
 
@@ -109,11 +110,11 @@ func runGetBatchRequests(ctx context.Context, client momento.CacheClient, testCo
 	for _, getConfig := range testConfiguration.Gets {
 		ensureCacheIsPopulated(ctx, client, getConfig)
 		perfTestContext := utils.InitiatePerfTestContext()
-		for time.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
+		for hrtime.Since(perfTestContext.StartTime).Seconds() < float64(testConfiguration.MinimumRunDurationSecondsForTests) {
 			sendGetBatchRequests(ctx, client, perfTestContext, getConfig)
 		}
 		fmt.Printf("Completed get batch requests with batch size %d and item size %d\n", getConfig.BatchSize, getConfig.ItemSizeBytes)
-		utils.CalculateSummary(perfTestContext, getConfig.BatchSize, getConfig.ItemSizeBytes, utils.GET_BATCH)
+		utils.CalculateSummary(perfTestContext, getConfig.BatchSize, getConfig.ItemSizeBytes, utils.GetBatch)
 	}
 }
 
@@ -121,7 +122,7 @@ func sendAsyncSetRequests(ctx context.Context, client momento.CacheClient, conte
 	var wg sync.WaitGroup
 	setResponses := make([]responses.SetResponse, setConfig.BatchSize)
 	value := strings.Repeat("x", setConfig.ItemSizeBytes)
-	setStartTime := time.Now()
+	setStartTime := hrtime.Now()
 
 	for i := 0; i < setConfig.BatchSize; i++ {
 		wg.Add(1)
@@ -143,7 +144,7 @@ func sendAsyncSetRequests(ctx context.Context, client momento.CacheClient, conte
 	// Wait for all goroutines to finish
 	wg.Wait()
 	// Calculate elapsed time and record it
-	setDuration := time.Since(setStartTime)
+	setDuration := hrtime.Since(setStartTime)
 	err := context.AsyncSetLatencies.RecordValue(setDuration.Milliseconds())
 	if err != nil {
 		return
@@ -153,7 +154,7 @@ func sendAsyncSetRequests(ctx context.Context, client momento.CacheClient, conte
 func sendAsyncGetRequests(ctx context.Context, client momento.CacheClient, context *utils.PerfTestContext, getConfig utils.GetSetConfig) {
 	var wg sync.WaitGroup
 	getResponses := make([]responses.GetResponse, getConfig.BatchSize)
-	getStartTime := time.Now()
+	getStartTime := hrtime.Now()
 
 	for i := 0; i < getConfig.BatchSize; i++ {
 		wg.Add(1)
@@ -174,7 +175,7 @@ func sendAsyncGetRequests(ctx context.Context, client momento.CacheClient, conte
 	// Wait for all goroutines to finish
 	wg.Wait()
 	// Calculate elapsed time and record it
-	getDuration := time.Since(getStartTime)
+	getDuration := hrtime.Since(getStartTime)
 	err := context.AsyncGetLatencies.RecordValue(getDuration.Milliseconds())
 	if err != nil {
 		return
@@ -192,7 +193,7 @@ func sendSetBatchRequests(ctx context.Context, client momento.CacheClient, conte
 			Value: momento.String(value),
 		}
 	}
-	setBatchStartTime := time.Now()
+	setBatchStartTime := hrtime.Now()
 	_, err := client.SetBatch(ctx, &momento.SetBatchRequest{
 		CacheName: cacheName,
 		Items:     items,
@@ -200,7 +201,7 @@ func sendSetBatchRequests(ctx context.Context, client momento.CacheClient, conte
 	if err != nil {
 		panic(err)
 	}
-	setBatchDuration := time.Since(setBatchStartTime)
+	setBatchDuration := hrtime.Since(setBatchStartTime)
 	err = context.SetBatchLatencies.RecordValue(setBatchDuration.Milliseconds())
 	if err != nil {
 		return
@@ -213,7 +214,7 @@ func sendGetBatchRequests(ctx context.Context, client momento.CacheClient, conte
 	for i := 0; i < getConfig.BatchSize; i++ {
 		keys[i] = momento.String(fmt.Sprintf("key-%d", i))
 	}
-	getBatchStartTime := time.Now()
+	getBatchStartTime := hrtime.Now()
 	_, err := client.GetBatch(ctx, &momento.GetBatchRequest{
 		CacheName: cacheName,
 		Keys:      keys,
@@ -221,7 +222,7 @@ func sendGetBatchRequests(ctx context.Context, client momento.CacheClient, conte
 	if err != nil {
 		panic(err)
 	}
-	getBatchDuration := time.Since(getBatchStartTime)
+	getBatchDuration := hrtime.Since(getBatchStartTime)
 	err = context.GetBatchLatencies.RecordValue(getBatchDuration.Milliseconds())
 	if err != nil {
 		return

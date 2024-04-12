@@ -2,9 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"github.com/HdrHistogram/hdrhistogram-go"
 	"os"
 	"strings"
+
+	"github.com/HdrHistogram/hdrhistogram-go"
 )
 
 func outputHistogramSummary(histogram *hdrhistogram.Histogram) string {
@@ -22,13 +23,13 @@ func outputHistogramSummary(histogram *hdrhistogram.Histogram) string {
 func CalculateSummary(context *PerfTestContext, batchSize int, itemSizeBytes int, requestType RequestType) {
 	var histogram *hdrhistogram.Histogram
 	switch requestType {
-	case ASYNC_SETS:
+	case AsyncSets:
 		histogram = context.AsyncSetLatencies
-	case ASYNC_GETS:
+	case AsyncGets:
 		histogram = context.AsyncGetLatencies
-	case SET_BATCH:
+	case SetBatch:
 		histogram = context.SetBatchLatencies
-	case GET_BATCH:
+	case GetBatch:
 		histogram = context.GetBatchLatencies
 	}
 
