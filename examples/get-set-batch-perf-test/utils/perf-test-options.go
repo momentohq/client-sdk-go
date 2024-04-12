@@ -1,9 +1,10 @@
 package utils
 
 import (
+	"time"
+
 	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/loov/hrtime"
-	"time"
 )
 
 type PerfTestContext struct {
