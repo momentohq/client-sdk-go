@@ -8,22 +8,24 @@ import (
 )
 
 type PerfTestContext struct {
-	StartTime          time.Duration
-	TotalItemSizeBytes int64
-	AsyncGetLatencies  *hdrhistogram.Histogram
-	AsyncSetLatencies  *hdrhistogram.Histogram
-	SetBatchLatencies  *hdrhistogram.Histogram
-	GetBatchLatencies  *hdrhistogram.Histogram
+	StartTime             time.Duration
+	TotalItemSizeBytes    int64
+	TotalNumberOfRequests int64
+	AsyncGetLatencies     *hdrhistogram.Histogram
+	AsyncSetLatencies     *hdrhistogram.Histogram
+	SetBatchLatencies     *hdrhistogram.Histogram
+	GetBatchLatencies     *hdrhistogram.Histogram
 }
 
 func InitiatePerfTestContext() *PerfTestContext {
 	return &PerfTestContext{
-		StartTime:          hrtime.Now(),
-		TotalItemSizeBytes: 0,
-		AsyncGetLatencies:  hdrhistogram.New(1, 1000, 1),
-		AsyncSetLatencies:  hdrhistogram.New(1, 1000, 1),
-		SetBatchLatencies:  hdrhistogram.New(1, 1000, 1),
-		GetBatchLatencies:  hdrhistogram.New(1, 1000, 1),
+		StartTime:             hrtime.Now(),
+		TotalItemSizeBytes:    0,
+		TotalNumberOfRequests: 0,
+		AsyncGetLatencies:     hdrhistogram.New(1, 10000000000, 3),
+		AsyncSetLatencies:     hdrhistogram.New(1, 10000000000, 3),
+		SetBatchLatencies:     hdrhistogram.New(1, 10000000000, 3),
+		GetBatchLatencies:     hdrhistogram.New(1, 10000000000, 3),
 	}
 }
 

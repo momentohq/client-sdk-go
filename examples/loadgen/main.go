@@ -129,7 +129,7 @@ func worker(
 			return
 		default:
 			i++
-			elapsed = 0
+			//elapsed = 0
 			cacheKey := fmt.Sprintf("worker%doperation%d", id, i)
 			setStart := hrtime.Now()
 			_, err := client.Set(ctx, &momento.SetRequest{
@@ -234,8 +234,8 @@ func (ec *ErrorCounter) updateErrors(err string) {
 }
 
 func timer(ctx context.Context, getChan chan int64, setChan chan int64, errChan chan string, statsInterval time.Duration) {
-	getHistogram := hdrhistogram.New(1, 1000, 1)
-	setHistogram := hdrhistogram.New(1, 1000, 1)
+	getHistogram := hdrhistogram.New(1, 10000000000, 3)
+	setHistogram := hdrhistogram.New(1, 10000000000, 3)
 	errorCounter := ErrorCounter{}
 
 	startTime := hrtime.Now()
@@ -274,9 +274,12 @@ func (r *loadGenerator) run(ctx context.Context, client momento.CacheClient, wor
 	defer cancelFunction()
 
 	var wg sync.WaitGroup
-	getChan := make(chan int64, r.options.numberOfConcurrentRequests)
-	setChan := make(chan int64, r.options.numberOfConcurrentRequests)
-	errChan := make(chan string, r.options.numberOfConcurrentRequests)
+
+	// Setting the channel length to a max of number of concurrent requests was a bottleneck.
+	//Hence, using a large number to ensure the channels were not getting clogged up.
+	getChan := make(chan int64, 10_000)
+	setChan := make(chan int64, 10_000)
+	errChan := make(chan string, 10_000)
 
 	wg.Add(1)
 	go func() {
@@ -307,12 +310,12 @@ func main() {
 	opts := loadGeneratorOptions{
 		logLevel:              momento_default_logger.DEBUG,
 		showStatsInterval:     time.Second * 5,
-		cacheItemPayloadBytes: 100,
+		cacheItemPayloadBytes: 10,
 		// Note: You are likely to see degraded performance if you increase this above 50
 		// and observe elevated client-side latencies.
-		numberOfConcurrentRequests: 50,
-		maxRequestsPerSecond:       100,
-		howLongToRun:               time.Minute,
+		numberOfConcurrentRequests: 100,
+		maxRequestsPerSecond:       18000,
+		howLongToRun:               time.Minute * 5,
 	}
 
 	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
