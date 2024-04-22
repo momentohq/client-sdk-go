@@ -129,7 +129,7 @@ func worker(
 			return
 		default:
 			i++
-			//elapsed = 0
+			elapsed = 0
 			cacheKey := fmt.Sprintf("worker%doperation%d", id, i)
 			setStart := hrtime.Now()
 			_, err := client.Set(ctx, &momento.SetRequest{
@@ -310,12 +310,12 @@ func main() {
 	opts := loadGeneratorOptions{
 		logLevel:              momento_default_logger.DEBUG,
 		showStatsInterval:     time.Second * 5,
-		cacheItemPayloadBytes: 10,
+		cacheItemPayloadBytes: 100,
 		// Note: You are likely to see degraded performance if you increase this above 50
 		// and observe elevated client-side latencies.
-		numberOfConcurrentRequests: 100,
-		maxRequestsPerSecond:       18000,
-		howLongToRun:               time.Minute * 5,
+		numberOfConcurrentRequests: 50,
+		maxRequestsPerSecond:       100,
+		howLongToRun:               time.Minute,
 	}
 
 	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
