@@ -234,8 +234,8 @@ func (ec *ErrorCounter) updateErrors(err string) {
 }
 
 func timer(ctx context.Context, getChan chan int64, setChan chan int64, errChan chan string, statsInterval time.Duration) {
-	getHistogram := hdrhistogram.New(1, 1000, 1)
-	setHistogram := hdrhistogram.New(1, 1000, 1)
+	getHistogram := hdrhistogram.New(1, 10000000000, 3)
+	setHistogram := hdrhistogram.New(1, 10000000000, 3)
 	errorCounter := ErrorCounter{}
 
 	startTime := hrtime.Now()
@@ -274,9 +274,12 @@ func (r *loadGenerator) run(ctx context.Context, client momento.CacheClient, wor
 	defer cancelFunction()
 
 	var wg sync.WaitGroup
-	getChan := make(chan int64, r.options.numberOfConcurrentRequests)
-	setChan := make(chan int64, r.options.numberOfConcurrentRequests)
-	errChan := make(chan string, r.options.numberOfConcurrentRequests)
+
+	// Setting the channel length to a max of number of concurrent requests was a bottleneck.
+	//Hence, using a large number to ensure the channels were not getting clogged up.
+	getChan := make(chan int64, 10_000)
+	setChan := make(chan int64, 10_000)
+	errChan := make(chan string, 10_000)
 
 	wg.Add(1)
 	go func() {
