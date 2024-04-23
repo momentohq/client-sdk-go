@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	cacheName             = "js-perf-test"
+	cacheName             = "go-perf-test"
 	itemDefaultTTLSeconds = 60
 	requestTimeoutSeconds = 600 // 10 minutes
 	maxRequestsPerSecond  = 10_000
@@ -257,7 +257,7 @@ func sendSetBatchRequests(ctx context.Context, client momento.CacheClient, conte
 	if err != nil {
 		panic(err)
 	}
-	context.TotalNumberOfRequests += int64(setConfig.BatchSize)
+	context.TotalNumberOfRequests += 1
 	setBatchDuration := hrtime.Since(setBatchStartTime)
 	err = context.SetBatchLatencies.RecordValue(setBatchDuration.Milliseconds())
 	if err != nil {
@@ -279,7 +279,7 @@ func sendGetBatchRequests(ctx context.Context, client momento.CacheClient, conte
 	if err != nil {
 		panic(err)
 	}
-	context.TotalNumberOfRequests += int64(getConfig.BatchSize)
+	context.TotalNumberOfRequests += 1
 	getBatchDuration := hrtime.Since(getBatchStartTime)
 	err = context.GetBatchLatencies.RecordValue(getBatchDuration.Milliseconds())
 	if err != nil {
