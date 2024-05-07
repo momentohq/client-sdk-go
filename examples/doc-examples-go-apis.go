@@ -20,6 +20,7 @@ import (
 var (
 	ctx               context.Context
 	client            momento.CacheClient
+	database          map[string]string
 	cacheName         string
 	leaderboardClient momento.PreviewLeaderboardClient
 	leaderboard       momento.Leaderboard
@@ -594,9 +595,40 @@ func example_API_LeaderboardRemoveElements() {
 	}
 }
 
-func example_API_LeaderboardDelete() {
-	_, err := leaderboard.Delete(ctx)
+func example_patterns_ReadAsideCaching() string {
+	key := uuid.NewString()
+	resp, err := client.Get(ctx, &momento.GetRequest{
+		CacheName: "cache-name",
+		Key:       momento.String(key),
+	})
 	if err != nil {
 		panic(err)
 	}
+
+	switch r := resp.(type) {
+	// cache hit
+	case *responses.GetHit:
+		return r.ValueString()
+	}
+	// lookup value in database
+	val := database[key]
+	client.Set(ctx, &momento.SetRequest{
+		CacheName: "cache-name",
+		Key:       momento.String(key),
+		Value:     momento.String(val),
+	})
+	return val
+}
+
+func example_patterns_WriteThroughCaching() {
+	key := uuid.NewString()
+	value := uuid.NewString()
+	// set value in database
+	database[key] = value
+	// set value in cache
+	client.Set(ctx, &momento.SetRequest{
+		CacheName: "cache-name",
+		Key:       momento.String(key),
+		Value:     momento.String(value),
+	})
 }
