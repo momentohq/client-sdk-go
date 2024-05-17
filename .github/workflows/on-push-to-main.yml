@@ -35,7 +35,7 @@ jobs:
           dev_docs_slug: go
 
   test:
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: read
