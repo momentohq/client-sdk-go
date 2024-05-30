@@ -24,7 +24,11 @@ service Scs {
   rpc Set (_SetRequest) returns (_SetResponse) {}
   rpc SetBatch (_SetBatchRequest) returns (stream _SetResponse) {}
   rpc SetIf (_SetIfRequest) returns (_SetIfResponse) {}
-  rpc SetIfNotExists (_SetIfNotExistsRequest) returns (_SetIfNotExistsResponse) {}
+
+  // Deprecated because we have SetIf - Absent to cover this case.
+  rpc SetIfNotExists (_SetIfNotExistsRequest) returns (_SetIfNotExistsResponse) {
+    option deprecated = true;
+  }
   rpc Delete (_DeleteRequest) returns (_DeleteResponse) {}
   rpc KeysExist (_KeysExistRequest) returns (_KeysExistResponse) {}
   rpc Increment (_IncrementRequest) returns (_IncrementResponse) {}
