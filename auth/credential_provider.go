@@ -19,6 +19,8 @@ type Endpoints struct {
 	CacheEndpoint string
 	// TokenEndpoint is the host which the Momento client will connect to for generating disposable auth tokens
 	TokenEndpoint string
+	// StoreEndpoint is the host which the Momento client will connect to the Momento storage data plane
+	StoreEndpoint string
 }
 
 type tokenAndEndpoints struct {
@@ -31,6 +33,7 @@ type CredentialProvider interface {
 	GetControlEndpoint() string
 	GetCacheEndpoint() string
 	GetTokenEndpoint() string
+	GetStoreEndpoint() string
 	WithEndpoints(endpoints Endpoints) (CredentialProvider, error)
 }
 
@@ -39,6 +42,7 @@ type defaultCredentialProvider struct {
 	controlEndpoint string
 	cacheEndpoint   string
 	tokenEndpoint   string
+	storeEndpoint   string
 }
 
 // GetAuthToken returns user's auth token.
@@ -59,6 +63,11 @@ func (credentialProvider defaultCredentialProvider) GetCacheEndpoint() string {
 // GetTokenEndpoint returns Endpoints.TokenEndpoint.
 func (credentialProvider defaultCredentialProvider) GetTokenEndpoint() string {
 	return credentialProvider.tokenEndpoint
+}
+
+// GetStoreEndpoint returns Endpoints.StoreEndpoint.
+func (credentialProvider defaultCredentialProvider) GetStoreEndpoint() string {
+	return credentialProvider.storeEndpoint
 }
 
 // FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
@@ -92,6 +101,9 @@ func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints Endp
 	if endpoints.TokenEndpoint != "" {
 		credentialProvider.tokenEndpoint = endpoints.TokenEndpoint
 	}
+	if endpoints.StoreEndpoint != "" {
+		credentialProvider.storeEndpoint = endpoints.StoreEndpoint
+	}
 	return credentialProvider, nil
 }
 
@@ -121,6 +133,7 @@ func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error)
 		controlEndpoint: tokenAndEndpoints.ControlEndpoint,
 		cacheEndpoint:   tokenAndEndpoints.CacheEndpoint,
 		tokenEndpoint:   tokenAndEndpoints.TokenEndpoint,
+		storeEndpoint:   tokenAndEndpoints.StoreEndpoint,
 	}
 	return provider, nil
 }
@@ -156,6 +169,7 @@ func processV1Token(decodedBase64Token []byte) (*tokenAndEndpoints, momentoerror
 			ControlEndpoint: fmt.Sprintf("control.%s", tokenData["endpoint"]),
 			CacheEndpoint:   fmt.Sprintf("cache.%s", tokenData["endpoint"]),
 			TokenEndpoint:   fmt.Sprintf("token.%s", tokenData["endpoint"]),
+			StoreEndpoint:   fmt.Sprintf("store.%s", tokenData["endpoint"]),
 		},
 		AuthToken: tokenData["api_key"],
 	}, nil
