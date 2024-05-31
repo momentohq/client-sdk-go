@@ -49,6 +49,11 @@ type LeaderboardGrpcManagerRequest struct {
 	GrpcConfiguration  config.GrpcConfiguration
 }
 
+type StoreGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
+}
+
 type LocalDataGrpcManagerRequest struct {
 	Endpoint string
 }
@@ -100,4 +105,22 @@ type PingClientRequest struct {
 type LeaderboardClientRequest struct {
 	Configuration      config.LeaderboardConfiguration
 	CredentialProvider auth.CredentialProvider
+}
+
+type StoreDataClientRequest struct {
+	CredentialProvider auth.CredentialProvider
+	Configuration      config.StoreConfiguration
+	Log                logger.MomentoLogger
+}
+
+type CreateStoreRequest struct {
+	StoreName string
+}
+
+type DeleteStoreRequest struct {
+	StoreName string
+}
+
+type ListStoresRequest struct {
+	NextToken string
 }
