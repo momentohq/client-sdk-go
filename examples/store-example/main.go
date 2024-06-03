@@ -40,16 +40,24 @@ func main() {
 		panic(err)
 	}
 
+	// This is possible because I've moved the TryGet* funcs to the StoreGetResponse interface. This
+	// retains the ability to explicitly check for the success type but allows users to grab values
+	// without needing to do a type assertion.
+	if tryGetResp.ValueType() == responses.STRING {
+		myStr, gotStr := tryGetResp.TryGetValueString()
+		if gotStr {
+			fmt.Printf("Got the string %s\n", myStr)
+		} else {
+			fmt.Printf("Did not get the string\n")
+		}
+	}
+
 	// The success type is the only implementor of the StoreGetResponse interface,
 	// and is therefore honestly kind of useless. The same is true of all the other
 	// responses that just have success/error outcomes.
-	//
-	// Removing the interface and just returning the success type would make the
-	// code cleaner and easier to understand and would prevent the need for the
-	// type assertion below.
 	getResp := tryGetResp.(*responses.StoreGetSuccess)
 
-	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType)
+	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
 	val, b00l := getResp.TryGetValueDouble()
 	if b00l {
 		fmt.Printf("Got the double %f\n", val)

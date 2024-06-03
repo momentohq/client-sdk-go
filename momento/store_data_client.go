@@ -70,9 +70,9 @@ func (client *storeDataClient) set(ctx context.Context, request *StorePutRequest
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	//requestMetadata := metadata.NewOutgoingContext(
-	//	ctx, client.CreateNewMetadata(request.StoreName),
-	//)
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.StoreName),
+	)
 
 	val := pb.XStoreValue{}
 	switch request.Value.(type) {
@@ -86,13 +86,13 @@ func (client *storeDataClient) set(ctx context.Context, request *StorePutRequest
 		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(Integer))}
 	}
 
-	//_, err := client.grpcClient.Set(requestMetadata, &pb.XStoreSetRequest{
-	//	Key:   request.Key,
-	//	Value: &val,
-	//})
-	//if err != nil {
-	//	return nil, momentoerrors.ConvertSvcErr(err)
-	//}
+	_, err := client.grpcClient.Set(requestMetadata, &pb.XStoreSetRequest{
+		Key:   request.Key,
+		Value: &val,
+	})
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
 
 	return &responses.StorePutSuccess{}, nil
 }
@@ -101,33 +101,19 @@ func (client *storeDataClient) get(ctx context.Context, request *StoreGetRequest
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	//requestMetadata := metadata.NewOutgoingContext(
-	//	ctx, client.CreateNewMetadata(request.StoreName),
-	//)
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.StoreName),
+	)
 
-	//response, err := client.grpcClient.Get(requestMetadata, &pb.XStoreGetRequest{
-	//	Key: request.Key,
-	//})
-	//
-	//if err != nil {
-	//	return nil, momentoerrors.ConvertSvcErr(err)
-	//}
+	response, err := client.grpcClient.Get(requestMetadata, &pb.XStoreGetRequest{
+		Key: request.Key,
+	})
 
-	//val := response.GetValue()
-	val := &pb.XStoreValue{}
-	switch request.Key {
-	case "str-key":
-		val.Value = &pb.XStoreValue_StringValue{StringValue: "my-str-value"}
-	case "int-key":
-		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: 123}
-	case "double-key":
-		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: 123.456}
-	case "bytes-key":
-		val.Value = &pb.XStoreValue_BytesValue{BytesValue: []byte("my-byte-value")}
-	default:
-		panic("Unknown key")
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
+	val := response.GetValue()
 	switch val.Value.(type) {
 	case *pb.XStoreValue_BytesValue:
 		return responses.NewStoreGetSuccess_Bytes(responses.BYTES, val.GetBytesValue()), nil

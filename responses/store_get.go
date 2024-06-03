@@ -12,10 +12,15 @@ const (
 
 type StoreGetResponse interface {
 	isStoreGetResponse()
+	ValueType() StoreValueType
+	TryGetValueString() (string, bool)
+	TryGetValueBytes() ([]byte, bool)
+	TryGetValueInteger() (int, bool)
+	TryGetValueDouble() (float64, bool)
 }
 
 type StoreGetSuccess struct {
-	ValueType    StoreValueType
+	valueType    StoreValueType
 	valueBytes   *[]byte
 	valueString  *string
 	valueDouble  *float64
@@ -24,8 +29,12 @@ type StoreGetSuccess struct {
 
 func (StoreGetSuccess) isStoreGetResponse() {}
 
+func (resp StoreGetSuccess) ValueType() StoreValueType {
+	return resp.valueType
+}
+
 func (resp StoreGetSuccess) TryGetValueString() (string, bool) {
-	if resp.ValueType == STRING {
+	if resp.valueType == STRING {
 		return *resp.valueString, true
 	}
 	// TODO
@@ -35,21 +44,21 @@ func (resp StoreGetSuccess) TryGetValueString() (string, bool) {
 }
 
 func (resp StoreGetSuccess) TryGetValueBytes() ([]byte, bool) {
-	if resp.ValueType == BYTES {
+	if resp.valueType == BYTES {
 		return *resp.valueBytes, true
 	}
 	return nil, false
 }
 
 func (resp StoreGetSuccess) TryGetValueDouble() (float64, bool) {
-	if resp.ValueType == DOUBLE {
+	if resp.valueType == DOUBLE {
 		return *resp.valueDouble, true
 	}
 	return 0, false
 }
 
 func (resp StoreGetSuccess) TryGetValueInteger() (int, bool) {
-	if resp.ValueType == INTEGER {
+	if resp.valueType == INTEGER {
 		return *resp.valueInteger, true
 	}
 	return 0, false
@@ -57,28 +66,28 @@ func (resp StoreGetSuccess) TryGetValueInteger() (int, bool) {
 
 func NewStoreGetSuccess_String(valueType StoreValueType, value string) *StoreGetSuccess {
 	return &StoreGetSuccess{
-		ValueType:   valueType,
+		valueType:   valueType,
 		valueString: &value,
 	}
 }
 
 func NewStoreGetSuccess_Bytes(valueType StoreValueType, value []byte) *StoreGetSuccess {
 	return &StoreGetSuccess{
-		ValueType:  valueType,
+		valueType:  valueType,
 		valueBytes: &value,
 	}
 }
 
 func NewStoreGetSuccess_Double(valueType StoreValueType, value float64) *StoreGetSuccess {
 	return &StoreGetSuccess{
-		ValueType:   valueType,
+		valueType:   valueType,
 		valueDouble: &value,
 	}
 }
 
 func NewStoreGetSuccess_Integer(valueType StoreValueType, value int) *StoreGetSuccess {
 	return &StoreGetSuccess{
-		ValueType:    valueType,
+		valueType:    valueType,
 		valueInteger: &value,
 	}
 }
