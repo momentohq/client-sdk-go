@@ -106,7 +106,7 @@ func (c defaultPreviewStoreClient) DeleteStore(ctx context.Context, request *Del
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return responses.DeleteStoreSuccess{}, nil
+	return &responses.DeleteStoreSuccess{}, nil
 }
 
 func (c defaultPreviewStoreClient) ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr) {
