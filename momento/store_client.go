@@ -72,10 +72,6 @@ func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credent
 	return client, nil
 }
 
-func (c defaultPreviewStoreClient) Close() {
-	c.storeDataClient.close()
-}
-
 func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
@@ -171,6 +167,11 @@ func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutReq
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (c defaultPreviewStoreClient) Close() {
+	c.storeDataClient.Close()
+	c.controlClient.Close()
 }
 
 func isStoreNameValid(storeName string) momentoerrors.MomentoSvcErr {

@@ -41,7 +41,7 @@ func newStoreDataClient(request *models.StoreDataClientRequest) (*storeDataClien
 	}, nil
 }
 
-func (client *storeDataClient) close() {
+func (client *storeDataClient) Close() {
 	client.grpcManager.Close()
 }
 
