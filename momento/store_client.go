@@ -14,8 +14,8 @@ import (
 )
 
 type PreviewStoreClient interface {
-	CreateStore(ctx context.Context, request CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr)
-	DeleteStore(ctx context.Context, request DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr)
+	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr)
+	DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr)
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr)
 	Get(ctx context.Context, request *StoreGetRequest) (responses.StoreGetResponse, momentoerrors.MomentoSvcErr)
 	Put(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr)
@@ -32,12 +32,14 @@ type defaultPreviewStoreClient struct {
 }
 
 func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credentialProvider auth.CredentialProvider) (PreviewStoreClient, error) {
+	if storeConfiguration.GetClientSideTimeout() < 1 {
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
+	}
 	client := &defaultPreviewStoreClient{
 		credentialProvider: credentialProvider,
 		log:                storeConfiguration.GetLoggerFactory().GetLogger("store-client"),
 	}
 
-	// TODO: this is a bit of a mess
 	cfg := config.NewCacheConfiguration(&config.ConfigurationProps{
 		TransportStrategy: storeConfiguration.GetTransportStrategy(),
 		LoggerFactory:     storeConfiguration.GetLoggerFactory(),
@@ -72,8 +74,8 @@ func (c defaultPreviewStoreClient) Close() {
 	c.storeDataClient.close()
 }
 
-func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
-	if err := isCacheNameValid(request.StoreName); err != nil {
+func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
+	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
@@ -86,8 +88,8 @@ func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request Crea
 	return responses.CreateStoreSuccess{}, nil
 }
 
-func (c defaultPreviewStoreClient) DeleteStore(ctx context.Context, request DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr) {
-	if err := isCacheNameValid(request.StoreName); err != nil {
+func (c defaultPreviewStoreClient) DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr) {
+	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
@@ -111,7 +113,7 @@ func (c defaultPreviewStoreClient) ListStores(ctx context.Context, request *List
 }
 
 func (c defaultPreviewStoreClient) Delete(ctx context.Context, request *StoreDeleteRequest) (responses.StoreDeleteResponse, momentoerrors.MomentoSvcErr) {
-	if err := isCacheNameValid(request.StoreName); err != nil {
+	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
@@ -127,7 +129,7 @@ func (c defaultPreviewStoreClient) Delete(ctx context.Context, request *StoreDel
 }
 
 func (c defaultPreviewStoreClient) Get(ctx context.Context, request *StoreGetRequest) (responses.StoreGetResponse, momentoerrors.MomentoSvcErr) {
-	if err := isCacheNameValid(request.StoreName); err != nil {
+	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
@@ -143,18 +145,23 @@ func (c defaultPreviewStoreClient) Get(ctx context.Context, request *StoreGetReq
 	return resp, nil
 }
 
+// TODO: are we really calling this Put, or should it just be Set?
 func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr) {
-	if err := isCacheNameValid(request.StoreName); err != nil {
+	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err.(MomentoError)
+	}
+	// TODO: I'd like to not shadow the nest of `Value` interfaces required to make sure this one thing isn't null
+	if request.Value == nil {
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Value cannot be nil", nil)
 	}
 
 	resp, err := c.storeDataClient.set(ctx, request)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err
 	}
 	return resp, nil
 }

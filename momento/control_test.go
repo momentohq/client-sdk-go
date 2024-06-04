@@ -20,7 +20,7 @@ var _ = Describe("Control ops", func() {
 		DeferCleanup(func() { sharedContext.Close() })
 	})
 
-	Describe("Happy Path", func() {
+	Describe("Cache Happy Path", func() {
 		It("creates, lists, and deletes caches", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
 			defer func() {
@@ -81,6 +81,60 @@ var _ = Describe("Control ops", func() {
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
 
+	})
+
+	Describe("Store Happy Path", func() {
+
+		It("creates, lists, and deletes stores", func() {
+			storeNames := []string{uuid.NewString(), uuid.NewString()}
+			defer func() {
+				for _, storeName := range storeNames {
+					_, err := sharedContext.StoreClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					if err != nil {
+						panic(err)
+					}
+				}
+			}()
+
+			for _, storeName := range storeNames {
+				Expect(
+					sharedContext.StoreClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+				).To(BeAssignableToTypeOf(&CreateStoreSuccess{}))
+
+				Expect(
+					sharedContext.StoreClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+				).To(BeAssignableToTypeOf(&CreateStoreAlreadyExists{}))
+			}
+
+			resp, err := sharedContext.StoreClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+			Expect(err).To(Succeed())
+
+			var listedStores []string
+			switch r := resp.(type) {
+			case *ListStoresSuccess:
+				for _, info := range r.Stores() {
+					listedStores = append(listedStores, info.Name())
+				}
+				Expect(listedStores).To(ContainElements(storeNames))
+			default:
+				Fail("Unexpected response type")
+			}
+
+			for _, storeName := range storeNames {
+				Expect(
+					sharedContext.StoreClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName}),
+				).To(BeAssignableToTypeOf(&DeleteStoreSuccess{}))
+			}
+			resp, err = sharedContext.StoreClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+			Expect(err).To(Succeed())
+			Expect(resp).To(BeAssignableToTypeOf(&ListStoresSuccess{}))
+			switch r := resp.(type) {
+			case *ListStoresSuccess:
+				Expect(r.Stores()).To(Not(ContainElements(storeNames)))
+			default:
+				Fail("Unexpected response type")
+			}
+		})
 	})
 
 	Describe("cache client with default cache name", func() {

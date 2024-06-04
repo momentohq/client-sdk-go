@@ -27,6 +27,7 @@ type SharedContext struct {
 	DefaultCacheName                string
 	TopicClient                     momento.TopicClient
 	CacheName                       string
+	StoreName                       string
 	CollectionName                  string
 	Ctx                             context.Context
 	DefaultTtl                      time.Duration
@@ -37,6 +38,8 @@ type SharedContext struct {
 	AuthConfiguration               config.AuthConfiguration
 	LeaderboardClient               momento.PreviewLeaderboardClient
 	LeaderboardConfiguration        config.LeaderboardConfiguration
+	StoreClient                     momento.PreviewStoreClient
+	StoreConfiguration              config.StoreConfiguration
 }
 
 func NewSharedContext() SharedContext {
@@ -52,6 +55,7 @@ func NewSharedContext() SharedContext {
 	shared.TopicConfigration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.LeaderboardConfiguration = config.LeaderboardDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.StoreConfiguration = config.StoreDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
@@ -96,6 +100,11 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
+	storeClient, err := momento.NewPreviewStoreClient(shared.StoreConfiguration, shared.CredentialProvider)
+	if err != nil {
+		panic(err)
+	}
+
 	shared.Client = client
 	shared.ClientWithDefaultCacheName = clientDefaultCacheName
 	shared.ClientWithConsistentReadConcern = consistentReadConcernClient
@@ -104,8 +113,11 @@ func NewSharedContext() SharedContext {
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
 	shared.LeaderboardClient = leaderboardClient
+	shared.StoreClient = storeClient
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
+	shared.StoreName = fmt.Sprintf("golang-%s", uuid.NewString())
+
 	shared.CollectionName = uuid.NewString()
 
 	return shared
@@ -143,6 +155,13 @@ func (shared SharedContext) CreateDefaultCaches() {
 	}
 }
 
+func (shared SharedContext) CreateDefaultStores() {
+	_, err := shared.StoreClient.CreateStore(shared.Ctx, &momento.CreateStoreRequest{StoreName: shared.StoreName})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (shared SharedContext) Close() {
 	_, err := shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.CacheName})
 	if err != nil {
@@ -152,9 +171,14 @@ func (shared SharedContext) Close() {
 	if err != nil {
 		panic(err)
 	}
+	_, err = shared.StoreClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
+	if err != nil {
+		panic(err)
+	}
 
 	shared.Client.Close()
 	shared.TopicClient.Close()
 	shared.AuthClient.Close()
 	shared.LeaderboardClient.Close()
+	shared.StoreClient.Close()
 }
