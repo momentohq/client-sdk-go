@@ -38,12 +38,12 @@ type StoreInfo struct {
 	name string
 }
 
-// Name Returns cache's name.
+// Name Returns store's name.
 func (si StoreInfo) Name() string {
 	return si.name
 }
 
-// NewStoreInfo returns new CacheInfo with the supplied name.
+// NewStoreInfo returns new StoreInfo with the supplied name.
 func NewStoreInfo(name string) StoreInfo {
 	return StoreInfo{name: name}
 }

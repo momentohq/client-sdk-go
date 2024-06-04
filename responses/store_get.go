@@ -2,7 +2,6 @@ package responses
 
 type StoreValueType string
 
-// TODO: prefix these names? Probably don't want to squat on these for the entire responses namespace?
 const (
 	BYTES   StoreValueType = "BYTES"
 	STRING                 = "STRING"
