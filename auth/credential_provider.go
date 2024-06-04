@@ -169,7 +169,7 @@ func processV1Token(decodedBase64Token []byte) (*tokenAndEndpoints, momentoerror
 			ControlEndpoint: fmt.Sprintf("control.%s", tokenData["endpoint"]),
 			CacheEndpoint:   fmt.Sprintf("cache.%s", tokenData["endpoint"]),
 			TokenEndpoint:   fmt.Sprintf("token.%s", tokenData["endpoint"]),
-			StoreEndpoint:   fmt.Sprintf("store.%s", tokenData["endpoint"]),
+			StoreEndpoint:   fmt.Sprintf("storage.%s", tokenData["endpoint"]),
 		},
 		AuthToken: tokenData["api_key"],
 	}, nil
