@@ -4,9 +4,9 @@ type StoreValueType string
 
 const (
 	BYTES   StoreValueType = "BYTES"
-	STRING                 = "STRING"
-	INTEGER                = "INTEGER"
-	DOUBLE                 = "DOUBLE"
+	STRING  StoreValueType = "STRING"
+	INTEGER StoreValueType = "INTEGER"
+	DOUBLE  StoreValueType = "DOUBLE"
 )
 
 // StoreGetResponse is the base response type for a store get request.
