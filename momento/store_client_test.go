@@ -1,8 +1,9 @@
 package momento_test
 
 import (
-	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"

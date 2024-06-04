@@ -1,9 +1,10 @@
 package config
 
 import (
+	"time"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
-	"time"
 )
 
 func StoreDefault() StoreConfiguration {
