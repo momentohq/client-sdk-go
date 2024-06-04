@@ -12,14 +12,14 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type storeDataClient struct {
+type storageDataClient struct {
 	grpcManager    *grpcmanagers.StoreGrpcManager
 	grpcClient     pb.StoreClient
 	requestTimeout time.Duration
 	endpoint       string
 }
 
-func newStoreDataClient(request *models.StoreDataClientRequest) (*storeDataClient, momentoerrors.MomentoSvcErr) {
+func newStorageDataClient(request *models.StoreDataClientRequest) (*storageDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewStoreGrpcManager(&models.StoreGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
@@ -34,23 +34,23 @@ func newStoreDataClient(request *models.StoreDataClientRequest) (*storeDataClien
 		timeout = request.Configuration.GetClientSideTimeout()
 	}
 
-	return &storeDataClient{
+	return &storageDataClient{
 		grpcManager:    dataManager,
 		grpcClient:     pb.NewStoreClient(dataManager.Conn),
 		requestTimeout: timeout,
-		endpoint:       request.CredentialProvider.GetStoreEndpoint(),
+		endpoint:       request.CredentialProvider.GetStorageEndpoint(),
 	}, nil
 }
 
-func (client *storeDataClient) Close() {
+func (client *storageDataClient) Close() {
 	client.grpcManager.Close()
 }
 
-func (*storeDataClient) CreateNewMetadata(storeName string) metadata.MD {
+func (*storageDataClient) CreateNewMetadata(storeName string) metadata.MD {
 	return metadata.Pairs("store", storeName)
 }
 
-func (client *storeDataClient) delete(ctx context.Context, request *StoreDeleteRequest) (responses.StoreDeleteResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -64,10 +64,10 @@ func (client *storeDataClient) delete(ctx context.Context, request *StoreDeleteR
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
-	return &responses.StoreDeleteSuccess{}, nil
+	return &responses.StorageDeleteSuccess{}, nil
 }
 
-func (client *storeDataClient) set(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) set(ctx context.Context, request *StorageSetRequest) (responses.StorageSetResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -95,10 +95,10 @@ func (client *storeDataClient) set(ctx context.Context, request *StorePutRequest
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	return &responses.StorePutSuccess{}, nil
+	return &responses.StorageSetSuccess{}, nil
 }
 
-func (client *storeDataClient) get(ctx context.Context, request *StoreGetRequest) (responses.StoreGetResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 

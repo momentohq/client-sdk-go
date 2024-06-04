@@ -109,7 +109,7 @@ type LeaderboardClientRequest struct {
 
 type StoreDataClientRequest struct {
 	CredentialProvider auth.CredentialProvider
-	Configuration      config.StoreConfiguration
+	Configuration      config.StorageConfiguration
 	Log                logger.MomentoLogger
 }
 

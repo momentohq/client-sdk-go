@@ -14,7 +14,7 @@ type StoreGrpcManager struct {
 }
 
 func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcManager, momentoerrors.MomentoSvcErr) {
-	endpoint := fmt.Sprint(request.CredentialProvider.GetStoreEndpoint(), CachePort)
+	endpoint := fmt.Sprint(request.CredentialProvider.GetStorageEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.NewClient(
 		endpoint,

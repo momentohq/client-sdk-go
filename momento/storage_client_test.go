@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("StoreClient", func() {
+var _ = Describe("StorageClient", func() {
 	var sharedContext = NewSharedContext()
 
 	BeforeEach(func() {
@@ -22,15 +22,15 @@ var _ = Describe("StoreClient", func() {
 
 	It("errors on invalid timeout", func() {
 		badRequestTimeout := 0 * time.Second
-		sharedContext.StoreConfiguration = config.StoreDefault().WithClientTimeout(badRequestTimeout)
+		sharedContext.StorageConfiguration = config.StorageDefault().WithClientTimeout(badRequestTimeout)
 		Expect(
-			NewPreviewStoreClient(sharedContext.StoreConfiguration, sharedContext.CredentialProvider),
+			NewPreviewStorageClient(sharedContext.StorageConfiguration, sharedContext.CredentialProvider),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
 	It("supports constructing a default config with a logger", func() {
-		_, err := NewPreviewStoreClient(
-			config.StoreDefaultWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+		_, err := NewPreviewStorageClient(
+			config.StorageDefaultWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 		)
 		if err != nil {

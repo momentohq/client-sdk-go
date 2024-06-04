@@ -13,7 +13,7 @@ import (
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
-type PreviewStoreClient interface {
+type PreviewStorageClient interface {
 	// CreateStore creates a new store if it does not exist.
 	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr)
 	// DeleteStore deletes a store and all the items within it.
@@ -21,28 +21,28 @@ type PreviewStoreClient interface {
 	// ListStores lists all the stores.
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr)
 	// Get retrieves a value from a store.
-	Get(ctx context.Context, request *StoreGetRequest) (responses.StoreGetResponse, momentoerrors.MomentoSvcErr)
-	// Put sets a value in a store.
-	Put(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr)
+	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr)
+	// Set sets a value in a store.
+	Set(ctx context.Context, request *StorageSetRequest) (responses.StorageSetResponse, momentoerrors.MomentoSvcErr)
 	// Delete removes a value from a store.
-	Delete(ctx context.Context, request *StoreDeleteRequest) (responses.StoreDeleteResponse, momentoerrors.MomentoSvcErr)
+	Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr)
 	// Close closes the client.
 	Close()
 }
 
-type defaultPreviewStoreClient struct {
+type defaultPreviewStorageClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
-	storeDataClient    *storeDataClient
+	storeDataClient    *storageDataClient
 	log                logger.MomentoLogger
 }
 
-// NewPreviewStoreClient creates a new PreviewStoreClient with the provided configuration and credential provider.
-func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credentialProvider auth.CredentialProvider) (PreviewStoreClient, error) {
+// NewPreviewStorageClient creates a new PreviewStorageClient with the provided configuration and credential provider.
+func NewPreviewStorageClient(storeConfiguration config.StorageConfiguration, credentialProvider auth.CredentialProvider) (PreviewStorageClient, error) {
 	if storeConfiguration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
-	client := &defaultPreviewStoreClient{
+	client := &defaultPreviewStorageClient{
 		credentialProvider: credentialProvider,
 		log:                storeConfiguration.GetLoggerFactory().GetLogger("store-client"),
 	}
@@ -59,7 +59,7 @@ func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credent
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
-	storeDataClient, err := newStoreDataClient(&models.StoreDataClientRequest{
+	storeDataClient, err := newStorageDataClient(&models.StoreDataClientRequest{
 		CredentialProvider: credentialProvider,
 		Configuration:      storeConfiguration,
 	})
@@ -73,7 +73,7 @@ func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credent
 	return client, nil
 }
 
-func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request *Cre
 	return &responses.CreateStoreSuccess{}, nil
 }
 
-func (c defaultPreviewStoreClient) DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (c defaultPreviewStoreClient) DeleteStore(ctx context.Context, request *Del
 	return &responses.DeleteStoreSuccess{}, nil
 }
 
-func (c defaultPreviewStoreClient) ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr) {
 	resp, err := c.controlClient.ListStores(ctx, &models.ListStoresRequest{
 		NextToken: request.NextToken,
 	})
@@ -116,7 +116,7 @@ func (c defaultPreviewStoreClient) ListStores(ctx context.Context, request *List
 	return responses.NewListStoresSuccess(resp.NextToken, resp.Stores), nil
 }
 
-func (c defaultPreviewStoreClient) Delete(ctx context.Context, request *StoreDeleteRequest) (responses.StoreDeleteResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (c defaultPreviewStoreClient) Delete(ctx context.Context, request *StoreDel
 	return response, nil
 }
 
-func (c defaultPreviewStoreClient) Get(ctx context.Context, request *StoreGetRequest) (responses.StoreGetResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (c defaultPreviewStoreClient) Get(ctx context.Context, request *StoreGetReq
 	return resp, nil
 }
 
-func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StorageSetRequest) (responses.StorageSetResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutReq
 	return resp, nil
 }
 
-func (c defaultPreviewStoreClient) Close() {
+func (c defaultPreviewStorageClient) Close() {
 	c.storeDataClient.Close()
 	c.controlClient.Close()
 }

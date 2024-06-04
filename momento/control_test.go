@@ -89,7 +89,7 @@ var _ = Describe("Control ops", func() {
 			storeNames := []string{uuid.NewString(), uuid.NewString()}
 			defer func() {
 				for _, storeName := range storeNames {
-					_, err := sharedContext.StoreClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
 					if err != nil {
 						panic(err)
 					}
@@ -98,15 +98,15 @@ var _ = Describe("Control ops", func() {
 
 			for _, storeName := range storeNames {
 				Expect(
-					sharedContext.StoreClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+					sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
 				).To(BeAssignableToTypeOf(&CreateStoreSuccess{}))
 
 				Expect(
-					sharedContext.StoreClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+					sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
 				).To(BeAssignableToTypeOf(&CreateStoreAlreadyExists{}))
 			}
 
-			resp, err := sharedContext.StoreClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+			resp, err := sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
 			Expect(err).To(Succeed())
 
 			var listedStores []string
@@ -122,10 +122,10 @@ var _ = Describe("Control ops", func() {
 
 			for _, storeName := range storeNames {
 				Expect(
-					sharedContext.StoreClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName}),
+					sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName}),
 				).To(BeAssignableToTypeOf(&DeleteStoreSuccess{}))
 			}
-			resp, err = sharedContext.StoreClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+			resp, err = sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
 			Expect(err).To(Succeed())
 			Expect(resp).To(BeAssignableToTypeOf(&ListStoresSuccess{}))
 			switch r := resp.(type) {

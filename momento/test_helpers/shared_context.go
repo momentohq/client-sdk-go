@@ -38,8 +38,8 @@ type SharedContext struct {
 	AuthConfiguration               config.AuthConfiguration
 	LeaderboardClient               momento.PreviewLeaderboardClient
 	LeaderboardConfiguration        config.LeaderboardConfiguration
-	StoreClient                     momento.PreviewStoreClient
-	StoreConfiguration              config.StoreConfiguration
+	StorageClient                   momento.PreviewStorageClient
+	StorageConfiguration            config.StorageConfiguration
 }
 
 func NewSharedContext() SharedContext {
@@ -55,7 +55,7 @@ func NewSharedContext() SharedContext {
 	shared.TopicConfigration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.LeaderboardConfiguration = config.LeaderboardDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
-	shared.StoreConfiguration = config.StoreDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.StorageConfiguration = config.StorageDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
 	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
@@ -100,7 +100,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
-	storeClient, err := momento.NewPreviewStoreClient(shared.StoreConfiguration, shared.CredentialProvider)
+	storageClient, err := momento.NewPreviewStorageClient(shared.StorageConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +113,7 @@ func NewSharedContext() SharedContext {
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
 	shared.LeaderboardClient = leaderboardClient
-	shared.StoreClient = storeClient
+	shared.StorageClient = storageClient
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 	shared.StoreName = fmt.Sprintf("golang-%s", uuid.NewString())
@@ -156,7 +156,7 @@ func (shared SharedContext) CreateDefaultCaches() {
 }
 
 func (shared SharedContext) CreateDefaultStores() {
-	_, err := shared.StoreClient.CreateStore(shared.Ctx, &momento.CreateStoreRequest{StoreName: shared.StoreName})
+	_, err := shared.StorageClient.CreateStore(shared.Ctx, &momento.CreateStoreRequest{StoreName: shared.StoreName})
 	if err != nil {
 		panic(err)
 	}
@@ -171,7 +171,7 @@ func (shared SharedContext) Close() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = shared.StoreClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
+	_, err = shared.StorageClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
 	if err != nil {
 		panic(err)
 	}
@@ -180,5 +180,5 @@ func (shared SharedContext) Close() {
 	shared.TopicClient.Close()
 	shared.AuthClient.Close()
 	shared.LeaderboardClient.Close()
-	shared.StoreClient.Close()
+	shared.StorageClient.Close()
 }

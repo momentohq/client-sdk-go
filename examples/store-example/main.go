@@ -36,7 +36,7 @@ func main() {
 		fmt.Printf("Unknown response type\n")
 	}
 
-	// tryGetResp is a StoreGetResponse that is coerced to the success type below
+	// tryGetResp is a StorageGetResponse that is coerced to the success type below
 	tryGetResp, err := client.Get(ctx, &momento.StoreGetRequest{
 		StoreName: "store-name",
 		Key:       "str-key",
@@ -45,7 +45,7 @@ func main() {
 		panic(err)
 	}
 
-	// This is possible because I've moved the TryGet* funcs to the StoreGetResponse interface. This
+	// This is possible because I've moved the TryGet* funcs to the StorageGetResponse interface. This
 	// retains the ability to explicitly check for the success type but allows users to grab values
 	// without needing to do a type assertion.
 	if tryGetResp.ValueType() == responses.STRING {
@@ -57,7 +57,7 @@ func main() {
 		}
 	}
 
-	// The success type is the only implementor of the StoreGetResponse interface.
+	// The success type is the only implementor of the StorageGetResponse interface.
 	getResp := tryGetResp.(*responses.StoreGetSuccess)
 
 	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
