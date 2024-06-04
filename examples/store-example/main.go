@@ -9,6 +9,9 @@ import (
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
+// NOTE: this is a playground for exercising the preview store client during development.
+// When the backend service is available, this code will be rewritten to illustrate the
+// intended use of the storage client.
 func main() {
 	ctx := context.Background()
 	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
@@ -29,9 +32,10 @@ func main() {
 	case *responses.StorePutSuccess:
 		fmt.Printf("Explicitly got Success type for PUT\n")
 	default:
-		fmt.Printf("WTF PUT!?\n")
+		fmt.Printf("Unknown response type\n")
 	}
 
+	// tryGetResp is a StoreGetResponse that is coerced to the success type below
 	tryGetResp, err := client.Get(ctx, &momento.StoreGetRequest{
 		StoreName: "store-name",
 		Key:       "str-key",
@@ -52,9 +56,7 @@ func main() {
 		}
 	}
 
-	// The success type is the only implementor of the StoreGetResponse interface,
-	// and is therefore honestly kind of useless. The same is true of all the other
-	// responses that just have success/error outcomes.
+	// The success type is the only implementor of the StoreGetResponse interface.
 	getResp := tryGetResp.(*responses.StoreGetSuccess)
 
 	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
@@ -72,14 +74,14 @@ func main() {
 		fmt.Printf("Did not get the string\n")
 	}
 
-	tryBytesResp, err := client.Get(ctx, &momento.StoreGetRequest{
+	// the below skips the type check and just tries to get the value
+	bytesResp, err := client.Get(ctx, &momento.StoreGetRequest{
 		StoreName: "store-name",
 		Key:       "bytes-key",
 	})
 	if err != nil {
 		panic(err)
 	}
-	bytesResp := tryBytesResp.(*responses.StoreGetSuccess)
 	bytesVal, gotBytes := bytesResp.TryGetValueBytes()
 	if gotBytes {
 		fmt.Printf("Got the bytes %s (%b)\n", bytesVal, bytesVal)
