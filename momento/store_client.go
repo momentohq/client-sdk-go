@@ -78,9 +78,14 @@ func (c defaultPreviewStoreClient) CreateStore(ctx context.Context, request *Cre
 		StoreName: request.StoreName,
 	})
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		if err.Code() == AlreadyExistsError {
+			c.log.Info("Store with name '%s' already exists, skipping", request.StoreName)
+			return &responses.CreateStoreAlreadyExists{}, nil
+		}
+		c.log.Warn("Error creating cache '%s': %s", request.StoreName, err.Message())
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return responses.CreateStoreSuccess{}, nil
+	return &responses.CreateStoreSuccess{}, nil
 }
 
 func (c defaultPreviewStoreClient) DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr) {
