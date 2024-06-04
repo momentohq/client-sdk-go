@@ -7,7 +7,6 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/internal/retry"
 	"github.com/momentohq/client-sdk-go/internal/services"
 	"github.com/momentohq/client-sdk-go/responses"
 	"strings"
@@ -40,17 +39,13 @@ func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credent
 		log:                storeConfiguration.GetLoggerFactory().GetLogger("store-client"),
 	}
 
-	cfg := config.NewCacheConfiguration(&config.ConfigurationProps{
+	controlConfig := config.NewCacheConfiguration(&config.ConfigurationProps{
 		TransportStrategy: storeConfiguration.GetTransportStrategy(),
 		LoggerFactory:     storeConfiguration.GetLoggerFactory(),
-		RetryStrategy:     retry.NewNeverRetryStrategy(),
-		NumGrpcChannels:   1,
-		ReadConcern:       config.BALANCED,
 	})
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		CredentialProvider: credentialProvider,
-		// TODO: ummmmm, this isn't great
-		Configuration: cfg,
+		Configuration:      controlConfig,
 	})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
