@@ -140,7 +140,6 @@ func (c defaultPreviewStoreClient) Get(ctx context.Context, request *StoreGetReq
 	return resp, nil
 }
 
-// TODO: are we really calling this Put, or should it just be Set?
 func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
@@ -149,7 +148,8 @@ func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutReq
 	if _, err := prepareName(request.Key, "Key"); err != nil {
 		return nil, err.(MomentoError)
 	}
-	// TODO: I'd like to not shadow the nest of `Value` interfaces required to make sure this one thing isn't null
+	// Doing a quick explicit null check instead of reimplementing the nest of interfaces involved
+	// in the cache client's `prepareValue` null check.
 	if request.Value == nil {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Value cannot be nil", nil)
 	}
@@ -161,8 +161,8 @@ func (c defaultPreviewStoreClient) Put(ctx context.Context, request *StorePutReq
 	return resp, nil
 }
 
-func isStoreNameValid(cacheName string) momentoerrors.MomentoSvcErr {
-	if len(strings.TrimSpace(cacheName)) < 1 {
+func isStoreNameValid(storeName string) momentoerrors.MomentoSvcErr {
+	if len(strings.TrimSpace(storeName)) < 1 {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Store name cannot be empty", nil)
 	}
 	return nil
