@@ -13,13 +13,19 @@ import (
 )
 
 type PreviewStoreClient interface {
+	// CreateStore creates a new store if it does not exist.
 	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr)
+	// DeleteStore deletes a store and all the items within it.
 	DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr)
+	// ListStores lists all the stores.
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr)
+	// Get retrieves a value from a store.
 	Get(ctx context.Context, request *StoreGetRequest) (responses.StoreGetResponse, momentoerrors.MomentoSvcErr)
+	// Put sets a value in a store.
 	Put(ctx context.Context, request *StorePutRequest) (responses.StorePutResponse, momentoerrors.MomentoSvcErr)
+	// Delete removes a value from a store.
 	Delete(ctx context.Context, request *StoreDeleteRequest) (responses.StoreDeleteResponse, momentoerrors.MomentoSvcErr)
-
+	// Close closes the client.
 	Close()
 }
 
@@ -30,6 +36,7 @@ type defaultPreviewStoreClient struct {
 	log                logger.MomentoLogger
 }
 
+// NewPreviewStoreClient creates a new PreviewStoreClient with the provided configuration and credential provider.
 func NewPreviewStoreClient(storeConfiguration config.StoreConfiguration, credentialProvider auth.CredentialProvider) (PreviewStoreClient, error) {
 	if storeConfiguration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
