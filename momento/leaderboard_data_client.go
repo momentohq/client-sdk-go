@@ -2,8 +2,9 @@ package momento
 
 import (
 	"context"
-	"google.golang.org/grpc/metadata"
 	"time"
+
+	"google.golang.org/grpc/metadata"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
