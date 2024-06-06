@@ -49,15 +49,22 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
 			s.log.Error("stream disconnected, attempting to reconnect err:", fmt.Sprint(err))
 
-			// Check if the context has been canceled before attempting to reconnect as the client
-			// might have given up on the context
 			select {
 			case <-ctx.Done():
-				// Context has been canceled, return an error
-				return nil, ctx.Err()
+				{
+					s.log.Info("Subscription context is done; closing subscription.")
+					return nil, ctx.Err()
+				}
+			case <-s.cancelContext.Done():
+				{
+					s.log.Info("Subscription context is cancelled; closing subscription.")
+					return nil, s.cancelContext.Err()
+				}
 			default:
-				// Attempt to reconnect
-				s.attemptReconnect(ctx)
+				{
+					// Attempt to reconnect
+					s.attemptReconnect(ctx)
+				}
 			}
 
 			// retry getting the latest item
