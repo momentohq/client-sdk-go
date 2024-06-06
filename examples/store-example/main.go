@@ -20,8 +20,8 @@ func main() {
 		panic(err)
 	}
 
-	client, err := momento.NewPreviewStoreClient(config.StoreDefault(), credentialProvider)
-	putResp, err := client.Put(ctx, &momento.StorePutRequest{
+	client, err := momento.NewPreviewStorageClient(config.StorageDefault(), credentialProvider)
+	putResp, err := client.Set(ctx, &momento.StorageSetRequest{
 		StoreName: "store-name",
 		Key:       "my-key",
 		Value:     momento.String("my-value"),
@@ -30,14 +30,14 @@ func main() {
 		panic(err)
 	}
 	switch putResp.(type) {
-	case *responses.StorePutSuccess:
+	case *responses.StorageSetSuccess:
 		fmt.Printf("Explicitly got Success type for PUT\n")
 	default:
 		fmt.Printf("Unknown response type\n")
 	}
 
 	// tryGetResp is a StorageGetResponse that is coerced to the success type below
-	tryGetResp, err := client.Get(ctx, &momento.StoreGetRequest{
+	tryGetResp, err := client.Get(ctx, &momento.StorageGetRequest{
 		StoreName: "store-name",
 		Key:       "str-key",
 	})
@@ -58,7 +58,7 @@ func main() {
 	}
 
 	// The success type is the only implementor of the StorageGetResponse interface.
-	getResp := tryGetResp.(*responses.StoreGetSuccess)
+	getResp := tryGetResp.(*responses.StorageGetSuccess)
 
 	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
 	val, b00l := getResp.TryGetValueDouble()
@@ -76,7 +76,7 @@ func main() {
 	}
 
 	// the below skips the type check and just tries to get the value
-	bytesResp, err := client.Get(ctx, &momento.StoreGetRequest{
+	bytesResp, err := client.Get(ctx, &momento.StorageGetRequest{
 		StoreName: "store-name",
 		Key:       "bytes-key",
 	})
