@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"google.golang.org/grpc/metadata"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -31,6 +32,10 @@ func newLeaderboardDataClient(request *models.LeaderboardClientRequest) (*leader
 	}, nil
 }
 
+func (*leaderboardDataClient) CreateNewMetadata(cacheName string) metadata.MD {
+	return metadata.Pairs("cache", cacheName)
+}
+
 func (client *leaderboardDataClient) close() momentoerrors.MomentoSvcErr {
 	return client.leaderboardGrpcManager.Close()
 }
@@ -38,7 +43,12 @@ func (client *leaderboardDataClient) close() momentoerrors.MomentoSvcErr {
 func (client *leaderboardDataClient) delete(ctx context.Context, request *LeaderboardInternalDeleteRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
-	_, err := client.leaderboardClient.DeleteLeaderboard(ctx, &pb.XDeleteLeaderboardRequest{
+
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
+
+	_, err := client.leaderboardClient.DeleteLeaderboard(requestMetadata, &pb.XDeleteLeaderboardRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 	})
@@ -52,6 +62,10 @@ func (client *leaderboardDataClient) fetchByRank(ctx context.Context, request *L
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
+
 	rankRange := &pb.XRankRange{
 		StartInclusive: request.StartRank,
 		EndExclusive:   request.EndRank,
@@ -62,7 +76,7 @@ func (client *leaderboardDataClient) fetchByRank(ctx context.Context, request *L
 		leaderboardOrder = pb.XOrder_DESCENDING
 	}
 
-	result, err := client.leaderboardClient.GetByRank(ctx, &pb.XGetByRankRequest{
+	result, err := client.leaderboardClient.GetByRank(requestMetadata, &pb.XGetByRankRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		RankRange:   rankRange,
@@ -77,6 +91,10 @@ func (client *leaderboardDataClient) fetchByRank(ctx context.Context, request *L
 func (client *leaderboardDataClient) fetchByScore(ctx context.Context, request *LeaderboardInternalFetchByScoreRequest) ([]*pb.XRankedElement, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
+
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
 
 	scoreRange := &pb.XScoreRange{}
 
@@ -107,7 +125,7 @@ func (client *leaderboardDataClient) fetchByScore(ctx context.Context, request *
 		count = *request.Count
 	}
 
-	result, err := client.leaderboardClient.GetByScore(ctx, &pb.XGetByScoreRequest{
+	result, err := client.leaderboardClient.GetByScore(requestMetadata, &pb.XGetByScoreRequest{
 		CacheName:     request.CacheName,
 		Leaderboard:   request.LeaderboardName,
 		ScoreRange:    scoreRange,
@@ -130,7 +148,11 @@ func (client *leaderboardDataClient) getRank(ctx context.Context, request *Leade
 		leaderboardOrder = pb.XOrder_DESCENDING
 	}
 
-	result, err := client.leaderboardClient.GetRank(ctx, &pb.XGetRankRequest{
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
+
+	result, err := client.leaderboardClient.GetRank(requestMetadata, &pb.XGetRankRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Ids:         request.Ids,
@@ -146,7 +168,11 @@ func (client *leaderboardDataClient) length(ctx context.Context, request *Leader
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	result, err := client.leaderboardClient.GetLeaderboardLength(ctx, &pb.XGetLeaderboardLengthRequest{
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
+
+	result, err := client.leaderboardClient.GetLeaderboardLength(requestMetadata, &pb.XGetLeaderboardLengthRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 	})
@@ -160,7 +186,11 @@ func (client *leaderboardDataClient) removeElements(ctx context.Context, request
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	_, err := client.leaderboardClient.RemoveElements(ctx, &pb.XRemoveElementsRequest{
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
+
+	_, err := client.leaderboardClient.RemoveElements(requestMetadata, &pb.XRemoveElementsRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Ids:         request.Ids,
@@ -175,7 +205,11 @@ func (client *leaderboardDataClient) upsert(ctx context.Context, request *Leader
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	_, err := client.leaderboardClient.UpsertElements(ctx, &pb.XUpsertElementsRequest{
+	requestMetadata := metadata.NewOutgoingContext(
+		ctx, client.CreateNewMetadata(request.CacheName),
+	)
+
+	_, err := client.leaderboardClient.UpsertElements(requestMetadata, &pb.XUpsertElementsRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Elements:    leaderboardUpsertElementToGrpc(request.Elements),
