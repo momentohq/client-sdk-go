@@ -27,6 +27,8 @@ it will use goroutines to subscribe to all of these topics and emit messages fro
 Caveats:
 * If you have some topics that you don't wish to shard, and some that you do, you should create separate `TopicClient`
   and `ShardedTopicClient` instances accordingly.
+* For any topic that you do wish to shard, it's important that you use a `ShardedTopicClient` for both the `Publish` and
+  the `Subscribe` operations. Otherwise you may end up with messages being lost.
 * It's important to make sure you use the same value for `numShardsPerTopic` in all of the places where you are doing
   any `Publish` and `Subscribe` operations on the same topic. If you don't, you may end up with messages appearing to
   be lost due to the clients not using the same list of sharded topic names behind the scenes.
@@ -42,3 +44,7 @@ Caveats:
 ```
 MOMENTO_API_KEY=<YOUR_TOKEN> go run topic-sharded-example/*.go
 ```
+
+If you compare the code in this [main.go](./main.go) to the code in the basic topic example's [main.go](../topic-example/main.go),
+you'll note that they are almost identical. The only meaningful difference is the way the `TopicClient` is instantiated,
+in the `getShardedTopicClient` and `getTopicClient` functions respectively. 

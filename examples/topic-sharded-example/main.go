@@ -32,7 +32,8 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	topicClient := getTopicClient(loggerFactory)
+	numShardsPerTopic := 16
+	topicClient := getShardedTopicClient(loggerFactory, numShardsPerTopic)
 	cacheClient := getCacheClient()
 	ctx := context.Background()
 	setupCache(cacheClient, ctx)
@@ -75,15 +76,18 @@ func pollForMessages(ctx context.Context, sub momento.TopicSubscription, log log
 	}
 }
 
-func getTopicClient(loggerFactory logger.MomentoLoggerFactory) momento.TopicClient {
+func getShardedTopicClient(loggerFactory logger.MomentoLoggerFactory, numShardsPerTopic int) momento.TopicClient {
 	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
+	//
+	// NOTE: this the main difference between this program and the basic topic example in ../topic-example
+	//
 	topicClient, err := NewShardedTopicClient(
 		config.TopicsDefaultWithLogger(loggerFactory),
 		credProvider,
-		16,
+		numShardsPerTopic,
 	)
 	if err != nil {
 		panic(err)
