@@ -39,6 +39,8 @@ func main() {
 
 	// Publish messages for the subscriber
 	publishMessages(topicClient, ctx)
+
+	sub.Close()
 }
 
 func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
