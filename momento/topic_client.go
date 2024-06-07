@@ -4,6 +4,7 @@ package momento
 import (
 	"context"
 	"fmt"
+
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -109,7 +110,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	if err != nil {
 		return nil, err
 	}
-	
+
 	switch firstMsg.Kind.(type) {
 	case *pb.XSubscriptionItem_Heartbeat:
 		// The first message to a new subscription will always be a heartbeat.
