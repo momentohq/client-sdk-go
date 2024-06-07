@@ -5,6 +5,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -24,14 +29,18 @@ type TopicClient interface {
 // defaultTopicClient represents all information needed for momento client to enable publish and subscribe operations.
 type defaultTopicClient struct {
 	credentialProvider auth.CredentialProvider
+	numChannels        uint32
 	pubSubClient       *pubSubClient
 	log                logger.MomentoLogger
 }
 
 // NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
 func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialProvider auth.CredentialProvider) (TopicClient, error) {
+	numChannels := topicsConfiguration.GetNumGrpcChannels()
+
 	client := &defaultTopicClient{
 		credentialProvider: credentialProvider,
+		numChannels:        numChannels,
 		log:                topicsConfiguration.GetLoggerFactory().GetLogger("topic-client"),
 	}
 
@@ -58,27 +67,61 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, err
 	}
 
-	topicManager, clientStream, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
-		CacheName: request.CacheName,
-		TopicName: request.TopicName,
-	})
+	maxAttempts := c.numChannels
+	if maxAttempts == 0 {
+		maxAttempts = 1
+	}
+
+	failedAttempts := uint32(0)
+
+	var topicManager *grpcmanagers.TopicGrpcManager
+	var clientStream grpc.ClientStream
+	var cancelContext context.Context
+	var cancelFunction context.CancelFunc
+	var err error
+
+	firstMsg := new(pb.XSubscriptionItem)
+
+	for failedAttempts < maxAttempts {
+		if failedAttempts > 0 {
+			c.log.Info(fmt.Sprintf("Retrying topic subscription due to subscription limit; retry attempt %d of %d", failedAttempts, maxAttempts-1))
+		}
+
+		topicManager, clientStream, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+			CacheName: request.CacheName,
+			TopicName: request.TopicName,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// Ping the stream to provide a nice error message if the cache does not exist.
+		err = clientStream.RecvMsg(firstMsg)
+		if err != nil {
+			rpcError, _ := status.FromError(err)
+			if rpcError != nil {
+				if rpcError.Code() == codes.ResourceExhausted {
+					c.log.Info("Topic subscription limit reached, checking to see if subscription is eligible for retry")
+					failedAttempts += 1
+					continue
+				}
+			}
+			return nil, momentoerrors.ConvertSvcErr(err)
+		}
+		break
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Ping the stream to provide a nice error message if the cache does not exist.
-	rawMsg := new(pb.XSubscriptionItem)
-	err = clientStream.RecvMsg(rawMsg)
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
-	}
-	switch rawMsg.Kind.(type) {
+	switch firstMsg.Kind.(type) {
 	case *pb.XSubscriptionItem_Heartbeat:
 		// The first message to a new subscription will always be a heartbeat.
 	default:
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
-			fmt.Sprintf("expected a heartbeat message, got: %T", rawMsg.Kind),
+			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
 			err,
 		)
 	}
