@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/momentohq/client-sdk-go/config/logger"
-	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"math/rand"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
