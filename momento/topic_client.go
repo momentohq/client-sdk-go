@@ -4,7 +4,6 @@ package momento
 import (
 	"context"
 	"fmt"
-
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -68,6 +67,10 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	}
 
 	maxAttempts := c.numChannels
+	if maxAttempts == 0 {
+		maxAttempts = 1
+	}
+
 	failedAttempts := uint32(0)
 
 	var topicManager *grpcmanagers.TopicGrpcManager
