@@ -47,8 +47,6 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 
 		rawMsg := new(pb.XSubscriptionItem)
 		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
-			s.log.Error("stream disconnected, attempting to reconnect err:", fmt.Sprint(err))
-
 			select {
 			case <-ctx.Done():
 				{
@@ -63,6 +61,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 			default:
 				{
 					// Attempt to reconnect
+					s.log.Error("stream disconnected YO, attempting to reconnect err:", fmt.Sprint(err))
 					s.attemptReconnect(ctx)
 				}
 			}
