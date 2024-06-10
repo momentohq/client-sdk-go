@@ -357,9 +357,7 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 }
 
 func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error) {
-	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
-		NextToken: request.NextToken,
-	})
+	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}

@@ -107,9 +107,7 @@ func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *D
 }
 
 func (c defaultPreviewStorageClient) ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr) {
-	resp, err := c.controlClient.ListStores(ctx, &models.ListStoresRequest{
-		NextToken: request.NextToken,
-	})
+	resp, err := c.controlClient.ListStores(ctx, &models.ListStoresRequest{})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
