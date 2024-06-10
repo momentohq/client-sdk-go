@@ -222,6 +222,9 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 	}
 
 	numChannels := props.Configuration.GetNumGrpcChannels()
+	if numChannels < 1 {
+		numChannels = 1
+	}
 	dataClients := make([]*scsDataClient, 0)
 
 	for i := 0; uint32(i) < numChannels; i++ {

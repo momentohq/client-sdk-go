@@ -3,6 +3,7 @@ package momento
 import (
 	"context"
 	"strings"
+	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
@@ -12,6 +13,8 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/services"
 	"github.com/momentohq/client-sdk-go/responses"
 )
+
+var storageDataClientCount uint64
 
 type PreviewStorageClient interface {
 	// CreateStore creates a new store if it does not exist.
@@ -33,23 +36,23 @@ type PreviewStorageClient interface {
 type defaultPreviewStorageClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
-	storeDataClient    *storageDataClient
+	storageDataClients []*storageDataClient
 	log                logger.MomentoLogger
 }
 
 // NewPreviewStorageClient creates a new PreviewStorageClient with the provided configuration and credential provider.
-func NewPreviewStorageClient(storeConfiguration config.StorageConfiguration, credentialProvider auth.CredentialProvider) (PreviewStorageClient, error) {
-	if storeConfiguration.GetClientSideTimeout() < 1 {
+func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, credentialProvider auth.CredentialProvider) (PreviewStorageClient, error) {
+	if storageConfiguration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultPreviewStorageClient{
 		credentialProvider: credentialProvider,
-		log:                storeConfiguration.GetLoggerFactory().GetLogger("store-client"),
+		log:                storageConfiguration.GetLoggerFactory().GetLogger("store-client"),
 	}
 
 	controlConfig := config.NewCacheConfiguration(&config.ConfigurationProps{
-		TransportStrategy: storeConfiguration.GetTransportStrategy(),
-		LoggerFactory:     storeConfiguration.GetLoggerFactory(),
+		TransportStrategy: storageConfiguration.GetTransportStrategy(),
+		LoggerFactory:     storageConfiguration.GetLoggerFactory(),
 	})
 	controlClient, err := services.NewScsControlClient(&models.ControlClientRequest{
 		CredentialProvider: credentialProvider,
@@ -59,18 +62,33 @@ func NewPreviewStorageClient(storeConfiguration config.StorageConfiguration, cre
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
-	storeDataClient, err := newStorageDataClient(&models.StoreDataClientRequest{
-		CredentialProvider: credentialProvider,
-		Configuration:      storeConfiguration,
-	})
-	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	numChannels := storageConfiguration.GetNumGrpcChannels()
+	if numChannels < 1 {
+		numChannels = 1
+	}
+	dataClients := make([]*storageDataClient, numChannels)
+
+	for i := uint32(0); i < numChannels; i++ {
+		storeDataClient, err := newStorageDataClient(&models.StorageDataClientRequest{
+			CredentialProvider: credentialProvider,
+			Configuration:      storageConfiguration,
+		})
+		if err != nil {
+			return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+		}
+		dataClients = append(dataClients, storeDataClient)
 	}
 
 	client.controlClient = controlClient
-	client.storeDataClient = storeDataClient
+	client.storageDataClients = dataClients
 
 	return client, nil
+}
+
+func (c defaultPreviewStorageClient) getNextStorageDataClient() *storageDataClient {
+	nextClientIndex := atomic.AddUint64(&storageDataClientCount, 1)
+	dataClient := c.storageDataClients[nextClientIndex%uint64(len(c.storageDataClients))]
+	return dataClient
 }
 
 func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
@@ -123,7 +141,7 @@ func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *Storag
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	response, err := c.storeDataClient.delete(ctx, request)
+	response, err := c.getNextStorageDataClient().delete(ctx, request)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
@@ -139,7 +157,7 @@ func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGe
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	resp, err := c.storeDataClient.get(ctx, request)
+	resp, err := c.getNextStorageDataClient().get(ctx, request)
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
@@ -161,7 +179,7 @@ func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StorageSe
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Value cannot be nil", nil)
 	}
 
-	resp, err := c.storeDataClient.set(ctx, request)
+	resp, err := c.getNextStorageDataClient().set(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +187,9 @@ func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StorageSe
 }
 
 func (c defaultPreviewStorageClient) Close() {
-	c.storeDataClient.Close()
+	for _, dataClient := range c.storageDataClients {
+		dataClient.Close()
+	}
 	c.controlClient.Close()
 }
 

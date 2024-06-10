@@ -19,7 +19,7 @@ type storageDataClient struct {
 	endpoint       string
 }
 
-func newStorageDataClient(request *models.StoreDataClientRequest) (*storageDataClient, momentoerrors.MomentoSvcErr) {
+func newStorageDataClient(request *models.StorageDataClientRequest) (*storageDataClient, momentoerrors.MomentoSvcErr) {
 	dataManager, err := grpcmanagers.NewStoreGrpcManager(&models.StoreGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),

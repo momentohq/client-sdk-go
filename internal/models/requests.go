@@ -107,7 +107,7 @@ type LeaderboardClientRequest struct {
 	CredentialProvider auth.CredentialProvider
 }
 
-type StoreDataClientRequest struct {
+type StorageDataClientRequest struct {
 	CredentialProvider auth.CredentialProvider
 	Configuration      config.StorageConfiguration
 	Log                logger.MomentoLogger
