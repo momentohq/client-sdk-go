@@ -7,11 +7,11 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 )
 
-func StorageLaptop() StorageConfiguration {
-	return StorageLaptopWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
+func StorageLaptopLatest() StorageConfiguration {
+	return StorageLaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO))
 }
 
-func StorageLaptopWithLogger(loggerFactory logger.MomentoLoggerFactory) StorageConfiguration {
+func StorageLaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) StorageConfiguration {
 	return NewStorageConfiguration(&StorageConfigurationProps{
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{

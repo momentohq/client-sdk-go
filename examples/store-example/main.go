@@ -20,7 +20,7 @@ func main() {
 		panic(err)
 	}
 
-	client, err := momento.NewPreviewStorageClient(config.StorageLaptop(), credentialProvider)
+	client, err := momento.NewPreviewStorageClient(config.StorageLaptopLatest(), credentialProvider)
 	putResp, err := client.Set(ctx, &momento.StorageSetRequest{
 		StoreName: "store-name",
 		Key:       "my-key",

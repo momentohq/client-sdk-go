@@ -22,7 +22,7 @@ var _ = Describe("StorageClient", func() {
 
 	It("errors on invalid timeout", func() {
 		badRequestTimeout := 0 * time.Second
-		sharedContext.StorageConfiguration = config.StorageDefault().WithClientTimeout(badRequestTimeout)
+		sharedContext.StorageConfiguration = config.StorageLaptopLatest().WithClientTimeout(badRequestTimeout)
 		Expect(
 			NewPreviewStorageClient(sharedContext.StorageConfiguration, sharedContext.CredentialProvider),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -30,7 +30,7 @@ var _ = Describe("StorageClient", func() {
 
 	It("supports constructing a default config with a logger", func() {
 		_, err := NewPreviewStorageClient(
-			config.StorageDefaultWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
+			config.StorageLaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 		)
 		if err != nil {
