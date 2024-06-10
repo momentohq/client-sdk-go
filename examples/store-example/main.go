@@ -49,8 +49,8 @@ func main() {
 	// retains the ability to explicitly check for the success type but allows users to grab values
 	// without needing to do a type assertion.
 	if tryGetResp.ValueType() == responses.STRING {
-		myStr, gotStr := tryGetResp.TryGetValueString()
-		if gotStr {
+		myStr, ok := tryGetResp.TryGetValueString()
+		if ok {
 			fmt.Printf("Got the string %s\n", myStr)
 		} else {
 			fmt.Printf("Did not get the string\n")
@@ -61,15 +61,15 @@ func main() {
 	getResp := tryGetResp.(*responses.StorageGetSuccess)
 
 	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
-	val, b00l := getResp.TryGetValueDouble()
-	if b00l {
+	val, ok := getResp.TryGetValueDouble()
+	if ok {
 		fmt.Printf("Got the double %f\n", val)
 	} else {
 		fmt.Printf("Did not get the double\n")
 	}
 
-	myStr, gotStr := getResp.TryGetValueString()
-	if gotStr {
+	myStr, ok := getResp.TryGetValueString()
+	if ok {
 		fmt.Printf("Got the string %s\n", myStr)
 	} else {
 		fmt.Printf("Did not get the string\n")
@@ -83,8 +83,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bytesVal, gotBytes := bytesResp.TryGetValueBytes()
-	if gotBytes {
+	bytesVal, ok := bytesResp.TryGetValueBytes()
+	if ok {
 		fmt.Printf("Got the bytes %s (%b)\n", bytesVal, bytesVal)
 	} else {
 		fmt.Printf("Did not get the bytes\n")
