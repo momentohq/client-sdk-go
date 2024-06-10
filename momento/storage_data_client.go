@@ -77,14 +77,14 @@ func (client *storageDataClient) set(ctx context.Context, request *StorageSetReq
 
 	val := pb.XStoreValue{}
 	switch request.Value.(type) {
-	case Bytes:
-		val.Value = &pb.XStoreValue_BytesValue{BytesValue: request.Value.(Bytes)}
-	case String:
-		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(String))}
-	case Double:
-		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(Double))}
-	case Integer:
-		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(Integer))}
+	case StorageValueBytes:
+		val.Value = &pb.XStoreValue_BytesValue{BytesValue: request.Value.(StorageValueBytes)}
+	case StorageValueString:
+		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(StorageValueString))}
+	case StorageValueDouble:
+		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(StorageValueDouble))}
+	case StorageValueInteger:
+		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(StorageValueInteger))}
 	}
 
 	_, err := client.grpcClient.Set(requestMetadata, &pb.XStoreSetRequest{

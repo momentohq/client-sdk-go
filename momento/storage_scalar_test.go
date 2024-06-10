@@ -33,10 +33,10 @@ var _ = Describe("Store scalar methods", func() {
 			Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 			Expect(resp.ValueType()).To(Equal(expected))
 		},
-		Entry(uuid.NewString(), String("string-value"), STRING),
-		Entry(uuid.NewString(), Integer(42), INTEGER),
-		Entry(uuid.NewString(), Double(3.14), DOUBLE),
-		Entry(uuid.NewString(), Bytes([]byte{0x01, 0x02, 0x03}), BYTES),
+		Entry(uuid.NewString(), StorageValueString("string-value"), STRING),
+		Entry(uuid.NewString(), StorageValueInteger(42), INTEGER),
+		Entry(uuid.NewString(), StorageValueDouble(3.14), DOUBLE),
+		Entry(uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
 	)
 
 	It("errors on missing store name", func() {
@@ -47,7 +47,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 		_, err = sharedContext.StorageClient.Set(sharedContext.Ctx, &StorageSetRequest{
 			Key:   key,
-			Value: String("value"),
+			Value: StorageValueString("value"),
 		})
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
@@ -61,7 +61,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StorageSetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       "",
-			Value:     String("value"),
+			Value:     StorageValueString("value"),
 		})
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 		_, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
@@ -81,7 +81,7 @@ var _ = Describe("Store scalar methods", func() {
 		value := "string-value"
 		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StorageSetRequest{
 			Key:   key,
-			Value: String(value),
+			Value: StorageValueString(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -117,7 +117,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StorageSetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     Integer(value),
+			Value:     StorageValueInteger(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -142,7 +142,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StorageSetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     Double(value),
+			Value:     StorageValueDouble(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -167,7 +167,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StorageSetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     Bytes(value),
+			Value:     StorageValueBytes(value),
 		})
 		Expect(err).To(Succeed())
 

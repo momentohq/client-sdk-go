@@ -4,16 +4,22 @@ type StorageValue interface {
 	isStorageValue()
 }
 
-// Integer plain old int.
-type Integer int64
+// StorageValueString type to store string values.
+type StorageValueString string
 
-// Double backed by float64 as Go doesn't have a double type.
-type Double float64
+// StorageValueBytes type to store byte values.
+type StorageValueBytes []byte
 
-func (String) isStorageValue() {}
+// StorageValueInteger type to store ints.
+type StorageValueInteger int64
 
-func (Bytes) isStorageValue() {}
+// StorageValueDouble backed by float64 as Go doesn't have a double type.
+type StorageValueDouble float64
 
-func (Integer) isStorageValue() {}
+func (StorageValueString) isStorageValue() {}
 
-func (Double) isStorageValue() {}
+func (StorageValueBytes) isStorageValue() {}
+
+func (StorageValueInteger) isStorageValue() {}
+
+func (StorageValueDouble) isStorageValue() {}

@@ -24,7 +24,7 @@ func main() {
 	putResp, err := client.Set(ctx, &momento.StorageSetRequest{
 		StoreName: "store-name",
 		Key:       "my-key",
-		Value:     momento.String("my-value"),
+		Value:     momento.StorageValueString("my-value"),
 	})
 	if err != nil {
 		panic(err)
