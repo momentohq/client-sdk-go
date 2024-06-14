@@ -27,7 +27,7 @@ var _ = Describe("Batch set operations", func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
-		credentialProvider, err := auth.FromEnvironmentVariable("TEST_AUTH_TOKEN")
+		credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
 		if err != nil {
 			panic(err)
 		}

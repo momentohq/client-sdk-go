@@ -43,7 +43,7 @@ func NewSharedContext() SharedContext {
 	shared := SharedContext{}
 
 	shared.Ctx = context.Background()
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("TEST_AUTH_TOKEN")
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}

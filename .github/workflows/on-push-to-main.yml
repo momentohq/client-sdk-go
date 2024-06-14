@@ -40,7 +40,7 @@ jobs:
       contents: read
       pull-requests: read
     env:
-      TEST_AUTH_TOKEN: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+      MOMENTO_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
     steps:
       - name: Setup repo
         uses: actions/checkout@v3

@@ -45,7 +45,7 @@ Running `make precommit` will run all formatters, linters, and the tests. Run th
 
 We use [Ginkgo](https://onsi.github.io/ginkgo/) and [Gomega](https://onsi.github.io/gomega/) to write our tests.
 
-Integration tests require an auth token for testing. Set the env var `TEST_AUTH_TOKEN` to provide it, you can get this from your `~/.momento/credentials` file.
+Integration tests require an auth token for testing. Set the env var `MOMENTO_API_KEY` to provide it, you can get this from your `~/.momento/credentials` file.
 
 Then run `make test`.
 
