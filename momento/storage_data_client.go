@@ -67,7 +67,7 @@ func (client *storageDataClient) delete(ctx context.Context, request *StorageDel
 	return &responses.StorageDeleteSuccess{}, nil
 }
 
-func (client *storageDataClient) set(ctx context.Context, request *StorageSetRequest) (responses.StorageSetResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) set(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -87,7 +87,7 @@ func (client *storageDataClient) set(ctx context.Context, request *StorageSetReq
 		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(StorageValueInteger))}
 	}
 
-	_, err := client.grpcClient.Set(requestMetadata, &pb.XStoreSetRequest{
+	_, err := client.grpcClient.Put(requestMetadata, &pb.XStorePutRequest{
 		Key:   request.Key,
 		Value: &val,
 	})
@@ -95,7 +95,7 @@ func (client *storageDataClient) set(ctx context.Context, request *StorageSetReq
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	return &responses.StorageSetSuccess{}, nil
+	return &responses.StoragePutSuccess{}, nil
 }
 
 func (client *storageDataClient) get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {

@@ -1,6 +1,6 @@
 package momento
 
-type StorageSetRequest struct {
+type StoragePutRequest struct {
 	// StoreName is the name of the store to put the value in.
 	StoreName string
 	// Key is the key to put the value for.

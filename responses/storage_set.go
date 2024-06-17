@@ -1,11 +1,11 @@
 package responses
 
-// StorageSetResponse is the base response type for a store put request.
-type StorageSetResponse interface {
+// StoragePutResponse is the base response type for a store put request.
+type StoragePutResponse interface {
 	isStorePutResponse()
 }
 
-// StorageSetSuccess indicates a successful store put request.
-type StorageSetSuccess struct{}
+// StoragePutSuccess indicates a successful store put request.
+type StoragePutSuccess struct{}
 
-func (StorageSetSuccess) isStorePutResponse() {}
+func (StoragePutSuccess) isStorePutResponse() {}

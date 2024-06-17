@@ -30,7 +30,7 @@ type PreviewStorageClient interface {
 	// Get retrieves a value from a store.
 	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr)
 	// Set sets a value in a store.
-	Set(ctx context.Context, request *StorageSetRequest) (responses.StorageSetResponse, momentoerrors.MomentoSvcErr)
+	Set(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr)
 	// Delete removes a value from a store.
 	Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr)
 	// Close closes the client.
@@ -172,7 +172,7 @@ func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGe
 	return resp, nil
 }
 
-func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StorageSetRequest) (responses.StorageSetResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
