@@ -81,8 +81,8 @@ func (client *storageDataClient) set(ctx context.Context, request *StoragePutReq
 		val.Value = &pb.XStoreValue_BytesValue{BytesValue: request.Value.(StorageValueBytes)}
 	case StorageValueString:
 		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(StorageValueString))}
-	case StorageValueDouble:
-		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(StorageValueDouble))}
+	case StorageValueFloat64:
+		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(StorageValueFloat64))}
 	case StorageValueInteger:
 		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(StorageValueInteger))}
 	}
@@ -121,7 +121,7 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	case *pb.XStoreValue_StringValue:
 		return responses.NewStoreGetSuccess_String(responses.STRING, val.GetStringValue()), nil
 	case *pb.XStoreValue_DoubleValue:
-		return responses.NewStoreGetSuccess_Double(responses.DOUBLE, val.GetDoubleValue()), nil
+		return responses.NewStoreGetSuccess_Float64(responses.DOUBLE, val.GetDoubleValue()), nil
 	case *pb.XStoreValue_IntegerValue:
 		return responses.NewStoreGetSuccess_Integer(responses.INTEGER, int(val.GetIntegerValue())), nil
 	default:

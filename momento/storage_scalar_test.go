@@ -35,7 +35,7 @@ var _ = Describe("Store scalar methods", func() {
 		},
 		Entry(uuid.NewString(), StorageValueString("string-value"), STRING),
 		Entry(uuid.NewString(), StorageValueInteger(42), INTEGER),
-		Entry(uuid.NewString(), StorageValueDouble(3.14), DOUBLE),
+		Entry(uuid.NewString(), StorageValueFloat64(3.14), DOUBLE),
 		Entry(uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
 	)
 
@@ -89,14 +89,14 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(STRING))
-		storeValue, ok := resp.TryGetValueString()
+		storeValue, ok := resp.ValueString()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
-		_, ok = resp.TryGetValueInteger()
+		_, ok = resp.ValueInteger()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueDouble()
+		_, ok = resp.ValueFloat64()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueBytes()
+		_, ok = resp.ValueBytes()
 		Expect(ok).To(BeFalse())
 	})
 
@@ -125,14 +125,14 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(INTEGER))
-		storeValue, ok := resp.TryGetValueInteger()
+		storeValue, ok := resp.ValueInteger()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
-		_, ok = resp.TryGetValueString()
+		_, ok = resp.ValueString()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueDouble()
+		_, ok = resp.ValueFloat64()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueBytes()
+		_, ok = resp.ValueBytes()
 		Expect(ok).To(BeFalse())
 	})
 
@@ -142,7 +142,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     StorageValueDouble(value),
+			Value:     StorageValueFloat64(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -150,14 +150,14 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(DOUBLE))
-		storeValue, ok := resp.TryGetValueDouble()
+		storeValue, ok := resp.ValueFloat64()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
-		_, ok = resp.TryGetValueString()
+		_, ok = resp.ValueString()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueInteger()
+		_, ok = resp.ValueInteger()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueBytes()
+		_, ok = resp.ValueBytes()
 		Expect(ok).To(BeFalse())
 	})
 
@@ -175,14 +175,14 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(BYTES))
-		storeValue, ok := resp.TryGetValueBytes()
+		storeValue, ok := resp.ValueBytes()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
-		_, ok = resp.TryGetValueString()
+		_, ok = resp.ValueString()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueInteger()
+		_, ok = resp.ValueInteger()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.TryGetValueDouble()
+		_, ok = resp.ValueFloat64()
 		Expect(ok).To(BeFalse())
 	})
 })

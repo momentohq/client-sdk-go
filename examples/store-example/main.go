@@ -21,7 +21,7 @@ func main() {
 	}
 
 	client, err := momento.NewPreviewStorageClient(config.StorageLaptopLatest(), credentialProvider)
-	putResp, err := client.Set(ctx, &momento.StorageSetRequest{
+	putResp, err := client.Set(ctx, &momento.StoragePutRequest{
 		StoreName: "store-name",
 		Key:       "my-key",
 		Value:     momento.StorageValueString("my-value"),
@@ -30,7 +30,7 @@ func main() {
 		panic(err)
 	}
 	switch putResp.(type) {
-	case *responses.StorageSetSuccess:
+	case *responses.StoragePutSuccess:
 		fmt.Printf("Explicitly got Success type for PUT\n")
 	default:
 		fmt.Printf("Unknown response type\n")
@@ -49,7 +49,7 @@ func main() {
 	// retains the ability to explicitly check for the success type but allows users to grab values
 	// without needing to do a type assertion.
 	if tryGetResp.ValueType() == responses.STRING {
-		myStr, ok := tryGetResp.TryGetValueString()
+		myStr, ok := tryGetResp.ValueString()
 		if ok {
 			fmt.Printf("Got the string %s\n", myStr)
 		} else {
@@ -61,14 +61,14 @@ func main() {
 	getResp := tryGetResp.(*responses.StorageGetSuccess)
 
 	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
-	val, ok := getResp.TryGetValueDouble()
+	val, ok := getResp.ValueFloat64()
 	if ok {
 		fmt.Printf("Got the double %f\n", val)
 	} else {
 		fmt.Printf("Did not get the double\n")
 	}
 
-	myStr, ok := getResp.TryGetValueString()
+	myStr, ok := getResp.ValueString()
 	if ok {
 		fmt.Printf("Got the string %s\n", myStr)
 	} else {
@@ -83,7 +83,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bytesVal, ok := bytesResp.TryGetValueBytes()
+	bytesVal, ok := bytesResp.ValueBytes()
 	if ok {
 		fmt.Printf("Got the bytes %s (%b)\n", bytesVal, bytesVal)
 	} else {
