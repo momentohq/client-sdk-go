@@ -150,6 +150,10 @@ func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *Storag
 
 	response, err := c.getNextStorageDataClient().delete(ctx, request)
 	if err != nil {
+		if err.Code() == NotFoundError {
+			c.log.Info("Store with name '%s' does not exist, skipping", request.StoreName)
+			return &responses.StorageDeleteSuccess{}, nil
+		}
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 	return response, nil
