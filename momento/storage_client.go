@@ -186,7 +186,7 @@ func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StoragePu
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Value cannot be nil", nil)
 	}
 
-	resp, err := c.getNextStorageDataClient().set(ctx, request)
+	resp, err := c.getNextStorageDataClient().put(ctx, request)
 	if err != nil {
 		return nil, err
 	}

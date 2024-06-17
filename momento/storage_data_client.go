@@ -67,7 +67,7 @@ func (client *storageDataClient) delete(ctx context.Context, request *StorageDel
 	return &responses.StorageDeleteSuccess{}, nil
 }
 
-func (client *storageDataClient) set(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
