@@ -73,7 +73,7 @@ func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, c
 	if numChannels < 1 {
 		numChannels = 1
 	}
-	dataClients := make([]*storageDataClient, numChannels)
+	dataClients := make([]*storageDataClient, 0)
 
 	for i := uint32(0); i < numChannels; i++ {
 		storeDataClient, err := newStorageDataClient(&models.StorageDataClientRequest{
