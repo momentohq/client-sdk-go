@@ -16,6 +16,10 @@ import (
 
 var storageDataClientCount uint64
 
+// PREVIEW Momento Storage Client
+//
+// WARNING: the API for this client is not yet stable and may change without notice.
+// Please contact Momento if you would like to try this preview.
 type PreviewStorageClient interface {
 	// CreateStore creates a new store if it does not exist.
 	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr)
@@ -41,6 +45,9 @@ type defaultPreviewStorageClient struct {
 }
 
 // NewPreviewStorageClient creates a new PreviewStorageClient with the provided configuration and credential provider.
+//
+// WARNING: the API for this client is not yet stable and may change without notice.
+// Please contact Momento if you would like to try this preview.
 func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, credentialProvider auth.CredentialProvider) (PreviewStorageClient, error) {
 	if storageConfiguration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
