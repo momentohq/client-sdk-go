@@ -19,11 +19,22 @@ const PingPort = ":443"
 func NewPingGrpcManager(request *models.PingGrpcManagerRequest) (*PingGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), PingPort)
 	authToken := request.CredentialProvider.GetAuthToken()
+
+	headerInterceptors := []grpc.UnaryClientInterceptor{
+		interceptor.AddAuthHeadersInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("ping"))
+	}
+
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
-			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)
 	if err != nil {

@@ -18,11 +18,22 @@ type TopicGrpcManager struct {
 func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
+
+	headerInterceptors := []grpc.StreamClientInterceptor{
+		interceptor.AddStreamHeaderInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddStreamRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddStreamAgentHeaderInterceptor("topic"))
+	}
+
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
-			grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+			grpc.WithChainStreamInterceptor(headerInterceptors...),
 			grpc.WithChainUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
 		)...,
 	)

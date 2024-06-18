@@ -20,11 +20,22 @@ const TokenPort = ":443"
 func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetTokenEndpoint(), TokenPort)
 	authToken := request.CredentialProvider.GetAuthToken()
+
+	headerInterceptors := []grpc.UnaryClientInterceptor{
+		interceptor.AddAuthHeadersInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("auth"))
+	}
+
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
-			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)
 	if err != nil {
