@@ -15,14 +15,12 @@ import (
 const (
 	DefaultClient             = "defaultClient"
 	WithDefaultCache          = "withDefaultCache"
-	WithExpressReadConcern    = "withExpressReadConcern"
 	WithConsistentReadConcern = "withConsistentReadConcern"
 )
 
 type SharedContext struct {
 	Client                          momento.CacheClient
 	ClientWithDefaultCacheName      momento.CacheClient
-	ClientWithExpressReadConcern    momento.CacheClient
 	ClientWithConsistentReadConcern momento.CacheClient
 	DefaultCacheName                string
 	TopicClient                     momento.TopicClient
@@ -31,7 +29,7 @@ type SharedContext struct {
 	Ctx                             context.Context
 	DefaultTtl                      time.Duration
 	Configuration                   config.Configuration
-	TopicConfigration               config.TopicsConfiguration
+	TopicConfiguration              config.TopicsConfiguration
 	CredentialProvider              auth.CredentialProvider
 	AuthClient                      momento.AuthClient
 	AuthConfiguration               config.AuthConfiguration
@@ -49,7 +47,7 @@ func NewSharedContext() SharedContext {
 	}
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
-	shared.TopicConfigration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.TopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.LeaderboardConfiguration = config.LeaderboardDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
@@ -74,14 +72,7 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
-	expressReadConcernClient, err := momento.NewCacheClientWithDefaultCache(
-		shared.Configuration.WithReadConcern(config.EXPRESS), shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	topicClient, err := momento.NewTopicClient(shared.TopicConfigration, shared.CredentialProvider)
+	topicClient, err := momento.NewTopicClient(shared.TopicConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +90,6 @@ func NewSharedContext() SharedContext {
 	shared.Client = client
 	shared.ClientWithDefaultCacheName = clientDefaultCacheName
 	shared.ClientWithConsistentReadConcern = consistentReadConcernClient
-	shared.ClientWithExpressReadConcern = expressReadConcernClient
 	shared.DefaultCacheName = defaultCacheName
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
@@ -120,9 +110,6 @@ func (shared SharedContext) GetClientPrereqsForType(clientType string) (momento.
 	} else if clientType == DefaultClient {
 		client = shared.Client
 		cacheName = shared.CacheName
-	} else if clientType == WithExpressReadConcern {
-		client = shared.ClientWithExpressReadConcern
-		cacheName = ""
 	} else if clientType == WithConsistentReadConcern {
 		client = shared.ClientWithConsistentReadConcern
 		cacheName = ""
