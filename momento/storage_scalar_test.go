@@ -28,7 +28,10 @@ var _ = Describe("Store scalar methods", func() {
 			})
 			Expect(err).To(Succeed())
 
-			resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{Key: key})
+			resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+				StoreName: sharedContext.StoreName,
+				Key:       key,
+			})
 			Expect(err).To(Succeed())
 			Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 			Expect(resp.ValueType()).To(Equal(expected))
@@ -86,7 +89,10 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{Key: key})
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(STRING))
@@ -120,7 +126,10 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{Key: key})
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(INTEGER))
@@ -145,7 +154,10 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{Key: key})
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(DOUBLE))
@@ -170,7 +182,10 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{Key: key})
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(BYTES))
