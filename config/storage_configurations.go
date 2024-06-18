@@ -16,7 +16,7 @@ func StorageLaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) St
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewStaticTransportStrategy(&TransportStrategyProps{
 			GrpcConfiguration: NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-				deadline: 5 * time.Second,
+				deadline: 15 * time.Second,
 			}),
 		}),
 		NumGrpcChannels: 1,

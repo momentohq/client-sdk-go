@@ -42,6 +42,40 @@ var _ = Describe("Store scalar methods", func() {
 		Entry("StorageValueBytes", uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
 	)
 
+	It("errors on missing store or key", func() {
+		key := uuid.NewString()
+		store := uuid.NewString()
+
+		_, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
+		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err.Error()).To(ContainSubstring("Element not found"))
+
+		_, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: store,
+			Key:       key,
+		})
+		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err.Error()).To(ContainSubstring("Store not found"))
+
+		_, err = sharedContext.StorageClient.Delete(sharedContext.Ctx, &StorageDeleteRequest{
+			StoreName: store,
+			Key:       key,
+		})
+		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err.Error()).To(ContainSubstring("Store not found"))
+
+		_, err = sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
+			StoreName: store,
+			Key:       key,
+			Value:     StorageValueString("value"),
+		})
+		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err.Error()).To(ContainSubstring("Store not found"))
+	})
+
 	It("errors on missing store name", func() {
 		key := uuid.NewString()
 		_, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
