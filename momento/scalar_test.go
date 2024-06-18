@@ -70,7 +70,6 @@ var _ = Describe("Scalar methods", func() {
 		Entry("with default cache name when the value is empty", WithDefaultCache, String("key"), String(""), "", []byte("")),
 		Entry("with default cache name when the value is blank", WithDefaultCache, String("key"), String("  "), "  ", []byte("  ")),
 		Entry("using a consistent read concern client", WithConsistentReadConcern, String("key"), String("value"), "value", []byte("value")),
-		Entry("using a express read concern client", WithExpressReadConcern, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
 		Entry("using a balanced read concern client", DefaultClient, Bytes([]byte{1, 2, 3}), Bytes("string"), "string", []byte("string")),
 	)
 

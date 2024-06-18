@@ -117,7 +117,7 @@ func newCacheClient(ctx SharedContext, provider auth.CredentialProvider) CacheCl
 }
 
 func newTopicClient(ctx SharedContext, provider auth.CredentialProvider) TopicClient {
-	tc, err := NewTopicClient(ctx.TopicConfigration, provider)
+	tc, err := NewTopicClient(ctx.TopicConfiguration, provider)
 	if err != nil {
 		panic(err)
 	}
