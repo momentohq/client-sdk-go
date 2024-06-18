@@ -21,7 +21,7 @@ var _ = Describe("Store scalar methods", func() {
 
 	DescribeTable("Sets with correct StorageValueType",
 		func(key string, value StorageValue, expected StorageValueType) {
-			_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+			_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 				StoreName: sharedContext.StoreName,
 				Key:       key,
 				Value:     value,
@@ -33,10 +33,10 @@ var _ = Describe("Store scalar methods", func() {
 			Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 			Expect(resp.ValueType()).To(Equal(expected))
 		},
-		Entry(uuid.NewString(), StorageValueString("string-value"), STRING),
-		Entry(uuid.NewString(), StorageValueInteger(42), INTEGER),
-		Entry(uuid.NewString(), StorageValueFloat64(3.14), DOUBLE),
-		Entry(uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
+		Entry("StorageValueString", uuid.NewString(), StorageValueString("string-value"), STRING),
+		Entry("StorageValueInteger", uuid.NewString(), StorageValueInteger(42), INTEGER),
+		Entry("StorageValueFloat64", uuid.NewString(), StorageValueFloat64(3.14), DOUBLE),
+		Entry("StorageValueBytes", uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
 	)
 
 	It("errors on missing store name", func() {
@@ -45,7 +45,7 @@ var _ = Describe("Store scalar methods", func() {
 			Key: key,
 		})
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
-		_, err = sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+		_, err = sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			Key:   key,
 			Value: StorageValueString("value"),
 		})
@@ -58,7 +58,7 @@ var _ = Describe("Store scalar methods", func() {
 	})
 
 	It("errors on invalid key", func() {
-		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       "",
 			Value:     StorageValueString("value"),
@@ -79,9 +79,10 @@ var _ = Describe("Store scalar methods", func() {
 	It("Handles strings", func() {
 		key := uuid.NewString()
 		value := "string-value"
-		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
-			Key:   key,
-			Value: StorageValueString(value),
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+			Value:     StorageValueString(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -102,19 +103,17 @@ var _ = Describe("Store scalar methods", func() {
 
 	It("Handles nil values", func() {
 		key := uuid.NewString()
-		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
-		if err != nil {
-			panic(err)
-		}
+		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 	})
 
 	It("Handles integers", func() {
 		key := uuid.NewString()
 		value := 42
-		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 			Value:     StorageValueInteger(value),
@@ -139,7 +138,7 @@ var _ = Describe("Store scalar methods", func() {
 	It("Handles doubles", func() {
 		key := uuid.NewString()
 		value := 3.14
-		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 			Value:     StorageValueFloat64(value),
@@ -164,7 +163,7 @@ var _ = Describe("Store scalar methods", func() {
 	It("Handles bytes", func() {
 		key := uuid.NewString()
 		value := []byte{0x01, 0x02, 0x03}
-		_, err := sharedContext.StorageClient.Set(sharedContext.Ctx, &StoragePutRequest{
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 			Value:     StorageValueBytes(value),

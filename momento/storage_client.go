@@ -22,17 +22,17 @@ var storageDataClientCount uint64
 // Please contact Momento if you would like to try this preview.
 type PreviewStorageClient interface {
 	// CreateStore creates a new store if it does not exist.
-	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr)
+	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, error)
 	// DeleteStore deletes a store and all the items within it.
-	DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr)
+	DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, error)
 	// ListStores lists all the stores.
-	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr)
+	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, error)
 	// Get retrieves a value from a store.
-	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr)
+	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error)
 	// Set sets a value in a store.
-	Set(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr)
+	Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error)
 	// Delete removes a value from a store.
-	Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr)
+	Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, error)
 	// Close closes the client.
 	Close()
 }
@@ -50,7 +50,7 @@ type defaultPreviewStorageClient struct {
 // Please contact Momento if you would like to try this preview.
 func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, credentialProvider auth.CredentialProvider) (PreviewStorageClient, error) {
 	if storageConfiguration.GetClientSideTimeout() < 1 {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
+		return nil, NewMomentoError(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultPreviewStorageClient{
 		credentialProvider: credentialProvider,
@@ -66,7 +66,7 @@ func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, c
 		Configuration:      controlConfig,
 	})
 	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 
 	numChannels := storageConfiguration.GetNumGrpcChannels()
@@ -81,7 +81,7 @@ func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, c
 			Configuration:      storageConfiguration,
 		})
 		if err != nil {
-			return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+			return nil, convertMomentoSvcErrorToCustomerError(err)
 		}
 		dataClients = append(dataClients, storeDataClient)
 	}
@@ -98,7 +98,7 @@ func (c defaultPreviewStorageClient) getNextStorageDataClient() *storageDataClie
 	return dataClient
 }
 
-func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *C
 	return &responses.CreateStoreSuccess{}, nil
 }
 
-func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *DeleteStoreRequest) (responses.DeleteStoreResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
@@ -130,69 +130,69 @@ func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *D
 			c.log.Info("Store with name '%s' does not exist, skipping", request.StoreName)
 			return &responses.DeleteStoreSuccess{}, nil
 		}
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return &responses.DeleteStoreSuccess{}, nil
 }
 
-func (c defaultPreviewStorageClient) ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, error) {
 	resp, err := c.controlClient.ListStores(ctx, &models.ListStoresRequest{})
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return responses.NewListStoresSuccess(resp.NextToken, resp.Stores), nil
 }
 
-func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err
 	}
 
 	response, err := c.getNextStorageDataClient().delete(ctx, request)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return response, nil
 }
 
-func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err
 	}
 
 	resp, err := c.getNextStorageDataClient().get(ctx, request)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 
 	return resp, nil
 }
 
-func (c defaultPreviewStorageClient) Set(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, momentoerrors.MomentoSvcErr) {
+func (c defaultPreviewStorageClient) Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return nil, err.(MomentoError)
+		return nil, err
 	}
 	// Doing a quick explicit null check instead of reimplementing the nest of interfaces involved
 	// in the cache client's `prepareValue` null check.
 	if request.Value == nil {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Value cannot be nil", nil)
+		return nil, NewMomentoError(momentoerrors.InvalidArgumentError, "Value cannot be nil", nil)
 	}
 
 	resp, err := c.getNextStorageDataClient().put(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return resp, nil
 }
@@ -204,9 +204,9 @@ func (c defaultPreviewStorageClient) Close() {
 	c.controlClient.Close()
 }
 
-func isStoreNameValid(storeName string) momentoerrors.MomentoSvcErr {
+func isStoreNameValid(storeName string) error {
 	if len(strings.TrimSpace(storeName)) < 1 {
-		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "Store name cannot be empty", nil)
+		return NewMomentoError(momentoerrors.InvalidArgumentError, "Store name cannot be empty", nil)
 	}
 	return nil
 }
