@@ -13,8 +13,10 @@ type StoreGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
+const StoragePort = ":443"
+
 func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcManager, momentoerrors.MomentoSvcErr) {
-	endpoint := fmt.Sprint(request.CredentialProvider.GetStorageEndpoint(), CachePort)
+	endpoint := fmt.Sprint(request.CredentialProvider.GetStorageEndpoint(), StoragePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 	conn, err := grpc.NewClient(
 		endpoint,
