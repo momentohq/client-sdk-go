@@ -119,6 +119,15 @@ var _ = Describe("Control ops", func() {
 				}
 				Expect(listedStores).To(ContainElements(storeNames))
 			default:
+				// best effort at cleaning up stores if we fail here
+				for _, storeName := range storeNames {
+					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					if err != nil {
+						if err.(MomentoError).Code() != NotFoundError {
+							panic(err)
+						}
+					}
+				}
 				Fail("Unexpected response type")
 			}
 
@@ -134,6 +143,15 @@ var _ = Describe("Control ops", func() {
 			case *ListStoresSuccess:
 				Expect(r.Stores()).To(Not(ContainElements(storeNames)))
 			default:
+				// best effort at cleaning up stores if we fail here
+				for _, storeName := range storeNames {
+					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					if err != nil {
+						if err.(MomentoError).Code() != NotFoundError {
+							panic(err)
+						}
+					}
+				}
 				Fail("Unexpected response type")
 			}
 		})
