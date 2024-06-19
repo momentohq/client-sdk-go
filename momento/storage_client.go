@@ -126,10 +126,6 @@ func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *D
 		StoreName: request.StoreName,
 	})
 	if err != nil {
-		if err.Code() == NotFoundError {
-			c.log.Info("Store with name '%s' does not exist, skipping", request.StoreName)
-			return &responses.DeleteStoreSuccess{}, nil
-		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return &responses.DeleteStoreSuccess{}, nil

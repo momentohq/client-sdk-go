@@ -91,7 +91,9 @@ var _ = Describe("Control ops", func() {
 				for _, storeName := range storeNames {
 					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
 					if err != nil {
-						panic(err)
+						if err.(MomentoError).Code() != NotFoundError {
+							panic(err)
+						}
 					}
 				}
 			}()

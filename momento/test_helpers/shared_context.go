@@ -173,7 +173,9 @@ func (shared SharedContext) Close() {
 	}
 	_, err = shared.StorageClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
 	if err != nil {
-		panic(err)
+		if err.(momento.MomentoError).Code() != momento.NotFoundError {
+			panic(err)
+		}
 	}
 
 	shared.Client.Close()
