@@ -28,11 +28,12 @@ var _ = Describe("Store scalar methods", func() {
 			})
 			Expect(err).To(Succeed())
 
-			resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 				StoreName: sharedContext.StoreName,
 				Key:       key,
 			})
 			Expect(err).To(Succeed())
+			Expect(found).To(BeTrue())
 			Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 			Expect(resp.ValueType()).To(Equal(expected))
 		},
@@ -46,14 +47,16 @@ var _ = Describe("Store scalar methods", func() {
 		key := uuid.NewString()
 		store := uuid.NewString()
 
-		_, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		// Missing key simply returns found=false
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
-		Expect(err.Error()).To(ContainSubstring("Element not found"))
+		Expect(found).To(BeFalse())
+		Expect(err).To(BeNil())
+		Expect(resp).To(BeNil())
 
-		_, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		_, _, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: store,
 			Key:       key,
 		})
@@ -78,10 +81,13 @@ var _ = Describe("Store scalar methods", func() {
 
 	It("errors on missing store name", func() {
 		key := uuid.NewString()
-		_, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			Key: key,
 		})
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+		Expect(found).To(BeFalse())
+		Expect(resp).To(BeNil())
+
 		_, err = sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			Key:   key,
 			Value: StorageValueString("value"),
@@ -101,11 +107,15 @@ var _ = Describe("Store scalar methods", func() {
 			Value:     StorageValueString("value"),
 		})
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
-		_, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       "",
 		})
 		Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
+		Expect(found).To(BeFalse())
+		Expect(resp).To(BeNil())
+
 		_, err = sharedContext.StorageClient.Delete(sharedContext.Ctx, &StorageDeleteRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       "",
@@ -123,13 +133,15 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
+		Expect(found).To(BeTrue()) // item was found
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(STRING))
+
 		storeValue, ok := resp.ValueString()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
@@ -160,13 +172,15 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
+		Expect(found).To(BeTrue()) // item was found
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(INTEGER))
+
 		storeValue, ok := resp.ValueInteger()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
@@ -188,13 +202,15 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
+		Expect(found).To(BeTrue()) // item was found
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(DOUBLE))
+
 		storeValue, ok := resp.ValueFloat64()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
@@ -216,13 +232,15 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
+		Expect(found).To(BeTrue()) // item was found
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(BYTES))
+
 		storeValue, ok := resp.ValueBytes()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
