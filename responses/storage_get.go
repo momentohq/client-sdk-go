@@ -24,7 +24,7 @@ type StorageGetSuccess struct {
 	valueType    StorageValueType
 	valueBytes   *[]byte
 	valueString  *string
-	valueFloat64 *float64
+	valueDouble  *float64
 	valueInteger *int
 }
 
@@ -54,7 +54,7 @@ func (resp StorageGetSuccess) ValueBytes() ([]byte, bool) {
 // ValueDouble returns the value in the store as a float64 and a boolean `true` value if it was stored as a double. Otherwise, it returns 0 and a boolean `false` value.
 func (resp StorageGetSuccess) ValueDouble() (float64, bool) {
 	if resp.valueType == DOUBLE {
-		return *resp.valueFloat64, true
+		return *resp.valueDouble, true
 	}
 	return 0, false
 }
@@ -83,11 +83,11 @@ func NewStoreGetSuccess_Bytes(valueType StorageValueType, value []byte) *Storage
 	}
 }
 
-// NewStoreGetSuccess_Float64 returns a new StorageGetSuccess containing the supplied float64 value.
-func NewStoreGetSuccess_Float64(valueType StorageValueType, value float64) *StorageGetSuccess {
+// NewStoreGetSuccess_Double returns a new StorageGetSuccess containing the supplied float64 value.
+func NewStoreGetSuccess_Double(valueType StorageValueType, value float64) *StorageGetSuccess {
 	return &StorageGetSuccess{
-		valueType:    valueType,
-		valueFloat64: &value,
+		valueType:   valueType,
+		valueDouble: &value,
 	}
 }
 

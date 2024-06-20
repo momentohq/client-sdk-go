@@ -140,7 +140,7 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	case *pb.XStoreValue_StringValue:
 		return responses.NewStoreGetSuccess_String(responses.STRING, val.GetStringValue()), nil
 	case *pb.XStoreValue_DoubleValue:
-		return responses.NewStoreGetSuccess_Float64(responses.DOUBLE, val.GetDoubleValue()), nil
+		return responses.NewStoreGetSuccess_Double(responses.DOUBLE, val.GetDoubleValue()), nil
 	case *pb.XStoreValue_IntegerValue:
 		return responses.NewStoreGetSuccess_Integer(responses.INTEGER, int(val.GetIntegerValue())), nil
 	default:
