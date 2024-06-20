@@ -39,7 +39,7 @@ var _ = Describe("GetBatch and SetBatch", func() {
 			}),
 		).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 	},
-		Entry("nonexistent cache name", uuid.NewString(), NotFoundError),
+		Entry("nonexistent cache name", uuid.NewString(), CacheNotFoundError),
 		Entry("empty cache name", "", InvalidArgumentError),
 		Entry("nil cache name", nil, InvalidArgumentError),
 	)

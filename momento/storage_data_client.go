@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -58,11 +59,17 @@ func (client *storageDataClient) delete(ctx context.Context, request *StorageDel
 		ctx, client.CreateNewMetadata(request.StoreName),
 	)
 
-	_, err := client.grpcClient.Delete(requestMetadata, &pb.XStoreDeleteRequest{
-		Key: request.Key,
-	})
+	var header, trailer metadata.MD // variable to store header and trailer
+	_, err := client.grpcClient.Delete(
+		requestMetadata,
+		&pb.XStoreDeleteRequest{
+			Key: request.Key,
+		},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return &responses.StorageDeleteSuccess{}, nil
 }
@@ -87,12 +94,18 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(StorageValueInteger))}
 	}
 
-	_, err := client.grpcClient.Put(requestMetadata, &pb.XStorePutRequest{
-		Key:   request.Key,
-		Value: &val,
-	})
+	var header, trailer metadata.MD // variable to store header and trailer
+	_, err := client.grpcClient.Put(
+		requestMetadata,
+		&pb.XStorePutRequest{
+			Key:   request.Key,
+			Value: &val,
+		},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
 	return &responses.StoragePutSuccess{}, nil
@@ -106,12 +119,18 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 		ctx, client.CreateNewMetadata(request.StoreName),
 	)
 
-	response, err := client.grpcClient.Get(requestMetadata, &pb.XStoreGetRequest{
-		Key: request.Key,
-	})
+	var header, trailer metadata.MD // variable to store header and trailer
+	response, err := client.grpcClient.Get(
+		requestMetadata,
+		&pb.XStoreGetRequest{
+			Key: request.Key,
+		},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
 	val := response.GetValue()

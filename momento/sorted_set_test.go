@@ -138,12 +138,12 @@ var _ = Describe("SortedSet", func() {
 		Entry("Blank cache name with default client", DefaultClient, "  ", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("Empty collection name with default client", DefaultClient, sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name with default client", DefaultClient, sharedContext.CacheName, "  ", InvalidArgumentError),
-		Entry("Non-existent cache with default client", DefaultClient, uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("Non-existent cache with default client", DefaultClient, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 		Entry("Empty cache name with client with default cache", WithDefaultCache, "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("Blank cache name with client with default cache", WithDefaultCache, "  ", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("Empty collection name with client with default cache", WithDefaultCache, sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name with client with default cache", WithDefaultCache, sharedContext.CacheName, "  ", InvalidArgumentError),
-		Entry("Non-existent cache with client with default cache", WithDefaultCache, uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("Non-existent cache with client with default cache", WithDefaultCache, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 	)
 
 	DescribeTable("Honors CollectionTtl  ",

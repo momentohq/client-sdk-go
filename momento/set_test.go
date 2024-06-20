@@ -44,7 +44,7 @@ var _ = Describe("Set methods", func() {
 					CacheName: cacheName,
 					SetName:   setName,
 				}),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			Expect(
 				client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
@@ -52,7 +52,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   setName,
 					Element:   String("astring"),
 				}),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			Expect(
 				client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
@@ -60,14 +60,14 @@ var _ = Describe("Set methods", func() {
 					SetName:   setName,
 					Elements:  []Value{String("astring"), String("bstring")},
 				}),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			Expect(
 				client.SetLength(sharedContext.Ctx, &SetLengthRequest{
 					CacheName: cacheName,
 					SetName:   setName,
 				}),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			Expect(
 				client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
@@ -75,7 +75,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   setName,
 					Element:   String("astring"),
 				}),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			Expect(
 				client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
@@ -83,7 +83,7 @@ var _ = Describe("Set methods", func() {
 					SetName:   setName,
 					Elements:  []Value{String("hi")},
 				}),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 		},
 		Entry("with default client", DefaultClient),
 		Entry("with client with default cache", WithDefaultCache),

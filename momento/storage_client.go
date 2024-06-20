@@ -122,10 +122,20 @@ func (c defaultPreviewStorageClient) DeleteStore(ctx context.Context, request *D
 		return nil, err
 	}
 
-	err := c.controlClient.DeleteStore(ctx, &models.DeleteStoreRequest{
-		StoreName: request.StoreName,
-	})
+	// TODO: figure out how to retrieve metadata from control plane calls
+	// var header, trailer metadata.MD
+	err := c.controlClient.DeleteStore(
+		ctx,
+		&models.DeleteStoreRequest{
+			StoreName: request.StoreName,
+		})
 	if err != nil {
+		// TODO: remove this once delete store accepts the metadata CallOptions and
+		// returns metadata that can be used to differentiate between the not found errors.
+		// Currently the default is CacheNotFoundError
+		if err.Code() == CacheNotFoundError {
+			return nil, NewMomentoError(StoreNotFoundError, "Store not found", nil)
+		}
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return &responses.DeleteStoreSuccess{}, nil
@@ -166,7 +176,7 @@ func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGe
 
 	resp, err := c.getNextStorageDataClient().get(ctx, request)
 	if err != nil {
-		if err.Code() == NotFoundError && err.Message() == "Element not found" {
+		if err.Code() == ItemNotFoundError {
 			return nil, false, nil
 		}
 		return nil, false, convertMomentoSvcErrorToCustomerError(err)

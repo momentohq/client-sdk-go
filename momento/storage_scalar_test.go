@@ -60,14 +60,14 @@ var _ = Describe("Store scalar methods", func() {
 			StoreName: store,
 			Key:       key,
 		})
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
 		Expect(err.Error()).To(ContainSubstring("Store not found"))
 
 		_, err = sharedContext.StorageClient.Delete(sharedContext.Ctx, &StorageDeleteRequest{
 			StoreName: store,
 			Key:       key,
 		})
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
 		Expect(err.Error()).To(ContainSubstring("Store not found"))
 
 		_, err = sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
@@ -75,7 +75,7 @@ var _ = Describe("Store scalar methods", func() {
 			Key:       key,
 			Value:     StorageValueString("value"),
 		})
-		Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+		Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
 		Expect(err.Error()).To(ContainSubstring("Store not found"))
 	})
 

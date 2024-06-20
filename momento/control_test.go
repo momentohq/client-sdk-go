@@ -91,7 +91,7 @@ var _ = Describe("Control ops", func() {
 				for _, storeName := range storeNames {
 					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
 					if err != nil {
-						if err.(MomentoError).Code() != NotFoundError {
+						if err.(MomentoError).Code() != StoreNotFoundError {
 							panic(err)
 						}
 					}
@@ -123,7 +123,7 @@ var _ = Describe("Control ops", func() {
 				for _, storeName := range storeNames {
 					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
 					if err != nil {
-						if err.(MomentoError).Code() != NotFoundError {
+						if err.(MomentoError).Code() != StoreNotFoundError {
 							panic(err)
 						}
 					}
@@ -147,7 +147,7 @@ var _ = Describe("Control ops", func() {
 				for _, storeName := range storeNames {
 					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
 					if err != nil {
-						if err.(MomentoError).Code() != NotFoundError {
+						if err.(MomentoError).Code() != StoreNotFoundError {
 							panic(err)
 						}
 					}
@@ -168,7 +168,7 @@ var _ = Describe("Control ops", func() {
 				sharedContext.ClientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{Key: String("hi")},
 				),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{

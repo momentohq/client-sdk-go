@@ -98,7 +98,7 @@ var _ = Describe("Dictionary methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
-		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 		Entry("empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("empty dictionary name", sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("nil dictionary name", sharedContext.CacheName, nil, InvalidArgumentError),

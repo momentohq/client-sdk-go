@@ -348,7 +348,7 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 		CacheName: request.CacheName,
 	})
 	if err != nil {
-		if err.Code() == NotFoundError {
+		if err.Code() == CacheNotFoundError {
 			c.logger.Info("Cache with name '%s' does not exist, skipping", request.CacheName)
 			return &responses.DeleteCacheSuccess{}, nil
 		}
