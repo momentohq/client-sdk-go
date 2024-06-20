@@ -39,7 +39,7 @@ var _ = Describe("Store scalar methods", func() {
 		},
 		Entry("StorageValueString", uuid.NewString(), StorageValueString("string-value"), STRING),
 		Entry("StorageValueInteger", uuid.NewString(), StorageValueInteger(42), INTEGER),
-		Entry("StorageValueFloat64", uuid.NewString(), StorageValueFloat64(3.14), DOUBLE),
+		Entry("StorageValueDouble", uuid.NewString(), StorageValueDouble(3.14), DOUBLE),
 		Entry("StorageValueBytes", uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
 	)
 
@@ -147,7 +147,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(storeValue).To(Equal(value))
 		_, ok = resp.ValueInteger()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.ValueFloat64()
+		_, ok = resp.ValueDouble()
 		Expect(ok).To(BeFalse())
 		_, ok = resp.ValueBytes()
 		Expect(ok).To(BeFalse())
@@ -186,7 +186,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(storeValue).To(Equal(value))
 		_, ok = resp.ValueString()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.ValueFloat64()
+		_, ok = resp.ValueDouble()
 		Expect(ok).To(BeFalse())
 		_, ok = resp.ValueBytes()
 		Expect(ok).To(BeFalse())
@@ -198,7 +198,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     StorageValueFloat64(value),
+			Value:     StorageValueDouble(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -211,7 +211,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(DOUBLE))
 
-		storeValue, ok := resp.ValueFloat64()
+		storeValue, ok := resp.ValueDouble()
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
 		_, ok = resp.ValueString()
@@ -248,7 +248,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(ok).To(BeFalse())
 		_, ok = resp.ValueInteger()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.ValueFloat64()
+		_, ok = resp.ValueDouble()
 		Expect(ok).To(BeFalse())
 	})
 })

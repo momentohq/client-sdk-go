@@ -16,7 +16,7 @@ type StorageGetResponse interface {
 	ValueString() (string, bool)
 	ValueBytes() ([]byte, bool)
 	ValueInteger() (int, bool)
-	ValueFloat64() (float64, bool)
+	ValueDouble() (float64, bool)
 }
 
 // StorageGetSuccess indicates a successful store get request.
@@ -51,8 +51,8 @@ func (resp StorageGetSuccess) ValueBytes() ([]byte, bool) {
 	return nil, false
 }
 
-// ValueFloat64 returns the value in the store as a float64 and a boolean `true` value if it was stored as a double. Otherwise, it returns 0 and a boolean `false` value.
-func (resp StorageGetSuccess) ValueFloat64() (float64, bool) {
+// ValueDouble returns the value in the store as a float64 and a boolean `true` value if it was stored as a double. Otherwise, it returns 0 and a boolean `false` value.
+func (resp StorageGetSuccess) ValueDouble() (float64, bool) {
 	if resp.valueType == DOUBLE {
 		return *resp.valueFloat64, true
 	}

@@ -14,7 +14,7 @@ type StorageValueBytes []byte
 type StorageValueInteger int64
 
 // StorageValueDouble backed by float64 as Go doesn't have a double type.
-type StorageValueFloat64 float64
+type StorageValueDouble float64
 
 func (StorageValueString) isStorageValue() {}
 
@@ -22,4 +22,4 @@ func (StorageValueBytes) isStorageValue() {}
 
 func (StorageValueInteger) isStorageValue() {}
 
-func (StorageValueFloat64) isStorageValue() {}
+func (StorageValueDouble) isStorageValue() {}

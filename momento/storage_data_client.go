@@ -88,8 +88,8 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 		val.Value = &pb.XStoreValue_BytesValue{BytesValue: request.Value.(StorageValueBytes)}
 	case StorageValueString:
 		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(StorageValueString))}
-	case StorageValueFloat64:
-		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(StorageValueFloat64))}
+	case StorageValueDouble:
+		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(StorageValueDouble))}
 	case StorageValueInteger:
 		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(StorageValueInteger))}
 	}

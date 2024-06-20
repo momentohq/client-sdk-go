@@ -61,7 +61,7 @@ func main() {
 	getResp := tryGetResp.(*responses.StorageGetSuccess)
 
 	fmt.Printf("Trying to get double value from type %s\n", getResp.ValueType())
-	val, ok := getResp.ValueFloat64()
+	val, ok := getResp.ValueDouble()
 	if ok {
 		fmt.Printf("Got the double %f\n", val)
 	} else {
