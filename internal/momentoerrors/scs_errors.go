@@ -37,10 +37,8 @@ const (
 	AuthenticationError = "AuthenticationError"
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"
-	// NotFoundError occurs when a cache with specified name doesn't exist.
-	NotFoundError = "NotFoundError"
 	// CacheNotFoundError occurs when a cache with specified name doesn't exist.
-	CacheNotFoundError = "CacheNotFoundError"
+	CacheNotFoundError = "NotFoundError"
 	// StoreNotFoundError occurs when a store with specified name doesn't exist.
 	StoreNotFoundError = "StoreNotFoundError"
 	// ItemNotFoundError occurs when an item with specified key doesn't exist.
