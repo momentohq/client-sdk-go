@@ -18,6 +18,7 @@ var _ = Describe("StorageClient", func() {
 
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
+		sharedContext.CreateDefaultStores()
 	})
 
 	It("errors on invalid timeout", func() {

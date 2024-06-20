@@ -29,7 +29,7 @@ const (
 	// Deprecated: Use more specific CacheNotFoundError, StoreNotFoundError, or ItemNotFoundError instead.
 	NotFoundError = "NotFoundError"
 	// CacheNotFoundError occurs when a cache with specified name doesn't exist.
-	CacheNotFoundError = "CacheNotFoundError"
+	CacheNotFoundError = "NotFoundError"
 	// StoreNotFoundError occurs when a store with specified name doesn't exist.
 	StoreNotFoundError = "StoreNotFoundError"
 	// ItemNotFoundError occurs when an item with specified key doesn't exist.
