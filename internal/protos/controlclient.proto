@@ -19,6 +19,36 @@ service ScsControl {
   rpc CreateIndex (_CreateIndexRequest) returns (_CreateIndexResponse) {}
   rpc DeleteIndex(_DeleteIndexRequest) returns (_DeleteIndexResponse) {}
   rpc ListIndexes(_ListIndexesRequest) returns (_ListIndexesResponse) {}
+  rpc CreateStore (_CreateStoreRequest) returns (_CreateStoreResponse) {}
+  rpc DeleteStore (_DeleteStoreRequest) returns (_DeleteStoreResponse) {}
+  rpc ListStores (_ListStoresRequest) returns (_ListStoresResponse) {}
+}
+
+message _CreateStoreRequest {
+  string store_name = 1;
+}
+
+message _CreateStoreResponse {
+}
+
+message _DeleteStoreRequest {
+  string store_name = 1;
+}
+
+message _DeleteStoreResponse {
+}
+
+message _ListStoresRequest {
+  string next_token = 1;
+}
+
+message _ListStoresResponse {
+  repeated _Store store = 1;
+  string next_token = 2;
+}
+
+message _Store {
+  string store_name = 1;
 }
 
 message _SimilarityMetric {

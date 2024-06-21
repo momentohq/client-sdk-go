@@ -62,3 +62,33 @@ func (client *ScsControlClient) ListCaches(ctx context.Context, request *models.
 	}
 	return models.NewListCacheResponse(resp), nil
 }
+
+func (client *ScsControlClient) CreateStore(ctx context.Context, request *models.CreateStoreRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
+	defer cancel()
+	_, err := client.grpcClient.CreateStore(ctx, &pb.XCreateStoreRequest{StoreName: request.StoreName})
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
+func (client *ScsControlClient) DeleteStore(ctx context.Context, request *models.DeleteStoreRequest) momentoerrors.MomentoSvcErr {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
+	defer cancel()
+	_, err := client.grpcClient.DeleteStore(ctx, &pb.XDeleteStoreRequest{StoreName: request.StoreName})
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err)
+	}
+	return nil
+}
+
+func (client *ScsControlClient) ListStores(ctx context.Context, request *models.ListStoresRequest) (*models.ListStoresResponse, momentoerrors.MomentoSvcErr) {
+	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
+	defer cancel()
+	resp, err := client.grpcClient.ListStores(ctx, &pb.XListStoresRequest{NextToken: request.NextToken})
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+	return models.NewListStoresResponse(resp), nil
+}

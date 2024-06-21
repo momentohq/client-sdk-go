@@ -25,7 +25,15 @@ const (
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"
 	// NotFoundError occurs when a cache with specified name doesn't exist.
+	//
+	// Deprecated: Use more specific CacheNotFoundError, StoreNotFoundError, or ItemNotFoundError instead.
 	NotFoundError = "NotFoundError"
+	// CacheNotFoundError occurs when a cache with specified name doesn't exist.
+	CacheNotFoundError = "NotFoundError"
+	// StoreNotFoundError occurs when a store with specified name doesn't exist.
+	StoreNotFoundError = "StoreNotFoundError"
+	// ItemNotFoundError occurs when an item with specified key doesn't exist.
+	ItemNotFoundError = "ItemNotFoundError"
 	// AlreadyExistsError occurs when a cache with specified name already exists.
 	AlreadyExistsError = "AlreadyExistsError"
 	// UnknownServiceError occurs when an unknown error has occurred.

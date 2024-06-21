@@ -29,3 +29,24 @@ func NewCacheInfo(cache *pb.XCache) responses.CacheInfo {
 type TopicSubscribeResponse struct{}
 
 type TopicPublishResponse struct{}
+
+type ListStoresResponse struct {
+	NextToken string
+	Stores    []responses.StoreInfo
+}
+
+func NewListStoresResponse(resp *pb.XListStoresResponse) *ListStoresResponse {
+	var stores []responses.StoreInfo
+	for _, store := range resp.Store {
+		stores = append(stores, NewStoreInfo(store))
+	}
+	return &ListStoresResponse{NextToken: resp.NextToken, Stores: stores}
+}
+
+type StoreInfo struct {
+	Name string
+}
+
+func NewStoreInfo(store *pb.XStore) responses.StoreInfo {
+	return responses.NewStoreInfo(store.StoreName)
+}

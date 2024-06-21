@@ -2,6 +2,7 @@ package momentoerrors
 
 import (
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -37,7 +38,15 @@ const (
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"
 	// NotFoundError occurs when a cache with specified name doesn't exist.
+	//
+	// Deprecated: Use more specific CacheNotFoundError, StoreNotFoundError, or ItemNotFoundError instead.
 	NotFoundError = "NotFoundError"
+	// CacheNotFoundError occurs when a cache with specified name doesn't exist.
+	CacheNotFoundError = "NotFoundError"
+	// StoreNotFoundError occurs when a store with specified name doesn't exist.
+	StoreNotFoundError = "StoreNotFoundError"
+	// ItemNotFoundError occurs when an item with specified key doesn't exist.
+	ItemNotFoundError = "ItemNotFoundError"
 	// AlreadyExistsError occurs when a cache with specified name already exists.
 	AlreadyExistsError = "AlreadyExistsError"
 	// UnknownServiceError occurs when an unknown error has occurred.
@@ -55,7 +64,7 @@ const (
 )
 
 // ConvertSvcErr converts gRPC error to MomentoSvcErr.
-func ConvertSvcErr(err error) MomentoSvcErr {
+func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 	if grpcStatus, ok := status.FromError(err); ok {
 		switch grpcStatus.Code() {
 		case codes.InvalidArgument:
@@ -77,7 +86,16 @@ func ConvertSvcErr(err error) MomentoSvcErr {
 		case codes.ResourceExhausted:
 			return NewMomentoSvcErr(LimitExceededError, grpcStatus.Message(), err)
 		case codes.NotFound:
-			return NewMomentoSvcErr(NotFoundError, grpcStatus.Message(), err)
+			// Use metadata to determine cause of not found error
+			if len(metadata) > 1 && len(metadata[1]) > 1 {
+				errCause := metadata[1]["err"][0]
+				if errCause == "element_not_found" {
+					return NewMomentoSvcErr(ItemNotFoundError, grpcStatus.Message(), err)
+				} else if errCause == "store_not_found" {
+					return NewMomentoSvcErr(StoreNotFoundError, grpcStatus.Message(), err)
+				}
+			}
+			return NewMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err)
 		case codes.AlreadyExists:
 			return NewMomentoSvcErr(AlreadyExistsError, grpcStatus.Message(), err)
 		case codes.Unknown:

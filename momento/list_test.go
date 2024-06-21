@@ -146,10 +146,10 @@ var _ = Describe("List methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
-		Entry("nonexistent cache name", DefaultClient, uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("nonexistent cache name", DefaultClient, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 		Entry("empty cache name", DefaultClient, "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("empty list name", DefaultClient, sharedContext.CacheName, "", InvalidArgumentError),
-		Entry("nonexistent cache name", WithDefaultCache, uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("nonexistent cache name", WithDefaultCache, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 		Entry("empty cache name", WithDefaultCache, "", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("empty list name", WithDefaultCache, sharedContext.CacheName, "", InvalidArgumentError),
 	)

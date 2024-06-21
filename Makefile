@@ -37,7 +37,7 @@ install-protos-devtools:
 .PHONY: protos
 protos:
 	@echo "Run `make install-protos-devtools` if you're missing the Go grpc tools."
-	@echo "Did you copy momentohq/client_protos/protos/*.proto to internal/protos?"
+	@echo "Did you copy momentohq/client_protos/proto/*.proto to internal/protos?"
 	# this file is not needed and causes errors, so make sure it's not present
 	rm -f internal/protos/httpcache.proto
 	protoc -I=internal/protos --go_out=internal/protos --go_opt=paths=source_relative --go-grpc_out=internal/protos --go-grpc_opt=paths=source_relative internal/protos/*.proto

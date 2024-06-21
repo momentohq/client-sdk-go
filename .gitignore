@@ -3,3 +3,4 @@
 vendor
 .env
 .vscode
+client-sdk-go.iml

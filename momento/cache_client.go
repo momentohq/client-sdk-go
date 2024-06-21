@@ -222,6 +222,9 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 	}
 
 	numChannels := props.Configuration.GetNumGrpcChannels()
+	if numChannels < 1 {
+		numChannels = 1
+	}
 	dataClients := make([]*scsDataClient, 0)
 
 	for i := 0; uint32(i) < numChannels; i++ {
@@ -345,7 +348,7 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 		CacheName: request.CacheName,
 	})
 	if err != nil {
-		if err.Code() == NotFoundError {
+		if err.Code() == CacheNotFoundError || err.Code() == NotFoundError {
 			c.logger.Info("Cache with name '%s' does not exist, skipping", request.CacheName)
 			return &responses.DeleteCacheSuccess{}, nil
 		}
@@ -357,9 +360,7 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 }
 
 func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error) {
-	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{
-		NextToken: request.NextToken,
-	})
+	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}

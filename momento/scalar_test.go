@@ -610,7 +610,7 @@ var _ = Describe("Scalar methods", func() {
 				Key:       key,
 			})
 			Expect(getResp).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+			Expect(err).To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			setResp, err := client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: cacheName,
@@ -618,14 +618,14 @@ var _ = Describe("Scalar methods", func() {
 				Value:     value,
 			})
 			Expect(setResp).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+			Expect(err).To(HaveMomentoErrorCode(CacheNotFoundError))
 
 			deleteResp, err := client.Delete(sharedContext.Ctx, &DeleteRequest{
 				CacheName: cacheName,
 				Key:       key,
 			})
 			Expect(deleteResp).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(NotFoundError))
+			Expect(err).To(HaveMomentoErrorCode(CacheNotFoundError))
 		},
 		Entry("with default client", DefaultClient),
 		Entry("with client with default cache", WithDefaultCache),

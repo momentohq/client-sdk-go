@@ -20,7 +20,7 @@ var _ = Describe("Control ops", func() {
 		DeferCleanup(func() { sharedContext.Close() })
 	})
 
-	Describe("Happy Path", func() {
+	Describe("Cache Happy Path", func() {
 		It("creates, lists, and deletes caches", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
 			defer func() {
@@ -83,6 +83,80 @@ var _ = Describe("Control ops", func() {
 
 	})
 
+	Describe("Store Happy Path", func() {
+
+		It("creates, lists, and deletes stores", func() {
+			storeNames := []string{uuid.NewString(), uuid.NewString()}
+			defer func() {
+				for _, storeName := range storeNames {
+					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					if err != nil {
+						if err.(MomentoError).Code() != StoreNotFoundError {
+							panic(err)
+						}
+					}
+				}
+			}()
+
+			for _, storeName := range storeNames {
+				Expect(
+					sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+				).To(BeAssignableToTypeOf(&CreateStoreSuccess{}))
+
+				Expect(
+					sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+				).To(BeAssignableToTypeOf(&CreateStoreAlreadyExists{}))
+			}
+
+			resp, err := sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+			Expect(err).To(Succeed())
+
+			var listedStores []string
+			switch r := resp.(type) {
+			case *ListStoresSuccess:
+				for _, info := range r.Stores() {
+					listedStores = append(listedStores, info.Name())
+				}
+				Expect(listedStores).To(ContainElements(storeNames))
+			default:
+				// best effort at cleaning up stores if we fail here
+				for _, storeName := range storeNames {
+					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					if err != nil {
+						if err.(MomentoError).Code() != StoreNotFoundError {
+							panic(err)
+						}
+					}
+				}
+				Fail("Unexpected response type")
+			}
+
+			for _, storeName := range storeNames {
+				Expect(
+					sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName}),
+				).To(BeAssignableToTypeOf(&DeleteStoreSuccess{}))
+			}
+			resp, err = sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+			Expect(err).To(Succeed())
+			Expect(resp).To(BeAssignableToTypeOf(&ListStoresSuccess{}))
+			switch r := resp.(type) {
+			case *ListStoresSuccess:
+				Expect(r.Stores()).To(Not(ContainElements(storeNames)))
+			default:
+				// best effort at cleaning up stores if we fail here
+				for _, storeName := range storeNames {
+					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+					if err != nil {
+						if err.(MomentoError).Code() != StoreNotFoundError {
+							panic(err)
+						}
+					}
+				}
+				Fail("Unexpected response type")
+			}
+		})
+	})
+
 	Describe("cache client with default cache name", func() {
 		It("overrides default cache name", func() {
 			Expect(
@@ -94,7 +168,7 @@ var _ = Describe("Control ops", func() {
 				sharedContext.ClientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{Key: String("hi")},
 				),
-			).Error().To(HaveMomentoErrorCode(NotFoundError))
+			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{

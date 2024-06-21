@@ -48,7 +48,7 @@ var _ = Describe("Pubsub", func() {
 		Entry("Blank cache name", "  ", sharedContext.CollectionName, InvalidArgumentError),
 		Entry("Empty collection name", sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name", sharedContext.CacheName, "  ", InvalidArgumentError),
-		Entry("Non-existent cache", uuid.NewString(), uuid.NewString(), NotFoundError),
+		Entry("Non-existent cache", uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 	)
 
 	It(`Publishes and receives`, func() {
