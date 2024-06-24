@@ -89,7 +89,7 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 			// Use metadata to determine cause of not found error
 			if len(metadata) > 1 && len(metadata[1]) > 1 {
 				errCause := metadata[1]["err"][0]
-				if errCause == "element_not_found" {
+				if errCause == "item_not_found" {
 					return NewMomentoSvcErr(ItemNotFoundError, grpcStatus.Message(), err)
 				} else if errCause == "store_not_found" {
 					return NewMomentoSvcErr(StoreNotFoundError, grpcStatus.Message(), err)
