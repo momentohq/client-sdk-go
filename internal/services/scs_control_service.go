@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -76,9 +78,15 @@ func (client *ScsControlClient) CreateStore(ctx context.Context, request *models
 func (client *ScsControlClient) DeleteStore(ctx context.Context, request *models.DeleteStoreRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
-	_, err := client.grpcClient.DeleteStore(ctx, &pb.XDeleteStoreRequest{StoreName: request.StoreName})
+	var header, trailer metadata.MD
+	_, err := client.grpcClient.DeleteStore(
+		ctx,
+		&pb.XDeleteStoreRequest{StoreName: request.StoreName},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }

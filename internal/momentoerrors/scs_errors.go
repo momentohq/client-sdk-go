@@ -87,8 +87,15 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 			return NewMomentoSvcErr(LimitExceededError, grpcStatus.Message(), err)
 		case codes.NotFound:
 			// Use metadata to determine cause of not found error
-			if len(metadata) > 1 && len(metadata[1]) > 1 {
-				errCause := metadata[1]["err"][0]
+			if len(metadata) > 1 {
+				errData, ok := metadata[1]["err"]
+				// In the absence of error metadata, return CacheNotFoundError.
+				// This is currently re-mapped to a StoreNotFoundError in the PreviewStorageClient's
+				// DeleteStore method.
+				if !ok {
+					return NewMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err)
+				}
+				errCause := errData[0]
 				if errCause == "item_not_found" {
 					return NewMomentoSvcErr(ItemNotFoundError, grpcStatus.Message(), err)
 				} else if errCause == "store_not_found" {

@@ -251,4 +251,16 @@ var _ = Describe("Store scalar methods", func() {
 		_, ok = resp.ValueDouble()
 		Expect(ok).To(BeFalse())
 	})
+
+	It("Handles a miss", func() {
+		key := uuid.NewString()
+		resp, found, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
+		Expect(err).To(Succeed())
+		Expect(found).To(BeFalse())
+		Expect(resp).To(BeNil())
+	})
+
 })
