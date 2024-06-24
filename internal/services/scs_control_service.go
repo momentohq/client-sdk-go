@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
+	"time"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
