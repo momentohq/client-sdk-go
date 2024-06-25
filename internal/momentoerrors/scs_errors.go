@@ -96,7 +96,8 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 					return NewMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err)
 				}
 				errCause := errData[0]
-				if errCause == "item_not_found" {
+				//if errCause == "item_not_found" {
+				if errCause == "element_not_found" {
 					return NewMomentoSvcErr(ItemNotFoundError, grpcStatus.Message(), err)
 				} else if errCause == "store_not_found" {
 					return NewMomentoSvcErr(StoreNotFoundError, grpcStatus.Message(), err)
