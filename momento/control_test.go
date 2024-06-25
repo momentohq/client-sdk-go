@@ -157,6 +157,14 @@ var _ = Describe("Control ops", func() {
 		})
 	})
 
+	Describe("Store error cases", func() {
+		It("returns StoreNotFoundError when deleting a non-existent store", func() {
+			resp, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: uuid.NewString()})
+			Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
+			Expect(resp).To(BeNil())
+		})
+	})
+
 	Describe("cache client with default cache name", func() {
 		It("overrides default cache name", func() {
 			Expect(
