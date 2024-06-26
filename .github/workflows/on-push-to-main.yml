@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   readme:
     runs-on: ubuntu-24.04
@@ -22,7 +26,7 @@ jobs:
           template_file: ./README.template.md
           output_file: ./README.md
           dev_docs_slug: go
-      
+
       - name: Generate CONTRIBUTING
         uses: momentohq/standards-and-practices/github-actions/generate-and-commit-oss-readme@gh-actions-v2
         with:
@@ -36,6 +40,7 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
+    needs: [ readme ]
     permissions:
       contents: read
       pull-requests: read
@@ -79,3 +84,41 @@ jobs:
 
       - name: Run test
         run: make test
+
+  release-please:
+    runs-on: ubuntu-latest
+    needs: [ test ]
+    name: Release Please
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
+          release-type: go
+          package-name: momento
+          default-branch: main
+          changelog-types: '[{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"chore","section":"Miscellaneous","hidden":false}]'
+          extra-files: |
+            internal/interceptor/first_time_headers_interceptor.go
+
+  publish-golang:
+    needs: [ release-please ]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Publish package
+        run: |
+          set -e
+          set -x
+          export MOMENTO_SDK_VERSION="${{needs.release-please.outputs.tag_name}}"
+          if [ -z "$MOMENTO_SDK_VERSION"]
+          then
+            echo "Unable to determine SDK version!  Exiting!"
+            exit 1
+          fi
+          echo "MOMENTO_SDK_VERSION=${MOMENTO_SDK_VERSION}"
+          GOPROXY=proxy.golang.org go list -m github.com/momentohq/client-sdk-go@${MOMENTO_SDK_VERSION}
+        shell: bash
