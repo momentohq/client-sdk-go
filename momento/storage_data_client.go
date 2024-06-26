@@ -92,8 +92,8 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(utils.StorageValueString))}
 	case utils.StorageValueFloat:
 		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(utils.StorageValueFloat))}
-	case utils.StorageValueInteger:
-		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(utils.StorageValueInteger))}
+	case utils.StorageValueInt:
+		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(utils.StorageValueInt))}
 	}
 
 	var header, trailer metadata.MD // variable to store header and trailer

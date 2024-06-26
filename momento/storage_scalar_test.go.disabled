@@ -50,7 +50,7 @@ var _ = Describe("Store scalar methods", func() {
 			}
 		},
 		Entry("StorageValueString", uuid.NewString(), utils.StorageValueString("string-value")),
-		Entry("StorageValueInteger", uuid.NewString(), utils.StorageValueInteger(42)),
+		Entry("StorageValueInt", uuid.NewString(), utils.StorageValueInt(42)),
 		Entry("StorageValueFloat", uuid.NewString(), utils.StorageValueFloat(3.14)),
 		Entry("StorageValueBytes", uuid.NewString(), utils.StorageValueBytes([]byte{0x01, 0x02, 0x03})),
 	)
@@ -227,7 +227,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     utils.StorageValueInteger(value),
+			Value:     utils.StorageValueInt(value),
 		})
 		Expect(err).To(Succeed())
 
