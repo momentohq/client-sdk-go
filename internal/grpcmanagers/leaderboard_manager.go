@@ -19,11 +19,22 @@ const LeaderboardPort = ":443"
 func NewLeaderboardGrpcManager(request *models.LeaderboardGrpcManagerRequest) (*LeaderboardGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), LeaderboardPort)
 	authToken := request.CredentialProvider.GetAuthToken()
+
+	headerInterceptors := []grpc.UnaryClientInterceptor{
+		interceptor.AddAuthHeadersInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("leaderboard"))
+	}
+
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
-			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)
 	if err != nil {

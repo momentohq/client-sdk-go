@@ -22,6 +22,18 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
 	authToken := request.CredentialProvider.GetAuthToken()
 
+	headerInterceptors := []grpc.UnaryClientInterceptor{
+		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy),
+		interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern),
+		interceptor.AddAuthHeadersInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("cache"))
+	}
+
 	var conn *grpc.ClientConn
 	var err error
 	if request.EagerConnect {
@@ -29,7 +41,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 			endpoint,
 			AllDialOptions(
 				request.GrpcConfiguration,
-				grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+				grpc.WithChainUnaryInterceptor(headerInterceptors...),
 				grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 			)...,
 		)
@@ -38,7 +50,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 			endpoint,
 			AllDialOptions(
 				request.GrpcConfiguration,
-				grpc.WithChainUnaryInterceptor(interceptor.AddUnaryRetryInterceptor(request.RetryStrategy), interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern), interceptor.AddAuthHeadersInterceptor(authToken)),
+				grpc.WithChainUnaryInterceptor(headerInterceptors...),
 				grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 			)...,
 		)

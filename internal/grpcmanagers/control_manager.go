@@ -24,11 +24,21 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 	// Override grpc config to disable keepalives
 	controlConfig := config.NewStaticGrpcConfiguration(&config.GrpcConfigurationProps{}).WithKeepAliveDisabled()
 
+	headerInterceptors := []grpc.UnaryClientInterceptor{
+		interceptor.AddAuthHeadersInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("cache"))
+	}
+
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			controlConfig,
-			grpc.WithUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)
 	if err != nil {
