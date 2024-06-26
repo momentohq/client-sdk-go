@@ -6,12 +6,10 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/utils"
-
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 var (
@@ -57,8 +55,7 @@ func main() {
 	}
 
 	fmt.Println("Getting value")
-	// getResp is a StorageGetResponse that is coerced to the "found" type below
-	getResp, err := client.Get(ctx, &momento.StorageGetRequest{
+	value, err := client.Get(ctx, &momento.StorageGetRequest{
 		StoreName: storeName,
 		Key:       key,
 	})
@@ -66,16 +63,15 @@ func main() {
 		panic(err)
 	}
 
-	// first coerce the response to the Found type if possible
-	foundResp, ok := getResp.(*responses.StorageGetFound)
-	if !ok {
-		fmt.Println("Did not get a found response; exiting")
+	// A nil value indicates that the key was not found.
+	if value == nil {
+		fmt.Println("Did not find a value for the key; exiting")
 		os.Exit(1)
 	}
 
 	// Then get the value from the found response.
 	// If you don't know the type beforehand:
-	switch t := foundResp.Value().(type) {
+	switch t := value.(type) {
 	case utils.StorageValueString:
 		fmt.Printf("Got the string %s\n", t)
 	case utils.StorageValueBytes:
@@ -87,10 +83,10 @@ func main() {
 	}
 
 	// If you know the type beforehand:
-	fmt.Printf("Got the string %s\n", foundResp.Value().(utils.StorageValueString))
+	fmt.Printf("Got the string %s\n", value.(utils.StorageValueString))
 
 	// If you choose the wrong type:
-	intVal, ok := foundResp.Value().(utils.StorageValueInt)
+	intVal, ok := value.(utils.StorageValueInt)
 	if !ok {
 		fmt.Println("Illegal type assertion")
 	} else {
@@ -98,7 +94,7 @@ func main() {
 	}
 
 	// You can do it in one shot, but it'll panic if you guess wrong like any cast would
-	//fmt.Printf("Got the integer %d\n", foundResp.Value().(utils.StorageValueInteger))
+	//fmt.Printf("Got the integer %d\n", value.(utils.StorageValueInteger))
 
 	// delete the key
 	fmt.Println("Deleting key")
@@ -109,6 +105,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// get a key that doesn't exist
+	fmt.Println("Getting a key that doesn't exist")
+	value, err = client.Get(ctx, &momento.StorageGetRequest{
+		StoreName: storeName,
+		Key:       uuid.NewString(),
+	})
+	if err != nil {
+		panic(err)
+	}
+	// result: "Got the value <nil>"
+	fmt.Printf("Got the value %v\n", value)
+	// Trying to coerce a nil value will also panic of course
+	// fmt.Printf("Got the string %s\n", value.(utils.StorageValueString))
 
 	fmt.Println("Done")
 }

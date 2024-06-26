@@ -113,7 +113,7 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 	return &responses.StoragePutSuccess{}, nil
 }
 
-func (client *storageDataClient) get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) get(ctx context.Context, request *StorageGetRequest) (utils.StorageValue, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -132,10 +132,10 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	)
 
 	if err != nil {
-		// Handle item not found error by returning a miss
+		// Handle item not found error by returning nil
 		myErr := momentoerrors.ConvertSvcErr(err, header, trailer)
 		if myErr.Code() == momentoerrors.ItemNotFoundError {
-			return responses.NewStoreGetNotFound(), nil
+			return nil, nil
 		}
 		return nil, myErr
 	}
@@ -143,13 +143,13 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	val := response.GetValue()
 	switch val.Value.(type) {
 	case *pb.XStoreValue_BytesValue:
-		return responses.NewStoreGetFound_Bytes(val.GetBytesValue()), nil
+		return utils.StorageValueBytes(val.GetBytesValue()), nil
 	case *pb.XStoreValue_StringValue:
-		return responses.NewStoreGetFound_String(val.GetStringValue()), nil
+		return utils.StorageValueString(val.GetStringValue()), nil
 	case *pb.XStoreValue_DoubleValue:
-		return responses.NewStoreGetFound_Float(val.GetDoubleValue()), nil
+		return utils.StorageValueFloat(val.GetDoubleValue()), nil
 	case *pb.XStoreValue_IntegerValue:
-		return responses.NewStoreGetFound_Integer(int(val.GetIntegerValue())), nil
+		return utils.StorageValueInt(val.GetIntegerValue()), nil
 	default:
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.UnknownServiceError, "Unknown store value type", nil)
 	}

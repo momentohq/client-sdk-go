@@ -1,8 +1,6 @@
 package momento_test
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/utils"
 	. "github.com/onsi/ginkgo/v2"
@@ -22,7 +20,7 @@ var _ = Describe("Store scalar methods", func() {
 		DeferCleanup(func() { sharedContext.Close() })
 	})
 
-	DescribeTable("Sets with correct StorageValueType",
+	DescribeTable("Sets, gets, and deletes with correct StorageValueType",
 		func(key string, value utils.StorageValue) {
 			_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 				StoreName: sharedContext.StoreName,
@@ -31,13 +29,11 @@ var _ = Describe("Store scalar methods", func() {
 			})
 			Expect(err).To(Succeed())
 
-			resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 				StoreName: sharedContext.StoreName,
 				Key:       key,
 			})
 			Expect(err).To(Succeed())
-			Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
-			val := resp.(*StorageGetFound).Value()
 			switch val.(type) {
 			case utils.StorageValueString:
 				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueString("")))
@@ -45,9 +41,25 @@ var _ = Describe("Store scalar methods", func() {
 				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueInt(0)))
 			case utils.StorageValueFloat:
 				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueFloat(0.0)))
+				Expect(val).To(Equal(value))
 			case utils.StorageValueBytes:
 				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueBytes([]byte{})))
+				Expect(val).To(Equal(value))
 			}
+
+			resp, err := sharedContext.StorageClient.Delete(sharedContext.Ctx, &StorageDeleteRequest{
+				StoreName: sharedContext.StoreName,
+				Key:       key,
+			})
+			Expect(err).To(Succeed())
+			Expect(resp).To(BeAssignableToTypeOf(&StorageDeleteSuccess{}))
+
+			val, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+				StoreName: sharedContext.StoreName,
+				Key:       key,
+			})
+			Expect(err).To(Succeed())
+			Expect(val).To(BeNil())
 		},
 		Entry("StorageValueString", uuid.NewString(), utils.StorageValueString("string-value")),
 		Entry("StorageValueInt", uuid.NewString(), utils.StorageValueInt(42)),
@@ -65,23 +77,13 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
-		Expect(resp.(*StorageGetFound).Value().(utils.StorageValueString)).To(Equal(value))
-	})
-
-	It("does the right thing on a miss", func() {
-		key := uuid.NewString()
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
-			StoreName: sharedContext.StoreName,
-			Key:       key,
-		})
-		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetNotFound{}))
+		Expect(val).To(BeAssignableToTypeOf(utils.StorageValueString("")))
+		Expect(val.(utils.StorageValueString)).To(Equal(value))
 	})
 
 	It("does the right thing on an incorrect cast", func() {
@@ -94,13 +96,12 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
-		val := resp.(*StorageGetFound).Value()
+		Expect(val).To(BeAssignableToTypeOf(utils.StorageValueString("")))
 		_, ok := val.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 	})
@@ -115,7 +116,7 @@ var _ = Describe("Store scalar methods", func() {
 			Key:       key,
 		})
 		Expect(err).To(BeNil())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetNotFound{}))
+		Expect(resp).To(BeNil())
 
 		_, err = sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: store,
@@ -192,23 +193,21 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+		Expect(val).To(BeAssignableToTypeOf(utils.StorageValueString("")))
 
-		hitResp := resp.(*StorageGetFound)
-		hitValue := hitResp.Value()
-		storeValue, ok := hitValue.(utils.StorageValueString)
+		storeValue, ok := val.(utils.StorageValueString)
 		Expect(ok).To(BeTrue())
 		Expect(string(storeValue)).To(Equal(value))
-		_, ok = hitValue.(utils.StorageValueInt)
+		_, ok = val.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueFloat)
+		_, ok = val.(utils.StorageValueFloat)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueBytes)
+		_, ok = val.(utils.StorageValueBytes)
 		Expect(ok).To(BeFalse())
 	})
 
@@ -231,23 +230,21 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+		Expect(val).To(BeAssignableToTypeOf(utils.StorageValueInt(0)))
 
-		hitResp := resp.(*StorageGetFound)
-		hitValue := hitResp.Value()
-		storeValue, ok := hitValue.(utils.StorageValueInt)
+		storeValue, ok := val.(utils.StorageValueInt)
 		Expect(ok).To(BeTrue())
 		Expect(int(storeValue)).To(Equal(value))
-		_, ok = hitValue.(utils.StorageValueString)
+		_, ok = val.(utils.StorageValueString)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueFloat)
+		_, ok = val.(utils.StorageValueFloat)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueBytes)
+		_, ok = val.(utils.StorageValueBytes)
 		Expect(ok).To(BeFalse())
 	})
 
@@ -261,23 +258,21 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+		Expect(val).To(BeAssignableToTypeOf(utils.StorageValueFloat(0.0)))
 
-		hitResp := resp.(*StorageGetFound)
-		hitValue := hitResp.Value()
-		storeValue, ok := hitValue.(utils.StorageValueFloat)
+		storeValue, ok := val.(utils.StorageValueFloat)
 		Expect(ok).To(BeTrue())
 		Expect(float64(storeValue)).To(Equal(value))
-		_, ok = hitValue.(utils.StorageValueString)
+		_, ok = val.(utils.StorageValueString)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueInt)
+		_, ok = val.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueBytes)
+		_, ok = val.(utils.StorageValueBytes)
 		Expect(ok).To(BeFalse())
 	})
 
@@ -291,73 +286,34 @@ var _ = Describe("Store scalar methods", func() {
 		})
 		Expect(err).To(Succeed())
 
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+		Expect(val).To(BeAssignableToTypeOf(utils.StorageValueBytes{}))
 
-		hitResp := resp.(*StorageGetFound)
-		hitValue := hitResp.Value()
-		storeValue, ok := hitValue.(utils.StorageValueBytes)
+		storeValue, ok := val.(utils.StorageValueBytes)
 		Expect(ok).To(BeTrue())
 		Expect([]byte(storeValue)).To(Equal(value))
-		_, ok = hitValue.(utils.StorageValueString)
+		_, ok = val.(utils.StorageValueString)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueInt)
+		_, ok = val.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueFloat)
+		_, ok = val.(utils.StorageValueFloat)
 		Expect(ok).To(BeFalse())
 	})
 
 	It("Handles a miss", func() {
 		key := uuid.NewString()
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+		val, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
 		})
 		Expect(err).To(Succeed())
-		Expect(resp).To(BeAssignableToTypeOf(&StorageGetNotFound{}))
-		Expect(resp.(*StorageGetNotFound).Value()).To(BeNil())
+		Expect(val).To(BeNil())
+		_, ok := val.(utils.StorageValueFloat)
+		Expect(ok).To(BeFalse())
 	})
-
-	It("reads directly from the response", func() {
-		key := uuid.NewString()
-		val := uuid.NewString()
-		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
-			StoreName: sharedContext.StoreName,
-			Key:       key,
-			Value:     utils.StorageValueString(val),
-		})
-		Expect(err).To(Succeed())
-		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
-			StoreName: sharedContext.StoreName,
-			Key:       key,
-		})
-		Expect(err).To(Succeed())
-
-		// unwrap value with no switch at all
-		_ = resp.(*StorageGetFound).Value().(utils.StorageValueString)
-		// unwrap value with a switch for response type
-		switch r := resp.(type) {
-		case *StorageGetFound:
-			fmt.Printf("resp as string: %s\n", r.Value().(utils.StorageValueString))
-		case *StorageGetNotFound:
-			fmt.Println("not found")
-		}
-	})
-
-	//It("deleteallstores", func() {
-	//	resp, err := sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
-	//	Expect(err).To(Succeed())
-	//	for _, store := range resp.(*ListStoresSuccess).Stores() {
-	//		name := store.Name()
-	//		_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{
-	//			StoreName: name,
-	//		})
-	//		Expect(err).To(Succeed())
-	//	}
-	//})
 
 })
