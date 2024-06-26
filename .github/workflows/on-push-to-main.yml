@@ -114,7 +114,7 @@ jobs:
           set -e
           set -x
           export MOMENTO_SDK_VERSION="${{needs.release-please.outputs.tag_name}}"
-          if [ -z "$MOMENTO_SDK_VERSION"]
+          if [ -z "$MOMENTO_SDK_VERSION" ]
           then
             echo "Unable to determine SDK version!  Exiting!"
             exit 1
