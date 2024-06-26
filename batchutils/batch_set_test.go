@@ -266,7 +266,7 @@ var _ = Describe("Batch set operations", func() {
 				items = append(items, item)
 			}
 
-			timeout := 1 * time.Millisecond
+			timeout := 1 * time.Nanosecond
 			setBatchResp, setErrors := batchutils.BatchSet(ctx, &batchutils.BatchSetRequest{
 				Client:         client,
 				CacheName:      cacheName,
