@@ -55,6 +55,6 @@ func NewStoreGetFound_Float(value float64) *StorageGetFound {
 // NewStoreGetFound_Integer returns a new StorageGetFound containing the supplied int value.
 func NewStoreGetFound_Integer(value int) *StorageGetFound {
 	return &StorageGetFound{
-		value: utils.StorageValueInteger(value),
+		value: utils.StorageValueInt(value),
 	}
 }
