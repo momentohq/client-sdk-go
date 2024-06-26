@@ -105,7 +105,7 @@ var _ = Describe("Batch operations", func() {
 		})
 
 		It("super small request timeout test", func() {
-			timeout := 1 * time.Millisecond
+			timeout := 1 * time.Nanosecond
 			errors := batchutils.BatchDelete(ctx, &batchutils.BatchDeleteRequest{
 				Client:         client,
 				CacheName:      cacheName,
@@ -175,7 +175,7 @@ var _ = Describe("Batch operations", func() {
 		})
 
 		It("super small request timeout test", func() {
-			timeout := 1 * time.Millisecond
+			timeout := 1 * time.Nanosecond
 			getBatch, errors := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
 				Client:         client,
 				CacheName:      cacheName,
