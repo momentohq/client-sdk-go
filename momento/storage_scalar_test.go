@@ -33,15 +33,74 @@ var _ = Describe("storage-client scalar", func() {
 				Key:       key,
 			})
 			Expect(err).To(Succeed())
-			Expect(found).To(BeTrue())
-			Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
-			Expect(resp.ValueType()).To(Equal(expected))
+			Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+			val := resp.(*StorageGetFound).Value()
+			switch val.(type) {
+			case utils.StorageValueString:
+				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueString("")))
+			case utils.StorageValueInt:
+				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueInt(0)))
+			case utils.StorageValueFloat:
+				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueFloat(0.0)))
+			case utils.StorageValueBytes:
+				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueBytes([]byte{})))
+			}
 		},
 		Entry("StorageValueString", uuid.NewString(), StorageValueString("string-value"), STRING),
 		Entry("StorageValueInteger", uuid.NewString(), StorageValueInteger(42), INTEGER),
 		Entry("StorageValueDouble", uuid.NewString(), StorageValueDouble(3.14), DOUBLE),
 		Entry("StorageValueBytes", uuid.NewString(), StorageValueBytes([]byte{0x01, 0x02, 0x03}), BYTES),
 	)
+
+	It("handles a get without a switch for a known type", func() {
+		key := uuid.NewString()
+		value := utils.StorageValueString("string-value")
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+			Value:     value,
+		})
+		Expect(err).To(Succeed())
+
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
+		Expect(err).To(Succeed())
+		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+		Expect(resp.(*StorageGetFound).Value().(utils.StorageValueString)).To(Equal(value))
+	})
+
+	It("does the right thing on a miss", func() {
+		key := uuid.NewString()
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
+		Expect(err).To(Succeed())
+		Expect(resp).To(BeAssignableToTypeOf(&StorageGetNotFound{}))
+	})
+
+	It("does the right thing on an incorrect cast", func() {
+		key := uuid.NewString()
+		value := utils.StorageValueString("string-value")
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+			Value:     value,
+		})
+		Expect(err).To(Succeed())
+
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
+		Expect(err).To(Succeed())
+		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+		val := resp.(*StorageGetFound).Value()
+		_, ok := val.(utils.StorageValueInt)
+		Expect(ok).To(BeFalse())
+	})
 
 	It("errors on missing store or key", func() {
 		key := uuid.NewString()
@@ -144,8 +203,8 @@ var _ = Describe("storage-client scalar", func() {
 
 		storeValue, ok := resp.ValueString()
 		Expect(ok).To(BeTrue())
-		Expect(storeValue).To(Equal(value))
-		_, ok = resp.ValueInteger()
+		Expect(string(storeValue)).To(Equal(value))
+		_, ok = hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 		_, ok = resp.ValueDouble()
 		Expect(ok).To(BeFalse())
@@ -181,7 +240,11 @@ var _ = Describe("storage-client scalar", func() {
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetSuccess{}))
 		Expect(resp.ValueType()).To(Equal(INTEGER))
 
-		storeValue, ok := resp.ValueInteger()
+		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
+
+		hitResp := resp.(*StorageGetFound)
+		hitValue := hitResp.Value()
+		storeValue, ok := hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeTrue())
 		Expect(storeValue).To(Equal(value))
 		_, ok = resp.ValueString()
@@ -216,7 +279,7 @@ var _ = Describe("storage-client scalar", func() {
 		Expect(storeValue).To(Equal(value))
 		_, ok = resp.ValueString()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.ValueInteger()
+		_, ok = hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 		_, ok = resp.ValueBytes()
 		Expect(ok).To(BeFalse())
@@ -246,7 +309,7 @@ var _ = Describe("storage-client scalar", func() {
 		Expect(storeValue).To(Equal(value))
 		_, ok = resp.ValueString()
 		Expect(ok).To(BeFalse())
-		_, ok = resp.ValueInteger()
+		_, ok = hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 		_, ok = resp.ValueDouble()
 		Expect(ok).To(BeFalse())
@@ -262,5 +325,43 @@ var _ = Describe("storage-client scalar", func() {
 		Expect(found).To(BeFalse())
 		Expect(resp).To(BeNil())
 	})
+
+	It("reads directly from the response", func() {
+		key := uuid.NewString()
+		val := uuid.NewString()
+		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+			Value:     utils.StorageValueString(val),
+		})
+		Expect(err).To(Succeed())
+		resp, err := sharedContext.StorageClient.Get(sharedContext.Ctx, &StorageGetRequest{
+			StoreName: sharedContext.StoreName,
+			Key:       key,
+		})
+		Expect(err).To(Succeed())
+
+		// unwrap value with no switch at all
+		_ = resp.(*StorageGetFound).Value().(utils.StorageValueString)
+		// unwrap value with a switch for response type
+		switch r := resp.(type) {
+		case *StorageGetFound:
+			fmt.Printf("resp as string: %s\n", r.Value().(utils.StorageValueString))
+		case *StorageGetNotFound:
+			fmt.Println("not found")
+		}
+	})
+
+	//It("deleteallstores", func() {
+	//	resp, err := sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+	//	Expect(err).To(Succeed())
+	//	for _, store := range resp.(*ListStoresSuccess).Stores() {
+	//		name := store.Name()
+	//		_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{
+	//			StoreName: name,
+	//		})
+	//		Expect(err).To(Succeed())
+	//	}
+	//})
 
 })
