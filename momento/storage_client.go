@@ -12,6 +12,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"github.com/momentohq/client-sdk-go/internal/services"
 	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 var storageDataClientCount uint64
@@ -28,7 +29,7 @@ type PreviewStorageClient interface {
 	// ListStores lists all the stores.
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, error)
 	// Get retrieves a value from a store.
-	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error)
+	Get(ctx context.Context, request *StorageGetRequest) (utils.StorageValue, error)
 	// Set sets a value in a store.
 	Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error)
 	// Delete removes a value from a store.
@@ -165,7 +166,7 @@ func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *Storag
 	return response, nil
 }
 
-func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error) {
+func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (utils.StorageValue, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
 	}
