@@ -10,7 +10,7 @@ import (
 )
 
 var FirstTimeHeadersSent = false
-var Version = "1.23.1" // x-release-please-version
+var Version = "1.24.0" // x-release-please-version
 
 func AddAgentHeaderInterceptor(clientType string) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
