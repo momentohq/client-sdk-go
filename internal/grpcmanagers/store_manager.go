@@ -18,11 +18,22 @@ const StoragePort = ":443"
 func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcManager, momentoerrors.MomentoSvcErr) {
 	endpoint := fmt.Sprint(request.CredentialProvider.GetStorageEndpoint(), StoragePort)
 	authToken := request.CredentialProvider.GetAuthToken()
+
+	headerInterceptors := []grpc.UnaryClientInterceptor{
+		interceptor.AddAuthHeadersInterceptor(authToken),
+	}
+
+	if !interceptor.FirstTimeHeadersSent {
+		interceptor.FirstTimeHeadersSent = true
+		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
+		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("store"))
+	}
+
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
-			grpc.WithChainUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
+			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)
 
