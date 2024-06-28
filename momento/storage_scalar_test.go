@@ -41,8 +41,8 @@ var _ = Describe("Store scalar methods", func() {
 			switch val.(type) {
 			case utils.StorageValueString:
 				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueString("")))
-			case utils.StorageValueInteger:
-				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueInteger(0)))
+			case utils.StorageValueInt:
+				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueInt(0)))
 			case utils.StorageValueFloat:
 				Expect(val).To(BeAssignableToTypeOf(utils.StorageValueFloat(0.0)))
 			case utils.StorageValueBytes:
@@ -50,7 +50,7 @@ var _ = Describe("Store scalar methods", func() {
 			}
 		},
 		Entry("StorageValueString", uuid.NewString(), utils.StorageValueString("string-value")),
-		Entry("StorageValueInteger", uuid.NewString(), utils.StorageValueInteger(42)),
+		Entry("StorageValueInt", uuid.NewString(), utils.StorageValueInt(42)),
 		Entry("StorageValueFloat", uuid.NewString(), utils.StorageValueFloat(3.14)),
 		Entry("StorageValueBytes", uuid.NewString(), utils.StorageValueBytes([]byte{0x01, 0x02, 0x03})),
 	)
@@ -101,7 +101,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(Succeed())
 		Expect(resp).To(BeAssignableToTypeOf(&StorageGetFound{}))
 		val := resp.(*StorageGetFound).Value()
-		_, ok := val.(utils.StorageValueInteger)
+		_, ok := val.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 	})
 
@@ -204,7 +204,7 @@ var _ = Describe("Store scalar methods", func() {
 		storeValue, ok := hitValue.(utils.StorageValueString)
 		Expect(ok).To(BeTrue())
 		Expect(string(storeValue)).To(Equal(value))
-		_, ok = hitValue.(utils.StorageValueInteger)
+		_, ok = hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 		_, ok = hitValue.(utils.StorageValueFloat)
 		Expect(ok).To(BeFalse())
@@ -227,7 +227,7 @@ var _ = Describe("Store scalar methods", func() {
 		_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
 			StoreName: sharedContext.StoreName,
 			Key:       key,
-			Value:     utils.StorageValueInteger(value),
+			Value:     utils.StorageValueInt(value),
 		})
 		Expect(err).To(Succeed())
 
@@ -240,7 +240,7 @@ var _ = Describe("Store scalar methods", func() {
 
 		hitResp := resp.(*StorageGetFound)
 		hitValue := hitResp.Value()
-		storeValue, ok := hitValue.(utils.StorageValueInteger)
+		storeValue, ok := hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeTrue())
 		Expect(int(storeValue)).To(Equal(value))
 		_, ok = hitValue.(utils.StorageValueString)
@@ -275,7 +275,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(float64(storeValue)).To(Equal(value))
 		_, ok = hitValue.(utils.StorageValueString)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueInteger)
+		_, ok = hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 		_, ok = hitValue.(utils.StorageValueBytes)
 		Expect(ok).To(BeFalse())
@@ -305,7 +305,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect([]byte(storeValue)).To(Equal(value))
 		_, ok = hitValue.(utils.StorageValueString)
 		Expect(ok).To(BeFalse())
-		_, ok = hitValue.(utils.StorageValueInteger)
+		_, ok = hitValue.(utils.StorageValueInt)
 		Expect(ok).To(BeFalse())
 		_, ok = hitValue.(utils.StorageValueFloat)
 		Expect(ok).To(BeFalse())
@@ -338,7 +338,7 @@ var _ = Describe("Store scalar methods", func() {
 		Expect(err).To(Succeed())
 
 		// unwrap value with no switch at all
-		fmt.Printf("resp as string: %s", resp.(*StorageGetFound).Value().(utils.StorageValueString))
+		_ = resp.(*StorageGetFound).Value().(utils.StorageValueString)
 		// unwrap value with a switch for response type
 		switch r := resp.(type) {
 		case *StorageGetFound:
