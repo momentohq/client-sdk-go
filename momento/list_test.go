@@ -64,7 +64,7 @@ func populateList(sharedContext SharedContext, numItems int) []string {
 	return expected
 }
 
-var _ = Describe("List methods", func() {
+var _ = Describe("cache-client list-methods", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

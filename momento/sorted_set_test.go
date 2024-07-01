@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("SortedSet", func() {
+var _ = Describe("cache-client sortedset-methods", func() {
 	var sharedContext SharedContext
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()

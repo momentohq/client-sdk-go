@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("ping", func() {
+var _ = Describe("ping-client", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {
