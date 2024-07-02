@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("StorageClient", func() {
+var _ = Describe("storage-client misc", func() {
 	var sharedContext = NewSharedContext()
 
 	BeforeEach(func() {

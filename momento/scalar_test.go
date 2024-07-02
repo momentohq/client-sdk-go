@@ -13,7 +13,7 @@ import (
 	. "github.com/momentohq/client-sdk-go/responses"
 )
 
-var _ = Describe("Scalar methods", func() {
+var _ = Describe("cache-client scalar-methods", func() {
 	var sharedContext SharedContext
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()

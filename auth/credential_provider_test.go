@@ -18,7 +18,7 @@ const (
 	testV1MissingApiKey   = "eyJlbmRwb2ludCI6ICJhLmIuY29tIn0="
 )
 
-var _ = Describe("CredentialProvider", func() {
+var _ = Describe("auth credential-provider", func() {
 	envVar := "v1token"
 
 	BeforeEach(func() {

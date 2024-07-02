@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("CacheClient", func() {
+var _ = Describe("cache-client", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

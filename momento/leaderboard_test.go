@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Leaderboards", func() {
+var _ = Describe("leaderboard-client", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

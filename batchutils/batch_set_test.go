@@ -16,7 +16,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Batch set operations", func() {
+var _ = Describe("batch-utils", func() {
 
 	var (
 		ctx       context.Context
