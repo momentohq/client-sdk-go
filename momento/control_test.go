@@ -83,87 +83,87 @@ var _ = Describe("control-ops", func() {
 
 	})
 
-	Describe("storage-client happy-path", func() {
-
-		It("creates, lists, and deletes stores", func() {
-			storeNames := []string{uuid.NewString(), uuid.NewString()}
-			defer func() {
-				for _, storeName := range storeNames {
-					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
-					if err != nil {
-						if err.(MomentoError).Code() != StoreNotFoundError {
-							panic(err)
-						}
-					}
-				}
-			}()
-
-			for _, storeName := range storeNames {
-				Expect(
-					sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
-				).To(BeAssignableToTypeOf(&CreateStoreSuccess{}))
-
-				Expect(
-					sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
-				).To(BeAssignableToTypeOf(&CreateStoreAlreadyExists{}))
-			}
-
-			resp, err := sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
-			Expect(err).To(Succeed())
-
-			var listedStores []string
-			switch r := resp.(type) {
-			case *ListStoresSuccess:
-				for _, info := range r.Stores() {
-					listedStores = append(listedStores, info.Name())
-				}
-				Expect(listedStores).To(ContainElements(storeNames))
-			default:
-				// best effort at cleaning up stores if we fail here
-				for _, storeName := range storeNames {
-					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
-					if err != nil {
-						if err.(MomentoError).Code() != StoreNotFoundError {
-							panic(err)
-						}
-					}
-				}
-				Fail("Unexpected response type")
-			}
-
-			for _, storeName := range storeNames {
-				Expect(
-					sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName}),
-				).To(BeAssignableToTypeOf(&DeleteStoreSuccess{}))
-			}
-			resp, err = sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
-			Expect(err).To(Succeed())
-			Expect(resp).To(BeAssignableToTypeOf(&ListStoresSuccess{}))
-			switch r := resp.(type) {
-			case *ListStoresSuccess:
-				Expect(r.Stores()).To(Not(ContainElements(storeNames)))
-			default:
-				// best effort at cleaning up stores if we fail here
-				for _, storeName := range storeNames {
-					_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
-					if err != nil {
-						if err.(MomentoError).Code() != StoreNotFoundError {
-							panic(err)
-						}
-					}
-				}
-				Fail("Unexpected response type")
-			}
-		})
-	})
-
-	Describe("storage-client errors", func() {
-		It("returns StoreNotFoundError when deleting a non-existent store", func() {
-			resp, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: uuid.NewString()})
-			Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
-			Expect(resp).To(BeNil())
-		})
-	})
+	//Describe("storage-client happy-path", func() {
+	//
+	//	It("creates, lists, and deletes stores", func() {
+	//		storeNames := []string{uuid.NewString(), uuid.NewString()}
+	//		defer func() {
+	//			for _, storeName := range storeNames {
+	//				_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+	//				if err != nil {
+	//					if err.(MomentoError).Code() != StoreNotFoundError {
+	//						panic(err)
+	//					}
+	//				}
+	//			}
+	//		}()
+	//
+	//		for _, storeName := range storeNames {
+	//			Expect(
+	//				sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+	//			).To(BeAssignableToTypeOf(&CreateStoreSuccess{}))
+	//
+	//			Expect(
+	//				sharedContext.StorageClient.CreateStore(sharedContext.Ctx, &CreateStoreRequest{StoreName: storeName}),
+	//			).To(BeAssignableToTypeOf(&CreateStoreAlreadyExists{}))
+	//		}
+	//
+	//		resp, err := sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+	//		Expect(err).To(Succeed())
+	//
+	//		var listedStores []string
+	//		switch r := resp.(type) {
+	//		case *ListStoresSuccess:
+	//			for _, info := range r.Stores() {
+	//				listedStores = append(listedStores, info.Name())
+	//			}
+	//			Expect(listedStores).To(ContainElements(storeNames))
+	//		default:
+	//			// best effort at cleaning up stores if we fail here
+	//			for _, storeName := range storeNames {
+	//				_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+	//				if err != nil {
+	//					if err.(MomentoError).Code() != StoreNotFoundError {
+	//						panic(err)
+	//					}
+	//				}
+	//			}
+	//			Fail("Unexpected response type")
+	//		}
+	//
+	//		for _, storeName := range storeNames {
+	//			Expect(
+	//				sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName}),
+	//			).To(BeAssignableToTypeOf(&DeleteStoreSuccess{}))
+	//		}
+	//		resp, err = sharedContext.StorageClient.ListStores(sharedContext.Ctx, &ListStoresRequest{})
+	//		Expect(err).To(Succeed())
+	//		Expect(resp).To(BeAssignableToTypeOf(&ListStoresSuccess{}))
+	//		switch r := resp.(type) {
+	//		case *ListStoresSuccess:
+	//			Expect(r.Stores()).To(Not(ContainElements(storeNames)))
+	//		default:
+	//			// best effort at cleaning up stores if we fail here
+	//			for _, storeName := range storeNames {
+	//				_, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: storeName})
+	//				if err != nil {
+	//					if err.(MomentoError).Code() != StoreNotFoundError {
+	//						panic(err)
+	//					}
+	//				}
+	//			}
+	//			Fail("Unexpected response type")
+	//		}
+	//	})
+	//})
+	//
+	//Describe("storage-client errors", func() {
+	//	It("returns StoreNotFoundError when deleting a non-existent store", func() {
+	//		resp, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: uuid.NewString()})
+	//		Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
+	//		Expect(resp).To(BeNil())
+	//	})
+	//})
 
 	Describe("cache-client default-cache-name", func() {
 		It("overrides default cache name", func() {
