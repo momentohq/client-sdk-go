@@ -124,7 +124,7 @@ func newTopicClient(ctx SharedContext, provider auth.CredentialProvider) TopicCl
 	return tc
 }
 
-var _ = Describe("AuthClient", func() {
+var _ = Describe("auth auth-client", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

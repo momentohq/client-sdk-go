@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Dictionary methods", func() {
+var _ = Describe("cache-client dictionary-methods", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

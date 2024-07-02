@@ -14,7 +14,7 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-var _ = Describe("Pubsub", func() {
+var _ = Describe("topic-client", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

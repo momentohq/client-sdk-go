@@ -22,7 +22,7 @@ func getElements(numElements int) []Value {
 	return elements
 }
 
-var _ = Describe("Set methods", func() {
+var _ = Describe("cache-client set-methods", func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {
