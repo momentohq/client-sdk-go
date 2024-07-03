@@ -10,6 +10,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/storageTypes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -77,14 +78,14 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 
 	val := pb.XStoreValue{}
 	switch request.Value.(type) {
-	case utils.StorageValueBytes:
-		val.Value = &pb.XStoreValue_BytesValue{BytesValue: request.Value.(utils.StorageValueBytes)}
-	case utils.StorageValueString:
-		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(utils.StorageValueString))}
-	case utils.StorageValueFloat:
-		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(utils.StorageValueFloat))}
-	case utils.StorageValueInt:
-		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(utils.StorageValueInt))}
+	case storageTypes.Bytes:
+		val.Value = &pb.XStoreValue_BytesValue{BytesValue: request.Value.(storageTypes.Bytes)}
+	case storageTypes.String:
+		val.Value = &pb.XStoreValue_StringValue{StringValue: string(request.Value.(storageTypes.String))}
+	case storageTypes.Float:
+		val.Value = &pb.XStoreValue_DoubleValue{DoubleValue: float64(request.Value.(storageTypes.Float))}
+	case storageTypes.Int:
+		val.Value = &pb.XStoreValue_IntegerValue{IntegerValue: int64(request.Value.(storageTypes.Int))}
 	}
 
 	var header, trailer metadata.MD // variable to store header and trailer
@@ -124,22 +125,22 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 		// Handle item not found error by returning a miss
 		myErr := momentoerrors.ConvertSvcErr(err, header, trailer)
 		if myErr.Code() == momentoerrors.ItemNotFoundError {
-			return responses.NewStoreGetNotFound(), nil
+			return *responses.NewStoreGetResponse_Nil(), nil
 		}
-		return nil, myErr
+		return *responses.NewStoreGetResponse_Nil(), myErr
 	}
 
 	val := response.GetValue()
 	switch val.Value.(type) {
 	case *pb.XStoreValue_BytesValue:
-		return responses.NewStoreGetFound_Bytes(val.GetBytesValue()), nil
+		return *responses.NewStoreGetResponse_Bytes(val.GetBytesValue()), nil
 	case *pb.XStoreValue_StringValue:
-		return responses.NewStoreGetFound_String(val.GetStringValue()), nil
+		return *responses.NewStoreGetResponse_String(val.GetStringValue()), nil
 	case *pb.XStoreValue_DoubleValue:
-		return responses.NewStoreGetFound_Float(val.GetDoubleValue()), nil
+		return *responses.NewStoreGetResponse_Float(val.GetDoubleValue()), nil
 	case *pb.XStoreValue_IntegerValue:
-		return responses.NewStoreGetFound_Integer(int(val.GetIntegerValue())), nil
+		return *responses.NewStoreGetResponse_Integer(int(val.GetIntegerValue())), nil
 	default:
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.UnknownServiceError, "Unknown store value type", nil)
+		return *responses.NewStoreGetResponse_Nil(), momentoerrors.NewMomentoSvcErr(momentoerrors.UnknownServiceError, "Unknown store value type", nil)
 	}
 }

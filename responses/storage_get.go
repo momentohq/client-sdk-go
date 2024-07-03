@@ -1,60 +1,48 @@
 package responses
 
-import "github.com/momentohq/client-sdk-go/utils"
+import (
+	"github.com/momentohq/client-sdk-go/storageTypes"
+)
 
 // StorageGetResponse is the base response type for a store get request.
-type StorageGetResponse interface {
-	isStoreGetResponse()
+type StorageGetResponse struct {
+	value storageTypes.Value
 }
 
-type StorageGetNotFound struct{}
-
-func (StorageGetNotFound) isStoreGetResponse() {}
-
-func (StorageGetNotFound) Value() utils.StorageValue {
-	return nil
+func (r StorageGetResponse) Value() storageTypes.Value {
+	return r.value
 }
 
-func NewStoreGetNotFound() *StorageGetNotFound {
-	return &StorageGetNotFound{}
-}
-
-// StorageGetFound indicates a successful store get request.
-type StorageGetFound struct {
-	value utils.StorageValue
-}
-
-func (StorageGetFound) isStoreGetResponse() {}
-
-// ValueType returns the `StorageValueType` indicating the type of the value in the store.
-func (resp StorageGetFound) Value() utils.StorageValue {
-	return resp.value
-}
-
-// NewStoreGetFound_String returns a new StorageGetFound containing the supplied string value.
-func NewStoreGetFound_String(value string) *StorageGetFound {
-	return &StorageGetFound{
-		value: utils.StorageValueString(value),
+// NewStoreGetFound_String returns a new StorageGetResponse containing the supplied string value.
+func NewStoreGetResponse_String(value string) *StorageGetResponse {
+	return &StorageGetResponse{
+		value: storageTypes.String(value),
 	}
 }
 
-// NewStoreGetFound_Bytes returns a new StorageGetFound containing the supplied byte slice value.
-func NewStoreGetFound_Bytes(value []byte) *StorageGetFound {
-	return &StorageGetFound{
-		value: utils.StorageValueBytes(value),
+// NewStoreGetResponse_Bytes returns a new StorageGetResponse containing the supplied byte slice value.
+func NewStoreGetResponse_Bytes(value []byte) *StorageGetResponse {
+	return &StorageGetResponse{
+		value: storageTypes.Bytes(value),
 	}
 }
 
-// NewStoreGetFound_Float returns a new StorageGetFound containing the supplied float64 value.
-func NewStoreGetFound_Float(value float64) *StorageGetFound {
-	return &StorageGetFound{
-		value: utils.StorageValueFloat(value),
+// NewStoreGetResponse_Float returns a new StorageGetResponse containing the supplied float64 value.
+func NewStoreGetResponse_Float(value float64) *StorageGetResponse {
+	return &StorageGetResponse{
+		value: storageTypes.Float(value),
 	}
 }
 
-// NewStoreGetFound_Integer returns a new StorageGetFound containing the supplied int value.
-func NewStoreGetFound_Integer(value int) *StorageGetFound {
-	return &StorageGetFound{
-		value: utils.StorageValueInt(value),
+// NewStoreGetResponse_Integer returns a new StorageGetResponse containing the supplied int value.
+func NewStoreGetResponse_Integer(value int) *StorageGetResponse {
+	return &StorageGetResponse{
+		value: storageTypes.Int(value),
+	}
+}
+
+func NewStoreGetResponse_Nil() *StorageGetResponse {
+	return &StorageGetResponse{
+		value: nil,
 	}
 }

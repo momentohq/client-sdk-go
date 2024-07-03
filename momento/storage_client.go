@@ -167,17 +167,17 @@ func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *Storag
 
 func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
-		return nil, err
+		return *responses.NewStoreGetResponse_Nil(), err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return nil, err
+		return *responses.NewStoreGetResponse_Nil(), err
 	}
 
 	resp, err := c.getNextStorageDataClient().get(ctx, request)
 	// Item not found errors are being converted to NotFound responses in the data client
 	if err != nil {
-		return nil, convertMomentoSvcErrorToCustomerError(err)
+		return resp, convertMomentoSvcErrorToCustomerError(err)
 	}
 
 	return resp, nil

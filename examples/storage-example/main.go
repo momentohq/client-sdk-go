@@ -3,15 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/storageTypes"
 )
 
 var (
@@ -50,7 +48,7 @@ func main() {
 	_, err = client.Put(ctx, &momento.StoragePutRequest{
 		StoreName: storeName,
 		Key:       key,
-		Value:     utils.StorageValueString("my-value"),
+		Value:     storageTypes.String("my-value"),
 	})
 	if err != nil {
 		panic(err)
@@ -66,31 +64,31 @@ func main() {
 		panic(err)
 	}
 
-	// first coerce the response to the Found type if possible
-	foundResp, ok := getResp.(*responses.StorageGetFound)
-	if !ok {
-		fmt.Println("Did not get a found response; exiting")
-		os.Exit(1)
+	// If the value was not found, the response's Value will be nil.
+	if getResp.Value() == nil {
+		fmt.Println("Got nil")
 	}
 
 	// Then get the value from the found response.
 	// If you don't know the type beforehand:
-	switch t := foundResp.Value().(type) {
-	case utils.StorageValueString:
+	switch t := getResp.Value().(type) {
+	case storageTypes.String:
 		fmt.Printf("Got the string %s\n", t)
-	case utils.StorageValueBytes:
+	case storageTypes.Bytes:
 		fmt.Printf("Got the bytes %b\n", t)
-	case utils.StorageValueFloat:
+	case storageTypes.Float:
 		fmt.Printf("Got the float %f\n", t)
-	case utils.StorageValueInt:
+	case storageTypes.Int:
 		fmt.Printf("Got the integer %d\n", t)
+	case nil:
+		fmt.Println("Got nil")
 	}
 
 	// If you know the type beforehand:
-	fmt.Printf("Got the string %s\n", foundResp.Value().(utils.StorageValueString))
+	fmt.Printf("Got the string %s\n", getResp.Value().(storageTypes.String))
 
 	// If you choose the wrong type:
-	intVal, ok := foundResp.Value().(utils.StorageValueInt)
+	intVal, ok := getResp.Value().(storageTypes.Int)
 	if !ok {
 		fmt.Println("Illegal type assertion")
 	} else {
@@ -98,7 +96,7 @@ func main() {
 	}
 
 	// You can do it in one shot, but it'll panic if you guess wrong like any cast would
-	//fmt.Printf("Got the integer %d\n", foundResp.Value().(utils.StorageValueInteger))
+	//fmt.Printf("Got the integer %d\n", getResp.Value.(storageTypes.Int))
 
 	// delete the key
 	fmt.Println("Deleting key")
