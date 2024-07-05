@@ -23,12 +23,6 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 		interceptor.AddStreamHeaderInterceptor(authToken),
 	}
 
-	if !interceptor.FirstTimeHeadersSent {
-		interceptor.FirstTimeHeadersSent = true
-		headerInterceptors = append(headerInterceptors, interceptor.AddStreamRuntimeVersionHeaderInterceptor())
-		headerInterceptors = append(headerInterceptors, interceptor.AddStreamAgentHeaderInterceptor("topic"))
-	}
-
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(

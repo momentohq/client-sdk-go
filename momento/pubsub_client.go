@@ -8,6 +8,7 @@ import (
 
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -79,8 +80,11 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 
 	checkNumConcurrentStreams(client.log)
 
-	// try withCancel on context
-	cancelContext, cancelFunction := context.WithCancel(ctx)
+	// add metadata to context
+	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
+
+	// add withCancel to context
+	cancelContext, cancelFunction := context.WithCancel(requestMetadata)
 
 	atomic.AddInt64(&numGrpcStreams, 1)
 	topicManager := client.getNextStreamTopicManager()
@@ -106,11 +110,12 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
 	checkNumConcurrentStreams(client.log)
 
+	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
 	topicManager := client.getNextStreamTopicManager()
 	switch value := request.Value.(type) {
 	case String:
 		atomic.AddInt64(&numGrpcStreams, 1)
-		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
@@ -123,7 +128,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 		return err
 	case Bytes:
 		atomic.AddInt64(&numGrpcStreams, 1)
-		_, err := topicManager.StreamClient.Publish(ctx, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{

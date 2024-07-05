@@ -7,6 +7,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	responses "github.com/momentohq/client-sdk-go/responses/auth"
@@ -51,7 +52,9 @@ func (c defaultAuthClient) GenerateDisposableToken(ctx context.Context, request 
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 
-	tokenResp, err := c.tokenClient.GenerateDisposableToken(ctx, request)
+	requestMetadata := internal.CreateMetadata(ctx, internal.Auth)
+
+	tokenResp, err := c.tokenClient.GenerateDisposableToken(requestMetadata, request)
 
 	if err != nil {
 		c.log.Debug("failed to generate disposable token...")

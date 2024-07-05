@@ -3,11 +3,14 @@ package momento
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/internal"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -323,7 +326,16 @@ func (c defaultScsClient) CreateCache(ctx context.Context, request *CreateCacheR
 		return nil, err
 	}
 	c.logger.Info("Creating cache with name: %s", request.CacheName)
-	err := c.controlClient.CreateCache(ctx, &models.CreateCacheRequest{
+
+	// requestMetadata := internal.CreateMetadata(ctx, internal.Cache, "cache", request.CacheName)
+	requestMetadata := metadata.AppendToOutgoingContext(ctx, internal.CreateMetadataHeaders(internal.Cache, "cache", request.CacheName)...)
+	updatedMetadata, ok := metadata.FromOutgoingContext(requestMetadata)
+	if !ok {
+		panic("metadata not found in newCtx")
+	}
+	fmt.Println("control client newCtx", updatedMetadata)
+
+	err := c.controlClient.CreateCache(requestMetadata, &models.CreateCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
@@ -344,7 +356,9 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 		return nil, err
 	}
 	c.logger.Info("Deleting cache with name: %s", request.CacheName)
-	err := c.controlClient.DeleteCache(ctx, &models.DeleteCacheRequest{
+
+	requestMetadata := internal.CreateMetadata(ctx, internal.Cache, "cache", request.CacheName)
+	err := c.controlClient.DeleteCache(requestMetadata, &models.DeleteCacheRequest{
 		CacheName: request.CacheName,
 	})
 	if err != nil {
@@ -360,7 +374,8 @@ func (c defaultScsClient) DeleteCache(ctx context.Context, request *DeleteCacheR
 }
 
 func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesRequest) (responses.ListCachesResponse, error) {
-	rsp, err := c.controlClient.ListCaches(ctx, &models.ListCachesRequest{})
+	requestMetadata := internal.CreateMetadata(ctx, internal.Cache)
+	rsp, err := c.controlClient.ListCaches(requestMetadata, &models.ListCachesRequest{})
 	if err != nil {
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}

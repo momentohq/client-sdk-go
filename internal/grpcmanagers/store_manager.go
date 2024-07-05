@@ -23,12 +23,6 @@ func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcMan
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
 
-	if !interceptor.FirstTimeHeadersSent {
-		interceptor.FirstTimeHeadersSent = true
-		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
-		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("store"))
-	}
-
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(
