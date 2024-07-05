@@ -136,14 +136,14 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	val := response.GetValue()
 	switch val.Value.(type) {
 	case *pb.XStoreValue_BytesValue:
-		return responses.NewStoreGetSuccess_Bytes(responses.BYTES, val.GetBytesValue()), nil
+		return responses.NewStorageGetFound_Bytes(responses.BYTES, val.GetBytesValue()), nil
 	case *pb.XStoreValue_StringValue:
-		return responses.NewStoreGetSuccess_String(responses.STRING, val.GetStringValue()), nil
+		return responses.NewStorageGetFound_String(responses.STRING, val.GetStringValue()), nil
 	case *pb.XStoreValue_DoubleValue:
-		return responses.NewStoreGetSuccess_Float(responses.DOUBLE, val.GetDoubleValue()), nil
+		return responses.NewStorageGetFound_Float(responses.DOUBLE, val.GetDoubleValue()), nil
 	case *pb.XStoreValue_IntegerValue:
-		return responses.NewStoreGetSuccess_Integer(responses.INTEGER, int(val.GetIntegerValue())), nil
+		return responses.NewStorageGetFound_Integer(responses.INTEGER, int(val.GetIntegerValue())), nil
 	default:
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.UnknownServiceError, "Unknown store value type", nil)
+		return &responses.StorageGetNotFound{}, nil
 	}
 }

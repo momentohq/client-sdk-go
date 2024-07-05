@@ -9,18 +9,17 @@ const (
 	DOUBLE  StorageValueType = "DOUBLE"
 )
 
-// StorageGetResponse is the base response type for a store get request.
 type StorageGetResponse interface {
-	isStoreGetResponse()
-	ValueType() StorageValueType
-	ValueString() (string, bool)
-	ValueBytes() ([]byte, bool)
-	ValueInteger() (int, bool)
-	ValueFloat() (float64, bool)
+	isStorageGetResponse()
 }
 
-// StorageGetSuccess indicates a successful store get request.
-type StorageGetSuccess struct {
+// StorageGetNotFound indicates the item was not found in the store
+type StorageGetNotFound struct{}
+
+func (StorageGetNotFound) isStorageGetResponse() {}
+
+// StorageGetFound indicates the item was found in the store
+type StorageGetFound struct {
 	valueType    StorageValueType
 	valueBytes   *[]byte
 	valueString  *string
@@ -28,15 +27,15 @@ type StorageGetSuccess struct {
 	valueInteger *int
 }
 
-func (StorageGetSuccess) isStoreGetResponse() {}
+func (StorageGetFound) isStorageGetResponse() {}
 
 // ValueType returns the `StorageValueType` indicating the type of the value in the store.
-func (resp StorageGetSuccess) ValueType() StorageValueType {
+func (resp StorageGetFound) ValueType() StorageValueType {
 	return resp.valueType
 }
 
 // ValueString returns the value in the store as a string and a boolean `true` value if it was stored as a string. Otherwise, it returns a blank string and a boolean `false` value.
-func (resp StorageGetSuccess) ValueString() (string, bool) {
+func (resp StorageGetFound) ValueString() (string, bool) {
 	if resp.valueType == STRING {
 		return *resp.valueString, true
 	}
@@ -44,7 +43,7 @@ func (resp StorageGetSuccess) ValueString() (string, bool) {
 }
 
 // ValueBytes returns the value in the store as a byte slice and a boolean `true` value if it was stored as a bytes. Otherwise, it returns a nil byte slice and a boolean `false` value.
-func (resp StorageGetSuccess) ValueBytes() ([]byte, bool) {
+func (resp StorageGetFound) ValueBytes() ([]byte, bool) {
 	if resp.valueType == BYTES {
 		return *resp.valueBytes, true
 	}
@@ -52,7 +51,7 @@ func (resp StorageGetSuccess) ValueBytes() ([]byte, bool) {
 }
 
 // ValueFloat returns the value in the store as a float64 and a boolean `true` value if it was stored as a double. Otherwise, it returns 0 and a boolean `false` value.
-func (resp StorageGetSuccess) ValueFloat() (float64, bool) {
+func (resp StorageGetFound) ValueFloat() (float64, bool) {
 	if resp.valueType == DOUBLE {
 		return *resp.valueFloat, true
 	}
@@ -60,40 +59,40 @@ func (resp StorageGetSuccess) ValueFloat() (float64, bool) {
 }
 
 // ValueInteger returns the value in the store as an int and a boolean `true` value if it was stored as an integer. Otherwise, it returns 0 and a boolean `false` value.
-func (resp StorageGetSuccess) ValueInteger() (int, bool) {
+func (resp StorageGetFound) ValueInteger() (int, bool) {
 	if resp.valueType == INTEGER {
 		return *resp.valueInteger, true
 	}
 	return 0, false
 }
 
-// NewStoreGetSuccess_String returns a new StorageGetSuccess containing the supplied string value.
-func NewStoreGetSuccess_String(valueType StorageValueType, value string) *StorageGetSuccess {
-	return &StorageGetSuccess{
+// NewStorageGetFound_String returns a new StorageGetFound containing the supplied string value.
+func NewStorageGetFound_String(valueType StorageValueType, value string) *StorageGetFound {
+	return &StorageGetFound{
 		valueType:   valueType,
 		valueString: &value,
 	}
 }
 
-// NewStoreGetSuccess_Bytes returns a new StorageGetSuccess containing the supplied byte slice value.
-func NewStoreGetSuccess_Bytes(valueType StorageValueType, value []byte) *StorageGetSuccess {
-	return &StorageGetSuccess{
+// NewStorageGetFound_Bytes returns a new StorageGetFound containing the supplied byte slice value.
+func NewStorageGetFound_Bytes(valueType StorageValueType, value []byte) *StorageGetFound {
+	return &StorageGetFound{
 		valueType:  valueType,
 		valueBytes: &value,
 	}
 }
 
-// NewStoreGetSuccess_Float returns a new StorageGetSuccess containing the supplied float64 value.
-func NewStoreGetSuccess_Float(valueType StorageValueType, value float64) *StorageGetSuccess {
-	return &StorageGetSuccess{
+// NewStorageGetFound_Float returns a new StorageGetFound containing the supplied float64 value.
+func NewStorageGetFound_Float(valueType StorageValueType, value float64) *StorageGetFound {
+	return &StorageGetFound{
 		valueType:  valueType,
 		valueFloat: &value,
 	}
 }
 
-// NewStoreGetSuccess_Integer returns a new StorageGetSuccess containing the supplied int value.
-func NewStoreGetSuccess_Integer(valueType StorageValueType, value int) *StorageGetSuccess {
-	return &StorageGetSuccess{
+// NewStorageGetFound_Integer returns a new StorageGetFound containing the supplied int value.
+func NewStorageGetFound_Integer(valueType StorageValueType, value int) *StorageGetFound {
+	return &StorageGetFound{
 		valueType:    valueType,
 		valueInteger: &value,
 	}

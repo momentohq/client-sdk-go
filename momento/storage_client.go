@@ -28,7 +28,7 @@ type PreviewStorageClient interface {
 	// ListStores lists all the stores.
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, error)
 	// Get retrieves a value from a store.
-	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, bool, error)
+	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error)
 	// Set sets a value in a store.
 	Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error)
 	// Delete removes a value from a store.
@@ -165,24 +165,24 @@ func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *Storag
 	return response, nil
 }
 
-func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, bool, error) {
+func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	resp, err := c.getNextStorageDataClient().get(ctx, request)
 	if err != nil {
 		if err.Code() == ItemNotFoundError {
-			return nil, false, nil
+			return &responses.StorageGetNotFound{}, nil
 		}
-		return nil, false, convertMomentoSvcErrorToCustomerError(err)
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 
-	return resp, true, nil
+	return resp, nil
 }
 
 func (c defaultPreviewStorageClient) Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error) {
