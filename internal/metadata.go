@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 
 	"google.golang.org/grpc/metadata"
@@ -29,27 +28,8 @@ func CreateMetadata(ctx context.Context, clientType ClientType, extraPairs ...st
 		FirstTimeHeadersSent = true
 		headers = append(headers, "runtime-version", "golang:"+runtime.Version())
 		headers = append(headers, "agent", "golang:"+string(clientType)+":"+Version)
-		fmt.Println("set first time headers")
 	}
-	newCtx := metadata.AppendToOutgoingContext(
+	return metadata.AppendToOutgoingContext(
 		ctx, headers...,
 	)
-	updatedMetadata, ok := metadata.FromOutgoingContext(newCtx)
-	if !ok {
-		panic("metadata not found in newCtx")
-	}
-	fmt.Println("metadata function newCtx", updatedMetadata)
-	return newCtx
-}
-
-func CreateMetadataHeaders(clientType ClientType, extraPairs ...string) []string {
-	headers := extraPairs
-
-	if !FirstTimeHeadersSent {
-		FirstTimeHeadersSent = true
-		headers = append(headers, "runtime-version", "golang:"+runtime.Version())
-		headers = append(headers, "agent", "golang:"+string(clientType)+":"+Version)
-		fmt.Println("set first time headers")
-	}
-	return headers
 }

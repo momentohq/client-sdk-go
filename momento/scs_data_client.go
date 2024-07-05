@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal"
@@ -10,7 +9,6 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"google.golang.org/grpc/metadata"
 )
 
 const defaultRequestTimeout = 5 * time.Second
@@ -69,11 +67,6 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	defer cancel()
 
 	requestMetadata := internal.CreateMetadata(ctx, internal.Cache, "cache", r.cacheName())
-	updatedMetadata, ok := metadata.FromOutgoingContext(requestMetadata)
-	if !ok {
-		panic("metadata not found in newCtx")
-	}
-	fmt.Println("data client newCtx", updatedMetadata)
 
 	_, err := r.makeGrpcRequest(requestMetadata, client)
 	if err != nil {
