@@ -52,7 +52,7 @@ func (client *storageDataClient) delete(ctx context.Context, request *StorageDel
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateMetadata(ctx, internal.Store, "store", request.StoreName)
+	requestMetadata := internal.CreateStoreMetadata(ctx, request.StoreName)
 
 	var header, trailer metadata.MD // variable to store header and trailer
 	_, err := client.grpcClient.Delete(
@@ -73,7 +73,7 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateMetadata(ctx, internal.Store, "store", request.StoreName)
+	requestMetadata := internal.CreateStoreMetadata(ctx, request.StoreName)
 
 	val := pb.XStoreValue{}
 	switch request.Value.(type) {
@@ -108,7 +108,7 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateMetadata(ctx, internal.Store, "store", request.StoreName)
+	requestMetadata := internal.CreateStoreMetadata(ctx, request.StoreName)
 
 	var header, trailer metadata.MD // variable to store header and trailer
 	response, err := client.grpcClient.Get(

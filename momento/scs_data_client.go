@@ -66,7 +66,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateMetadata(ctx, internal.Cache, "cache", r.cacheName())
+	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
 	_, err := r.makeGrpcRequest(requestMetadata, client)
 	if err != nil {

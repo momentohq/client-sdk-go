@@ -33,3 +33,15 @@ func CreateMetadata(ctx context.Context, clientType ClientType, extraPairs ...st
 		ctx, headers...,
 	)
 }
+
+func CreateCacheMetadata(ctx context.Context, cacheName string) context.Context {
+	return CreateMetadata(ctx, Cache, "cache", cacheName)
+}
+
+func CreateStoreMetadata(ctx context.Context, storeName string) context.Context {
+	return CreateMetadata(ctx, Store, "store", storeName)
+}
+
+func CreateLeaderboardMetadata(ctx context.Context, cacheName string) context.Context {
+	return CreateMetadata(ctx, Leaderboard, "cache", cacheName)
+}
