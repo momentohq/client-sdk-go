@@ -28,12 +28,6 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
 
-	if !interceptor.FirstTimeHeadersSent {
-		interceptor.FirstTimeHeadersSent = true
-		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
-		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("cache"))
-	}
-
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(

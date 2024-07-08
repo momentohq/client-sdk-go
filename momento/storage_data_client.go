@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -47,17 +48,11 @@ func (client *storageDataClient) Close() {
 	client.grpcManager.Close()
 }
 
-func (*storageDataClient) CreateNewMetadata(storeName string) metadata.MD {
-	return metadata.Pairs("store", storeName)
-}
-
 func (client *storageDataClient) delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := metadata.NewOutgoingContext(
-		ctx, client.CreateNewMetadata(request.StoreName),
-	)
+	requestMetadata := internal.CreateStoreMetadata(ctx, request.StoreName)
 
 	var header, trailer metadata.MD // variable to store header and trailer
 	_, err := client.grpcClient.Delete(
@@ -78,9 +73,7 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := metadata.NewOutgoingContext(
-		ctx, client.CreateNewMetadata(request.StoreName),
-	)
+	requestMetadata := internal.CreateStoreMetadata(ctx, request.StoreName)
 
 	val := pb.XStoreValue{}
 	switch request.Value.(type) {
@@ -115,9 +108,7 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := metadata.NewOutgoingContext(
-		ctx, client.CreateNewMetadata(request.StoreName),
-	)
+	requestMetadata := internal.CreateStoreMetadata(ctx, request.StoreName)
 
 	var header, trailer metadata.MD // variable to store header and trailer
 	response, err := client.grpcClient.Get(

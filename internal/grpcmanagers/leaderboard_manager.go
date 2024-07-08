@@ -24,12 +24,6 @@ func NewLeaderboardGrpcManager(request *models.LeaderboardGrpcManagerRequest) (*
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
 
-	if !interceptor.FirstTimeHeadersSent {
-		interceptor.FirstTimeHeadersSent = true
-		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
-		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("leaderboard"))
-	}
-
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(

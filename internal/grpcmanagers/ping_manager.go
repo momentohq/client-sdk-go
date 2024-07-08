@@ -24,12 +24,6 @@ func NewPingGrpcManager(request *models.PingGrpcManagerRequest) (*PingGrpcManage
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
 
-	if !interceptor.FirstTimeHeadersSent {
-		interceptor.FirstTimeHeadersSent = true
-		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
-		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("ping"))
-	}
-
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(

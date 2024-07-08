@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-	"google.golang.org/grpc/metadata"
 )
 
 const defaultRequestTimeout = 5 * time.Second
@@ -54,10 +54,6 @@ func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
-func (scsDataClient) CreateNewMetadata(cacheName string) metadata.MD {
-	return metadata.Pairs("cache", cacheName)
-}
-
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
 	if _, err := prepareCacheName(r); err != nil {
 		return err
@@ -70,9 +66,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := metadata.NewOutgoingContext(
-		ctx, client.CreateNewMetadata(r.cacheName()),
-	)
+	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
 	_, err := r.makeGrpcRequest(requestMetadata, client)
 	if err != nil {

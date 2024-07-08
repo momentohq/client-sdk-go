@@ -25,12 +25,6 @@ func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcMan
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
 
-	if !interceptor.FirstTimeHeadersSent {
-		interceptor.FirstTimeHeadersSent = true
-		headerInterceptors = append(headerInterceptors, interceptor.AddRuntimeVersionHeaderInterceptor())
-		headerInterceptors = append(headerInterceptors, interceptor.AddAgentHeaderInterceptor("auth"))
-	}
-
 	conn, err := grpc.NewClient(
 		endpoint,
 		AllDialOptions(

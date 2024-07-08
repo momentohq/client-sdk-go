@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -37,8 +38,9 @@ func (client *ScsPingClient) Close() momentoerrors.MomentoSvcErr {
 
 func (client *ScsPingClient) Ping(ctx context.Context) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	requestMetadata := internal.CreateMetadata(ctx, internal.Ping)
 	defer cancel()
-	_, err := client.grpcClient.Ping(ctx, &pb.XPingRequest{})
+	_, err := client.grpcClient.Ping(requestMetadata, &pb.XPingRequest{})
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err)
 	}
