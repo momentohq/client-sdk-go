@@ -7,7 +7,14 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var FirstTimeHeadersSent = false
+var FirstTimeHeadersSent = map[ClientType]bool{
+	Cache:       false,
+	Store:       false,
+	Leaderboard: false,
+	Topic:       false,
+	Ping:        false,
+	Auth:        false,
+}
 var Version = "1.24.0" // x-release-please-version
 
 type ClientType string
@@ -24,8 +31,8 @@ const (
 func CreateMetadata(ctx context.Context, clientType ClientType, extraPairs ...string) context.Context {
 	headers := extraPairs
 
-	if !FirstTimeHeadersSent {
-		FirstTimeHeadersSent = true
+	if !FirstTimeHeadersSent[clientType] {
+		FirstTimeHeadersSent[clientType] = true
 		headers = append(headers, "runtime-version", "golang:"+runtime.Version())
 		headers = append(headers, "agent", "golang:"+string(clientType)+":"+Version)
 	}
