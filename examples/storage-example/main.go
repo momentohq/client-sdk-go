@@ -84,19 +84,13 @@ func main() {
 		fmt.Println("Got nil")
 	}
 
-	// If you know the type beforehand:
-	fmt.Printf("Got the string %s\n", getResp.Value().(storageTypes.String))
-
-	// If you choose the wrong type:
+	// If you know the type you're expecting, you can assert it directly:
 	intVal, ok := getResp.Value().(storageTypes.Int)
 	if !ok {
 		fmt.Println("Illegal type assertion")
 	} else {
 		fmt.Printf("Got the integer %d\n", intVal)
 	}
-
-	// You can do it in one shot, but it'll panic if you guess wrong like any cast would
-	//fmt.Printf("Got the integer %d\n", getResp.Value.(storageTypes.Int))
 
 	// delete the key
 	fmt.Println("Deleting key")
