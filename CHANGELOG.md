@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.24.2](https://github.com/momentohq/client-sdk-go/compare/v1.24.1...v1.24.2) (2024-07-11)
+
+
+### Miscellaneous
+
+* add accessor for storage client logger ([#455](https://github.com/momentohq/client-sdk-go/issues/455)) ([27b9907](https://github.com/momentohq/client-sdk-go/commit/27b99075974a00dbb62b012d9de529cebd4d7152))
+* fix example for clarity ([#453](https://github.com/momentohq/client-sdk-go/issues/453)) ([30511d0](https://github.com/momentohq/client-sdk-go/commit/30511d0eda679d94d7e7e233c765a9a853d64e17))
+
 ## [1.24.1](https://github.com/momentohq/client-sdk-go/compare/v1.24.0...v1.24.1) (2024-07-09)
 
 
