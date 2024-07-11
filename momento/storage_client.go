@@ -16,11 +16,13 @@ import (
 
 var storageDataClientCount uint64
 
-// PREVIEW Momento Storage Client
+// PreviewStorageClient PREVIEW Momento Storage Client
 //
 // WARNING: the API for this client is not yet stable and may change without notice.
 // Please contact Momento if you would like to try this preview.
 type PreviewStorageClient interface {
+	Logger() logger.MomentoLogger
+
 	// CreateStore creates a new store if it does not exist.
 	CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, error)
 	// DeleteStore deletes a store and all the items within it.
@@ -29,7 +31,7 @@ type PreviewStorageClient interface {
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, error)
 	// Get retrieves a value from a store.
 	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error)
-	// Set sets a value in a store.
+	// Put sets a value in a store.
 	Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error)
 	// Delete removes a value from a store.
 	Delete(ctx context.Context, request *StorageDeleteRequest) (responses.StorageDeleteResponse, error)
@@ -41,7 +43,7 @@ type defaultPreviewStorageClient struct {
 	credentialProvider auth.CredentialProvider
 	controlClient      *services.ScsControlClient
 	storageDataClients []*storageDataClient
-	log                logger.MomentoLogger
+	logger             logger.MomentoLogger
 }
 
 // NewPreviewStorageClient creates a new PreviewStorageClient with the provided configuration and credential provider.
@@ -54,7 +56,7 @@ func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, c
 	}
 	client := &defaultPreviewStorageClient{
 		credentialProvider: credentialProvider,
-		log:                storageConfiguration.GetLoggerFactory().GetLogger("store-client"),
+		logger:             storageConfiguration.GetLoggerFactory().GetLogger("store-client"),
 	}
 
 	controlConfig := config.NewCacheConfiguration(&config.ConfigurationProps{
@@ -98,6 +100,10 @@ func (c defaultPreviewStorageClient) getNextStorageDataClient() *storageDataClie
 	return dataClient
 }
 
+func (c defaultPreviewStorageClient) Logger() logger.MomentoLogger {
+	return c.logger
+}
+
 func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *CreateStoreRequest) (responses.CreateStoreResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
 		return nil, err
@@ -108,10 +114,10 @@ func (c defaultPreviewStorageClient) CreateStore(ctx context.Context, request *C
 	})
 	if err != nil {
 		if err.Code() == AlreadyExistsError {
-			c.log.Info("Store with name '%s' already exists, skipping", request.StoreName)
+			c.logger.Info("Store with name '%s' already exists, skipping", request.StoreName)
 			return &responses.CreateStoreAlreadyExists{}, nil
 		}
-		c.log.Warn("Error creating cache '%s': %s", request.StoreName, err.Message())
+		c.logger.Warn("Error creating cache '%s': %s", request.StoreName, err.Message())
 		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
 	return &responses.CreateStoreSuccess{}, nil
