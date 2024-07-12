@@ -104,10 +104,10 @@ func processError(err error, errChan chan string) {
 			mErr.Code() == momento.LimitExceededError {
 			errChan <- mErr.Code()
 		} else {
-			panic(fmt.Sprintf("unrecognized result: %T", mErr))
+			fmt.Sprintf("unrecognized result: %T", mErr)
 		}
 	default:
-		panic(fmt.Sprintf("unknown error type %T", err))
+		fmt.Sprintf("unknown error type %T", err)
 	}
 }
 
@@ -297,7 +297,7 @@ func main() {
 		// and observe elevated client-side latencies.
 		numberOfConcurrentRequests: 50,
 		maxRequestsPerSecond:       1000,
-		howLongToRun:               time.Minute * 30,
+		howLongToRun:               time.Hour * 30,
 	}
 
 	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
