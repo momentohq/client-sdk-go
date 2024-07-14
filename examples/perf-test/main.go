@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/loov/hrtime"
+	"github.com/momentohq/client-sdk-go/batchutils"
 	"math"
 	"math/rand"
 	"strings"
@@ -131,9 +132,11 @@ func worker(
 			i++
 			elapsed = 0
 			setStart := hrtime.Now()
-			_, err := client.GetBatch(ctx, &momento.GetBatchRequest{
-				CacheName: CacheName,
-				Keys:      buildBatchGetValues(20),
+			_, err := batchutils.BatchGet(ctx, &batchutils.BatchGetRequest{
+				Client:            client,
+				CacheName:         CacheName,
+				Keys:              buildBatchGetValues(20),
+				MaxConcurrentGets: 5,
 			})
 			if err != nil {
 				processError(err, errChan)
@@ -335,8 +338,8 @@ func buildBatchSetValues(start int) []momento.BatchSetItem {
 	return returnList
 }
 
-func buildBatchGetValues(count int) []momento.Value {
-	var returnList []momento.Value
+func buildBatchGetValues(count int) []momento.Key {
+	var returnList []momento.Key
 	for i := 0; i < count; i++ {
 		returnList = append(returnList, momento.String(
 			fmt.Sprintf("key%d",
