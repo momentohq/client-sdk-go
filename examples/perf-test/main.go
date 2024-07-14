@@ -67,7 +67,7 @@ func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Dur
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewCacheClientWithEagerConnectTimeout(r.momentoClientConfig, credentialProvider, time.Second*CacheItemTtlSeconds, 30*time.Second)
+	client, err := momento.NewCacheClientWithEagerConnectTimeout(r.momentoClientConfig.WithNumGrpcChannels(6), credentialProvider, time.Second*CacheItemTtlSeconds, 30*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -298,7 +298,7 @@ func main() {
 		cacheItemPayloadBytes: 100,
 		// Note: You are likely to see degraded performance if you increase this above 50
 		// and observe elevated client-side latencies.
-		numberOfConcurrentRequests: 50,
+		numberOfConcurrentRequests: 10,
 		maxRequestsPerSecond:       1000,
 		howLongToRun:               time.Hour * 30,
 	}
