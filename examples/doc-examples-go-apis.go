@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/storageTypes"
 	"github.com/momentohq/client-sdk-go/utils"
 
 	"github.com/google/uuid"
@@ -24,7 +25,28 @@ var (
 	cacheName         string
 	leaderboardClient momento.PreviewLeaderboardClient
 	leaderboard       momento.Leaderboard
+	storageClient     momento.PreviewStorageClient
+	storeName         string
 )
+
+func RetrieveApiKeyFromYourSecretsManager() string {
+	return "your-api-key"
+}
+
+func example_API_CredentialProviderFromString() {
+	apiKey := RetrieveApiKeyFromYourSecretsManager()
+	credentialProvider, err := auth.NewStringMomentoTokenProvider(apiKey)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromEnvVar() {
+	credentialProvider, err := auth.NewStringMomentoTokenProvider("MOMENTO_API_KEY")
+	if err != nil {
+		panic(err)
+	}
+}
 
 func example_API_InstantiateCacheClient() {
 	context := context.Background()
@@ -630,5 +652,130 @@ func example_patterns_WriteThroughCaching() {
 		CacheName: "cache-name",
 		Key:       momento.String(key),
 		Value:     momento.String(value),
+	})
+}
+
+func example_API_Storage_InstantiateClient() {
+	credentialProvider, err := auth.NewStringMomentoTokenProvider("MOMENTO_API_KEY")
+	if err != nil {
+		panic(err)
+	}
+
+	storageClient, err := momento.NewPreviewStorageClient(config.StorageLaptopLatest(), credentialProvider)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_Storage_CreateStore() {
+	resp, err := storageClient.CreateStore(ctx, &momento.CreateStoreRequest{
+		StoreName: storeName,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	switch resp.(type) {
+	case *responses.CreateStoreSuccess:
+		fmt.Printf("Successfully created store %s\n", storeName)
+	case *responses.CreateStoreAlreadyExists:
+		fmt.Printf("Store %s already exists\n", storeName)
+	}
+}
+
+func example_API_Storage_ListStores() {
+	resp, err := storageClient.ListStores(ctx, &momento.ListStoresRequest{})
+	if err != nil {
+		panic(err)
+	}
+
+	switch r := resp.(type) {
+	case *responses.ListStoresSuccess:
+		log.Printf("Found stores %+v", r.Stores())
+	}
+}
+
+func example_API_Storage_DeleteStore() {
+	_, err := storageClient.DeleteStore(ctx, &momento.DeleteStoreRequest{
+		StoreName: storeName,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_Storage_Delete() {
+	_, err := storageClient.Delete(ctx, &momento.StorageDeleteRequest{
+		StoreName: storeName,
+		Key:       "key",
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_Storage_Get() {
+	getResp, err := storageClient.Get(ctx, &momento.StorageGetRequest{
+		StoreName: storeName,
+		Key:       "key",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// If the value was not found, the response's Value will be nil.
+	if getResp.Value() == nil {
+		fmt.Println("Got nil")
+	}
+
+	// Then get the value from the found response.
+	// Use switch if you don't know the type beforehand:
+	switch t := getResp.Value().(type) {
+	case storageTypes.String:
+		fmt.Printf("Got the string %s\n", t)
+	case storageTypes.Bytes:
+		fmt.Printf("Got the bytes %b\n", t)
+	case storageTypes.Float:
+		fmt.Printf("Got the float %f\n", t)
+	case storageTypes.Int:
+		fmt.Printf("Got the integer %d\n", t)
+	case nil:
+		fmt.Println("Got nil")
+	}
+
+	// If you know the type you're expecting, you can assert it directly:
+	intVal, ok := getResp.Value().(storageTypes.Int)
+	if !ok {
+		fmt.Println("Illegal type assertion")
+	} else {
+		fmt.Printf("Got the integer %d\n", intVal)
+	}
+}
+
+func example_API_Storage_Put() {
+	_, err := storageClient.Put(ctx, &momento.StoragePutRequest{
+		StoreName: storeName,
+		Key:       "key",
+		Value:     storageTypes.String("my-value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// Momento storage also supports these other data types:
+	storageClient.Put(ctx, &momento.StoragePutRequest{
+		StoreName: storeName,
+		Key:       "key",
+		Value:     storageTypes.Int(42),
+	})
+	storageClient.Put(ctx, &momento.StoragePutRequest{
+		StoreName: storeName,
+		Key:       "key",
+		Value:     storageTypes.Float(3.14),
+	})
+	storageClient.Put(ctx, &momento.StoragePutRequest{
+		StoreName: storeName,
+		Key:       "key",
+		Value:     storageTypes.Bytes{0x01, 0x02, 0x03},
 	})
 }
