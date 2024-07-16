@@ -715,7 +715,10 @@ func example_API_Storage_ListStores() {
 
 	switch r := resp.(type) {
 	case *responses.ListStoresSuccess:
-		log.Printf("Found stores %+v", r.Stores())
+		log.Printf("Found stores:")
+		for _, store := range r.Stores() {
+			log.Printf("\tStore name: %s", store.Name())
+		}
 	}
 }
 
@@ -805,13 +808,21 @@ func example_API_Storage_Put() {
 
 // Clean up any lingering resources even if something panics
 func cleanup() {
-	leaderboard.Delete(ctx)
-	client.DeleteCache(ctx, &momento.DeleteCacheRequest{
-		CacheName: cacheName,
-	})
-	storageClient.DeleteStore(ctx, &momento.DeleteStoreRequest{
-		StoreName: storeName,
-	})
+	if leaderboard != nil {
+		leaderboard.Delete(ctx)
+	}
+
+	if client != nil {
+		client.DeleteCache(ctx, &momento.DeleteCacheRequest{
+			CacheName: cacheName,
+		})
+	}
+
+	if storageClient != nil {
+		storageClient.DeleteStore(ctx, &momento.DeleteStoreRequest{
+			StoreName: storeName,
+		})
+	}
 }
 
 func main() {
