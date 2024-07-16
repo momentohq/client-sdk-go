@@ -104,7 +104,7 @@ func example_API_ListCaches() {
 
 	switch r := resp.(type) {
 	case *responses.ListCachesSuccess:
-		log.Printf("Found caches %+v", r.Caches())
+		log.Printf("Found caches %+v\n", r.Caches())
 	}
 }
 
@@ -140,7 +140,7 @@ func example_API_Get() {
 	case *responses.GetHit:
 		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
 	case *responses.GetMiss:
-		log.Printf("Look up did not find a value key=%s", key)
+		log.Printf("Look up did not find a value key=%s\n", key)
 	}
 }
 
@@ -715,9 +715,9 @@ func example_API_Storage_ListStores() {
 
 	switch r := resp.(type) {
 	case *responses.ListStoresSuccess:
-		log.Printf("Found stores:")
+		log.Printf("Found stores:\n")
 		for _, store := range r.Stores() {
-			log.Printf("\tStore name: %s", store.Name())
+			log.Printf("\tStore name: %s\n", store.Name())
 		}
 	}
 }
