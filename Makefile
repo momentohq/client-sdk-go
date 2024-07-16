@@ -61,3 +61,7 @@ vendor:
 build-examples:
 	cd examples
 	go build ./...
+
+.PHONY: run-docs-examples
+run-docs-examples:
+	cd examples && go run docs-examples/main.go

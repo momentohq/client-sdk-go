@@ -19,14 +19,18 @@ import (
 )
 
 var (
-	ctx               context.Context
-	client            momento.CacheClient
-	database          map[string]string
-	cacheName         string
-	leaderboardClient momento.PreviewLeaderboardClient
-	leaderboard       momento.Leaderboard
-	storageClient     momento.PreviewStorageClient
-	storeName         string
+	ctx                context.Context
+	client             momento.CacheClient
+	database           map[string]string
+	cacheName          string
+	leaderboardClient  momento.PreviewLeaderboardClient
+	leaderboard        momento.Leaderboard
+	storageClient      momento.PreviewStorageClient
+	storeName          string
+	credentialProvider auth.CredentialProvider
+	topicClient        momento.TopicClient
+	authClient         momento.AuthClient
+	err                error
 )
 
 func RetrieveApiKeyFromYourSecretsManager() string {
@@ -35,14 +39,14 @@ func RetrieveApiKeyFromYourSecretsManager() string {
 
 func example_API_CredentialProviderFromString() {
 	apiKey := RetrieveApiKeyFromYourSecretsManager()
-	credentialProvider, err := auth.NewStringMomentoTokenProvider(apiKey)
+	credentialProvider, err = auth.NewStringMomentoTokenProvider(apiKey)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error parsing API key:", err)
 	}
 }
 
 func example_API_CredentialProviderFromEnvVar() {
-	credentialProvider, err := auth.NewStringMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
@@ -50,14 +54,14 @@ func example_API_CredentialProviderFromEnvVar() {
 
 func example_API_InstantiateCacheClient() {
 	context := context.Background()
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
-	defaultTtl := time.Duration(9999)
+	defaultTtl := 60 * time.Second
 	eagerConnectTimeout := 30 * time.Second
 
-	client, err := momento.NewCacheClientWithEagerConnectTimeout(
+	client, err = momento.NewCacheClientWithEagerConnectTimeout(
 		config.LaptopLatest(),
 		credentialProvider,
 		defaultTtl,
@@ -106,7 +110,7 @@ func example_API_ListCaches() {
 
 func example_API_CreateCache() {
 	_, err := client.CreateCache(ctx, &momento.CreateCacheRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 	})
 	if err != nil {
 		panic(err)
@@ -115,7 +119,7 @@ func example_API_CreateCache() {
 
 func example_API_DeleteCache() {
 	_, err := client.DeleteCache(ctx, &momento.DeleteCacheRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 	})
 	if err != nil {
 		panic(err)
@@ -125,7 +129,7 @@ func example_API_DeleteCache() {
 func example_API_Get() {
 	key := uuid.NewString()
 	resp, err := client.Get(ctx, &momento.GetRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String(key),
 	})
 	if err != nil {
@@ -145,7 +149,7 @@ func example_API_Set() {
 	value := uuid.NewString()
 	log.Printf("Setting key: %s, value: %s\n", key, value)
 	_, err := client.Set(ctx, &momento.SetRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String(key),
 		Value:     momento.String(value),
 		Ttl:       time.Duration(9999),
@@ -165,7 +169,7 @@ func example_API_Set() {
 func example_API_Delete() {
 	key := uuid.NewString()
 	_, err := client.Delete(ctx, &momento.DeleteRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String(key),
 	})
 	if err != nil {
@@ -179,7 +183,7 @@ func example_API_InstantiateTopicClient() {
 		panic(err)
 	}
 
-	topicClient, err := momento.NewTopicClient(
+	topicClient, err = momento.NewTopicClient(
 		config.TopicsDefault(),
 		credProvider,
 	)
@@ -188,9 +192,9 @@ func example_API_InstantiateTopicClient() {
 	}
 }
 
-func example_API_TopicPublish(client momento.TopicClient) {
-	_, err := client.Publish(ctx, &momento.TopicPublishRequest{
-		CacheName: "test-cache",
+func example_API_TopicPublish() {
+	_, err := topicClient.Publish(ctx, &momento.TopicPublishRequest{
+		CacheName: cacheName,
 		TopicName: "test-topic",
 		Value:     momento.String("test-message"),
 	})
@@ -199,10 +203,10 @@ func example_API_TopicPublish(client momento.TopicClient) {
 	}
 }
 
-func example_API_TopicSubscribe(client momento.TopicClient) {
+func example_API_TopicSubscribe() {
 	// Instantiate subscriber
-	sub, subErr := client.Subscribe(ctx, &momento.TopicSubscribeRequest{
-		CacheName: "test-cache",
+	sub, subErr := topicClient.Subscribe(ctx, &momento.TopicSubscribeRequest{
+		CacheName: cacheName,
 		TopicName: "test-topic",
 	})
 	if subErr != nil {
@@ -210,8 +214,8 @@ func example_API_TopicSubscribe(client momento.TopicClient) {
 	}
 
 	time.Sleep(time.Second)
-	_, pubErr := client.Publish(ctx, &momento.TopicPublishRequest{
-		CacheName: "test-cache",
+	_, pubErr := topicClient.Publish(ctx, &momento.TopicPublishRequest{
+		CacheName: cacheName,
 		TopicName: "test-topic",
 		Value:     momento.String("test-message"),
 	})
@@ -232,9 +236,21 @@ func example_API_TopicSubscribe(client momento.TopicClient) {
 	}
 }
 
-func example_API_GenerateDisposableToken(client momento.AuthClient) {
+func example_API_InstantiateAuthClient() {
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	if err != nil {
+		panic(err)
+	}
+
+	authClient, err = momento.NewAuthClient(config.AuthDefault(), credentialProvider)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_GenerateDisposableToken() {
 	tokenId := "a token id"
-	resp, err := client.GenerateDisposableToken(ctx, &momento.GenerateDisposableTokenRequest{
+	resp, err := authClient.GenerateDisposableToken(ctx, &momento.GenerateDisposableTokenRequest{
 		ExpiresIn: utils.ExpiresInSeconds(10),
 		Scope: momento.TopicSubscribeOnly(
 			momento.CacheName{Name: "a cache"},
@@ -257,7 +273,7 @@ func example_API_GenerateDisposableToken(client momento.AuthClient) {
 
 func example_API_SetIfPresent() {
 	resp, err := client.SetIfPresent(ctx, &momento.SetIfPresentRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Value:     momento.String("value"),
 	})
@@ -272,7 +288,7 @@ func example_API_SetIfPresent() {
 
 func example_API_SetIfAbsent() {
 	resp, err := client.SetIfAbsent(ctx, &momento.SetIfAbsentRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Value:     momento.String("value"),
 	})
@@ -287,7 +303,7 @@ func example_API_SetIfAbsent() {
 
 func example_API_SetIfEqual() {
 	resp, err := client.SetIfEqual(ctx, &momento.SetIfEqualRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Value:     momento.String("value"),
 		Equal:     momento.String("current-value"),
@@ -303,7 +319,7 @@ func example_API_SetIfEqual() {
 
 func example_API_SetIfNotEqual() {
 	resp, err := client.SetIfNotEqual(ctx, &momento.SetIfNotEqualRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Value:     momento.String("value"),
 		NotEqual:  momento.String("current-value"),
@@ -319,7 +335,7 @@ func example_API_SetIfNotEqual() {
 
 func example_API_SetIfPresentAndNotEqual() {
 	resp, err := client.SetIfPresentAndNotEqual(ctx, &momento.SetIfPresentAndNotEqualRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Value:     momento.String("value"),
 		NotEqual:  momento.String("current-value"),
@@ -335,7 +351,7 @@ func example_API_SetIfPresentAndNotEqual() {
 
 func example_API_SetIfAbsentOrEqual() {
 	resp, err := client.SetIfAbsentOrEqual(ctx, &momento.SetIfAbsentOrEqualRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Value:     momento.String("value"),
 		Equal:     momento.String("current-value"),
@@ -352,7 +368,7 @@ func example_API_SetIfAbsentOrEqual() {
 func example_API_KeysExist() {
 	keys := []momento.Value{momento.String("key1"), momento.String("key2")}
 	resp, err := client.KeysExist(ctx, &momento.KeysExistRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Keys:      keys,
 	})
 	if err != nil {
@@ -369,7 +385,7 @@ func example_API_KeysExist() {
 
 func example_API_ItemGetType() {
 	resp, err := client.ItemGetType(ctx, &momento.ItemGetTypeRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 	})
 	if err != nil {
@@ -385,7 +401,7 @@ func example_API_ItemGetType() {
 
 func example_API_UpdateTtl() {
 	resp, err := client.UpdateTtl(ctx, &momento.UpdateTtlRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Ttl:       time.Duration(9999),
 	})
@@ -402,7 +418,7 @@ func example_API_UpdateTtl() {
 
 func example_API_IncreaseTtl() {
 	resp, err := client.IncreaseTtl(ctx, &momento.IncreaseTtlRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Ttl:       time.Duration(9999),
 	})
@@ -419,7 +435,7 @@ func example_API_IncreaseTtl() {
 
 func example_API_DecreaseTtl() {
 	resp, err := client.DecreaseTtl(ctx, &momento.DecreaseTtlRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 		Ttl:       time.Duration(9999),
 	})
@@ -436,7 +452,7 @@ func example_API_DecreaseTtl() {
 
 func example_API_ItemGetTtl() {
 	resp, err := client.ItemGetTtl(ctx, &momento.ItemGetTtlRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String("key"),
 	})
 	if err != nil {
@@ -452,7 +468,7 @@ func example_API_ItemGetTtl() {
 
 func example_API_Increment() {
 	resp, err := client.Increment(ctx, &momento.IncrementRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Field:     momento.String("key"),
 		Amount:    1,
 	})
@@ -467,7 +483,7 @@ func example_API_Increment() {
 
 func example_API_GetBatch() {
 	resp, err := client.GetBatch(ctx, &momento.GetBatchRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Keys:      []momento.Value{momento.String("key1"), momento.String("key2")},
 	})
 	if err != nil {
@@ -481,7 +497,7 @@ func example_API_GetBatch() {
 
 func example_API_SetBatch() {
 	resp, err := client.SetBatch(ctx, &momento.SetBatchRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Items: []momento.BatchSetItem{
 			{
 				Key:   momento.String("key1"),
@@ -517,14 +533,15 @@ func example_API_InstantiateLeaderboardClient() {
 	}
 }
 
-func example_API_CreateLeaderboard() {
-	leaderboard, err := leaderboardClient.Leaderboard(ctx, &momento.LeaderboardRequest{
+func example_API_CreateLeaderboard() momento.Leaderboard {
+	leaderboard, err = leaderboardClient.Leaderboard(ctx, &momento.LeaderboardRequest{
 		CacheName:       cacheName,
 		LeaderboardName: "leaderboard",
 	})
 	if err != nil {
 		panic(err)
 	}
+	return leaderboard
 }
 
 func example_API_LeaderboardUpsert() {
@@ -617,10 +634,17 @@ func example_API_LeaderboardRemoveElements() {
 	}
 }
 
+func example_API_LeaderboardDelete() {
+	_, err := leaderboard.Delete(ctx)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func example_patterns_ReadAsideCaching() string {
 	key := uuid.NewString()
 	resp, err := client.Get(ctx, &momento.GetRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String(key),
 	})
 	if err != nil {
@@ -635,7 +659,7 @@ func example_patterns_ReadAsideCaching() string {
 	// lookup value in database
 	val := database[key]
 	client.Set(ctx, &momento.SetRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String(key),
 		Value:     momento.String(val),
 	})
@@ -649,19 +673,19 @@ func example_patterns_WriteThroughCaching() {
 	database[key] = value
 	// set value in cache
 	client.Set(ctx, &momento.SetRequest{
-		CacheName: "cache-name",
+		CacheName: cacheName,
 		Key:       momento.String(key),
 		Value:     momento.String(value),
 	})
 }
 
 func example_API_Storage_InstantiateClient() {
-	credentialProvider, err := auth.NewStringMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
 
-	storageClient, err := momento.NewPreviewStorageClient(config.StorageLaptopLatest(), credentialProvider)
+	storageClient, err = momento.NewPreviewStorageClient(config.StorageLaptopLatest(), credentialProvider)
 	if err != nil {
 		panic(err)
 	}
@@ -729,6 +753,15 @@ func example_API_Storage_Get() {
 	}
 
 	// Then get the value from the found response.
+
+	// If you know the type you're expecting, you can assert it directly:
+	intVal, ok := getResp.Value().(storageTypes.Int)
+	if !ok {
+		fmt.Printf("Not an integer, received type: %T\n", getResp.Value())
+	} else {
+		fmt.Printf("Got the integer %d\n", intVal)
+	}
+
 	// Use switch if you don't know the type beforehand:
 	switch t := getResp.Value().(type) {
 	case storageTypes.String:
@@ -741,14 +774,6 @@ func example_API_Storage_Get() {
 		fmt.Printf("Got the integer %d\n", t)
 	case nil:
 		fmt.Println("Got nil")
-	}
-
-	// If you know the type you're expecting, you can assert it directly:
-	intVal, ok := getResp.Value().(storageTypes.Int)
-	if !ok {
-		fmt.Println("Illegal type assertion")
-	} else {
-		fmt.Printf("Got the integer %d\n", intVal)
 	}
 }
 
@@ -778,4 +803,84 @@ func example_API_Storage_Put() {
 		Key:       "key",
 		Value:     storageTypes.Bytes{0x01, 0x02, 0x03},
 	})
+}
+
+// Clean up any lingering resources even if something panics
+func cleanup() {
+	leaderboard.Delete(ctx)
+	client.DeleteCache(ctx, &momento.DeleteCacheRequest{
+		CacheName: cacheName,
+	})
+	storageClient.DeleteStore(ctx, &momento.DeleteStoreRequest{
+		StoreName: storeName,
+	})
+}
+
+func main() {
+	defer cleanup()
+
+	ctx = context.Background()
+	cacheName = fmt.Sprintf("golang-docs-examples-%s", uuid.NewString())
+	storeName = fmt.Sprintf("golang-docs-examples-%s", uuid.NewString())
+	database = make(map[string]string)
+
+	example_API_CredentialProviderFromString()
+	example_API_CredentialProviderFromEnvVar()
+	example_API_InstantiateCacheClientWithReadConcern()
+	example_API_InstantiateCacheClient()
+
+	example_API_CreateCache()
+	example_API_ListCaches()
+
+	example_API_Set()
+	example_API_Get()
+	example_API_Delete()
+
+	example_API_SetIfPresent()
+	example_API_SetIfAbsent()
+	example_API_SetIfEqual()
+	example_API_SetIfNotEqual()
+	example_API_SetIfPresentAndNotEqual()
+	example_API_SetIfAbsentOrEqual()
+
+	example_API_KeysExist()
+	example_API_ItemGetType()
+	example_API_UpdateTtl()
+	example_API_IncreaseTtl()
+	example_API_DecreaseTtl()
+	example_API_ItemGetTtl()
+	example_API_Increment()
+
+	example_API_SetBatch()
+	example_API_GetBatch()
+
+	example_API_InstantiateTopicClient()
+	example_API_TopicPublish()
+	example_API_TopicSubscribe()
+
+	example_API_InstantiateLeaderboardClient()
+	example_API_CreateLeaderboard()
+	example_API_LeaderboardUpsert()
+	example_API_LeaderboardFetchByScore()
+	example_API_LeaderboardFetchByRank()
+	example_API_LeaderboardGetRank()
+	example_API_LeaderboardLength()
+	example_API_LeaderboardRemoveElements()
+	example_API_LeaderboardDelete()
+
+	example_patterns_ReadAsideCaching()
+	example_patterns_WriteThroughCaching()
+
+	example_API_DeleteCache()
+
+	example_API_InstantiateAuthClient()
+	example_API_GenerateDisposableToken()
+
+	example_API_Storage_InstantiateClient()
+	example_API_Storage_CreateStore()
+	example_API_Storage_ListStores()
+	example_API_Storage_Put()
+	example_API_Storage_Get()
+	example_API_Storage_Delete()
+	example_API_Storage_DeleteStore()
 }

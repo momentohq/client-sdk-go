@@ -81,5 +81,8 @@ jobs:
       - name: Build examples
         run: make build-examples
 
+      - name: Run docs examples
+        run: make run-docs-examples
+
       - name: Run test
         run: make test
