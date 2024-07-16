@@ -105,7 +105,7 @@ func (client *storageDataClient) put(ctx context.Context, request *StoragePutReq
 	return &responses.StoragePutSuccess{}, nil
 }
 
-func (client *storageDataClient) get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {
+func (client *storageDataClient) get(ctx context.Context, request *StorageGetRequest) (*responses.StorageGetResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
@@ -125,22 +125,22 @@ func (client *storageDataClient) get(ctx context.Context, request *StorageGetReq
 		// Handle item not found error by returning a miss
 		myErr := momentoerrors.ConvertSvcErr(err, header, trailer)
 		if myErr.Code() == momentoerrors.ItemNotFoundError {
-			return *responses.NewStoreGetResponse_Nil(), nil
+			return nil, nil
 		}
-		return *responses.NewStoreGetResponse_Nil(), myErr
+		return nil, myErr
 	}
 
 	val := response.GetValue()
 	switch val.Value.(type) {
 	case *pb.XStoreValue_BytesValue:
-		return *responses.NewStoreGetResponse_Bytes(val.GetBytesValue()), nil
+		return responses.NewStoreGetResponse_Bytes(val.GetBytesValue()), nil
 	case *pb.XStoreValue_StringValue:
-		return *responses.NewStoreGetResponse_String(val.GetStringValue()), nil
+		return responses.NewStoreGetResponse_String(val.GetStringValue()), nil
 	case *pb.XStoreValue_DoubleValue:
-		return *responses.NewStoreGetResponse_Float(val.GetDoubleValue()), nil
+		return responses.NewStoreGetResponse_Float(val.GetDoubleValue()), nil
 	case *pb.XStoreValue_IntegerValue:
-		return *responses.NewStoreGetResponse_Integer(int(val.GetIntegerValue())), nil
+		return responses.NewStoreGetResponse_Integer(int(val.GetIntegerValue())), nil
 	default:
-		return *responses.NewStoreGetResponse_Nil(), momentoerrors.NewMomentoSvcErr(momentoerrors.UnknownServiceError, "Unknown store value type", nil)
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.UnknownServiceError, "Unknown store value type", nil)
 	}
 }

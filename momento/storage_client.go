@@ -30,7 +30,7 @@ type PreviewStorageClient interface {
 	// ListStores lists all the stores.
 	ListStores(ctx context.Context, request *ListStoresRequest) (responses.ListStoresResponse, error)
 	// Get retrieves a value from a store.
-	Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error)
+	Get(ctx context.Context, request *StorageGetRequest) (*responses.StorageGetResponse, error)
 	// Put sets a value in a store.
 	Put(ctx context.Context, request *StoragePutRequest) (responses.StoragePutResponse, error)
 	// Delete removes a value from a store.
@@ -171,13 +171,13 @@ func (c defaultPreviewStorageClient) Delete(ctx context.Context, request *Storag
 	return response, nil
 }
 
-func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (responses.StorageGetResponse, error) {
+func (c defaultPreviewStorageClient) Get(ctx context.Context, request *StorageGetRequest) (*responses.StorageGetResponse, error) {
 	if err := isStoreNameValid(request.StoreName); err != nil {
-		return *responses.NewStoreGetResponse_Nil(), err
+		return nil, err
 	}
 
 	if _, err := prepareName(request.Key, "Key"); err != nil {
-		return *responses.NewStoreGetResponse_Nil(), err
+		return nil, err
 	}
 
 	resp, err := c.getNextStorageDataClient().get(ctx, request)

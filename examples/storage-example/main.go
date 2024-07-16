@@ -64,8 +64,8 @@ func main() {
 		panic(err)
 	}
 
-	// If the value was not found, the response's Value will be nil.
-	if getResp.Value() == nil {
+	// If the value was not found, the response will be nil.
+	if getResp == nil {
 		fmt.Println("Got nil")
 	}
 
@@ -80,8 +80,6 @@ func main() {
 		fmt.Printf("Got the float %f\n", t)
 	case storageTypes.Int:
 		fmt.Printf("Got the integer %d\n", t)
-	case nil:
-		fmt.Println("Got nil")
 	}
 
 	// If you know the type you're expecting, you can assert it directly:
