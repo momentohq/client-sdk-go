@@ -752,8 +752,6 @@ func example_API_Storage_Get() {
 		fmt.Println("Got nil")
 	}
 
-	// Then get the value from the found response.
-
 	// If you know the type you're expecting, you can assert it directly:
 	intVal, ok := getResp.Value().(storageTypes.Int)
 	if !ok {
