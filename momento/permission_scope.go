@@ -109,6 +109,16 @@ var AllDataReadWrite = &Permissions{
 	},
 }
 
+type PredefinedScopeInterface interface {
+	IsPredefinedScope()
+}
+
+type PredefinedScope struct{}
+
+func (PredefinedScope) IsPredefinedScope() {}
+
+func (PredefinedScope) IsPermissionScope() {}
+
 type PermissionScope interface {
 	IsPermissionScope()
 }

@@ -29,6 +29,11 @@ type TokenGrpcManagerRequest struct {
 	GrpcConfiguration  config.GrpcConfiguration
 }
 
+type AuthGrpcManagerRequest struct {
+	CredentialProvider auth.CredentialProvider
+	GrpcConfiguration  config.GrpcConfiguration
+}
+
 type DataStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 	GrpcConfiguration  config.GrpcConfiguration
@@ -93,6 +98,11 @@ type TopicClientRequest struct {
 }
 
 type TokenClientRequest struct {
+	CredentialProvider auth.CredentialProvider
+	Log                logger.MomentoLogger
+}
+
+type AuthClientRequest struct {
 	CredentialProvider auth.CredentialProvider
 	Log                logger.MomentoLogger
 }
