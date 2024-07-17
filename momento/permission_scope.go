@@ -102,7 +102,7 @@ type Permissions struct {
 
 func (Permissions) IsPermissionScope() {}
 
-var AllDataReadWrite = &Permissions{
+var AllDataReadWrite = Permissions{
 	Permissions: []Permission{
 		TopicPermission{Topic: AllTopics{}, Cache: AllCaches{}, Role: PublishSubscribe},
 		CachePermission{Cache: AllCaches{}, Role: ReadWrite},

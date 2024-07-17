@@ -6,7 +6,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
-	responses "github.com/momentohq/client-sdk-go/responses/auth"
+	"github.com/momentohq/client-sdk-go/internal"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	responses "github.com/momentohq/client-sdk-go/responses"
+	auth_responses "github.com/momentohq/client-sdk-go/responses/auth"
 	"github.com/momentohq/client-sdk-go/utils"
 	"golang.org/x/net/context"
 
@@ -17,8 +20,30 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-func credProviderFromDisposableToken(resp responses.GenerateDisposableTokenResponse) auth.CredentialProvider {
-	success := resp.(*responses.GenerateDisposableTokenSuccess)
+func credProviderFromApiKey(resp auth_responses.GenerateApiKeyResponse) auth.CredentialProvider {
+	success := resp.(*auth_responses.GenerateApiKeySuccess)
+	credProviderWithoutEndpoints, err := auth.NewStringMomentoTokenProvider(success.ApiKey)
+
+	if err != nil {
+		panic(err)
+	}
+	credProviderWithEndpoints, err := credProviderWithoutEndpoints.WithEndpoints(
+		auth.Endpoints{
+			ControlEndpoint: fmt.Sprintf("control.%s", success.Endpoint),
+			CacheEndpoint:   fmt.Sprintf("cache.%s", success.Endpoint),
+			TokenEndpoint:   fmt.Sprintf("cache.%s", success.Endpoint),
+		},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return credProviderWithEndpoints
+}
+
+func credProviderFromDisposableToken(resp auth_responses.GenerateDisposableTokenResponse) auth.CredentialProvider {
+	success := resp.(*auth_responses.GenerateDisposableTokenSuccess)
 	credProviderWithoutEndpoints, err := auth.NewStringMomentoTokenProvider(success.ApiKey)
 
 	if err != nil {
@@ -95,7 +120,7 @@ func assertSubscribeSuccess(tc TopicClient, topicName string, cacheName string) 
 	}
 }
 
-func generateDisposableTokenSuccess(ctx SharedContext, scope DisposableTokenScope) responses.GenerateDisposableTokenResponse {
+func generateDisposableTokenSuccess(ctx SharedContext, scope DisposableTokenScope) auth_responses.GenerateDisposableTokenResponse {
 	expiresIn := utils.ExpiresInMinutes(5)
 	resp, err := ctx.AuthClient.GenerateDisposableToken(ctx.Ctx, &GenerateDisposableTokenRequest{
 		ExpiresIn: expiresIn,
@@ -104,7 +129,7 @@ func generateDisposableTokenSuccess(ctx SharedContext, scope DisposableTokenScop
 	if err != nil {
 		panic(err)
 	}
-	Expect(resp).To(BeAssignableToTypeOf(&responses.GenerateDisposableTokenSuccess{}))
+	Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateDisposableTokenSuccess{}))
 	return resp
 }
 
@@ -136,7 +161,7 @@ var _ = Describe("auth auth-client", func() {
 		})
 	})
 
-	Describe("Disposable tokens", func() {
+	Describe("Generate disposable tokens", func() {
 		Describe("CacheKeyReadOnly tokens", func() {
 			It(`Generates disposable token CacheKeyReadOnly AllCaches, and validates its permissions`, func() {
 				key := String(uuid.NewString())
@@ -1244,6 +1269,204 @@ var _ = Describe("auth auth-client", func() {
 		})
 	})
 
-	Describe("Api keys", func() {})
+	Describe("Generate api keys", func() {
+		var sessionTokenClient AuthClient
+		var authTestingCacheName string
+
+		BeforeEach(func() {
+			sessionCredsProvider, err := auth.NewEnvMomentoTokenProvider("TEST_SESSION_TOKEN")
+			if err != nil {
+				Fail(fmt.Sprintf("Failed to create session token credential provider: %v", err))
+			}
+
+			// session tokens don't include cache/control endpoints so we steal them from
+			// the auth-token-based credential provider and override them here
+			sessionCredsProvider, err = sessionCredsProvider.WithEndpoints(auth.Endpoints{
+				ControlEndpoint: sharedContext.CredentialProvider.GetControlEndpoint(),
+				CacheEndpoint:   sharedContext.CredentialProvider.GetCacheEndpoint(),
+				TokenEndpoint:   sharedContext.CredentialProvider.GetTokenEndpoint(),
+				StorageEndpoint: sharedContext.CredentialProvider.GetStorageEndpoint(),
+			})
+			if err != nil {
+				Fail(fmt.Sprintf("Failed to override endpionts in session token credential provider: %v", err))
+			}
+
+			sessionTokenClient, err = NewAuthClient(sharedContext.AuthConfiguration, sessionCredsProvider)
+			if err != nil {
+				Fail(fmt.Sprintf("Failed to create session token auth client: %v", err))
+			}
+
+			authTestingCacheName = fmt.Sprintf("golang-auth-%s", uuid.NewString())
+
+			_, err = sharedContext.Client.CreateCache(context.Background(), &CreateCacheRequest{
+				CacheName: authTestingCacheName,
+			})
+			if err != nil {
+				Fail(fmt.Sprintf("Failed to create cache for auth client testing: %v", err))
+			}
+
+			DeferCleanup(func() {
+				_, err = sharedContext.Client.DeleteCache(context.Background(), &DeleteCacheRequest{
+					CacheName: authTestingCacheName,
+				})
+				sessionTokenClient.Close()
+			})
+		})
+
+		It("should successfully generate api key that expires", func() {
+			secondsSinceEpoch := time.Now().Unix()
+
+			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInDays(1),
+				Scope:     internal.InternalSuperUserPermissions{},
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
+
+			successResponse := resp.(*auth_responses.GenerateApiKeySuccess)
+
+			oneHourInSeconds := 60 * 60
+			oneDayInSeconds := 24 * oneHourInSeconds
+			expiresIn := secondsSinceEpoch + int64(oneDayInSeconds)
+
+			Expect(successResponse.ExpiresAt.DoesExpire()).To(BeTrue())
+			Expect(successResponse.ExpiresAt.Epoch()).To(BeNumerically("~", expiresIn-int64(oneHourInSeconds), expiresIn+int64(oneHourInSeconds)))
+		})
+
+		It("should successfully generate api key that does not expire", func() {
+			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInNever(),
+				Scope:     internal.InternalSuperUserPermissions{},
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
+
+			successResponse := resp.(*auth_responses.GenerateApiKeySuccess)
+			Expect(successResponse.ExpiresAt.DoesExpire()).To(BeFalse())
+		})
+
+		It("should fail to generate an api key with invalid expiry", func() {
+			_, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInSeconds(-100),
+				Scope:     internal.InternalSuperUserPermissions{},
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
+		})
+
+		It("should fail to generate an api key with empty permission list", func() {
+			_, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInSeconds(10),
+				Scope:     Permissions{Permissions: []Permission{}},
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
+		})
+
+		It("cannot create token with duplicate/conflicting cache permissions - all caches", func() {
+			_, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInSeconds(10),
+				Scope: Permissions{
+					Permissions: []Permission{
+						CachePermission{Cache: AllCaches{}, Role: ReadOnly},
+						CachePermission{Cache: AllCaches{}, Role: ReadWrite},
+					},
+				},
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
+		})
+
+		It("cannot create token with duplicate/conflicting cache permissions - cache name", func() {
+			_, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInSeconds(10),
+				Scope: Permissions{
+					Permissions: []Permission{
+						CachePermission{Cache: CacheName{Name: "cache-name"}, Role: ReadOnly},
+						CachePermission{Cache: CacheName{Name: "cache-name"}, Role: ReadWrite},
+					},
+				},
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
+		})
+
+		It("cannot create token with duplicate/conflicting topic permissions - cache + topic name", func() {
+			_, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInSeconds(10),
+				Scope: Permissions{
+					Permissions: []Permission{
+						TopicPermission{Cache: CacheName{Name: "cache-name"}, Topic: TopicName{Name: "topic-name"}, Role: SubscribeOnly},
+						TopicPermission{Cache: CacheName{Name: "cache-name"}, Topic: TopicName{Name: "topic-name"}, Role: PublishSubscribe},
+					},
+				},
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
+		})
+
+		It("expired token can't create cache", func() {
+			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInSeconds(1),
+				Scope:     internal.InternalSuperUserPermissions{},
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
+
+			// Wait for token to expire
+			time.Sleep(3 * time.Second)
+
+			cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(resp))
+			defer cacheClient.Close()
+
+			_, err = cacheClient.CreateCache(sharedContext.Ctx, &CreateCacheRequest{
+				CacheName: "cache-should-fail-to-create",
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.AuthenticationError))
+		})
+
+		It("AllDataReadWrite api key can complete only data plane requests", func() {
+			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+				ExpiresIn: utils.ExpiresInMinutes(10),
+				Scope:     AllDataReadWrite,
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
+
+			cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(resp))
+
+			// Cannot create a cache
+			_, err = cacheClient.CreateCache(sharedContext.Ctx, &CreateCacheRequest{
+				CacheName: "cache-should-fail-to-create",
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.PermissionError))
+
+			// Cannot delete a cache
+			_, err = cacheClient.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{
+				CacheName: "cache-should-fail-to-delete",
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.PermissionError))
+
+			// Can set values in an existing cache
+			setResp, err := cacheClient.Set(sharedContext.Ctx, &SetRequest{
+				CacheName: authTestingCacheName,
+				Key:       String("key"),
+				Value:     String("value"),
+			})
+			Expect(err).To(BeNil())
+			Expect(setResp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
+
+			// Can get values in an existing cache
+			getResp, err := cacheClient.Get(sharedContext.Ctx, &GetRequest{
+				CacheName: authTestingCacheName,
+				Key:       String("key"),
+			})
+			Expect(err).To(BeNil())
+			Expect(getResp).To(BeAssignableToTypeOf(&responses.GetHit{}))
+		})
+	})
 
 })

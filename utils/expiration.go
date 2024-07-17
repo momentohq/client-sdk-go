@@ -62,9 +62,9 @@ func (e ExpiresAt) Epoch() int64 {
 
 // ExpiresAtFromEpoch constructs an ExpiresAt with the specified epoch timestamp,
 // but if timestamp is undefined, the epoch timestamp will be set to math.MaxInt64.
-func ExpiresAtFromEpoch(epoch *int64) ExpiresAt {
-	if epoch != nil {
-		return ExpiresAt{validUntil: *epoch}
+func ExpiresAtFromEpoch(epoch int64) ExpiresAt {
+	if epoch > 0 {
+		return ExpiresAt{validUntil: epoch}
 	}
 	return ExpiresAt{validUntil: math.MaxInt64}
 }

@@ -83,7 +83,7 @@ func (c defaultAuthClient) GenerateApiKey(ctx context.Context, request *Generate
 	apiKeyResp, err := c.authClient.GenerateApiKey(requestMetadata, request)
 	if err != nil {
 		c.log.Debug("failed to generate api key...")
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err
 	}
 
 	return apiKeyResp, nil

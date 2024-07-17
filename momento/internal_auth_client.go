@@ -36,13 +36,10 @@ func (client *authClient) Close() {
 	defer client.grpcManager.Close()
 }
 
-func (client *authClient) GenerateApiKey(ctx context.Context, request *GenerateApiKeyRequest) (auth_responses.GenerateApiKeyResponse, error) {
-	// convert from sdk perms list to grpc perms list
-	// DRY up overlap with disposable token conversion
-
-	permissions, err := permissionsFromTokenScope(request.Scope)
-	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+func (client *authClient) GenerateApiKey(ctx context.Context, request *GenerateApiKeyRequest) (auth_responses.GenerateApiKeyResponse, MomentoError) {
+	permissions, permsErr := permissionsFromTokenScope(request.Scope)
+	if permsErr != nil {
+		return nil, permsErr
 	}
 
 	grpc_request := &pb.XGenerateApiTokenRequest{
@@ -61,30 +58,34 @@ func (client *authClient) GenerateApiKey(ctx context.Context, request *GenerateA
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
-	validUntil := int64(resp.ValidUntil)
-
 	return &auth_responses.GenerateApiKeySuccess{
 		ApiKey:       resp.ApiKey,
 		RefreshToken: resp.RefreshToken,
 		Endpoint:     resp.Endpoint,
-		ExpiresAt:    utils.ExpiresAtFromEpoch(&validUntil),
+		ExpiresAt:    utils.ExpiresAtFromEpoch(int64(resp.ValidUntil)),
 	}, nil
 }
 
-func permissionsFromTokenScope(scope PermissionScope) (*pb.Permissions, error) {
+func permissionsFromTokenScope(scope PermissionScope) (*pb.Permissions, MomentoError) {
 	var permissionsObject *pb.Permissions
 
 	switch stype := scope.(type) {
 	case internal.InternalSuperUserPermissions:
-		// grant superuser perms
 		permissionsObject = &pb.Permissions{
 			Kind: &pb.Permissions_SuperUser{
 				SuperUser: pb.SuperUserPermissions_SuperUser,
 			},
 		}
 	case Permissions:
-		// grant specified perms
 		var permissions []*pb.PermissionsType
+
+		if len(stype.Permissions) == 0 {
+			return nil, NewMomentoError(
+				momentoerrors.InvalidArgumentError,
+				"Permissions list cannot be empty",
+				nil,
+			)
+		}
 
 		for _, perm := range stype.Permissions {
 			switch ptype := perm.(type) {
@@ -113,7 +114,7 @@ func permissionsFromTokenScope(scope PermissionScope) (*pb.Permissions, error) {
 			},
 		}
 	default:
-		return nil, momentoerrors.NewMomentoSvcErr(
+		return nil, NewMomentoError(
 			momentoerrors.InvalidArgumentError,
 			"Unrecognized PermissionScope",
 			nil,

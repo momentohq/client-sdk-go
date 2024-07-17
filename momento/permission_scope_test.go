@@ -29,7 +29,7 @@ var _ = Describe("auth auth-client", func() {
 			Expect(scope).To(Equal(internal.InternalSuperUserPermissions{}))
 
 			scope = AllDataReadWrite
-			Expect(scope).To(Equal(&Permissions{
+			Expect(scope).To(Equal(Permissions{
 				Permissions: []Permission{
 					TopicPermission{Topic: AllTopics{}, Cache: AllCaches{}, Role: PublishSubscribe},
 					CachePermission{Cache: AllCaches{}, Role: ReadWrite},
