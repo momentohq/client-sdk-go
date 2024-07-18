@@ -19,6 +19,8 @@ var _ = Describe("cache-client", func() {
 
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
+
+		DeferCleanup(func() { sharedContext.Close() })
 	})
 
 	It(`errors on an invalid TTL`, func() {
