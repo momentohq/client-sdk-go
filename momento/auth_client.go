@@ -16,7 +16,7 @@ import (
 
 type AuthClient interface {
 	GenerateDisposableToken(ctx context.Context, request *GenerateDisposableTokenRequest) (responses.GenerateDisposableTokenResponse, error)
-
+	GenerateApiKey(ctx context.Context, request *GenerateApiKeyRequest) (responses.GenerateApiKeyResponse, error)
 	Close()
 }
 
@@ -24,6 +24,7 @@ type AuthClient interface {
 type defaultAuthClient struct {
 	credentialProvider auth.CredentialProvider
 	tokenClient        *tokenClient
+	authClient         *authClient
 	log                logger.MomentoLogger
 }
 
@@ -42,7 +43,16 @@ func NewAuthClient(authConfiguration config.AuthConfiguration, credentialProvide
 		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
 
+	authClient, err := newAuthClient(&models.AuthClientRequest{
+		CredentialProvider: credentialProvider,
+		Log:                authConfiguration.GetLoggerFactory().GetLogger("auth-client"),
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
+	}
+
 	client.tokenClient = tokenClient
+	client.authClient = authClient
 
 	return client, nil
 }
@@ -60,20 +70,23 @@ func (c defaultAuthClient) GenerateDisposableToken(ctx context.Context, request 
 		c.log.Debug("failed to generate disposable token...")
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
+	return tokenResp, nil
+}
 
-	switch result := tokenResp.(type) {
-	case *responses.GenerateDisposableTokenSuccess:
-		return &responses.GenerateDisposableTokenSuccess{
-			ApiKey:     result.ApiKey,
-			Endpoint:   result.Endpoint,
-			ValidUntil: result.ValidUntil,
-		}, nil
+func (c defaultAuthClient) GenerateApiKey(ctx context.Context, request *GenerateApiKeyRequest) (responses.GenerateApiKeyResponse, error) {
+	if err := utils.ValidateApiKeyExpiry(request.ExpiresIn); err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(err)
 	}
-	return nil, convertMomentoSvcErrorToCustomerError(
-		momentoerrors.NewMomentoSvcErr(
-			momentoerrors.UnknownServiceError, "Unknown service error was returned when requesting a disposable token", nil,
-		),
-	)
+
+	requestMetadata := internal.CreateMetadata(ctx, internal.Auth)
+
+	apiKeyResp, err := c.authClient.GenerateApiKey(requestMetadata, request)
+	if err != nil {
+		c.log.Debug("failed to generate api key...")
+		return nil, err
+	}
+
+	return apiKeyResp, nil
 }
 
 func (c defaultAuthClient) Close() {

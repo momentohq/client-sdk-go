@@ -9,6 +9,7 @@ type Expiration interface {
 	DoesExpire() bool
 }
 
+// ExpiresIn is used in AuthClient requests to specify the expiration time of a disposable token or API key.
 type ExpiresIn struct {
 	validForSeconds int64
 }
@@ -44,4 +45,26 @@ func ExpiresInDays(days int64) ExpiresIn {
 func ExpiresAtEpoch(expiresBy int64) ExpiresIn {
 	var now = time.Now().Unix()
 	return ExpiresIn{validForSeconds: expiresBy - now}
+}
+
+// ExpiresAt is used in AuthClient responses to specify the expiration time of a disposable token or API key.
+type ExpiresAt struct {
+	validUntil int64
+}
+
+func (e ExpiresAt) DoesExpire() bool {
+	return e.validUntil != math.MaxInt64
+}
+
+func (e ExpiresAt) Epoch() int64 {
+	return e.validUntil
+}
+
+// ExpiresAtFromEpoch constructs an ExpiresAt with the specified epoch timestamp,
+// but if timestamp is undefined, the epoch timestamp will be set to math.MaxInt64.
+func ExpiresAtFromEpoch(epoch int64) ExpiresAt {
+	if epoch > 0 {
+		return ExpiresAt{validUntil: epoch}
+	}
+	return ExpiresAt{validUntil: math.MaxInt64}
 }

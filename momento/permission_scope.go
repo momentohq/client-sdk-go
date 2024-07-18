@@ -102,12 +102,22 @@ type Permissions struct {
 
 func (Permissions) IsPermissionScope() {}
 
-var AllDataReadWrite = &Permissions{
+var AllDataReadWrite = Permissions{
 	Permissions: []Permission{
 		TopicPermission{Topic: AllTopics{}, Cache: AllCaches{}, Role: PublishSubscribe},
 		CachePermission{Cache: AllCaches{}, Role: ReadWrite},
 	},
 }
+
+type PredefinedScopeInterface interface {
+	IsPredefinedScope()
+}
+
+type PredefinedScope struct{}
+
+func (PredefinedScope) IsPredefinedScope() {}
+
+func (PredefinedScope) IsPermissionScope() {}
 
 type PermissionScope interface {
 	IsPermissionScope()
