@@ -14,11 +14,13 @@ import (
 )
 
 var _ = Describe("storage-client misc", func() {
-	var sharedContext = NewSharedContext()
+	var sharedContext SharedContext
 
 	BeforeEach(func() {
 		sharedContext = NewSharedContext()
 		sharedContext.CreateDefaultStores()
+
+		DeferCleanup(func() { sharedContext.Close() })
 	})
 
 	It("errors on invalid timeout", func() {
