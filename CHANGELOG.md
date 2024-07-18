@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.25.0](https://github.com/momentohq/client-sdk-go/compare/v1.24.2...v1.25.0) (2024-07-18)
+
+
+### Features
+
+* implement GenerateApiKey ([#460](https://github.com/momentohq/client-sdk-go/issues/460)) ([1371155](https://github.com/momentohq/client-sdk-go/commit/137115593779786fb701e9aee35639957d551580))
+
+
+### Bug Fixes
+
+* make sure to clean up caches and stores that can be leaked in tests ([#461](https://github.com/momentohq/client-sdk-go/issues/461)) ([f98bcd9](https://github.com/momentohq/client-sdk-go/commit/f98bcd9ccbc7bfe49de8308a2de002518a1b2eb5))
+
+
+### Miscellaneous
+
+* add dev docs snippets for storage client ([#457](https://github.com/momentohq/client-sdk-go/issues/457)) ([769cfc8](https://github.com/momentohq/client-sdk-go/commit/769cfc898060c56da7462eb36bae2bb7fd1a8a17))
+* make sure push-to-main has test session token too ([#462](https://github.com/momentohq/client-sdk-go/issues/462)) ([268e771](https://github.com/momentohq/client-sdk-go/commit/268e7713ad2be16dd9f595f37d41e4a1c4547d65))
+
 ## [1.24.2](https://github.com/momentohq/client-sdk-go/compare/v1.24.1...v1.24.2) (2024-07-11)
 
 
