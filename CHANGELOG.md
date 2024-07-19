@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.0](https://github.com/momentohq/client-sdk-go/compare/v1.25.0...v1.26.0) (2024-07-19)
+
+
+### Features
+
+* add RefreshApiKey ([#465](https://github.com/momentohq/client-sdk-go/issues/465)) ([e1eb693](https://github.com/momentohq/client-sdk-go/commit/e1eb6938742616bf88210b5d4e48eccf41b561ff))
+
 ## [1.25.0](https://github.com/momentohq/client-sdk-go/compare/v1.24.2...v1.25.0) (2024-07-18)
 
 
