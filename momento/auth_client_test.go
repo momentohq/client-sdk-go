@@ -1829,6 +1829,56 @@ var _ = Describe("auth auth-client", func() {
 
 		})
 
+		Describe("Refresh api keys", func() {
+			It("should successfully refresh api key with unexpired refresh token", func() {
+				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+					ExpiresIn: utils.ExpiresInSeconds(30),
+					Scope:     internal.InternalSuperUserPermissions{},
+				})
+				Expect(err).To(BeNil())
+				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
+
+				success := resp.(*auth_responses.GenerateApiKeySuccess)
+				testingAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+
+				// we need to sleep for a bit here so that the timestamp on the refreshed token
+				// will be different than the one on the original token
+				delaySecondsBeforeRefresh := 2 * time.Second
+				time.Sleep(delaySecondsBeforeRefresh)
+
+				refreshResp, err := testingAuthClient.RefreshApiKey(sharedContext.Ctx, &RefreshApiKeyRequest{
+					RefreshToken: success.RefreshToken,
+				})
+				Expect(err).To(BeNil())
+				Expect(refreshResp).To(BeAssignableToTypeOf(&auth_responses.RefreshApiKeySuccess{}))
+
+				refreshSuccess := refreshResp.(*auth_responses.RefreshApiKeySuccess)
+
+				expiresAtDelta := refreshSuccess.ExpiresAt.Epoch() - success.ExpiresAt.Epoch()
+				Expect(expiresAtDelta).To(BeNumerically("~", delaySecondsBeforeRefresh.Seconds(), delaySecondsBeforeRefresh.Seconds()+10))
+			})
+
+			It("should fail to refresh api key with expired refresh token", func() {
+				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
+					ExpiresIn: utils.ExpiresInSeconds(1),
+					Scope:     internal.InternalSuperUserPermissions{},
+				})
+				Expect(err).To(BeNil())
+				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
+
+				success := resp.(*auth_responses.GenerateApiKeySuccess)
+				testingAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+
+				// wait for api key to expire
+				time.Sleep(3 * time.Second)
+
+				_, err = testingAuthClient.RefreshApiKey(sharedContext.Ctx, &RefreshApiKeyRequest{
+					RefreshToken: success.RefreshToken,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			})
+		})
 	})
 
 })
