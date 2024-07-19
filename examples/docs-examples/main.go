@@ -381,6 +381,49 @@ func example_API_GenerateApiKey() {
 	}
 }
 
+func example_API_RefreshApiKey() {
+	resp, err := authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.AllDataReadWrite,
+	})
+	if err != nil {
+		panic(err)
+	}
+	generateApiKeySuccess := resp.(*auth_resp.GenerateApiKeySuccess)
+
+	newCredProvider, err := auth.FromString(generateApiKeySuccess.ApiKey)
+	if err != nil {
+		panic(err)
+	}
+
+	newCredProvider, err = newCredProvider.WithEndpoints(auth.Endpoints{
+		ControlEndpoint: fmt.Sprintf("control.%s", generateApiKeySuccess.Endpoint),
+		CacheEndpoint:   fmt.Sprintf("cache.%s", generateApiKeySuccess.Endpoint),
+		TokenEndpoint:   fmt.Sprintf("cache.%s", generateApiKeySuccess.Endpoint),
+		StorageEndpoint: fmt.Sprintf("storage.%s", generateApiKeySuccess.Endpoint),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	refreshAuthClient, err := momento.NewAuthClient(config.AuthDefault(), newCredProvider)
+	if err != nil {
+		panic(err)
+	}
+
+	refreshResp, err := refreshAuthClient.RefreshApiKey(ctx, &momento.RefreshApiKeyRequest{
+		RefreshToken: generateApiKeySuccess.RefreshToken,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := refreshResp.(type) {
+	case *auth_resp.RefreshApiKeySuccess:
+		log.Printf("Successfully refreshed API key!\n")
+		log.Printf("Refreshed API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+}
+
 func example_API_SetIfPresent() {
 	resp, err := client.SetIfPresent(ctx, &momento.SetIfPresentRequest{
 		CacheName: cacheName,
@@ -995,6 +1038,7 @@ func main() {
 	example_API_InstantiateAuthClient()
 	example_API_GenerateDisposableToken()
 	example_API_GenerateApiKey()
+	example_API_RefreshApiKey()
 
 	example_API_Storage_InstantiateClient()
 	example_API_Storage_CreateStore()
