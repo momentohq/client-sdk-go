@@ -283,8 +283,6 @@ func example_API_GenerateApiKey() {
 	switch r := resp.(type) {
 	case *auth_resp.GenerateApiKeySuccess:
 		log.Printf("Successfully generated an API key with AllDataReadWrite scope!\n")
-		log.Printf("API key starts with: %s\n", r.ApiKey[:10])
-		log.Printf("Refesh token starts with: %s\n", r.RefreshToken[:10])
 		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
 	}
 
@@ -299,8 +297,6 @@ func example_API_GenerateApiKey() {
 	switch r := resp.(type) {
 	case *auth_resp.GenerateApiKeySuccess:
 		log.Printf("Successfully generated an API key with read-only access to cache foo!\n")
-		log.Printf("API key starts with: %s\n", r.ApiKey[:10])
-		log.Printf("Refesh token starts with: %s\n", r.RefreshToken[:10])
 		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
 	}
 
@@ -315,8 +311,6 @@ func example_API_GenerateApiKey() {
 	switch r := resp.(type) {
 	case *auth_resp.GenerateApiKeySuccess:
 		log.Printf("Successfully generated an API key with read-write access to all caches!\n")
-		log.Printf("API key starts with: %s\n", r.ApiKey[:10])
-		log.Printf("Refesh token starts with: %s\n", r.RefreshToken[:10])
 		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
 	}
 
@@ -331,8 +325,6 @@ func example_API_GenerateApiKey() {
 	switch r := resp.(type) {
 	case *auth_resp.GenerateApiKeySuccess:
 		log.Printf("Successfully generated an API key publish-subscribe access to all topics within cache bar!\n")
-		log.Printf("API key starts with: %s\n", r.ApiKey[:10])
-		log.Printf("Refesh token starts with: %s\n", r.RefreshToken[:10])
 		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
 	}
 
@@ -347,8 +339,6 @@ func example_API_GenerateApiKey() {
 	switch r := resp.(type) {
 	case *auth_resp.GenerateApiKeySuccess:
 		log.Printf("Successfully generated an API key with subscribe-only access to topic where_is_mo within cache mo_nuts!\n")
-		log.Printf("API key starts with: %s\n", r.ApiKey[:10])
-		log.Printf("Refesh token starts with: %s\n", r.RefreshToken[:10])
 		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
 	}
 
@@ -387,8 +377,6 @@ func example_API_GenerateApiKey() {
 	switch r := resp.(type) {
 	case *auth_resp.GenerateApiKeySuccess:
 		log.Printf("Successfully generated an API key with multiple cache and topic permissions!\n")
-		log.Printf("API key starts with: %s\n", r.ApiKey[:10])
-		log.Printf("Refesh token starts with: %s\n", r.RefreshToken[:10])
 		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
 	}
 }
