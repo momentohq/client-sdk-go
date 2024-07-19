@@ -3,6 +3,9 @@ package momento
 import (
 	"context"
 
+	b64 "encoding/base64"
+	"encoding/json"
+
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -77,8 +80,22 @@ func (client *authClient) GenerateApiKey(ctx context.Context, request *GenerateA
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
+	jsonObject := map[string]string{
+		"api_key":  resp.ApiKey,
+		"endpoint": resp.Endpoint,
+	}
+	jsonString, err := json.Marshal(jsonObject)
+	if err != nil {
+		return nil, NewMomentoError(
+			momentoerrors.ClientSdkError,
+			"Unable to map API key to necessary form",
+			err,
+		)
+	}
+	b64Encoded := b64.StdEncoding.EncodeToString([]byte(jsonString))
+
 	return &auth_responses.GenerateApiKeySuccess{
-		ApiKey:       resp.ApiKey,
+		ApiKey:       b64Encoded,
 		RefreshToken: resp.RefreshToken,
 		Endpoint:     resp.Endpoint,
 		ExpiresAt:    utils.ExpiresAtFromEpoch(int64(resp.ValidUntil)),
