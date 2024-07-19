@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.1](https://github.com/momentohq/client-sdk-go/compare/v1.26.0...v1.26.1) (2024-07-19)
+
+
+### Bug Fixes
+
+* package api key and endpoint correctly in generate token/api key responses ([#467](https://github.com/momentohq/client-sdk-go/issues/467)) ([2a4ee7f](https://github.com/momentohq/client-sdk-go/commit/2a4ee7fb83ea0f4b917a1988d731da4eeb5b7b01))
+
 ## [1.26.0](https://github.com/momentohq/client-sdk-go/compare/v1.25.0...v1.26.0) (2024-07-19)
 
 
