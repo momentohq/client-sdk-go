@@ -15,7 +15,7 @@ var FirstTimeHeadersSent = map[ClientType]bool{
 	Ping:        false,
 	Auth:        false,
 }
-var Version = "1.25.0" // x-release-please-version
+var Version = "1.26.0" // x-release-please-version
 
 type ClientType string
 
