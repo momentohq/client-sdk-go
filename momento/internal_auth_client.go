@@ -36,6 +36,25 @@ func (client *authClient) Close() {
 	defer client.grpcManager.Close()
 }
 
+func (client *authClient) RefreshApiKey(ctx context.Context, request *RefreshApiKeyRequest) (auth_responses.RefreshApiKeyResponse, MomentoError) {
+	grpc_request := &pb.XRefreshApiTokenRequest{
+		RefreshToken: request.RefreshToken,
+		ApiKey:       client.grpcManager.AuthToken,
+	}
+
+	resp, err := client.grpcClient.RefreshApiToken(ctx, grpc_request)
+	if err != nil {
+		return nil, momentoerrors.ConvertSvcErr(err)
+	}
+
+	return &auth_responses.RefreshApiKeySuccess{
+		ApiKey:       resp.ApiKey,
+		RefreshToken: resp.RefreshToken,
+		Endpoint:     resp.Endpoint,
+		ExpiresAt:    utils.ExpiresAtFromEpoch(int64(resp.ValidUntil)),
+	}, nil
+}
+
 func (client *authClient) GenerateApiKey(ctx context.Context, request *GenerateApiKeyRequest) (auth_responses.GenerateApiKeyResponse, MomentoError) {
 	permissions, permsErr := permissionsFromTokenScope(request.Scope)
 	if permsErr != nil {

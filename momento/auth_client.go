@@ -17,6 +17,7 @@ import (
 type AuthClient interface {
 	GenerateDisposableToken(ctx context.Context, request *GenerateDisposableTokenRequest) (responses.GenerateDisposableTokenResponse, error)
 	GenerateApiKey(ctx context.Context, request *GenerateApiKeyRequest) (responses.GenerateApiKeyResponse, error)
+	RefreshApiKey(ctx context.Context, request *RefreshApiKeyRequest) (responses.RefreshApiKeyResponse, error)
 	Close()
 }
 
@@ -87,6 +88,18 @@ func (c defaultAuthClient) GenerateApiKey(ctx context.Context, request *Generate
 	}
 
 	return apiKeyResp, nil
+}
+
+func (c defaultAuthClient) RefreshApiKey(ctx context.Context, request *RefreshApiKeyRequest) (responses.RefreshApiKeyResponse, error) {
+	requestMetadata := internal.CreateMetadata(ctx, internal.Auth)
+
+	refreshResp, err := c.authClient.RefreshApiKey(requestMetadata, request)
+	if err != nil {
+		c.log.Debug("failed to refresh api key...")
+		return nil, err
+	}
+
+	return refreshResp, nil
 }
 
 func (c defaultAuthClient) Close() {
