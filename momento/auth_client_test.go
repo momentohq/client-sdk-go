@@ -20,8 +20,12 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-func authClientFromApiKey(ctx SharedContext, apiKey string, endpoint string) AuthClient {
-	credProvider := credProviderFromApiKey(apiKey, endpoint)
+func authClientFromApiKey(ctx SharedContext, apiKey string) AuthClient {
+	credProvider, err := auth.FromString(apiKey)
+	if err != nil {
+		panic(err)
+	}
+
 	authClient, err := NewAuthClient(ctx.AuthConfiguration, credProvider)
 	if err != nil {
 		panic(err)
@@ -29,46 +33,21 @@ func authClientFromApiKey(ctx SharedContext, apiKey string, endpoint string) Aut
 	return authClient
 }
 
-func credProviderFromApiKey(apiKey string, endpoint string) auth.CredentialProvider {
-	credProviderWithoutEndpoints, err := auth.NewStringMomentoTokenProvider(apiKey)
+func credentialProviderFromString(apiKey string) auth.CredentialProvider {
+	credProvider, err := auth.FromString(apiKey)
 	if err != nil {
 		panic(err)
 	}
-
-	credProviderWithEndpoints, err := credProviderWithoutEndpoints.WithEndpoints(
-		auth.Endpoints{
-			ControlEndpoint: fmt.Sprintf("control.%s", endpoint),
-			CacheEndpoint:   fmt.Sprintf("cache.%s", endpoint),
-			TokenEndpoint:   fmt.Sprintf("cache.%s", endpoint),
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	return credProviderWithEndpoints
+	return credProvider
 }
 
 func credProviderFromDisposableToken(resp auth_responses.GenerateDisposableTokenResponse) auth.CredentialProvider {
 	success := resp.(*auth_responses.GenerateDisposableTokenSuccess)
-	credProviderWithoutEndpoints, err := auth.NewStringMomentoTokenProvider(success.ApiKey)
-
+	credProvider, err := auth.FromString(success.ApiKey)
 	if err != nil {
 		panic(err)
 	}
-	credProviderWithEndpoints, err := credProviderWithoutEndpoints.WithEndpoints(
-		auth.Endpoints{
-			ControlEndpoint: fmt.Sprintf("control.%s", success.Endpoint),
-			CacheEndpoint:   fmt.Sprintf("cache.%s", success.Endpoint),
-			TokenEndpoint:   fmt.Sprintf("cache.%s", success.Endpoint),
-		},
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return credProviderWithEndpoints
+	return credProvider
 }
 
 func assertGetSuccess(cc CacheClient, key Value, cacheName string) {
@@ -1313,7 +1292,7 @@ var _ = Describe("auth auth-client", func() {
 			}
 			successResponse := resp.(*auth_responses.GenerateApiKeySuccess)
 
-			authTestingCacheClient := newCacheClient(sharedContext, credProviderFromApiKey(successResponse.ApiKey, successResponse.Endpoint))
+			authTestingCacheClient := newCacheClient(sharedContext, credentialProviderFromString(successResponse.ApiKey))
 			authTestCache1 = fmt.Sprintf("golang-auth-%s", uuid.NewString())
 			authTestCache2 = fmt.Sprintf("golang-auth-%s", uuid.NewString())
 
@@ -1448,7 +1427,7 @@ var _ = Describe("auth auth-client", func() {
 				time.Sleep(3 * time.Second)
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
+				cacheClient := newCacheClient(sharedContext, credentialProviderFromString(success.ApiKey))
 				defer cacheClient.Close()
 
 				_, err = cacheClient.CreateCache(sharedContext.Ctx, &CreateCacheRequest{
@@ -1467,7 +1446,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
 
 				_, err = superuserAuthClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 					ExpiresIn: utils.ExpiresInSeconds(1),
@@ -1486,7 +1465,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
 
 				resp, err = superuserAuthClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 					ExpiresIn: utils.ExpiresInSeconds(1),
@@ -1508,7 +1487,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
+				cacheClient := newCacheClient(sharedContext, credentialProviderFromString(success.ApiKey))
 
 				// Cannot create a cache
 				_, err = cacheClient.CreateCache(sharedContext.Ctx, &CreateCacheRequest{
@@ -1551,7 +1530,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
 
 				_, err = superuserAuthClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 					ExpiresIn: utils.ExpiresInSeconds(1),
@@ -1570,7 +1549,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
 
 				_, err = superuserAuthClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 					ExpiresIn: utils.ExpiresInSeconds(1),
@@ -1594,8 +1573,8 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
-				topicClient := newTopicClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
+				cacheClient := newCacheClient(sharedContext, credentialProviderFromString(success.ApiKey))
+				topicClient := newTopicClient(sharedContext, credentialProviderFromString(success.ApiKey))
 				defer cacheClient.Close()
 				defer topicClient.Close()
 
@@ -1675,8 +1654,8 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
-				topicClient := newTopicClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
+				cacheClient := newCacheClient(sharedContext, credentialProviderFromString(success.ApiKey))
+				topicClient := newTopicClient(sharedContext, credentialProviderFromString(success.ApiKey))
 				defer cacheClient.Close()
 				defer topicClient.Close()
 
@@ -1757,8 +1736,8 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				cacheClient := newCacheClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
-				topicClient := newTopicClient(sharedContext, credProviderFromApiKey(success.ApiKey, success.Endpoint))
+				cacheClient := newCacheClient(sharedContext, credentialProviderFromString(success.ApiKey))
+				topicClient := newTopicClient(sharedContext, credentialProviderFromString(success.ApiKey))
 				defer cacheClient.Close()
 				defer topicClient.Close()
 
@@ -1839,7 +1818,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				testingAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+				testingAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
 
 				// we need to sleep for a bit here so that the timestamp on the refreshed token
 				// will be different than the one on the original token
@@ -1867,7 +1846,7 @@ var _ = Describe("auth auth-client", func() {
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
 
 				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				testingAuthClient := authClientFromApiKey(sharedContext, success.ApiKey, success.Endpoint)
+				testingAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
 
 				// wait for api key to expire
 				time.Sleep(3 * time.Second)
