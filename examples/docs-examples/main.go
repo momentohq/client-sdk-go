@@ -396,16 +396,6 @@ func example_API_RefreshApiKey() {
 		panic(err)
 	}
 
-	newCredProvider, err = newCredProvider.WithEndpoints(auth.Endpoints{
-		ControlEndpoint: fmt.Sprintf("control.%s", generateApiKeySuccess.Endpoint),
-		CacheEndpoint:   fmt.Sprintf("cache.%s", generateApiKeySuccess.Endpoint),
-		TokenEndpoint:   fmt.Sprintf("cache.%s", generateApiKeySuccess.Endpoint),
-		StorageEndpoint: fmt.Sprintf("storage.%s", generateApiKeySuccess.Endpoint),
-	})
-	if err != nil {
-		panic(err)
-	}
-
 	refreshAuthClient, err := momento.NewAuthClient(config.AuthDefault(), newCredProvider)
 	if err != nil {
 		panic(err)
