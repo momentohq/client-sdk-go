@@ -271,6 +271,149 @@ func example_API_GenerateDisposableToken() {
 	}
 }
 
+func example_API_GenerateApiKey() {
+	// Generate a token that allows all data plane APIs on all caches and topics.
+	resp, err := authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.AllDataReadWrite,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *auth_resp.GenerateApiKeySuccess:
+		log.Printf("Successfully generated an API key with AllDataReadWrite scope!\n")
+		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+
+	// Generate a token that can only call read-only data plane APIs on a specific cache foo. No topic apis (publish/subscribe) are allowed.
+	resp, err = authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.CacheReadOnly(momento.CacheName{Name: "foo"}),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *auth_resp.GenerateApiKeySuccess:
+		log.Printf("Successfully generated an API key with read-only access to cache foo!\n")
+		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+
+	// Generate a token that can call all data plane APIs on all caches. No topic apis (publish/subscribe) are allowed.
+	resp, err = authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.CacheReadWrite(momento.AllCaches{}),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *auth_resp.GenerateApiKeySuccess:
+		log.Printf("Successfully generated an API key with read-write access to all caches!\n")
+		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+
+	// Generate a token that can call publish and subscribe on all topics within cache bar
+	resp, err = authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.TopicPublishSubscribe(momento.CacheName{Name: "bar"}, momento.AllTopics{}),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *auth_resp.GenerateApiKeySuccess:
+		log.Printf("Successfully generated an API key publish-subscribe access to all topics within cache bar!\n")
+		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+
+	// Generate a token that can only call subscribe on topic where_is_mo within cache mo_nuts
+	resp, err = authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.TopicSubscribeOnly(momento.CacheName{Name: "mo_nuts"}, momento.TopicName{Name: "where_is_mo"}),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *auth_resp.GenerateApiKeySuccess:
+		log.Printf("Successfully generated an API key with subscribe-only access to topic where_is_mo within cache mo_nuts!\n")
+		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+
+	// Generate a token with multiple permissions
+	cachePermission1 := momento.CachePermission{
+		Cache: momento.CacheName{Name: "acorns"}, // Scopes the access to a single cache named 'acorns'
+		Role:  momento.ReadWrite,                 // Managed role that grants access to read as well as write apis on caches
+	}
+	cachePermission2 := momento.CachePermission{
+		Cache: momento.AllCaches{}, // Built-in value for access to all caches in the account
+		Role:  momento.ReadOnly,    // Managed role that grants access to only read data apis on caches
+	}
+	topicPermission1 := momento.TopicPermission{
+		Cache: momento.CacheName{Name: "walnuts"},      // Scopes the access to a single cache named 'walnuts'
+		Topic: momento.TopicName{Name: "mo_favorites"}, // Scopes the access to a single topic named 'mo_favorites' within cache 'walnuts'
+		Role:  momento.PublishSubscribe,                // Managed role that grants access to subscribe as well as publish apis
+	}
+	topicPermission2 := momento.TopicPermission{
+		Cache: momento.AllCaches{},   // Built-in value for all cache(s) in the account.
+		Topic: momento.AllTopics{},   // Built-in value for access to all topics in the listed cache(s).
+		Role:  momento.SubscribeOnly, // Managed role that grants access to only subscribe api
+	}
+	permissions := []momento.Permission{
+		cachePermission1, cachePermission2, topicPermission1, topicPermission2,
+	}
+
+	resp, err = authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope: momento.Permissions{
+			Permissions: permissions,
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *auth_resp.GenerateApiKeySuccess:
+		log.Printf("Successfully generated an API key with multiple cache and topic permissions!\n")
+		log.Printf("API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+}
+
+func example_API_RefreshApiKey() {
+	resp, err := authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
+		ExpiresIn: utils.ExpiresInMinutes(30),
+		Scope:     momento.AllDataReadWrite,
+	})
+	if err != nil {
+		panic(err)
+	}
+	generateApiKeySuccess := resp.(*auth_resp.GenerateApiKeySuccess)
+
+	newCredProvider, err := auth.FromString(generateApiKeySuccess.ApiKey)
+	if err != nil {
+		panic(err)
+	}
+
+	refreshAuthClient, err := momento.NewAuthClient(config.AuthDefault(), newCredProvider)
+	if err != nil {
+		panic(err)
+	}
+
+	refreshResp, err := refreshAuthClient.RefreshApiKey(ctx, &momento.RefreshApiKeyRequest{
+		RefreshToken: generateApiKeySuccess.RefreshToken,
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := refreshResp.(type) {
+	case *auth_resp.RefreshApiKeySuccess:
+		log.Printf("Successfully refreshed API key!\n")
+		log.Printf("Refreshed API key expires at: %d\n", r.ExpiresAt.Epoch())
+	}
+}
+
 func example_API_SetIfPresent() {
 	resp, err := client.SetIfPresent(ctx, &momento.SetIfPresentRequest{
 		CacheName: cacheName,
@@ -884,6 +1027,8 @@ func main() {
 
 	example_API_InstantiateAuthClient()
 	example_API_GenerateDisposableToken()
+	example_API_GenerateApiKey()
+	example_API_RefreshApiKey()
 
 	example_API_Storage_InstantiateClient()
 	example_API_Storage_CreateStore()

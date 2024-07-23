@@ -8,7 +8,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/google/uuid v1.6.0
 	github.com/loov/hrtime v1.0.3
-	github.com/momentohq/client-sdk-go v1.24.1
+	github.com/momentohq/client-sdk-go v1.26.1
 
 	// logrus is not required to use momento, but it is used in the logging-example
 	github.com/sirupsen/logrus v1.9.0
