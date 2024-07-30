@@ -58,3 +58,7 @@ func (r *ListLengthRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *ListLengthRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

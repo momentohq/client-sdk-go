@@ -84,3 +84,7 @@ func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *SortedSetLengthByScoreRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

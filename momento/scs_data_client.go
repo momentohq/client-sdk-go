@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
 
@@ -85,8 +84,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		return err
 	}
 
-	fmt.Printf("Response: %T\n", r)
-	//client.middleware.OnResponse(r.Response)
+	client.middleware.OnResponse(r.getResponse())
 
 	return nil
 }

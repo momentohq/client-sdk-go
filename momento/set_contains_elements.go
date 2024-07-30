@@ -66,3 +66,7 @@ func (r *SetContainsElementsRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *SetContainsElementsRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

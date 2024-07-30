@@ -79,3 +79,7 @@ func (r *ListConcatenateBackRequest) interpretGrpcResponse() error {
 	r.response = responses.NewListConcatenateBackSuccess(resp.ListLength)
 	return nil
 }
+
+func (r *ListConcatenateBackRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

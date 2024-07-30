@@ -89,3 +89,7 @@ func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
 
 	return nil
 }
+
+func (r *SortedSetIncrementScoreRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

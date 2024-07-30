@@ -88,3 +88,7 @@ func (r *DictionaryIncrementRequest) interpretGrpcResponse() error {
 	r.response = responses.NewDictionaryIncrementSuccess(r.grpcResponse.Value)
 	return nil
 }
+
+func (r *DictionaryIncrementRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

@@ -106,3 +106,7 @@ func (r *SetIfEqualRequest) interpretGrpcResponse() error {
 	r.response = resp
 	return nil
 }
+
+func (r *SetIfEqualRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

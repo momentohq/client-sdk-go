@@ -57,3 +57,5 @@ func (r *DeleteRequest) interpretGrpcResponse() error {
 	r.response = &responses.DeleteSuccess{}
 	return nil
 }
+
+func (r *DeleteRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }

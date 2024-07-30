@@ -79,3 +79,7 @@ func (r *ListPushFrontRequest) interpretGrpcResponse() error {
 	r.response = responses.NewListPushFrontSuccess(resp.ListLength)
 	return nil
 }
+
+func (r *ListPushFrontRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

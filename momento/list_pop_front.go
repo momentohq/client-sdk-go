@@ -55,3 +55,7 @@ func (r *ListPopFrontRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *ListPopFrontRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

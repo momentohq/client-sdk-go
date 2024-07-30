@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-
 	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -80,4 +79,8 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
+}
+
+func (r *DictionaryGetFieldsRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
 }

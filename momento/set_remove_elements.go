@@ -67,3 +67,7 @@ func (r *SetRemoveElementsRequest) interpretGrpcResponse() error {
 	r.response = &responses.SetRemoveElementsSuccess{}
 	return nil
 }
+
+func (r *SetRemoveElementsRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}
