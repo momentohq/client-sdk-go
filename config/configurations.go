@@ -38,8 +38,8 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
-		Middleware: &middleware.LoggingMiddleware{
-			Log: loggerFactory.GetLogger("LoggingMiddleware"),
+		Middleware: &middleware.MetricsMiddleware{
+			Log: loggerFactory.GetLogger("MetricsMiddleware"),
 		},
 	})
 }
