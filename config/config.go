@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/retry"
@@ -28,6 +29,7 @@ type ConfigurationProps struct {
 	NumGrpcChannels uint32
 	// ReadConcern is the read concern for the cache client.
 	ReadConcern ReadConcern
+	Middleware  middleware.Middleware
 }
 
 type Configuration interface {
@@ -49,6 +51,8 @@ type Configuration interface {
 
 	GetReadConcern() ReadConcern
 
+	GetMiddleware() middleware.Middleware
+
 	// WithRetryStrategy Copy constructor for overriding TransportStrategy returns a new Configuration object
 	// with the specified momento.TransportStrategy
 	WithRetryStrategy(retryStrategy retry.Strategy) Configuration
@@ -68,6 +72,8 @@ type Configuration interface {
 	// WithReadConcern Copy constructor for overriding ReadConcern returns a new Configuration object
 	// with the specified ReadConcern
 	WithReadConcern(readConcern ReadConcern) Configuration
+
+	WithMiddleware(middleware middleware.Middleware) Configuration
 }
 
 type cacheConfiguration struct {
@@ -76,6 +82,7 @@ type cacheConfiguration struct {
 	retryStrategy     retry.Strategy
 	numGrpcChannels   uint32
 	readConcern       ReadConcern
+	middleware        middleware.Middleware
 }
 
 func (s *cacheConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
@@ -93,6 +100,7 @@ func NewCacheConfiguration(props *ConfigurationProps) Configuration {
 		retryStrategy:     props.RetryStrategy,
 		numGrpcChannels:   props.NumGrpcChannels,
 		readConcern:       props.ReadConcern,
+		middleware:        props.Middleware,
 	}
 }
 
@@ -112,6 +120,11 @@ func (s *cacheConfiguration) GetReadConcern() ReadConcern {
 	return s.readConcern
 }
 
+func (s *cacheConfiguration) GetMiddleware() middleware.Middleware {
+	return s.middleware
+	//return &middleware.LoggingMiddleware{Log: s.loggerFactory.GetLogger("LoggingMiddleware")}
+}
+
 func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
 	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
@@ -119,6 +132,18 @@ func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Conf
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   s.numGrpcChannels,
 		readConcern:       s.readConcern,
+		middleware:        s.middleware,
+	}
+}
+
+func (s *cacheConfiguration) WithMiddleware(middleware middleware.Middleware) Configuration {
+	return &cacheConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		retryStrategy:     s.retryStrategy,
+		numGrpcChannels:   s.numGrpcChannels,
+		readConcern:       s.readConcern,
+		middleware:        middleware,
 	}
 }
 
@@ -129,6 +154,7 @@ func (s *cacheConfiguration) WithRetryStrategy(strategy retry.Strategy) Configur
 		retryStrategy:     strategy,
 		numGrpcChannels:   s.numGrpcChannels,
 		readConcern:       s.readConcern,
+		middleware:        s.middleware,
 	}
 }
 
@@ -139,6 +165,7 @@ func (s *cacheConfiguration) WithTransportStrategy(transportStrategy TransportSt
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   s.numGrpcChannels,
 		readConcern:       s.readConcern,
+		middleware:        s.middleware,
 	}
 }
 
@@ -149,6 +176,7 @@ func (s *cacheConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) Configu
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   numGrpcChannels,
 		readConcern:       s.readConcern,
+		middleware:        s.middleware,
 	}
 }
 
@@ -159,5 +187,6 @@ func (s *cacheConfiguration) WithReadConcern(readConcern ReadConcern) Configurat
 		retryStrategy:     s.retryStrategy,
 		numGrpcChannels:   s.numGrpcChannels,
 		readConcern:       readConcern,
+		middleware:        s.middleware,
 	}
 }
