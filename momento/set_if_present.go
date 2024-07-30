@@ -88,3 +88,7 @@ func (r *SetIfPresentRequest) interpretGrpcResponse() error {
 	r.response = resp
 	return nil
 }
+
+func (r *SetIfPresentRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

@@ -57,3 +57,7 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *DictionaryFetchRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

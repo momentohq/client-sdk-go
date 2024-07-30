@@ -52,7 +52,9 @@ func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
 		return err
 	}
-
+	// If ttl is not provided, then default TTL for the cache client instance is used.
+	// Make sure that the updated ttl is represented in the request.
+	r.Ttl = time.Duration(ttl)
 	r.grpcRequest = &pb.XSetRequest{
 		CacheKey:        key,
 		CacheBody:       value,
@@ -74,4 +76,8 @@ func (r *SetRequest) makeGrpcRequest(metadata context.Context, client scsDataCli
 func (r *SetRequest) interpretGrpcResponse() error {
 	r.response = &responses.SetSuccess{}
 	return nil
+}
+
+func (r *SetRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
 }

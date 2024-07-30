@@ -57,3 +57,7 @@ func (r *ListRemoveValueRequest) interpretGrpcResponse() error {
 	r.response = &responses.ListRemoveValueSuccess{}
 	return nil
 }
+
+func (r *ListRemoveValueRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

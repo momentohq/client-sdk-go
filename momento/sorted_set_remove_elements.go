@@ -64,3 +64,7 @@ func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse() error {
 	r.response = &responses.SortedSetRemoveElementsSuccess{}
 	return nil
 }
+
+func (r *SortedSetRemoveElementsRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}
