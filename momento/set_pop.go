@@ -62,3 +62,5 @@ func (r *SetPopRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *SetPopRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }

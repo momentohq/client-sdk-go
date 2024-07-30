@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-
 	"github.com/momentohq/client-sdk-go/responses"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -76,4 +75,8 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
+}
+
+func (r *DictionaryGetFieldsRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
 }

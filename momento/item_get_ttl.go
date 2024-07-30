@@ -59,3 +59,7 @@ func (r *ItemGetTtlRequest) interpretGrpcResponse() error {
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 }
+
+func (r *ItemGetTtlRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}
