@@ -2,8 +2,11 @@ package momento
 
 import (
 	"context"
+	"fmt"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -21,6 +24,8 @@ type scsDataClient struct {
 	requestTimeout      time.Duration
 	endpoint            string
 	eagerConnectTimeout time.Duration
+	loggerFactory       logger.MomentoLoggerFactory
+	middleware          middleware.Middleware
 }
 
 func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout time.Duration) (*scsDataClient, momentoerrors.MomentoSvcErr) {
@@ -46,6 +51,8 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 		requestTimeout:      timeout,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 		eagerConnectTimeout: eagerConnectTimeout,
+		loggerFactory:       request.Configuration.GetLoggerFactory(),
+		middleware:          request.Configuration.GetMiddleware(),
 	}, nil
 }
 
@@ -67,6 +74,8 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
+	client.middleware.OnRequest(r, requestMetadata)
+
 	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)
 	if err != nil {
 		return momentoerrors.ConvertSvcErr(err, responseMetadata...)
@@ -75,6 +84,9 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	if err := r.interpretGrpcResponse(); err != nil {
 		return err
 	}
+
+	fmt.Printf("Response: %T\n", r)
+	//client.middleware.OnResponse(r.Response)
 
 	return nil
 }
