@@ -2,9 +2,10 @@ package momento
 
 import (
 	"context"
+	"strconv"
+
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
-	"strconv"
 )
 
 type GetRequest struct {

@@ -2,11 +2,11 @@ package momento
 
 import (
 	"context"
-	"github.com/momentohq/client-sdk-go/config/middleware"
 	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"

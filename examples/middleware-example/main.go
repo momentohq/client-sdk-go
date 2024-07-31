@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
-	"github.com/momentohq/client-sdk-go/config/middleware"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 

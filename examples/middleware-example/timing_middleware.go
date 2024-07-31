@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/loov/hrtime"
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/loov/hrtime"
+	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type TimingMiddleware struct {
