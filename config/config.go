@@ -30,7 +30,7 @@ type ConfigurationProps struct {
 	NumGrpcChannels uint32
 	// ReadConcern is the read concern for the cache client.
 	ReadConcern ReadConcern
-	Middleware  middleware.Middleware
+	Middleware  []middleware.Middleware
 }
 
 type Configuration interface {
@@ -52,7 +52,7 @@ type Configuration interface {
 
 	GetReadConcern() ReadConcern
 
-	GetMiddleware() middleware.Middleware
+	GetMiddleware() []middleware.Middleware
 
 	// WithRetryStrategy Copy constructor for overriding TransportStrategy returns a new Configuration object
 	// with the specified momento.TransportStrategy
@@ -74,7 +74,7 @@ type Configuration interface {
 	// with the specified ReadConcern
 	WithReadConcern(readConcern ReadConcern) Configuration
 
-	WithMiddleware(middleware middleware.Middleware) Configuration
+	WithMiddleware(middleware []middleware.Middleware) Configuration
 }
 
 type cacheConfiguration struct {
@@ -83,7 +83,7 @@ type cacheConfiguration struct {
 	retryStrategy     retry.Strategy
 	numGrpcChannels   uint32
 	readConcern       ReadConcern
-	middleware        middleware.Middleware
+	middleware        []middleware.Middleware
 }
 
 func (s *cacheConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
@@ -121,9 +121,8 @@ func (s *cacheConfiguration) GetReadConcern() ReadConcern {
 	return s.readConcern
 }
 
-func (s *cacheConfiguration) GetMiddleware() middleware.Middleware {
+func (s *cacheConfiguration) GetMiddleware() []middleware.Middleware {
 	return s.middleware
-	//return &middleware.LoggingMiddleware{Log: s.loggerFactory.GetLogger("LoggingMiddleware")}
 }
 
 func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Configuration {
@@ -137,7 +136,7 @@ func (s *cacheConfiguration) WithClientTimeout(clientTimeout time.Duration) Conf
 	}
 }
 
-func (s *cacheConfiguration) WithMiddleware(middleware middleware.Middleware) Configuration {
+func (s *cacheConfiguration) WithMiddleware(middleware []middleware.Middleware) Configuration {
 	return &cacheConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy,

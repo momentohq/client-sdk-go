@@ -12,6 +12,12 @@ type MetricsMiddleware struct {
 	requestCount map[string]uint64
 }
 
+func NewMetricsMiddleware(log logger.MomentoLogger) *MetricsMiddleware {
+	return &MetricsMiddleware{
+		Log: log,
+	}
+}
+
 func (mw *MetricsMiddleware) OnRequest(theRequest interface{}, _ context.Context) {
 	// Log request
 	if mw.requestCount == nil {

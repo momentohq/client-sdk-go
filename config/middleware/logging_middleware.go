@@ -11,6 +11,12 @@ type LoggingMiddleware struct {
 	Log logger.MomentoLogger
 }
 
+func NewLoggingMiddleware(log logger.MomentoLogger) *LoggingMiddleware {
+	return &LoggingMiddleware{
+		Log: log,
+	}
+}
+
 func (mw *LoggingMiddleware) OnRequest(theRequest interface{}, metadata context.Context) {
 	// Log request
 	jsonStr, _ := json.MarshalIndent(theRequest, "", "  ")
