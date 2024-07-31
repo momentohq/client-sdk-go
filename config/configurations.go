@@ -2,7 +2,6 @@
 package config
 
 import (
-	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -38,9 +37,6 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
-		Middleware: &middleware.MetricsMiddleware{
-			Log: loggerFactory.GetLogger("MetricsMiddleware"),
-		},
 	})
 }
 

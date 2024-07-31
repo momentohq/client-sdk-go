@@ -24,7 +24,7 @@ type scsDataClient struct {
 	endpoint            string
 	eagerConnectTimeout time.Duration
 	loggerFactory       logger.MomentoLoggerFactory
-	middleware          middleware.Middleware
+	middleware          []middleware.Middleware
 }
 
 func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout time.Duration) (*scsDataClient, momentoerrors.MomentoSvcErr) {
@@ -74,7 +74,9 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
-	client.middleware.OnRequest(r, requestMetadata)
+	for _, mw := range client.middleware {
+		mw.OnRequest(r, requestMetadata)
+	}
 
 	_, err := r.makeGrpcRequest(requestMetadata, client)
 	if err != nil {
@@ -85,7 +87,9 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		return err
 	}
 
-	client.middleware.OnResponse(r.getResponse())
+	for _, mw := range client.middleware {
+		mw.OnResponse(r.getResponse())
+	}
 
 	return nil
 }
