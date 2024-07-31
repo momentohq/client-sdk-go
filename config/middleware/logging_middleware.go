@@ -17,18 +17,18 @@ func NewLoggingMiddleware(log logger.MomentoLogger) *LoggingMiddleware {
 	}
 }
 
-func (mw *LoggingMiddleware) OnRequest(theRequest interface{}, metadata context.Context) {
+func (mw *LoggingMiddleware) OnRequest(requestId uint64, theRequest interface{}, metadata context.Context) {
 	// Log request
 	jsonStr, _ := json.MarshalIndent(theRequest, "", "  ")
-	mw.Log.Info(fmt.Sprintf("\nIssuing %T:\n%s\nwith metadada: %+v\n", theRequest, string(jsonStr), metadata))
+	mw.Log.Info(fmt.Sprintf("\n(%d) Issuing %T:\n%s\nwith metadada: %+v\n", requestId, theRequest, string(jsonStr), metadata))
 }
 
-func (mw *LoggingMiddleware) OnResponse(theResponse map[string]string) {
+func (mw *LoggingMiddleware) OnResponse(requestId uint64, theResponse map[string]string) {
 	if len(theResponse) == 0 {
 		mw.Log.Debug("Got empty response")
 		return
 	}
 	// Log response
 	jsonStr, _ := json.MarshalIndent(theResponse, "", "  ")
-	mw.Log.Info(fmt.Sprintf("\nGot response: %s\n", string(jsonStr)))
+	mw.Log.Info(fmt.Sprintf("\n(%d) Got response: %s\n", requestId, string(jsonStr)))
 }
