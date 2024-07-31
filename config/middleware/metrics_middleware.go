@@ -18,7 +18,7 @@ func NewMetricsMiddleware(log logger.MomentoLogger) *MetricsMiddleware {
 	}
 }
 
-func (mw *MetricsMiddleware) OnRequest(theRequest interface{}, _ context.Context) {
+func (mw *MetricsMiddleware) OnRequest(_ uint64, theRequest interface{}, _ context.Context) {
 	// Log request
 	if mw.requestCount == nil {
 		mw.requestCount = make(map[string]uint64)
@@ -28,6 +28,6 @@ func (mw *MetricsMiddleware) OnRequest(theRequest interface{}, _ context.Context
 	mw.Log.Info(fmt.Sprintf("%+v\n", string(jsonStr)))
 }
 
-func (mw *MetricsMiddleware) OnResponse(_ map[string]string) {
+func (mw *MetricsMiddleware) OnResponse(requestId uint64, _ map[string]string) {
 	return
 }
