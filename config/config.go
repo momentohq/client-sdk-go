@@ -1,13 +1,12 @@
 package config
 
 import (
-	"github.com/momentohq/client-sdk-go/config/middleware"
 	"fmt"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/internal/retry"
-
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/internal/retry"
 )
 
 type ReadConcern string
