@@ -3,6 +3,7 @@ package momento
 import (
 	"context"
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -15,6 +16,8 @@ import (
 
 const defaultRequestTimeout = 5 * time.Second
 const defaultEagerConnectTimeout = 30 * time.Second
+
+var globalRequestId atomic.Uint64
 
 type scsDataClient struct {
 	grpcManager         *grpcmanagers.DataGrpcManager
@@ -60,6 +63,8 @@ func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
+	requestId := globalRequestId.Add(1)
+
 	if _, err := prepareCacheName(r); err != nil {
 		return err
 	}
@@ -74,7 +79,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
 	for _, mw := range client.middleware {
-		mw.OnRequest(r, requestMetadata)
+		mw.OnRequest(requestId, r, requestMetadata)
 	}
 
 	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)
@@ -87,7 +92,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	for _, mw := range client.middleware {
-		mw.OnResponse(r.getResponse())
+		mw.OnResponse(requestId, r.getResponse())
 	}
 
 	return nil
