@@ -8,13 +8,13 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-type MetricsMiddleware struct {
+type metricsMiddleware struct {
 	Log         logger.MomentoLogger
 	requestChan chan string
 }
 
-func NewMetricsMiddleware(log logger.MomentoLogger) *MetricsMiddleware {
-	mw := &MetricsMiddleware{
+func NewMetricsMiddleware(log logger.MomentoLogger) *metricsMiddleware {
+	mw := &metricsMiddleware{
 		Log:         log,
 		requestChan: make(chan string),
 	}
@@ -36,8 +36,8 @@ func metricsSink(requestChan chan string, log logger.MomentoLogger) {
 	}
 }
 
-func (mw *MetricsMiddleware) OnRequest(_ uint64, theRequest interface{}, _ context.Context) {
+func (mw *metricsMiddleware) OnRequest(_ uint64, theRequest interface{}, _ context.Context) {
 	mw.requestChan <- fmt.Sprintf("%T", theRequest)
 }
 
-func (mw *MetricsMiddleware) OnResponse(requestId uint64, _ map[string]string) {}
+func (mw *metricsMiddleware) OnResponse(requestId uint64, _ map[string]string) {}

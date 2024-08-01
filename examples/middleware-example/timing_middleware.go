@@ -11,7 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-type TimingMiddleware struct {
+type timingMiddleware struct {
 	Log       logger.MomentoLogger
 	timerChan chan string
 }
@@ -40,16 +40,16 @@ func timer(timerChan chan string, log logger.MomentoLogger) {
 	}
 }
 
-func (mw *TimingMiddleware) OnRequest(requestId uint64, theRequest interface{}, metadata context.Context) {
+func (mw *timingMiddleware) OnRequest(requestId uint64, theRequest interface{}, metadata context.Context) {
 	mw.timerChan <- fmt.Sprintf("start:%d:%d", requestId, hrtime.Now())
 }
 
-func (mw *TimingMiddleware) OnResponse(requestId uint64, theResponse map[string]string) {
+func (mw *timingMiddleware) OnResponse(requestId uint64, theResponse map[string]string) {
 	mw.timerChan <- fmt.Sprintf("end:%d:%d", requestId, hrtime.Now())
 }
 
-func NewTimingMiddleware(log logger.MomentoLogger) *TimingMiddleware {
-	mw := &TimingMiddleware{
+func NewTimingMiddleware(log logger.MomentoLogger) *timingMiddleware {
+	mw := &timingMiddleware{
 		Log:       log,
 		timerChan: make(chan string),
 	}
