@@ -27,12 +27,10 @@ func NewMetricsMiddleware(log logger.MomentoLogger) *metricsMiddleware {
 func metricsSink(requestChan chan string, log logger.MomentoLogger) {
 	requestCount := make(map[string]uint64)
 	for {
-		select {
-		case requestMsg := <-requestChan:
-			requestCount[requestMsg]++
-			jsonStr, _ := json.MarshalIndent(requestCount, "", "  ")
-			log.Info(fmt.Sprintf("Request count: %s", string(jsonStr)))
-		}
+		requestMsg := <-requestChan
+		requestCount[requestMsg]++
+		jsonStr, _ := json.MarshalIndent(requestCount, "", "  ")
+		log.Info(fmt.Sprintf("Request count: %s", string(jsonStr)))
 	}
 }
 
