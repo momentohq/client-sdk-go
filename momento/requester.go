@@ -33,6 +33,7 @@ type requester interface {
 	makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error)
 	interpretGrpcResponse() error
 	requestName() string
+	getResponse() map[string]string
 }
 
 type grpcResponse interface {
@@ -89,6 +90,12 @@ type hasCollectionTtl interface {
 
 type hasUpdateTtl interface {
 	updateTtl() time.Duration
+}
+
+func getMomentoResponseData(in interface{}) map[string]string {
+	return map[string]string{
+		"responseType": fmt.Sprintf("%T", in),
+	}
 }
 
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {

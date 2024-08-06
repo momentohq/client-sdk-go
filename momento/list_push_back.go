@@ -75,3 +75,7 @@ func (r *ListPushBackRequest) interpretGrpcResponse() error {
 	r.response = responses.NewListPushBackSuccess(resp.ListLength)
 	return nil
 }
+
+func (r *ListPushBackRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

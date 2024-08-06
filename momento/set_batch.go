@@ -85,3 +85,5 @@ func (r *SetBatchRequest) interpretGrpcResponse() error {
 	r.response = *responses.NewSetBatchSuccess(setResponses)
 	return nil
 }
+
+func (r *SetBatchRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }

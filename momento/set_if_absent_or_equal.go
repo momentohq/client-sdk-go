@@ -102,3 +102,7 @@ func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse() error {
 	r.response = resp
 	return nil
 }
+
+func (r *SetIfAbsentOrEqualRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}

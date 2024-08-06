@@ -74,3 +74,5 @@ func (r *UpdateTtlRequest) interpretGrpcResponse() error {
 
 	return nil
 }
+
+func (r *UpdateTtlRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }

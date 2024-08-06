@@ -114,3 +114,7 @@ func sortedSetByScoreGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement)
 	}
 	return returnList
 }
+
+func (r *SortedSetFetchByScoreRequest) getResponse() map[string]string {
+	return getMomentoResponseData(r.response)
+}
