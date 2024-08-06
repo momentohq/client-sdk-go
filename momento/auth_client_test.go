@@ -1256,43 +1256,18 @@ var _ = Describe("auth auth-client", func() {
 	})
 
 	Describe("Generate api keys", func() {
-		var sessionTokenClient AuthClient
 		var authTestCache1 string
 		var authTestCache2 string
+		var sessionTokenClient AuthClient
+		var err error
 
 		BeforeEach(func() {
-			sessionCredsProvider, err := auth.NewEnvMomentoTokenProvider("TEST_SESSION_TOKEN")
-			if err != nil {
-				Fail(fmt.Sprintf("Failed to create session token credential provider: %v", err))
-			}
-
-			// session tokens don't include cache/control endpoints so we steal them from
-			// the auth-token-based credential provider and override them here
-			sessionCredsProvider, err = sessionCredsProvider.WithEndpoints(auth.Endpoints{
-				ControlEndpoint: sharedContext.CredentialProvider.GetControlEndpoint(),
-				CacheEndpoint:   sharedContext.CredentialProvider.GetCacheEndpoint(),
-				TokenEndpoint:   sharedContext.CredentialProvider.GetTokenEndpoint(),
-				StorageEndpoint: sharedContext.CredentialProvider.GetStorageEndpoint(),
-			})
-			if err != nil {
-				Fail(fmt.Sprintf("Failed to override endpionts in session token credential provider: %v", err))
-			}
-
-			sessionTokenClient, err = NewAuthClient(sharedContext.AuthConfiguration, sessionCredsProvider)
+			sessionTokenClient, err = NewAuthClient(sharedContext.AuthConfiguration, sharedContext.CredentialProvider)
 			if err != nil {
 				Fail(fmt.Sprintf("Failed to create session token auth client: %v", err))
 			}
 
-			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
-				ExpiresIn: utils.ExpiresInDays(1),
-				Scope:     internal.InternalSuperUserPermissions{},
-			})
-			if err != nil {
-				Fail(fmt.Sprintf("Failed to create superuser api key for creating auth testing cache client: %v", err))
-			}
-			successResponse := resp.(*auth_responses.GenerateApiKeySuccess)
-
-			authTestingCacheClient := newCacheClient(sharedContext, credentialProviderFromString(successResponse.ApiKey))
+			authTestingCacheClient := newCacheClient(sharedContext, sharedContext.CredentialProvider)
 			authTestCache1 = fmt.Sprintf("golang-auth-%s", uuid.NewString())
 			authTestCache2 = fmt.Sprintf("golang-auth-%s", uuid.NewString())
 
@@ -1327,7 +1302,7 @@ var _ = Describe("auth auth-client", func() {
 
 			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 				ExpiresIn: utils.ExpiresInDays(1),
-				Scope:     internal.InternalSuperUserPermissions{},
+				Scope:     AllDataReadWrite,
 			})
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
@@ -1345,7 +1320,7 @@ var _ = Describe("auth auth-client", func() {
 		It("should successfully generate api key that does not expire", func() {
 			resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 				ExpiresIn: utils.ExpiresInNever(),
-				Scope:     internal.InternalSuperUserPermissions{},
+				Scope:     AllDataReadWrite,
 			})
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
@@ -1357,7 +1332,7 @@ var _ = Describe("auth auth-client", func() {
 		It("should fail to generate an api key with invalid expiry", func() {
 			_, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 				ExpiresIn: utils.ExpiresInSeconds(-100),
-				Scope:     internal.InternalSuperUserPermissions{},
+				Scope:     AllDataReadWrite,
 			})
 			Expect(err).To(HaveOccurred())
 			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
@@ -1412,69 +1387,6 @@ var _ = Describe("auth auth-client", func() {
 			})
 			Expect(err).To(HaveOccurred())
 			Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.InvalidArgumentError))
-		})
-
-		Describe("Superuser scope", func() {
-			It("expired token cannot create cache", func() {
-				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
-					ExpiresIn: utils.ExpiresInSeconds(1),
-					Scope:     internal.InternalSuperUserPermissions{},
-				})
-				Expect(err).To(BeNil())
-				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
-
-				// Wait for token to expire
-				time.Sleep(3 * time.Second)
-
-				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				cacheClient := newCacheClient(sharedContext, credentialProviderFromString(success.ApiKey))
-				defer cacheClient.Close()
-
-				_, err = cacheClient.CreateCache(sharedContext.Ctx, &CreateCacheRequest{
-					CacheName: "cache-should-fail-to-create",
-				})
-				Expect(err).To(HaveOccurred())
-				Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.AuthenticationError))
-			})
-
-			It("cannot generate superuser token from a superuser token", func() {
-				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
-					ExpiresIn: utils.ExpiresInMinutes(5),
-					Scope:     internal.InternalSuperUserPermissions{},
-				})
-				Expect(err).To(BeNil())
-				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
-
-				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
-
-				_, err = superuserAuthClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
-					ExpiresIn: utils.ExpiresInSeconds(1),
-					Scope:     internal.InternalSuperUserPermissions{},
-				})
-				Expect(err).To(HaveOccurred())
-				Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.PermissionError))
-			})
-
-			It("can generate AllDataReadWrite token from superuser token", func() {
-				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
-					ExpiresIn: utils.ExpiresInMinutes(5),
-					Scope:     internal.InternalSuperUserPermissions{},
-				})
-				Expect(err).To(BeNil())
-				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
-
-				success := resp.(*auth_responses.GenerateApiKeySuccess)
-				superuserAuthClient := authClientFromApiKey(sharedContext, success.ApiKey)
-
-				resp, err = superuserAuthClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
-					ExpiresIn: utils.ExpiresInSeconds(1),
-					Scope:     AllDataReadWrite,
-				})
-				Expect(err).To(BeNil())
-				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
-			})
-
 		})
 
 		Describe("AllDataReadWrite scope", func() {
@@ -1812,7 +1724,7 @@ var _ = Describe("auth auth-client", func() {
 			It("should successfully refresh api key with unexpired refresh token", func() {
 				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 					ExpiresIn: utils.ExpiresInSeconds(30),
-					Scope:     internal.InternalSuperUserPermissions{},
+					Scope:     AllDataReadWrite,
 				})
 				Expect(err).To(BeNil())
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))
@@ -1840,7 +1752,7 @@ var _ = Describe("auth auth-client", func() {
 			It("should fail to refresh api key with expired refresh token", func() {
 				resp, err := sessionTokenClient.GenerateApiKey(sharedContext.Ctx, &GenerateApiKeyRequest{
 					ExpiresIn: utils.ExpiresInSeconds(1),
-					Scope:     internal.InternalSuperUserPermissions{},
+					Scope:     AllDataReadWrite,
 				})
 				Expect(err).To(BeNil())
 				Expect(resp).To(BeAssignableToTypeOf(&auth_responses.GenerateApiKeySuccess{}))

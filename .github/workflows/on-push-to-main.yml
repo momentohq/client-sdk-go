@@ -46,7 +46,6 @@ jobs:
       pull-requests: read
     env:
       MOMENTO_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
-      TEST_SESSION_TOKEN: ${{ secrets.MOMENTO_PREPROD_SESSION_TOKEN }}
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
