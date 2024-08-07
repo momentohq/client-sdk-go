@@ -3,18 +3,22 @@ package internal
 import (
 	"context"
 	"runtime"
+	"sync"
 
 	"google.golang.org/grpc/metadata"
 )
 
-var FirstTimeHeadersSent = map[ClientType]bool{
-	Cache:       false,
-	Store:       false,
-	Leaderboard: false,
-	Topic:       false,
-	Ping:        false,
-	Auth:        false,
+var FirstTimeHeadersSent sync.Map
+
+func init() {
+	FirstTimeHeadersSent.Store(Cache, false)
+	FirstTimeHeadersSent.Store(Store, false)
+	FirstTimeHeadersSent.Store(Leaderboard, false)
+	FirstTimeHeadersSent.Store(Topic, false)
+	FirstTimeHeadersSent.Store(Ping, false)
+	FirstTimeHeadersSent.Store(Auth, false)
 }
+
 var Version = "1.26.1" // x-release-please-version
 
 type ClientType string
@@ -31,8 +35,10 @@ const (
 func CreateMetadata(ctx context.Context, clientType ClientType, extraPairs ...string) context.Context {
 	headers := extraPairs
 
-	if !FirstTimeHeadersSent[clientType] {
-		FirstTimeHeadersSent[clientType] = true
+	var ftHeadersSent, ok = FirstTimeHeadersSent.Load(clientType)
+
+	if !ok || !ftHeadersSent.(bool) {
+		FirstTimeHeadersSent.Store(clientType, true)
 		headers = append(headers, "runtime-version", "golang:"+runtime.Version())
 		headers = append(headers, "agent", "golang:"+string(clientType)+":"+Version)
 	}
