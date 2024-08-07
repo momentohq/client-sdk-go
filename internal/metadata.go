@@ -8,14 +8,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-//	var FirstTimeHeadersSent = map[ClientType]bool{
-//		Cache:       false,
-//		Store:       false,
-//		Leaderboard: false,
-//		Topic:       false,
-//		Ping:        false,
-//		Auth:        false,
-//	}
 var FirstTimeHeadersSent sync.Map
 
 func init() {
