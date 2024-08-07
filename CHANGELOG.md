@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.26.2](https://github.com/momentohq/client-sdk-go/compare/v1.26.1...v1.26.2) (2024-08-07)
+
+
+### Bug Fixes
+
+* use sync.Map to track first-time agent headers ([#473](https://github.com/momentohq/client-sdk-go/issues/473)) ([d7fffa9](https://github.com/momentohq/client-sdk-go/commit/d7fffa9ae7db6aa3d5e9532b6e6604e3c5a1d697))
+
+
+### Miscellaneous
+
+* add GenerateApiKey dev docs snippet ([#463](https://github.com/momentohq/client-sdk-go/issues/463)) ([97ba7b3](https://github.com/momentohq/client-sdk-go/commit/97ba7b3d3ae49aea1a335ca84637d515a6ab2279))
+* remove tests that require account session token ([#472](https://github.com/momentohq/client-sdk-go/issues/472)) ([d574a74](https://github.com/momentohq/client-sdk-go/commit/d574a7457581f6df8776d4ce936f751e1a9d1783))
+
 ## [1.26.1](https://github.com/momentohq/client-sdk-go/compare/v1.26.0...v1.26.1) (2024-07-19)
 
 
