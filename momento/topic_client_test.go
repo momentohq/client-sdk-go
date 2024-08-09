@@ -60,7 +60,7 @@ var _ = Describe("topic-client", func() {
 		}
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
-		var receivedValues []TopicValue
+		var receivedValues []Value
 		ready := make(chan int, 1)
 		go func() {
 			ready <- 1
