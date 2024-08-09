@@ -51,6 +51,12 @@ var _ = Describe("topic-client", func() {
 			Bytes([]byte{1, 2, 3}),
 		}
 
+		// Value does not implement TopicValue
+		expectedValues := []Value{
+			String("aaa"),
+			Bytes([]byte{1, 2, 3}),
+		}
+
 		sub, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
 			TopicName: topicName,
@@ -93,7 +99,7 @@ var _ = Describe("topic-client", func() {
 		time.Sleep(time.Millisecond * 100)
 		cancelFunction()
 
-		Expect(receivedValues).To(Equal(publishedValues))
+		Expect(receivedValues).To(Equal(expectedValues))
 	})
 
 	It("Cancels the context immediataly after subscribing and asserts as such", func() {
