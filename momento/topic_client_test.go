@@ -69,11 +69,11 @@ var _ = Describe("topic-client", func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					value, err := sub.Item(sharedContext.Ctx)
+					item, err := sub.Item(sharedContext.Ctx)
 					if err != nil {
 						panic(err)
 					}
-					receivedValues = append(receivedValues, value)
+					receivedValues = append(receivedValues, item.GetValue())
 				}
 			}
 		}()
@@ -195,7 +195,7 @@ var _ = Describe("topic-client", func() {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.(type) {
+		switch msg := item.GetValue().(type) {
 		case String:
 			Expect(msg).To(Equal(String("hello-1")))
 		case Bytes:
@@ -206,7 +206,7 @@ var _ = Describe("topic-client", func() {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.(type) {
+		switch msg := item.GetValue().(type) {
 		case String:
 			Expect(msg).To(Equal(String("hello-2")))
 		case Bytes:
@@ -244,7 +244,7 @@ var _ = Describe("topic-client", func() {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.(type) {
+		switch msg := item.GetValue().(type) {
 		case String:
 			Expect(msg).To(Equal(String("hello-again-2")))
 		case Bytes:

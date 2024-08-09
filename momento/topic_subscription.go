@@ -14,7 +14,7 @@ import (
 )
 
 type TopicSubscription interface {
-	Item(ctx context.Context) (TopicValue, error)
+	Item(ctx context.Context) (*TopicItem, error)
 	Close()
 }
 
@@ -30,7 +30,7 @@ type topicSubscription struct {
 	cancelFunction          context.CancelFunc
 }
 
-func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
+func (s *topicSubscription) Item(ctx context.Context) (*TopicItem, error) {
 	for {
 		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
 		// item, so we should check that here.
@@ -78,9 +78,17 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
-				return String(subscriptionItem.Text), nil
+				return &TopicItem{
+					Message:             String(subscriptionItem.Text),
+					PublisherId:         String(typedMsg.Item.PublisherId),
+					TopicSequenceNumber: typedMsg.Item.TopicSequenceNumber,
+				}, nil
 			case *pb.XTopicValue_Binary:
-				return Bytes(subscriptionItem.Binary), nil
+				return &TopicItem{
+					Message:             Bytes(subscriptionItem.Binary),
+					PublisherId:         String(typedMsg.Item.PublisherId),
+					TopicSequenceNumber: typedMsg.Item.TopicSequenceNumber,
+				}, nil
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Debug("received heartbeat item")
