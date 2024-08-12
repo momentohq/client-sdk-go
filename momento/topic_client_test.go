@@ -45,7 +45,58 @@ var _ = Describe("topic-client", func() {
 		Entry("Non-existent cache", uuid.NewString(), uuid.NewString(), CacheNotFoundError),
 	)
 
-	It(`Publishes and receives`, func() {
+	It("Publishes and receives", func() {
+		publishedValues := []TopicValue{
+			String("aaa"),
+			Bytes([]byte{1, 2, 3}),
+		}
+
+		sub, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: sharedContext.CollectionName,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
+		var receivedValues []TopicValue
+		ready := make(chan int, 1)
+		go func() {
+			ready <- 1
+			for {
+				select {
+				case <-cancelContext.Done():
+					return
+				default:
+					value, err := sub.Item(sharedContext.Ctx)
+					if err != nil {
+						panic(err)
+					}
+					receivedValues = append(receivedValues, value)
+				}
+			}
+		}()
+		<-ready
+
+		time.Sleep(time.Millisecond * 100)
+		for _, value := range publishedValues {
+			_, err := sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: sharedContext.CollectionName,
+				Value:     value,
+			})
+			if err != nil {
+				panic(err)
+			}
+		}
+		time.Sleep(time.Millisecond * 100)
+		cancelFunction()
+
+		Expect(receivedValues).To(Equal(publishedValues))
+	})
+
+	It("Publishes and receives detailed subscription items", func() {
 		publishedValues := []TopicValue{
 			String("aaa"),
 			Bytes([]byte{1, 2, 3}),
@@ -66,7 +117,7 @@ var _ = Describe("topic-client", func() {
 		}
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
-		var receivedValues []Value
+		var receivedItems []*TopicItem
 		ready := make(chan int, 1)
 		go func() {
 			ready <- 1
@@ -75,11 +126,11 @@ var _ = Describe("topic-client", func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					item, err := sub.Item(sharedContext.Ctx)
+					item, err := sub.DetailedItem(sharedContext.Ctx)
 					if err != nil {
 						panic(err)
 					}
-					receivedValues = append(receivedValues, item.GetValue())
+					receivedItems = append(receivedItems, item)
 				}
 			}
 		}()
@@ -99,10 +150,14 @@ var _ = Describe("topic-client", func() {
 		time.Sleep(time.Millisecond * 100)
 		cancelFunction()
 
-		Expect(receivedValues).To(Equal(expectedValues))
+		for i, receivedItem := range receivedItems {
+			Expect(receivedItem.GetValue()).To(Equal(expectedValues[i]))
+			Expect(receivedItem.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
+			Expect(receivedItem.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
+		}
 	})
 
-	It("Cancels the context immediataly after subscribing and asserts as such", func() {
+	It("Cancels the context immediately after subscribing and asserts as such", func() {
 
 		sub, _ := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
@@ -201,7 +256,7 @@ var _ = Describe("topic-client", func() {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.GetValue().(type) {
+		switch msg := item.(type) {
 		case String:
 			Expect(msg).To(Equal(String("hello-1")))
 		case Bytes:
@@ -212,7 +267,7 @@ var _ = Describe("topic-client", func() {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.GetValue().(type) {
+		switch msg := item.(type) {
 		case String:
 			Expect(msg).To(Equal(String("hello-2")))
 		case Bytes:
@@ -250,7 +305,7 @@ var _ = Describe("topic-client", func() {
 		if err != nil {
 			panic(err)
 		}
-		switch msg := item.GetValue().(type) {
+		switch msg := item.(type) {
 		case String:
 			Expect(msg).To(Equal(String("hello-again-2")))
 		case Bytes:

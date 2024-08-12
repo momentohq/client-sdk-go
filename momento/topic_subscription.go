@@ -14,7 +14,8 @@ import (
 )
 
 type TopicSubscription interface {
-	Item(ctx context.Context) (*TopicItem, error)
+	Item(ctx context.Context) (TopicValue, error)
+	DetailedItem(ctx context.Context) (*TopicItem, error)
 	Close()
 }
 
@@ -30,7 +31,70 @@ type topicSubscription struct {
 	cancelFunction          context.CancelFunc
 }
 
-func (s *topicSubscription) Item(ctx context.Context) (*TopicItem, error) {
+func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
+	for {
+		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
+		// item, so we should check that here.
+		select {
+		case <-ctx.Done():
+			// Context has been canceled, return an error
+			return nil, ctx.Err()
+		case <-s.cancelContext.Done():
+			// Context has been canceled, return an error
+			return nil, s.cancelContext.Err()
+		default:
+			// Proceed as is
+		}
+
+		rawMsg := new(pb.XSubscriptionItem)
+		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
+			select {
+			case <-ctx.Done():
+				{
+					s.log.Info("Subscription context is done; closing subscription.")
+					return nil, ctx.Err()
+				}
+			case <-s.cancelContext.Done():
+				{
+					s.log.Info("Subscription context is cancelled; closing subscription.")
+					return nil, s.cancelContext.Err()
+				}
+			default:
+				{
+					// Attempt to reconnect
+					s.log.Error("stream disconnected YO, attempting to reconnect err:", fmt.Sprint(err))
+					s.attemptReconnect(ctx)
+				}
+			}
+
+			// retry getting the latest item
+			continue
+		}
+
+		switch typedMsg := rawMsg.Kind.(type) {
+		case *pb.XSubscriptionItem_Discontinuity:
+			s.log.Debug("received discontinuity item")
+			continue
+		case *pb.XSubscriptionItem_Item:
+			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
+			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
+			case *pb.XTopicValue_Text:
+				return String(subscriptionItem.Text), nil
+			case *pb.XTopicValue_Binary:
+				return Bytes(subscriptionItem.Binary), nil
+			}
+		case *pb.XSubscriptionItem_Heartbeat:
+			s.log.Debug("received heartbeat item")
+			continue
+		default:
+			s.log.Trace("Unrecognized response detected.",
+				"response", fmt.Sprint(typedMsg))
+			continue
+		}
+	}
+}
+
+func (s *topicSubscription) DetailedItem(ctx context.Context) (*TopicItem, error) {
 	for {
 		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
 		// item, so we should check that here.
