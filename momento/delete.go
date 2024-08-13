@@ -58,4 +58,6 @@ func (r *DeleteRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *DeleteRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }
+func (r *DeleteRequest) getResponse() interface{} {
+	return r.response
+}

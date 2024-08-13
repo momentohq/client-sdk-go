@@ -80,6 +80,6 @@ func (r *ListPushBackRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *ListPushBackRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *ListPushBackRequest) getResponse() interface{} {
+	return r.response
 }

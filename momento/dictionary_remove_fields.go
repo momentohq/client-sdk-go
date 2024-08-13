@@ -61,6 +61,6 @@ func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *DictionaryRemoveFieldsRequest) getResponse() interface{} {
+	return r.response
 }

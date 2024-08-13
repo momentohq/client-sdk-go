@@ -85,6 +85,6 @@ func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SortedSetLengthByScoreRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SortedSetLengthByScoreRequest) getResponse() interface{} {
+	return r.response
 }

@@ -77,6 +77,6 @@ func (r *SetAddElementsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SetAddElementsRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SetAddElementsRequest) getResponse() interface{} {
+	return r.response
 }

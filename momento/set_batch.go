@@ -96,4 +96,6 @@ func (r *SetBatchRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SetBatchRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }
+func (r *SetBatchRequest) getResponse() interface{} {
+	return r.response
+}

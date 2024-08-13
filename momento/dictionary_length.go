@@ -59,6 +59,6 @@ func (r *DictionaryLengthRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *DictionaryLengthRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *DictionaryLengthRequest) getResponse() interface{} {
+	return r.response
 }

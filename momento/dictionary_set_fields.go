@@ -88,6 +88,6 @@ func (r *DictionarySetFieldsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *DictionarySetFieldsRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *DictionarySetFieldsRequest) getResponse() interface{} {
+	return r.response
 }

@@ -109,6 +109,6 @@ func sortedSetByRankGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) 
 	return returnList
 }
 
-func (r *SortedSetFetchByRankRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SortedSetFetchByRankRequest) getResponse() interface{} {
+	return r.response
 }

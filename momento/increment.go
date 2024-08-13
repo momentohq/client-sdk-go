@@ -71,4 +71,4 @@ func (r *IncrementRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *IncrementRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }
+func (r *IncrementRequest) getResponse() interface{} { return r.response }

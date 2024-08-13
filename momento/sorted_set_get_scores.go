@@ -90,6 +90,6 @@ func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreRespon
 	return rList
 }
 
-func (r *SortedSetGetScoresRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SortedSetGetScoresRequest) getResponse() interface{} {
+	return r.response
 }

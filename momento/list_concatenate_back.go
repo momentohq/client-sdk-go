@@ -80,6 +80,6 @@ func (r *ListConcatenateBackRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *ListConcatenateBackRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *ListConcatenateBackRequest) getResponse() interface{} {
+	return r.response
 }

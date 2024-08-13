@@ -79,6 +79,6 @@ func (r *ListConcatenateFrontRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *ListConcatenateFrontRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *ListConcatenateFrontRequest) getResponse() interface{} {
+	return r.response
 }

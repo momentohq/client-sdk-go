@@ -82,6 +82,6 @@ func (r *SetRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SetRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SetRequest) getResponse() interface{} {
+	return r.response
 }

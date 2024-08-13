@@ -89,6 +89,6 @@ func (r *DictionaryIncrementRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *DictionaryIncrementRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *DictionaryIncrementRequest) getResponse() interface{} {
+	return r.response
 }

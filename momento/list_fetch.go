@@ -79,4 +79,4 @@ func (r *ListFetchRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *ListFetchRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }
+func (r *ListFetchRequest) getResponse() interface{} { return r.response }

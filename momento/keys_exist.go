@@ -58,4 +58,6 @@ func (r *KeysExistRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *KeysExistRequest) getResponse() map[string]string { return getMomentoResponseData(r.response) }
+func (r *KeysExistRequest) getResponse() interface{} {
+	return r.response
+}
