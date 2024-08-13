@@ -9,6 +9,10 @@ GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aw
 TEST_DIRS = momento/ auth/ batchutils/
 GINKGO_OPTS = --no-color -v
 
+install-devtools:
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install honnef.co/go/tools/cmd/staticcheck@v0.4.7
+	go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
 
 install-goimport:
 	@if ! command -v goimports &> /dev/null; then \
