@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/momento"
 	"strconv"
 	"strings"
 	"time"
@@ -41,11 +42,17 @@ func timer(timerChan chan string, log logger.MomentoLogger) {
 }
 
 func (mw *timingMiddleware) OnRequest(requestId uint64, theRequest interface{}, metadata context.Context) {
-	mw.timerChan <- fmt.Sprintf("start:%d:%d", requestId, hrtime.Now())
+	switch theRequest.(type) {
+	case *momento.GetRequest, *momento.SetRequest:
+		mw.timerChan <- fmt.Sprintf("start:%d:%d", requestId, hrtime.Now())
+	}
 }
 
 func (mw *timingMiddleware) OnResponse(requestId uint64, theResponse map[string]string) {
-	mw.timerChan <- fmt.Sprintf("end:%d:%d", requestId, hrtime.Now())
+	switch theResponse["responseType"] {
+	case "*responses.GetHit", "*responses.GetMiss", "*responses.SetSuccess":
+		mw.timerChan <- fmt.Sprintf("end:%d:%d", requestId, hrtime.Now())
+	}
 }
 
 func NewTimingMiddleware(log logger.MomentoLogger) *timingMiddleware {
