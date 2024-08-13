@@ -53,7 +53,7 @@ var _ = Describe("topic-client", func() {
 
 		sub, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
-			TopicName: sharedContext.CollectionName,
+			TopicName: topicName,
 		})
 		if err != nil {
 			panic(err)
@@ -83,7 +83,7 @@ var _ = Describe("topic-client", func() {
 		for _, value := range publishedValues {
 			_, err := sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
-				TopicName: sharedContext.CollectionName,
+				TopicName: topicName,
 				Value:     value,
 			})
 			if err != nil {
