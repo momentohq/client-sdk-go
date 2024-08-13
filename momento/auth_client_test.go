@@ -135,22 +135,11 @@ func newTopicClient(ctx SharedContext, provider auth.CredentialProvider) TopicCl
 	return tc
 }
 
-var _ = Describe("auth auth-client", func() {
-	var sharedContext SharedContext
-
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-
-		DeferCleanup(func() {
-			sharedContext.Close()
-		})
-	})
-
+var _ = Describe("auth auth-client methods", func() {
 	Describe("Generate disposable tokens", func() {
 		Describe("CacheKeyReadOnly tokens", func() {
 			It(`Generates disposable token CacheKeyReadOnly AllCaches, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				resp := generateDisposableTokenSuccess(sharedContext, CacheKeyReadOnly(AllCaches{}, key))
 				credProvider := credProviderFromDisposableToken(resp)
 
@@ -176,7 +165,7 @@ var _ = Describe("auth auth-client", func() {
 			})
 
 			It(`Generates disposable token CacheKeyReadOnly for a specific cache, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				resp := generateDisposableTokenSuccess(sharedContext, CacheKeyReadOnly(CacheName{Name: sharedContext.CacheName}, key))
 				credProvider := credProviderFromDisposableToken(resp)
 
@@ -204,7 +193,7 @@ var _ = Describe("auth auth-client", func() {
 
 		Describe("CacheKeyWriteOnly tokens", func() {
 			It(`Generates disposable token CacheKeyWriteOnly for a specific cache, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyWriteOnly(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -233,7 +222,7 @@ var _ = Describe("auth auth-client", func() {
 			})
 
 			It(`Generates disposable token CacheKeyWriteOnly for all caches, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyWriteOnly(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -266,7 +255,7 @@ var _ = Describe("auth auth-client", func() {
 
 		Describe("CacheKeyReadWrite tokens", func() {
 			It(`Generates disposable token CacheKeyReadWrite for all caches, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyReadWrite(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -299,7 +288,7 @@ var _ = Describe("auth auth-client", func() {
 			})
 
 			It(`Generates disposable token CacheKeyReadWrite for a specific cache, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyReadWrite(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -334,7 +323,7 @@ var _ = Describe("auth auth-client", func() {
 
 		Describe("CacheKeyPrefixReadWrite tokens", func() {
 			It(`Generates disposable token CacheKeyPrefixReadWrite for a specific cache, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyPrefixReadWrite(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -367,7 +356,7 @@ var _ = Describe("auth auth-client", func() {
 			})
 
 			It(`Generates disposable token CacheKeyPrefixReadWrite for all caches, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyPrefixReadWrite(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -402,7 +391,7 @@ var _ = Describe("auth auth-client", func() {
 
 		Describe("CacheKeyPrefixReadOnly tokens", func() {
 			It(`Generates disposable token CacheKeyPrefixReadOnly for a specific cache, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyPrefixReadOnly(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -435,7 +424,7 @@ var _ = Describe("auth auth-client", func() {
 			})
 
 			It(`Generates disposable token CacheKeyPrefixReadOnly for all caches, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyPrefixReadOnly(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -470,7 +459,7 @@ var _ = Describe("auth auth-client", func() {
 
 		Describe("CacheKeyPrefixWriteOnly tokens", func() {
 			It(`Generates disposable token CacheKeyPrefixWriteOnly for a specific cache, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyPrefixWriteOnly(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -505,7 +494,7 @@ var _ = Describe("auth auth-client", func() {
 			})
 
 			It(`Generates disposable token CacheKeyPrefixWriteOnly for all caches, and validates its permissions`, func() {
-				key := String(uuid.NewString())
+				key := NewStringKey()
 				scope := CacheKeyPrefixWriteOnly(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -1416,9 +1405,10 @@ var _ = Describe("auth auth-client", func() {
 				Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.PermissionError))
 
 				// Can set values in an existing cache
+				key := NewStringKey()
 				setResp, err := cacheClient.Set(sharedContext.Ctx, &SetRequest{
 					CacheName: authTestCache1,
-					Key:       String("key"),
+					Key:       key,
 					Value:     String("value"),
 				})
 				Expect(err).To(BeNil())
@@ -1427,7 +1417,7 @@ var _ = Describe("auth auth-client", func() {
 				// Can get values in an existing cache
 				getResp, err := cacheClient.Get(sharedContext.Ctx, &GetRequest{
 					CacheName: authTestCache1,
-					Key:       String("key"),
+					Key:       key,
 				})
 				Expect(err).To(BeNil())
 				Expect(getResp).To(BeAssignableToTypeOf(&responses.GetHit{}))
@@ -1654,9 +1644,10 @@ var _ = Describe("auth auth-client", func() {
 				defer topicClient.Close()
 
 				// 1. Cache get/set on authTestCache1 should succeed
+				key := NewStringKey()
 				setResp, err := cacheClient.Set(sharedContext.Ctx, &SetRequest{
 					CacheName: authTestCache1,
-					Key:       String("key"),
+					Key:       key,
 					Value:     String("value"),
 				})
 				Expect(err).To(BeNil())
@@ -1664,7 +1655,7 @@ var _ = Describe("auth auth-client", func() {
 
 				getResp, err := cacheClient.Get(sharedContext.Ctx, &GetRequest{
 					CacheName: authTestCache1,
-					Key:       String("key"),
+					Key:       key,
 				})
 				Expect(err).To(BeNil())
 				Expect(getResp).To(BeAssignableToTypeOf(&responses.GetHit{}))
@@ -1672,7 +1663,7 @@ var _ = Describe("auth auth-client", func() {
 				// 2. Cache get/set on authTestCache2 should fail
 				_, err = cacheClient.Set(sharedContext.Ctx, &SetRequest{
 					CacheName: authTestCache2,
-					Key:       String("key"),
+					Key:       key,
 					Value:     String("value"),
 				})
 				Expect(err).To(HaveOccurred())
@@ -1680,7 +1671,7 @@ var _ = Describe("auth auth-client", func() {
 
 				_, err = cacheClient.Get(sharedContext.Ctx, &GetRequest{
 					CacheName: authTestCache2,
-					Key:       String("key"),
+					Key:       key,
 				})
 				Expect(err).To(HaveOccurred())
 				Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.PermissionError))

@@ -46,18 +46,18 @@ func getValueAndExpectedValueListsRange(start int, end int) ([]Value, []string) 
 	return values, expected
 }
 
-func populateList(sharedContext SharedContext, numItems int) []string {
+func populateList(sharedContext SharedContext, listName string, numItems int) []string {
 	values, expected := getValueAndExpectedValueLists(numItems)
 	Expect(
 		sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
 			CacheName: sharedContext.CacheName,
-			ListName:  sharedContext.CollectionName,
+			ListName:  listName,
 			Values:    values,
 		}),
 	).To(BeAssignableToTypeOf(&ListConcatenateFrontSuccess{}))
 	Expect(
 		sharedContext.ClientWithDefaultCacheName.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
-			ListName: sharedContext.CollectionName,
+			ListName: listName,
 			Values:   values,
 		}),
 	).To(BeAssignableToTypeOf(&ListConcatenateFrontSuccess{}))
@@ -65,14 +65,20 @@ func populateList(sharedContext SharedContext, numItems int) []string {
 }
 
 var _ = Describe("cache-client list-methods", func() {
-	var sharedContext SharedContext
+	// var sharedContext SharedContext
+
+	// BeforeEach(func() {
+	// 	sharedContext = NewSharedContext()
+	// 	sharedContext.CreateDefaultCaches()
+	// 	DeferCleanup(func() {
+	// 		sharedContext.Close()
+	// 	})
+	// })
+
+	var listName string
 
 	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-		DeferCleanup(func() {
-			sharedContext.Close()
-		})
+		listName = uuid.NewString()
 	})
 
 	DescribeTable("try using invalid cache and list names",
@@ -147,19 +153,19 @@ var _ = Describe("cache-client list-methods", func() {
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
 		Entry("nonexistent cache name", DefaultClient, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
-		Entry("empty cache name", DefaultClient, "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("empty cache name", DefaultClient, "", listName, InvalidArgumentError),
 		Entry("empty list name", DefaultClient, sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("nonexistent cache name", WithDefaultCache, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
-		Entry("empty cache name", WithDefaultCache, "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("empty cache name", WithDefaultCache, "", listName, InvalidArgumentError),
 		Entry("empty list name", WithDefaultCache, sharedContext.CacheName, "", InvalidArgumentError),
 	)
 
 	It("returns the correct list length", func() {
 		numItems := 33
-		populateList(sharedContext, numItems)
+		populateList(sharedContext, listName, numItems)
 		lengthResp, err := sharedContext.Client.ListLength(sharedContext.Ctx, &ListLengthRequest{
 			CacheName: sharedContext.CacheName,
-			ListName:  sharedContext.CollectionName,
+			ListName:  listName,
 		})
 		Expect(err).To(BeNil())
 		switch result := lengthResp.(type) {
@@ -184,14 +190,14 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushFrontSuccess{}))
 					}
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
@@ -210,18 +216,18 @@ var _ = Describe("cache-client list-methods", func() {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 10
 					truncateTo := 5
-					populateList(sharedContext, numItems)
+					populateList(sharedContext, listName, numItems)
 					Expect(
 						client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
 							CacheName:          cacheName,
-							ListName:           sharedContext.CollectionName,
+							ListName:           listName,
 							Value:              String("andherlittledogtoo"),
 							TruncateBackToSize: uint32(truncateTo),
 						}),
 					).Error().To(BeNil())
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(truncateTo))
@@ -234,7 +240,7 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -244,14 +250,14 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     String(""),
 					}),
 				).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
 
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveListLength(1))
@@ -269,7 +275,7 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
@@ -277,7 +283,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(numItems))
@@ -295,18 +301,18 @@ var _ = Describe("cache-client list-methods", func() {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 10
 					truncateTo := 5
-					populateList(sharedContext, numItems)
+					populateList(sharedContext, listName, numItems)
 					Expect(
 						client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 							CacheName:           cacheName,
-							ListName:            sharedContext.CollectionName,
+							ListName:            listName,
 							Value:               String("andherlittledogtoo"),
 							TruncateFrontToSize: uint32(truncateTo),
 						}),
 					).Error().To(BeNil())
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(truncateTo))
@@ -319,7 +325,7 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -329,14 +335,14 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     String(""),
 					}),
 				).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
 
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveListLength(1))
@@ -353,13 +359,13 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 10
-					expected := populateList(sharedContext, numItems)
+					expected := populateList(sharedContext, listName, numItems)
 
 					numConcatItems := 5
 					concatValues, concatExpected := getValueAndExpectedValueLists(numConcatItems)
 					concatResp, err := client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Values:    concatValues,
 					})
 					Expect(err).To(BeNil())
@@ -367,7 +373,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
@@ -385,11 +391,11 @@ var _ = Describe("cache-client list-methods", func() {
 			DescribeTable("truncates the list properly",
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-					populateList(sharedContext, 5)
+					populateList(sharedContext, listName, 5)
 					concatValues := []Value{String("100"), String("101"), String("102")}
 					concatResp, err := client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
 						CacheName:          cacheName,
-						ListName:           sharedContext.CollectionName,
+						ListName:           listName,
 						Values:             concatValues,
 						TruncateBackToSize: 3,
 					})
@@ -398,7 +404,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
@@ -413,12 +419,12 @@ var _ = Describe("cache-client list-methods", func() {
 			)
 
 			It("returns an invalid argument for a nil value", func() {
-				populateList(sharedContext, 5)
+				populateList(sharedContext, listName, 5)
 				concatValues := []Value{nil, String("aRealValue"), nil}
 				Expect(
 					sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
 						CacheName:          sharedContext.CacheName,
-						ListName:           sharedContext.CollectionName,
+						ListName:           listName,
 						Values:             concatValues,
 						TruncateBackToSize: 3,
 					}),
@@ -429,14 +435,14 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListConcatenateFront(sharedContext.Ctx, &ListConcatenateFrontRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Values:    []Value{String("")},
 					}),
 				).To(BeAssignableToTypeOf(&ListConcatenateFrontSuccess{}))
 
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveListLength(1))
@@ -449,13 +455,13 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 10
-					expected := populateList(sharedContext, numItems)
+					expected := populateList(sharedContext, listName, numItems)
 
 					numConcatItems := 5
 					concatValues, concatExpected := getValueAndExpectedValueLists(numConcatItems)
 					concatResp, err := client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Values:    concatValues,
 					})
 					Expect(err).To(BeNil())
@@ -463,7 +469,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
@@ -481,11 +487,11 @@ var _ = Describe("cache-client list-methods", func() {
 			DescribeTable("truncates the list properly",
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-					populateList(sharedContext, 5)
+					populateList(sharedContext, listName, 5)
 					concatValues := []Value{String("100"), String("101"), String("102")}
 					concatResp, err := client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
 						CacheName:           cacheName,
-						ListName:            sharedContext.CollectionName,
+						ListName:            listName,
 						Values:              concatValues,
 						TruncateFrontToSize: 3,
 					})
@@ -494,7 +500,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
@@ -509,12 +515,12 @@ var _ = Describe("cache-client list-methods", func() {
 			)
 
 			It("returns an invalid argument for a nil value", func() {
-				populateList(sharedContext, 5)
+				populateList(sharedContext, listName, 5)
 				concatValues := []Value{nil, String("aRealValue"), nil}
 				Expect(
 					sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
 						CacheName:           sharedContext.CacheName,
-						ListName:            sharedContext.CollectionName,
+						ListName:            listName,
 						Values:              concatValues,
 						TruncateFrontToSize: 3,
 					}),
@@ -525,14 +531,14 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Values:    []Value{String("")},
 					}),
 				).To(BeAssignableToTypeOf(&ListConcatenateBackSuccess{}))
 
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveListLength(1))
@@ -548,11 +554,11 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 5
-					expected := populateList(sharedContext, numItems)
+					expected := populateList(sharedContext, listName, numItems)
 
 					popResp, err := client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					switch result := popResp.(type) {
@@ -564,7 +570,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(numItems - 1))
@@ -575,18 +581,18 @@ var _ = Describe("cache-client list-methods", func() {
 
 			It("returns a miss after popping the last item", func() {
 				numItems := 3
-				populateList(sharedContext, numItems)
+				populateList(sharedContext, listName, numItems)
 				for i := 0; i < 3; i++ {
 					Expect(
 						sharedContext.Client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
 							CacheName: sharedContext.CacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 						}),
 					).To(BeAssignableToTypeOf(&ListPopFrontHit{}))
 				}
 				popResp, err := sharedContext.Client.ListPopFront(sharedContext.Ctx, &ListPopFrontRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				Expect(popResp).To(BeAssignableToTypeOf(&ListPopFrontMiss{}))
@@ -600,11 +606,11 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 5
-					expected := populateList(sharedContext, numItems)
+					expected := populateList(sharedContext, listName, numItems)
 
 					popResp, err := client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					switch result := popResp.(type) {
@@ -616,7 +622,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(numItems - 1))
@@ -627,18 +633,18 @@ var _ = Describe("cache-client list-methods", func() {
 
 			It("returns a miss after popping the last item", func() {
 				numItems := 3
-				populateList(sharedContext, numItems)
+				populateList(sharedContext, listName, numItems)
 				for i := 0; i < 3; i++ {
 					Expect(
 						sharedContext.Client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
 							CacheName: sharedContext.CacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 						}),
 					).To(BeAssignableToTypeOf(&ListPopBackHit{}))
 				}
 				popResp, err := sharedContext.Client.ListPopBack(sharedContext.Ctx, &ListPopBackRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				Expect(popResp).To(BeAssignableToTypeOf(&ListPopBackMiss{}))
@@ -656,18 +662,18 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 5
-					expected := populateList(sharedContext, numItems)
+					expected := populateList(sharedContext, listName, numItems)
 					Expect(
 						client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
 							CacheName: cacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 							Value:     String(expected[0]),
 						}),
 					).Error().To(BeNil())
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					switch result := fetchResp.(type) {
@@ -685,7 +691,7 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -697,7 +703,7 @@ var _ = Describe("cache-client list-methods", func() {
 						sharedContext.Ctx,
 						&ListConcatenateFrontRequest{
 							CacheName: sharedContext.CacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 							Values:    []Value{String("one"), String(""), String("three")},
 						},
 					),
@@ -706,14 +712,14 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     String(""),
 					}),
 				).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
 
 				fetchResp, err := sharedContext.Client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 					CacheName: sharedContext.CacheName,
-					ListName:  sharedContext.CollectionName,
+					ListName:  listName,
 				})
 				Expect(err).To(BeNil())
 				switch result := fetchResp.(type) {
@@ -731,12 +737,12 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 5
-					populateList(sharedContext, numItems)
+					populateList(sharedContext, listName, numItems)
 					toAdd := []Value{String("#4"), String("#4"), String("#4"), String("#0")}
 					Expect(
 						client.ListConcatenateBack(sharedContext.Ctx, &ListConcatenateBackRequest{
 							CacheName: cacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 							Values:    toAdd,
 						}),
 					).To(BeAssignableToTypeOf(&ListConcatenateBackSuccess{}))
@@ -744,14 +750,14 @@ var _ = Describe("cache-client list-methods", func() {
 					Expect(
 						client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
 							CacheName: cacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 							Value:     String("#4"),
 						}),
 					).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					switch result := fetchResp.(type) {
@@ -769,7 +775,7 @@ var _ = Describe("cache-client list-methods", func() {
 				Expect(
 					sharedContext.Client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
 						CacheName: sharedContext.CacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						Value:     nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -783,18 +789,18 @@ var _ = Describe("cache-client list-methods", func() {
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					numItems := 5
-					populateList(sharedContext, numItems)
+					populateList(sharedContext, listName, numItems)
 					Expect(
 						client.ListRemoveValue(sharedContext.Ctx, &ListRemoveValueRequest{
 							CacheName: cacheName,
-							ListName:  sharedContext.CollectionName,
+							ListName:  listName,
 							Value:     String("iamnotinthelist"),
 						}),
 					).To(BeAssignableToTypeOf(&ListRemoveValueSuccess{}))
 
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(numItems))
@@ -835,14 +841,14 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushFrontSuccess{}))
 					}
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 					})
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(BeAssignableToTypeOf(&ListFetchHit{}))
@@ -868,7 +874,7 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
@@ -877,7 +883,7 @@ var _ = Describe("cache-client list-methods", func() {
 					endIndex := int32(0)
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						EndIndex:  &endIndex,
 					})
 
@@ -901,7 +907,7 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
@@ -910,7 +916,7 @@ var _ = Describe("cache-client list-methods", func() {
 					startIndex := int32(1)
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName:  cacheName,
-						ListName:   sharedContext.CollectionName,
+						ListName:   listName,
 						StartIndex: &startIndex,
 					})
 
@@ -939,7 +945,7 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
@@ -948,7 +954,7 @@ var _ = Describe("cache-client list-methods", func() {
 					endIndex := int32(3)
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName: cacheName,
-						ListName:  sharedContext.CollectionName,
+						ListName:  listName,
 						EndIndex:  &endIndex,
 					})
 
@@ -977,7 +983,7 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
@@ -987,7 +993,7 @@ var _ = Describe("cache-client list-methods", func() {
 					endIndex := int32(3)
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName:  cacheName,
-						ListName:   sharedContext.CollectionName,
+						ListName:   listName,
 						StartIndex: &startIndex,
 						EndIndex:   &endIndex,
 					})
@@ -1018,7 +1024,7 @@ var _ = Describe("cache-client list-methods", func() {
 						Expect(
 							client.ListPushBack(sharedContext.Ctx, &ListPushBackRequest{
 								CacheName: cacheName,
-								ListName:  sharedContext.CollectionName,
+								ListName:  listName,
 								Value:     value,
 							}),
 						).To(BeAssignableToTypeOf(&ListPushBackSuccess{}))
@@ -1027,7 +1033,7 @@ var _ = Describe("cache-client list-methods", func() {
 					startIndex := int32(-2)
 					fetchResp, err := client.ListFetch(sharedContext.Ctx, &ListFetchRequest{
 						CacheName:  cacheName,
-						ListName:   sharedContext.CollectionName,
+						ListName:   listName,
 						StartIndex: &startIndex,
 					})
 

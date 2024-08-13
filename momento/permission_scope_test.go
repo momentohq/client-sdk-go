@@ -6,21 +6,9 @@ import (
 
 	"github.com/momentohq/client-sdk-go/internal"
 	. "github.com/momentohq/client-sdk-go/momento"
-	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
-var _ = Describe("auth auth-client", func() {
-	var sharedContext SharedContext
-
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-
-		DeferCleanup(func() {
-			sharedContext.Close()
-		})
-	})
-
+var _ = Describe("auth auth-client permission-scope", func() {
 	Describe("PermissionScope", func() {
 		It("should support assignment from PredefinedScope and AllDataReadWrite", func() {
 			var scope PermissionScope

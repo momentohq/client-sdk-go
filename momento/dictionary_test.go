@@ -14,14 +14,10 @@ import (
 )
 
 var _ = Describe("cache-client dictionary-methods", func() {
-	var sharedContext SharedContext
+	var dictionaryName string
 
 	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-		DeferCleanup(func() {
-			sharedContext.Close()
-		})
+		dictionaryName = uuid.NewString()
 	})
 
 	DescribeTable("try using invalid cache and dictionary names",
@@ -99,10 +95,10 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
 		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), CacheNotFoundError),
-		Entry("empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("empty cache name", "", dictionaryName, InvalidArgumentError),
 		Entry("empty dictionary name", sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("nil dictionary name", sharedContext.CacheName, nil, InvalidArgumentError),
-		Entry("nil cache name", nil, sharedContext.CollectionName, InvalidArgumentError),
+		Entry("nil cache name", nil, dictionaryName, InvalidArgumentError),
 	)
 
 	DescribeTable("add string and bytes value for single field happy path",
@@ -111,14 +107,14 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      cacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          field,
 					Value:          value,
 				}),
 			).Error().To(BeNil())
 			getFieldResp, err := client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 				CacheName:      cacheName,
-				DictionaryName: sharedContext.CollectionName,
+				DictionaryName: dictionaryName,
 				Field:          field,
 			})
 			Expect(err).To(BeNil())
@@ -146,7 +142,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          field,
 					Value:          value,
 				}),
@@ -162,7 +158,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 		Expect(
 			sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: sharedContext.CollectionName,
+				DictionaryName: dictionaryName,
 				Field:          String("myField"),
 				Value:          String("myValue"),
 				Ttl:            &CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
@@ -173,7 +169,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 	It("returns the correct dictionary length", func() {
 		_, setErr := sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 			CacheName:      sharedContext.CacheName,
-			DictionaryName: sharedContext.CollectionName,
+			DictionaryName: dictionaryName,
 			Elements: DictionaryElementsFromMapStringValue(
 				map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 			),
@@ -181,7 +177,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 		Expect(setErr).To(BeNil())
 		resp, err := sharedContext.Client.DictionaryLength(sharedContext.Ctx, &DictionaryLengthRequest{
 			CacheName:      sharedContext.CacheName,
-			DictionaryName: sharedContext.CollectionName,
+			DictionaryName: dictionaryName,
 		})
 		Expect(err).To(BeNil())
 		switch result := resp.(type) {
@@ -205,13 +201,13 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      cacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements:       elements,
 				}),
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			fetchResp, err := client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 				CacheName:      cacheName,
-				DictionaryName: sharedContext.CollectionName,
+				DictionaryName: dictionaryName,
 			})
 			Expect(err).To(BeNil())
 			switch result := fetchResp.(type) {
@@ -324,7 +320,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 		Expect(
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: sharedContext.CollectionName,
+				DictionaryName: dictionaryName,
 				Elements: []DictionaryElement{
 					{Field: String("myField"), Value: String("myValue")},
 					{Field: String(""), Value: String("myOtherValue")},
@@ -337,7 +333,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 		Expect(
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: sharedContext.CollectionName,
+				DictionaryName: dictionaryName,
 				Elements: []DictionaryElement{
 					{Field: String("myField"), Value: String("myValue")},
 					{Field: String("myOtherField"), Value: nil},
@@ -387,7 +383,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 				incrResp, err := client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 					CacheName:      cacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          String("myField"),
 					Amount:         3,
 				})
@@ -406,7 +402,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          String("notacounter"),
 					Value:          String("notanumber"),
 				}),
@@ -415,7 +411,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          String("notacounter"),
 					Amount:         1,
 				}),
@@ -425,7 +421,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 		It("returns an error when amount is zero", func() {
 			_, err := sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: sharedContext.CollectionName,
+				DictionaryName: dictionaryName,
 				Field:          String("myField"),
 				Amount:         0,
 			})
@@ -440,7 +436,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 					Expect(
 						client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 							CacheName:      cacheName,
-							DictionaryName: sharedContext.CollectionName,
+							DictionaryName: dictionaryName,
 							Field:          field,
 							Amount:         1,
 						}),
@@ -448,7 +444,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				}
 				fetchResp, err := client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 					CacheName:      cacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          field,
 				})
 				Expect(err).To(BeNil())
@@ -468,7 +464,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          nil,
 					Amount:         1,
 				}),
@@ -482,7 +478,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 					),
@@ -490,7 +486,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 					),
@@ -508,7 +504,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 					for fieldName, valueStr := range expected {
 						getResp, err := client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 							CacheName:      cacheName,
-							DictionaryName: sharedContext.CollectionName,
+							DictionaryName: dictionaryName,
 							Field:          String(fieldName),
 						})
 						Expect(err).To(BeNil())
@@ -531,7 +527,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			It("returns a miss for a nonexistent field", func() {
 				getResp, err := sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          String("idontexist"),
 				})
 				Expect(err).To(BeNil())
@@ -552,7 +548,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Field:          nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -567,7 +563,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					getResp, err := client.DictionaryGetFields(sharedContext.Ctx, &DictionaryGetFieldsRequest{
 						CacheName:      cacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Fields:         []Value{String("myField1"), String("myField2")},
 					})
 					Expect(err).To(BeNil())
@@ -599,7 +595,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			It("returns misses for nonexistent fields", func() {
 				getResp, err := sharedContext.Client.DictionaryGetFields(sharedContext.Ctx, &DictionaryGetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Fields:         []Value{String("bogusField1"), String("bogusField2")},
 				})
 				Expect(err).To(BeNil())
@@ -616,7 +612,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			It("filters missing fields out of response value maps", func() {
 				getResp, err := sharedContext.Client.DictionaryGetFields(sharedContext.Ctx, &DictionaryGetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Fields:         []Value{String("bogusField1"), String("myField2")},
 				})
 				Expect(err).To(BeNil())
@@ -632,7 +628,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryGetFields(sharedContext.Ctx, &DictionaryGetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Fields:         []Value{String("myField"), nil},
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -647,7 +643,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 					),
@@ -655,7 +651,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": Bytes("myValue2")},
 					),
@@ -669,7 +665,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				expected := map[string]string{"myField1": "myValue1", "myField2": "myValue2"}
 				fetchResp, err := client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 					CacheName:      cacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
@@ -699,7 +695,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{
 							"myField1": String("myValue1"),
@@ -711,7 +707,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{
 							"myField1": String("myValue1"),
@@ -730,7 +726,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					removeResp, err := client.DictionaryRemoveField(sharedContext.Ctx, &DictionaryRemoveFieldRequest{
 						CacheName:      cacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Field:          String("myField1"),
 					})
 					Expect(err).To(BeNil())
@@ -738,7 +734,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 
 					fetchResp, err := client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      cacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					})
 					Expect(err).To(BeNil())
 					switch result := fetchResp.(type) {
@@ -758,7 +754,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			It("no-ops when attempting to remove a nonexistent field", func() {
 				removeResp, err := sharedContext.Client.DictionaryRemoveField(sharedContext.Ctx, &DictionaryRemoveFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Field:          String("bogusField1"),
 				})
 				Expect(err).To(BeNil())
@@ -779,7 +775,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryRemoveField(sharedContext.Ctx, &DictionaryRemoveFieldRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Field:          nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -793,7 +789,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 					removeResp, err := client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 						CacheName:      cacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Fields:         []Value{String("myField1"), Bytes("myField2")},
 					})
 					Expect(err).To(BeNil())
@@ -801,7 +797,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 
 					fetchResp, err := client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      cacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					})
 					Expect(err).To(BeNil())
 					switch result := fetchResp.(type) {
@@ -820,7 +816,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			It("no-ops when attempting to remove a nonexistent field", func() {
 				removeResp, err := sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Fields:         []Value{String("bogusField1"), Bytes("bogusField2")},
 				})
 				Expect(err).To(BeNil())
@@ -841,7 +837,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Fields:         nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -851,7 +847,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Fields:         []Value{String("myField"), nil, String("myField2")},
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -868,7 +864,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Elements: DictionaryElementsFromMapStringValue(
 							map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 						),
@@ -878,7 +874,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 
@@ -887,7 +883,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
 			})
@@ -902,7 +898,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: sharedContext.CollectionName,
+					DictionaryName: dictionaryName,
 					Elements: DictionaryElementsFromMapStringValue(
 						map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 					),
@@ -917,7 +913,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Field:          String("foo"),
 						Value:          String("bar"),
 					}),
@@ -928,7 +924,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 			})
@@ -941,7 +937,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
 						Ttl: &CollectionTtl{
@@ -956,7 +952,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
 			})
@@ -965,7 +961,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
 						Ttl: &CollectionTtl{
@@ -980,7 +976,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: sharedContext.CollectionName,
+						DictionaryName: dictionaryName,
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 			})

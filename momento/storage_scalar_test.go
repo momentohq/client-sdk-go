@@ -8,18 +8,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/momentohq/client-sdk-go/momento"
-	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
 var _ = Describe("storage-client scalar", func() {
-	var sharedContext SharedContext
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultStores()
-
-		DeferCleanup(func() { sharedContext.Close() })
-	})
-
 	DescribeTable("Sets with correct StorageValueType",
 		func(key string, value storageTypes.Value) {
 			_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{
