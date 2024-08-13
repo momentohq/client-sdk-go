@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	. "github.com/momentohq/client-sdk-go/momento"
-	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	. "github.com/momentohq/client-sdk-go/responses"
 
 	"github.com/google/uuid"
@@ -13,15 +12,6 @@ import (
 )
 
 var _ = Describe("leaderboard-client", func() {
-	var sharedContext SharedContext
-
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-
-		DeferCleanup(func() { sharedContext.Close() })
-	})
-
 	// Convenience method for creating temporary leaderboard
 	createLeaderboard := func() Leaderboard {
 		leaderboard, err := sharedContext.LeaderboardClient.Leaderboard(sharedContext.Ctx, &LeaderboardRequest{

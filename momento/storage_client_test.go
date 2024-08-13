@@ -7,22 +7,12 @@ import (
 
 	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
-	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("storage-client misc", func() {
-	var sharedContext SharedContext
-
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultStores()
-
-		DeferCleanup(func() { sharedContext.Close() })
-	})
-
 	It("errors on invalid timeout", func() {
 		badRequestTimeout := 0 * time.Second
 		sharedContext.StorageConfiguration = config.StorageLaptopLatest().WithClientTimeout(badRequestTimeout)

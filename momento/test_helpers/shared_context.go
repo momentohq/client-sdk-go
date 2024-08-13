@@ -26,7 +26,6 @@ type SharedContext struct {
 	TopicClient                     momento.TopicClient
 	CacheName                       string
 	StoreName                       string
-	CollectionName                  string
 	Ctx                             context.Context
 	DefaultTtl                      time.Duration
 	Configuration                   config.Configuration
@@ -107,8 +106,6 @@ func NewSharedContext() SharedContext {
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 	shared.StoreName = fmt.Sprintf("golang-%s", uuid.NewString())
-
-	shared.CollectionName = uuid.NewString()
 
 	return shared
 }

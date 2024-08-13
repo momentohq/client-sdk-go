@@ -2,24 +2,18 @@ package momento_test
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	. "github.com/momentohq/client-sdk-go/momento"
-	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	. "github.com/momentohq/client-sdk-go/responses"
 )
 
 var _ = Describe("control-ops", func() {
-	var sharedContext SharedContext
-
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		DeferCleanup(func() { sharedContext.Close() })
-	})
-
 	Describe("cache-client happy-path", func() {
 		It("creates, lists, and deletes caches", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
@@ -73,11 +67,22 @@ var _ = Describe("control-ops", func() {
 		})
 
 		It("creates and deletes using a default cache", func() {
+			// Create a separate client with a default cache name to be used only in this test
+			// to avoid affecting the shared context when all tests run
+			defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
+			clientWithDefaultCacheName, err := NewCacheClientWithDefaultCache(
+				sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, defaultCacheName,
+			)
+			if err != nil {
+				panic(err)
+			}
+			DeferCleanup(func() { clientWithDefaultCacheName.Close() })
+
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.CreateCache(sharedContext.Ctx, &CreateCacheRequest{}),
-			).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
+				clientWithDefaultCacheName.CreateCache(sharedContext.Ctx, &CreateCacheRequest{}),
+			).Error().NotTo(HaveOccurred())
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{}),
+				clientWithDefaultCacheName.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{}),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
 
@@ -167,27 +172,39 @@ var _ = Describe("control-ops", func() {
 
 	Describe("cache-client default-cache-name", func() {
 		It("overrides default cache name", func() {
+			// Create a separate client with a default cache name to be used only in this test
+			// to avoid affecting the shared context when all tests run
+			defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
+			clientWithDefaultCacheName, err := NewCacheClientWithDefaultCache(
+				sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, defaultCacheName,
+			)
+			if err != nil {
+				panic(err)
+			}
+			DeferCleanup(func() { clientWithDefaultCacheName.Close() })
+
+			newCacheName := uuid.NewString()
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.CreateCache(
-					sharedContext.Ctx, &CreateCacheRequest{CacheName: sharedContext.CacheName},
+				clientWithDefaultCacheName.CreateCache(
+					sharedContext.Ctx, &CreateCacheRequest{CacheName: newCacheName},
 				),
-			).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
+			).Error().NotTo(HaveOccurred())
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.Get(
-					sharedContext.Ctx, &GetRequest{Key: String("hi")},
+				clientWithDefaultCacheName.Get(
+					sharedContext.Ctx, &GetRequest{Key: helpers.NewStringKey()},
 				),
 			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.Get(
+				clientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{
-						CacheName: sharedContext.CacheName,
-						Key:       String("hi"),
+						CacheName: newCacheName,
+						Key:       helpers.NewStringKey(),
 					},
 				),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.DeleteCache(
-					sharedContext.Ctx, &DeleteCacheRequest{CacheName: sharedContext.CacheName},
+				clientWithDefaultCacheName.DeleteCache(
+					sharedContext.Ctx, &DeleteCacheRequest{CacheName: newCacheName},
 				),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})

@@ -11,19 +11,13 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/momentohq/client-sdk-go/momento"
-	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 )
 
 var _ = Describe("topic-client", func() {
-	var sharedContext SharedContext
+	var topicName string
 
 	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-
-		DeferCleanup(func() {
-			sharedContext.Close()
-		})
+		topicName = uuid.NewString()
 	})
 
 	DescribeTable("Validates the names",
@@ -44,8 +38,8 @@ var _ = Describe("topic-client", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 		},
-		Entry("Empty cache name", "", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Blank cache name", "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty cache name", "", topicName, InvalidArgumentError),
+		Entry("Blank cache name", "  ", topicName, InvalidArgumentError),
 		Entry("Empty collection name", sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name", sharedContext.CacheName, "  ", InvalidArgumentError),
 		Entry("Non-existent cache", uuid.NewString(), uuid.NewString(), CacheNotFoundError),
@@ -59,7 +53,7 @@ var _ = Describe("topic-client", func() {
 
 		sub, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
-			TopicName: sharedContext.CollectionName,
+			TopicName: topicName,
 		})
 		if err != nil {
 			panic(err)
@@ -89,7 +83,7 @@ var _ = Describe("topic-client", func() {
 		for _, value := range publishedValues {
 			_, err := sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
-				TopicName: sharedContext.CollectionName,
+				TopicName: topicName,
 				Value:     value,
 			})
 			if err != nil {
@@ -106,7 +100,7 @@ var _ = Describe("topic-client", func() {
 
 		sub, _ := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 			CacheName: sharedContext.CacheName,
-			TopicName: sharedContext.CollectionName,
+			TopicName: topicName,
 		})
 
 		// Create a new context with a timeout
@@ -141,7 +135,7 @@ var _ = Describe("topic-client", func() {
 		Expect(
 			sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
 				CacheName: sharedContext.CacheName,
-				TopicName: sharedContext.CollectionName,
+				TopicName: topicName,
 				Value:     nil,
 			}),
 		).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -152,7 +146,7 @@ var _ = Describe("topic-client", func() {
 			Expect(
 				sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
 					CacheName: sharedContext.CacheName,
-					TopicName: sharedContext.CollectionName,
+					TopicName: topicName,
 				}),
 			).Error().NotTo(HaveOccurred())
 		})

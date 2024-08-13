@@ -15,12 +15,10 @@ import (
 )
 
 var _ = Describe("cache-client sortedset-methods", func() {
-	var sharedContext SharedContext
-	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
+	var sortedSetName string
 
-		DeferCleanup(func() { sharedContext.Close() })
+	BeforeEach(func() {
+		sortedSetName = uuid.NewString()
 	})
 
 	// A convenience for adding elements to a sorted set.
@@ -30,7 +28,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 				sharedContext.Ctx,
 				&SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Elements:  elements,
 				},
 			),
@@ -39,7 +37,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			sharedContext.ClientWithDefaultCacheName.SortedSetPutElements(
 				sharedContext.Ctx,
 				&SortedSetPutElementsRequest{
-					SetName:  sharedContext.CollectionName,
+					SetName:  sortedSetName,
 					Elements: elements,
 				},
 			),
@@ -52,7 +50,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			sharedContext.Ctx,
 			&SortedSetFetchByRankRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   sortedSetName,
 			},
 		)
 	}
@@ -134,13 +132,13 @@ var _ = Describe("cache-client sortedset-methods", func() {
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedError))
 		},
-		Entry("Empty cache name with default client", DefaultClient, "", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Blank cache name with default client", DefaultClient, "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty cache name with default client", DefaultClient, "", sortedSetName, InvalidArgumentError),
+		Entry("Blank cache name with default client", DefaultClient, "  ", sortedSetName, InvalidArgumentError),
 		Entry("Empty collection name with default client", DefaultClient, sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name with default client", DefaultClient, sharedContext.CacheName, "  ", InvalidArgumentError),
 		Entry("Non-existent cache with default client", DefaultClient, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
-		Entry("Empty cache name with client with default cache", WithDefaultCache, "", sharedContext.CollectionName, InvalidArgumentError),
-		Entry("Blank cache name with client with default cache", WithDefaultCache, "  ", sharedContext.CollectionName, InvalidArgumentError),
+		Entry("Empty cache name with client with default cache", WithDefaultCache, "", sortedSetName, InvalidArgumentError),
+		Entry("Blank cache name with client with default cache", WithDefaultCache, "  ", sortedSetName, InvalidArgumentError),
 		Entry("Empty collection name with client with default cache", WithDefaultCache, sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("Blank collection name with client with default cache", WithDefaultCache, sharedContext.CacheName, "  ", InvalidArgumentError),
 		Entry("Non-existent cache with client with default cache", WithDefaultCache, uuid.NewString(), uuid.NewString(), CacheNotFoundError),
@@ -211,7 +209,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			func(element SortedSetElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetIncrementScoreRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     element.Value,
 					Amount:    element.Score,
 				}
@@ -228,7 +226,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			func(element SortedSetElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetPutElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     element.Value,
 					Score:     element.Score,
 				}
@@ -245,7 +243,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			func(element SortedSetElement, ttl *utils.CollectionTtl) {
 				request := &SortedSetPutElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Elements:  []SortedSetElement{element},
 				}
 				if ttl != nil {
@@ -266,7 +264,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetFetchByRankRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetFetchMiss{}))
@@ -294,7 +292,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByRankRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 						},
 					)
 					Expect(err).To(BeNil())
@@ -329,7 +327,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 						},
 					),
@@ -353,7 +351,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 							StartRank: &start,
 							EndRank:   &end,
@@ -375,7 +373,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 							StartRank: &start,
 						},
@@ -396,7 +394,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetFetchByRankRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Order:     DESCENDING,
 						StartRank: &start,
 						EndRank:   &end,
@@ -417,7 +415,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByRankRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 							EndRank:   &end,
 						},
@@ -438,7 +436,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 							sharedContext.Ctx,
 							&SortedSetFetchByRankRequest{
 								CacheName: sharedContext.CacheName,
-								SetName:   sharedContext.CollectionName,
+								SetName:   sortedSetName,
 								StartRank: &start,
 								EndRank:   &end,
 							},
@@ -470,7 +468,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 		putElements(sortedSetElements)
 		lengthResp, err := sharedContext.Client.SortedSetLength(sharedContext.Ctx, &SortedSetLengthRequest{
 			CacheName: sharedContext.CacheName,
-			SetName:   sharedContext.CollectionName,
+			SetName:   sortedSetName,
 		})
 		Expect(err).To(BeNil())
 		switch result := lengthResp.(type) {
@@ -496,7 +494,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetFetchByScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetFetchMiss{}))
@@ -524,7 +522,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByScoreRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 						},
 					)
 					Expect(err).To(BeNil())
@@ -559,7 +557,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByScoreRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 						},
 					),
@@ -583,7 +581,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByScoreRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 							MinScore:  &minScore,
 							MaxScore:  &maxScore,
@@ -607,7 +605,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByScoreRequest{
 							CacheName: sharedContext.CacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 							MinScore:  &minScore,
 							MaxScore:  &maxScore,
@@ -632,7 +630,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetLengthByScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 					},
 				),
 			).To(BeAssignableToTypeOf(&SortedSetLengthByScoreMiss{}))
@@ -660,7 +658,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetLengthByScoreRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 						},
 					)
 					Expect(err).To(BeNil())
@@ -684,7 +682,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetLengthByScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						MinScore:  &minScore,
 						MaxScore:  &maxScore,
 					},
@@ -708,7 +706,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetLengthByScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						MinScore:  &minScore,
 						MaxScore:  &maxScore,
 					},
@@ -732,7 +730,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetLengthByScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						MinScore:  &minScore,
 						MaxScore:  &maxScore,
 					},
@@ -756,7 +754,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetLengthByScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						MinScore:  &minScore,
 						MaxScore:  &maxScore,
 					},
@@ -781,7 +779,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("foo"),
 					},
 				),
@@ -815,7 +813,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("first"),
 					},
 				)
@@ -833,7 +831,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetGetRankRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Value:     String("last"),
 						},
 					),
@@ -844,7 +842,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetGetRankRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Order:     DESCENDING,
 							Value:     String("last"),
 						},
@@ -861,7 +859,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     nil,
 					},
 				),
@@ -878,7 +876,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetRankRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String(""),
 					},
 				),
@@ -893,7 +891,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values:    []Value{String("foo")},
 					},
 				),
@@ -927,7 +925,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values: []Value{
 							String("first"), String("last"), String("dne"),
 						},
@@ -959,7 +957,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values:    nil,
 					},
 				),
@@ -970,7 +968,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetGetScoresRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values:    []Value{nil, String("aValue"), nil},
 					},
 				),
@@ -992,7 +990,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 				getResp, err := client.SortedSetGetScore(
 					sharedContext.Ctx, &SortedSetGetScoreRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("first"),
 					},
 				)
@@ -1017,7 +1015,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			getResp, err := sharedContext.Client.SortedSetGetScore(
 				sharedContext.Ctx, &SortedSetGetScoreRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     String("idontexist"),
 				},
 			)
@@ -1041,7 +1039,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			Expect(
 				sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     nil,
 					Score:     10,
 				}),
@@ -1056,7 +1054,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("dne"),
 						Amount:    99,
 					},
@@ -1070,7 +1068,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("dne"),
 						Amount:    0,
 					},
@@ -1084,7 +1082,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("dne"),
 					},
 				),
@@ -1106,7 +1104,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("middle"),
 						Amount:    42,
 					},
@@ -1125,7 +1123,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetIncrementScoreRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Value:     String("middle"),
 							Amount:    -42,
 						},
@@ -1142,7 +1140,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetIncrementScoreRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     nil,
 						Amount:    42,
 					},
@@ -1159,7 +1157,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 				sharedContext.Ctx,
 				&SortedSetIncrementScoreRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     String(""),
 					Amount:    10,
 				},
@@ -1178,7 +1176,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetPutElementRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     inputValue,
 						Score:     inputScore,
 					})
@@ -1189,7 +1187,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetFetchByRankRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 					},
 				)
 				Expect(fetchErr).To(BeNil())
@@ -1210,7 +1208,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			putElements([]SortedSetElement{{Value: strValue, Score: 500}})
 			fetchResp, err := sharedContext.Client.SortedSetGetScore(sharedContext.Ctx, &SortedSetGetScoreRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   sortedSetName,
 				Value:     strValue,
 			})
 			Expect(err).To(BeNil())
@@ -1251,7 +1249,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			Expect(
 				sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     nil,
 					Score:     0,
 				}),
@@ -1269,7 +1267,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetPutElementsRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Elements:  elems,
 						},
 					),
@@ -1277,7 +1275,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 
 				fetchResp, err := client.SortedSetFetchByRank(sharedContext.Ctx, &SortedSetFetchByRankRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Order:     ASCENDING,
 				})
 				Expect(err).To(BeNil())
@@ -1318,7 +1316,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 		It("returns an error for nil elements", func() {
 			Expect(sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, &SortedSetPutElementsRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   sortedSetName,
 				Elements:  nil,
 			})).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
@@ -1326,7 +1324,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 		It("returns an error for nil values", func() {
 			Expect(sharedContext.Client.SortedSetPutElements(sharedContext.Ctx, &SortedSetPutElementsRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   sortedSetName,
 				Elements:  []SortedSetElement{{Value: String("hi"), Score: 10}, {Value: nil, Score: 500}},
 			})).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
@@ -1342,7 +1340,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetPutElementsRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Elements:  elems,
 						},
 					),
@@ -1351,14 +1349,14 @@ var _ = Describe("cache-client sortedset-methods", func() {
 				Expect(
 					client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Value:     String("val1"),
 					}),
 				).To(BeAssignableToTypeOf(&SortedSetRemoveElementSuccess{}))
 
 				fetchResp, err := client.SortedSetFetchByRank(sharedContext.Ctx, &SortedSetFetchByRankRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Order:     ASCENDING,
 				})
 				Expect(err).To(BeNil())
@@ -1380,7 +1378,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			Expect(
 				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     String("idontexist"),
 				}),
 			).To(BeAssignableToTypeOf(&SortedSetRemoveElementSuccess{}))
@@ -1390,7 +1388,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			Expect(
 				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 					Value:     nil,
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -1398,7 +1396,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 			Expect(
 				sharedContext.Client.SortedSetRemoveElement(sharedContext.Ctx, &SortedSetRemoveElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   sortedSetName,
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
 		})
@@ -1411,7 +1409,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values:    []Value{String("dne")},
 					},
 				),
@@ -1434,7 +1432,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetRemoveElementsRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 							Values: []Value{
 								String("first"), String("dne"),
 							},
@@ -1447,7 +1445,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 						sharedContext.Ctx,
 						&SortedSetFetchByRankRequest{
 							CacheName: cacheName,
-							SetName:   sharedContext.CollectionName,
+							SetName:   sortedSetName,
 						},
 					),
 				).To(HaveSortedSetElements(
@@ -1467,7 +1465,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values:    nil,
 					},
 				),
@@ -1478,7 +1476,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 					sharedContext.Ctx,
 					&SortedSetRemoveElementsRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   sortedSetName,
 						Values:    []Value{nil, String("aValue"), nil},
 					},
 				),

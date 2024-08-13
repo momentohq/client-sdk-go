@@ -23,14 +23,10 @@ func getElements(numElements int) []Value {
 }
 
 var _ = Describe("cache-client set-methods", func() {
-	var sharedContext SharedContext
+	var setName string
 
 	BeforeEach(func() {
-		sharedContext = NewSharedContext()
-		sharedContext.CreateDefaultCaches()
-		DeferCleanup(func() {
-			sharedContext.Close()
-		})
+		setName = uuid.NewString()
 	})
 
 	DescribeTable("errors when the cache is missing",
@@ -163,14 +159,14 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   element,
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
 
 				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				switch result := fetchResp.(type) {
@@ -195,13 +191,13 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Elements:  elements,
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementsSuccess{}))
 				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				switch result := fetchResp.(type) {
@@ -274,7 +270,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Element:   nil,
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -282,7 +278,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  nil,
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -290,7 +286,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  []Value{nil, String("aValue"), nil},
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -305,13 +301,13 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  elements,
 				}),
 			).Error().To(BeNil())
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
-					SetName:  sharedContext.CollectionName,
+					SetName:  setName,
 					Elements: elements,
 				}),
 			).Error().To(BeNil())
@@ -323,14 +319,14 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   toRemove,
 					}),
 				).Error().To(BeNil())
 
 				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(expectedLength))
@@ -355,14 +351,14 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
 						CacheName: cacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Elements:  toRemove,
 					}),
 				).Error().To(BeNil())
 
 				fetchResp, err := client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(expectedLength))
@@ -385,7 +381,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetRemoveElement(sharedContext.Ctx, &SetRemoveElementRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Element:   nil,
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -393,7 +389,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  nil,
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -401,7 +397,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetRemoveElements(sharedContext.Ctx, &SetRemoveElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  []Value{nil, String("aValue"), nil},
 				}),
 			).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -415,13 +411,13 @@ var _ = Describe("cache-client set-methods", func() {
 
 		_, err := sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 			CacheName: sharedContext.CacheName,
-			SetName:   sharedContext.CollectionName,
+			SetName:   setName,
 			Elements:  elements,
 		})
 		Expect(err).To(BeNil())
 		resp, err := sharedContext.Client.SetLength(sharedContext.Ctx, &SetLengthRequest{
 			CacheName: sharedContext.CacheName,
-			SetName:   sharedContext.CollectionName,
+			SetName:   setName,
 		})
 		Expect(err).To(BeNil())
 		switch result := resp.(type) {
@@ -445,13 +441,13 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  elements,
 				}),
 			).Error().To(BeNil())
 			Expect(
 				sharedContext.ClientWithDefaultCacheName.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
-					SetName:  sharedContext.CollectionName,
+					SetName:  setName,
 					Elements: elements,
 				}),
 			).Error().To(BeNil())
@@ -462,7 +458,7 @@ var _ = Describe("cache-client set-methods", func() {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 				containsResp, err := client.SetContainsElements(sharedContext.Ctx, &SetContainsElementsRequest{
 					CacheName: cacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  toCheck,
 				})
 				Expect(err).To(BeNil())
@@ -498,14 +494,14 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   String("hello"),
 					}),
 				).Error().To(BeNil())
 
 				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(1))
@@ -514,7 +510,7 @@ var _ = Describe("cache-client set-methods", func() {
 
 				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchMiss{}))
@@ -531,7 +527,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   String("goodbye"),
 					}),
 				).To(BeAssignableToTypeOf(&SetAddElementSuccess{}))
@@ -541,7 +537,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   String("hello"),
 						Ttl: &utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTtl + time.Second*60,
@@ -552,7 +548,7 @@ var _ = Describe("cache-client set-methods", func() {
 
 				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(2))
@@ -561,7 +557,7 @@ var _ = Describe("cache-client set-methods", func() {
 
 				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchHit{}))
@@ -571,7 +567,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   String("hello"),
 						Ttl: &utils.CollectionTtl{
 							Ttl:        sharedContext.DefaultTtl + 1*time.Second,
@@ -583,7 +579,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 					}),
 				).To(HaveSetLength(2))
 
@@ -592,7 +588,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 					}),
 				).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 			})
@@ -601,7 +597,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   String("hello"),
 						Ttl: &utils.CollectionTtl{
 							Ttl:        time.Millisecond * 20,
@@ -612,7 +608,7 @@ var _ = Describe("cache-client set-methods", func() {
 
 				fetchResp, err := sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(HaveSetLength(2))
@@ -621,7 +617,7 @@ var _ = Describe("cache-client set-methods", func() {
 
 				fetchResp, err = sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				})
 				Expect(err).To(BeNil())
 				Expect(fetchResp).To(BeAssignableToTypeOf(&SetFetchHit{}))
@@ -631,7 +627,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 						Element:   String("hello"),
 						Ttl: &utils.CollectionTtl{
 							Ttl:        time.Millisecond * 200,
@@ -645,7 +641,7 @@ var _ = Describe("cache-client set-methods", func() {
 				Expect(
 					sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 						CacheName: sharedContext.CacheName,
-						SetName:   sharedContext.CollectionName,
+						SetName:   setName,
 					}),
 				).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 			})
@@ -658,7 +654,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetAddElements(sharedContext.Ctx, &SetAddElementsRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 					Elements:  elements,
 				}),
 			).Error().To(BeNil())
@@ -679,14 +675,14 @@ var _ = Describe("cache-client set-methods", func() {
 			// Pop one item from the set (1 is the default), 9 should remain
 			resp1, err1 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   setName,
 			})
 			Expect(err1).To(BeNil())
 			Expect(resp1).To(BeAssignableToTypeOf(&SetPopHit{}))
 			Expect(
 				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				}),
 			).To(HaveSetLength(9))
 
@@ -694,7 +690,7 @@ var _ = Describe("cache-client set-methods", func() {
 			count = 4
 			resp2, err2 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   setName,
 				Count:     &count,
 			})
 			Expect(err2).To(BeNil())
@@ -702,7 +698,7 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				}),
 			).To(HaveSetLength(5))
 
@@ -710,7 +706,7 @@ var _ = Describe("cache-client set-methods", func() {
 			count = 5
 			resp3, err3 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   setName,
 				Count:     &count,
 			})
 			Expect(err3).To(BeNil())
@@ -718,14 +714,14 @@ var _ = Describe("cache-client set-methods", func() {
 			Expect(
 				sharedContext.Client.SetFetch(sharedContext.Ctx, &SetFetchRequest{
 					CacheName: sharedContext.CacheName,
-					SetName:   sharedContext.CollectionName,
+					SetName:   setName,
 				}),
 			).To(BeAssignableToTypeOf(&SetFetchMiss{}))
 
 			// Expect a miss when set is empty
 			resp4, err4 := sharedContext.Client.SetPop(sharedContext.Ctx, &SetPopRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   sharedContext.CollectionName,
+				SetName:   setName,
 			})
 			Expect(err4).To(BeNil())
 			Expect(resp4).To(BeAssignableToTypeOf(&SetPopMiss{}))

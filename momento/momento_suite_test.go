@@ -5,16 +5,29 @@ import (
 	"testing"
 
 	"github.com/momentohq/client-sdk-go/momento"
+	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	"github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 )
 
+var sharedContext helpers.SharedContext
+
 func TestMomento(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Momento Suite")
 }
+
+var _ = BeforeSuite(func() {
+	sharedContext = helpers.NewSharedContext()
+	sharedContext.CreateDefaultCaches()
+	sharedContext.CreateDefaultStores()
+})
+
+var _ = AfterSuite(func() {
+	sharedContext.Close()
+})
 
 func HaveMomentoErrorCode(code string) types.GomegaMatcher {
 	return WithTransform(
