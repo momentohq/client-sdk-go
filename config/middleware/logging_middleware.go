@@ -24,11 +24,7 @@ func (mw *LoggingMiddleware) OnRequest(requestId uint64, theRequest interface{},
 	mw.Log.Info(fmt.Sprintf("\n(%d) Issuing %T:\n%s\nwith metadada: %+v\n", requestId, theRequest, string(jsonStr), metadata))
 }
 
-func (mw *LoggingMiddleware) OnResponse(requestId uint64, theResponse map[string]string) {
-	if len(theResponse) == 0 {
-		mw.Log.Debug("Got empty response")
-		return
-	}
+func (mw *LoggingMiddleware) OnResponse(requestId uint64, theResponse interface{}) {
 	// Log response
 	jsonStr, _ := json.MarshalIndent(theResponse, "", "  ")
 	mw.Log.Info(fmt.Sprintf("\n(%d) Got response: %s\n", requestId, string(jsonStr)))

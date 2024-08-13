@@ -60,6 +60,6 @@ func (r *ItemGetTtlRequest) interpretGrpcResponse() error {
 	}
 }
 
-func (r *ItemGetTtlRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *ItemGetTtlRequest) getResponse() interface{} {
+	return r.response
 }

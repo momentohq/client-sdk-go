@@ -64,6 +64,6 @@ func (r *SetRemoveElementsRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SetRemoveElementsRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SetRemoveElementsRequest) getResponse() interface{} {
+	return r.response
 }

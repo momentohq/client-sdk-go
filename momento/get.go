@@ -2,8 +2,6 @@ package momento
 
 import (
 	"context"
-	"strconv"
-
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -65,18 +63,19 @@ func (r *GetRequest) interpretGrpcResponse() error {
 	}
 }
 
-func (r *GetRequest) getResponse() map[string]string {
-	respMap := getMomentoResponseData(r.response)
-	var responseLen uint64
-	//var responseVal string
-	switch t := r.response.(type) {
-	case *responses.GetHit:
-		responseLen = uint64(len(t.ValueByte()))
-		//responseVal = t.ValueString()
-	case *responses.GetMiss:
-		break
-	}
-	respMap["responseLength"] = strconv.FormatUint(responseLen, 10)
-	//respMap["responseValue"] = responseVal
-	return respMap
+func (r *GetRequest) getResponse() interface{} {
+	return r.response
+	//respMap := getMomentoResponseData(r.response)
+	//var responseLen uint64
+	////var responseVal string
+	//switch t := r.response.(type) {
+	//case *responses.GetHit:
+	//	responseLen = uint64(len(t.ValueByte()))
+	//	//responseVal = t.ValueString()
+	//case *responses.GetMiss:
+	//	break
+	//}
+	//respMap["responseLength"] = strconv.FormatUint(responseLen, 10)
+	////respMap["responseValue"] = responseVal
+	//return respMap
 }

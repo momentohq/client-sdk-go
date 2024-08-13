@@ -38,4 +38,4 @@ func (mw *metricsMiddleware) OnRequest(_ uint64, theRequest interface{}, _ conte
 	mw.requestChan <- fmt.Sprintf("%T", theRequest)
 }
 
-func (mw *metricsMiddleware) OnResponse(requestId uint64, _ map[string]string) {}
+func (mw *metricsMiddleware) OnResponse(requestId uint64, _ interface{}) {}

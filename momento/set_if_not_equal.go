@@ -103,6 +103,6 @@ func (r *SetIfNotEqualRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SetIfNotEqualRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SetIfNotEqualRequest) getResponse() interface{} {
+	return r.response
 }

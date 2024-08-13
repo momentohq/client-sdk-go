@@ -58,6 +58,6 @@ func (r *ListRemoveValueRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *ListRemoveValueRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *ListRemoveValueRequest) getResponse() interface{} {
+	return r.response
 }

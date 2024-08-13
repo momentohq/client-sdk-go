@@ -77,6 +77,6 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
 	return nil
 }
 
-func (r *SortedSetGetRankRequest) getResponse() map[string]string {
-	return getMomentoResponseData(r.response)
+func (r *SortedSetGetRankRequest) getResponse() interface{} {
+	return r.response
 }
