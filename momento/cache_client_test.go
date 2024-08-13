@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("cache-client creation", func() {
+var _ = Describe("cache-client", func() {
 	It(`errors on an invalid TTL`, func() {
 		zeroDefaultTtl := 0 * time.Second
 		client, err := NewCacheClient(sharedContext.Configuration, sharedContext.CredentialProvider, zeroDefaultTtl)
