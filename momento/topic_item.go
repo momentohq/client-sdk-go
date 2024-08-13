@@ -1,27 +1,59 @@
 package momento
 
-type TopicItem struct {
-	Message             Value
-	PublisherId         String
-	TopicSequenceNumber uint64
+type DetailedTopicItem interface {
+	isDetailedTopicItem()
 }
 
-func (m TopicItem) GetValue() Value {
-	return m.Message
+// type TopicHeartbeat struct{}
+
+// func (TopicHeartbeat) isDetailedTopicItem() {}
+
+// type TopicDiscontinuity struct {
+// 	lastKnownSequenceNumber uint64
+// 	newSequenceNumber       uint64
+// }
+
+// func (d TopicDiscontinuity) GetLastKnownSequenceNumber() uint64 {
+// 	return d.lastKnownSequenceNumber
+// }
+
+// func (d TopicDiscontinuity) GetNewSequenceNumber() uint64 {
+// 	return d.newSequenceNumber
+// }
+
+// func NewTopicDiscontinuity(lastKnownSequenceNumber uint64, newSequenceNumber uint64) TopicDiscontinuity {
+// 	return TopicDiscontinuity{
+// 		lastKnownSequenceNumber: lastKnownSequenceNumber,
+// 		newSequenceNumber:       newSequenceNumber,
+// 	}
+// }
+
+// func (TopicDiscontinuity) isDetailedTopicItem() {}
+
+type TopicMessage struct {
+	message             TopicValue
+	publisherId         String
+	topicSequenceNumber uint64
 }
 
-func (m TopicItem) GetValueString() string {
-	return m.Message.asString()
+func (m TopicMessage) isDetailedTopicItem() {}
+
+func (m TopicMessage) GetValue() TopicValue {
+	return m.message
 }
 
-func (m TopicItem) GetValueBytes() []byte {
-	return m.Message.asBytes()
+func (m TopicMessage) GetPublisherId() String {
+	return m.publisherId
 }
 
-func (m TopicItem) GetPublisherId() String {
-	return m.PublisherId
+func (m TopicMessage) GetTopicSequenceNumber() uint64 {
+	return m.topicSequenceNumber
 }
 
-func (m TopicItem) GetTopicSequenceNumber() uint64 {
-	return m.TopicSequenceNumber
+func NewTopicMessage(message TopicValue, publisherId String, topicSequenceNumber uint64) TopicMessage {
+	return TopicMessage{
+		message:             message,
+		publisherId:         publisherId,
+		topicSequenceNumber: topicSequenceNumber,
+	}
 }

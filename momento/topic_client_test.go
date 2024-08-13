@@ -117,7 +117,7 @@ var _ = Describe("topic-client", func() {
 		}
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
-		var receivedItems []*TopicItem
+		var receivedItems []DetailedTopicItem
 		ready := make(chan int, 1)
 		go func() {
 			ready <- 1
@@ -151,9 +151,12 @@ var _ = Describe("topic-client", func() {
 		cancelFunction()
 
 		for i, receivedItem := range receivedItems {
-			Expect(receivedItem.GetValue()).To(Equal(expectedValues[i]))
-			Expect(receivedItem.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
-			Expect(receivedItem.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
+			switch r := receivedItem.(type) {
+			case TopicMessage:
+				Expect(r.GetValue()).To(Equal(expectedValues[i]))
+				Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
+				Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
+			}
 		}
 	})
 
