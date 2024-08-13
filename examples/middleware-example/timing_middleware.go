@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/responses"
 	"strconv"
 	"strings"
 	"time"
@@ -48,9 +49,9 @@ func (mw *timingMiddleware) OnRequest(requestId uint64, theRequest interface{}, 
 	}
 }
 
-func (mw *timingMiddleware) OnResponse(requestId uint64, theResponse map[string]string) {
-	switch theResponse["responseType"] {
-	case "*responses.GetHit", "*responses.GetMiss", "*responses.SetSuccess":
+func (mw *timingMiddleware) OnResponse(requestId uint64, theResponse interface{}) {
+	switch theResponse.(type) {
+	case *responses.GetHit, *responses.GetMiss, *responses.SetSuccess:
 		mw.timerChan <- fmt.Sprintf("end:%d:%d", requestId, hrtime.Now())
 	}
 }
