@@ -92,12 +92,6 @@ type hasUpdateTtl interface {
 	updateTtl() time.Duration
 }
 
-func getMomentoResponseData(in interface{}) map[string]string {
-	return map[string]string{
-		"responseType": fmt.Sprintf("%T", in),
-	}
-}
-
 func buildError(errorCode string, errorMessage string, originalError error) MomentoError {
 	return convertMomentoSvcErrorToCustomerError(
 		momentoerrors.NewMomentoSvcErr(errorCode, errorMessage, originalError),
