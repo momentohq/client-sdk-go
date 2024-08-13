@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -66,11 +67,22 @@ var _ = Describe("control-ops", func() {
 		})
 
 		It("creates and deletes using a default cache", func() {
+			// Create a separate client with a default cache name to be used only in this test
+			// to avoid affecting the shared context when all tests run
+			defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
+			clientWithDefaultCacheName, err := NewCacheClientWithDefaultCache(
+				sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, defaultCacheName,
+			)
+			if err != nil {
+				panic(err)
+			}
+			DeferCleanup(func() { clientWithDefaultCacheName.Close() })
+
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.CreateCache(sharedContext.Ctx, &CreateCacheRequest{}),
+				clientWithDefaultCacheName.CreateCache(sharedContext.Ctx, &CreateCacheRequest{}),
 			).Error().NotTo(HaveOccurred())
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{}),
+				clientWithDefaultCacheName.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{}),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})
 
@@ -160,27 +172,39 @@ var _ = Describe("control-ops", func() {
 
 	Describe("cache-client default-cache-name", func() {
 		It("overrides default cache name", func() {
+			// Create a separate client with a default cache name to be used only in this test
+			// to avoid affecting the shared context when all tests run
+			defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
+			clientWithDefaultCacheName, err := NewCacheClientWithDefaultCache(
+				sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, defaultCacheName,
+			)
+			if err != nil {
+				panic(err)
+			}
+			DeferCleanup(func() { clientWithDefaultCacheName.Close() })
+
+			newCacheName := uuid.NewString()
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.CreateCache(
-					sharedContext.Ctx, &CreateCacheRequest{CacheName: sharedContext.CacheName},
+				clientWithDefaultCacheName.CreateCache(
+					sharedContext.Ctx, &CreateCacheRequest{CacheName: newCacheName},
 				),
 			).Error().NotTo(HaveOccurred())
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.Get(
+				clientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{Key: helpers.NewStringKey()},
 				),
 			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.Get(
+				clientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{
-						CacheName: sharedContext.CacheName,
+						CacheName: newCacheName,
 						Key:       helpers.NewStringKey(),
 					},
 				),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 			Expect(
-				sharedContext.ClientWithDefaultCacheName.DeleteCache(
-					sharedContext.Ctx, &DeleteCacheRequest{CacheName: sharedContext.CacheName},
+				clientWithDefaultCacheName.DeleteCache(
+					sharedContext.Ctx, &DeleteCacheRequest{CacheName: newCacheName},
 				),
 			).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 		})

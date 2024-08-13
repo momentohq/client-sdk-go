@@ -65,16 +65,6 @@ func populateList(sharedContext SharedContext, listName string, numItems int) []
 }
 
 var _ = Describe("cache-client list-methods", func() {
-	// var sharedContext SharedContext
-
-	// BeforeEach(func() {
-	// 	sharedContext = NewSharedContext()
-	// 	sharedContext.CreateDefaultCaches()
-	// 	DeferCleanup(func() {
-	// 		sharedContext.Close()
-	// 	})
-	// })
-
 	var listName string
 
 	BeforeEach(func() {

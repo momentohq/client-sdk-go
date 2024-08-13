@@ -14,14 +14,6 @@ import (
 )
 
 var _ = Describe("cache-client scalar-methods", func() {
-	// var sharedContext SharedContext
-	// BeforeEach(func() {
-	// 	sharedContext = NewSharedContext()
-	// 	sharedContext.CreateDefaultCaches()
-
-	// 	DeferCleanup(func() { sharedContext.Close() })
-	// })
-
 	DescribeTable("Gets, Sets, and Deletes",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)

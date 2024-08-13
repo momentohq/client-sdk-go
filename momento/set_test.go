@@ -23,16 +23,6 @@ func getElements(numElements int) []Value {
 }
 
 var _ = Describe("cache-client set-methods", func() {
-	// var sharedContext SharedContext
-
-	// BeforeEach(func() {
-	// 	sharedContext = NewSharedContext()
-	// 	sharedContext.CreateDefaultCaches()
-	// 	DeferCleanup(func() {
-	// 		sharedContext.Close()
-	// 	})
-	// })
-
 	var setName string
 
 	BeforeEach(func() {

@@ -15,14 +15,6 @@ import (
 )
 
 var _ = Describe("cache-client sortedset-methods", func() {
-	// var sharedContext SharedContext
-	// BeforeEach(func() {
-	// 	sharedContext = NewSharedContext()
-	// 	sharedContext.CreateDefaultCaches()
-
-	// 	DeferCleanup(func() { sharedContext.Close() })
-	// })
-
 	var sortedSetName string
 
 	BeforeEach(func() {
