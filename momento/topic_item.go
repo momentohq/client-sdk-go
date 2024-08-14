@@ -4,31 +4,31 @@ type DetailedTopicItem interface {
 	isDetailedTopicItem()
 }
 
-// type TopicHeartbeat struct{}
+type TopicHeartbeat struct{}
 
-// func (TopicHeartbeat) isDetailedTopicItem() {}
+func (TopicHeartbeat) isDetailedTopicItem() {}
 
-// type TopicDiscontinuity struct {
-// 	lastKnownSequenceNumber uint64
-// 	newSequenceNumber       uint64
-// }
+type TopicDiscontinuity struct {
+	lastKnownSequenceNumber uint64
+	newSequenceNumber       uint64
+}
 
-// func (d TopicDiscontinuity) GetLastKnownSequenceNumber() uint64 {
-// 	return d.lastKnownSequenceNumber
-// }
+func (d TopicDiscontinuity) GetLastKnownSequenceNumber() uint64 {
+	return d.lastKnownSequenceNumber
+}
 
-// func (d TopicDiscontinuity) GetNewSequenceNumber() uint64 {
-// 	return d.newSequenceNumber
-// }
+func (d TopicDiscontinuity) GetNewSequenceNumber() uint64 {
+	return d.newSequenceNumber
+}
 
-// func NewTopicDiscontinuity(lastKnownSequenceNumber uint64, newSequenceNumber uint64) TopicDiscontinuity {
-// 	return TopicDiscontinuity{
-// 		lastKnownSequenceNumber: lastKnownSequenceNumber,
-// 		newSequenceNumber:       newSequenceNumber,
-// 	}
-// }
+func NewTopicDiscontinuity(lastKnownSequenceNumber uint64, newSequenceNumber uint64) TopicDiscontinuity {
+	return TopicDiscontinuity{
+		lastKnownSequenceNumber: lastKnownSequenceNumber,
+		newSequenceNumber:       newSequenceNumber,
+	}
+}
 
-// func (TopicDiscontinuity) isDetailedTopicItem() {}
+func (TopicDiscontinuity) isDetailedTopicItem() {}
 
 type TopicItem struct {
 	message             TopicValue

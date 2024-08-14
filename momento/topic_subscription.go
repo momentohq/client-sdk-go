@@ -41,10 +41,10 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		switch item := item.(type) {
 		case TopicItem:
 			return item.GetValue(), nil
-			// case TopicHeartbeat:
-			// 	continue
-			// case TopicDiscontinuity:
-			// 	continue
+		case TopicHeartbeat:
+			continue
+		case TopicDiscontinuity:
+			continue
 		}
 	}
 }
@@ -92,8 +92,7 @@ func (s *topicSubscription) DetailedItem(ctx context.Context) (DetailedTopicItem
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
 			s.log.Debug("received discontinuity item")
-			continue
-			// return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence), nil
+			return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence), nil
 		case *pb.XSubscriptionItem_Item:
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
@@ -104,8 +103,7 @@ func (s *topicSubscription) DetailedItem(ctx context.Context) (DetailedTopicItem
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Debug("received heartbeat item")
-			continue
-			// return TopicHeartbeat{}, nil
+			return TopicHeartbeat{}, nil
 		default:
 			s.log.Trace("Unrecognized response detected.",
 				"response", fmt.Sprint(typedMsg))
