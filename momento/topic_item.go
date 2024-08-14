@@ -30,28 +30,28 @@ type DetailedTopicItem interface {
 
 // func (TopicDiscontinuity) isDetailedTopicItem() {}
 
-type TopicMessage struct {
+type TopicItem struct {
 	message             TopicValue
 	publisherId         String
 	topicSequenceNumber uint64
 }
 
-func (m TopicMessage) isDetailedTopicItem() {}
+func (m TopicItem) isDetailedTopicItem() {}
 
-func (m TopicMessage) GetValue() TopicValue {
+func (m TopicItem) GetValue() TopicValue {
 	return m.message
 }
 
-func (m TopicMessage) GetPublisherId() String {
+func (m TopicItem) GetPublisherId() String {
 	return m.publisherId
 }
 
-func (m TopicMessage) GetTopicSequenceNumber() uint64 {
+func (m TopicItem) GetTopicSequenceNumber() uint64 {
 	return m.topicSequenceNumber
 }
 
-func NewTopicMessage(message TopicValue, publisherId String, topicSequenceNumber uint64) TopicMessage {
-	return TopicMessage{
+func NewTopicItem(message TopicValue, publisherId String, topicSequenceNumber uint64) TopicItem {
+	return TopicItem{
 		message:             message,
 		publisherId:         publisherId,
 		topicSequenceNumber: topicSequenceNumber,

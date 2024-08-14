@@ -152,7 +152,7 @@ var _ = Describe("topic-client", func() {
 
 		for i, receivedItem := range receivedItems {
 			switch r := receivedItem.(type) {
-			case TopicMessage:
+			case TopicItem:
 				Expect(r.GetValue()).To(Equal(expectedValues[i]))
 				Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
 				Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))

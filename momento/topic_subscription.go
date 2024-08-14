@@ -39,7 +39,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		}
 
 		switch item := item.(type) {
-		case TopicMessage:
+		case TopicItem:
 			return item.GetValue(), nil
 			// case TopicHeartbeat:
 			// 	continue
@@ -98,9 +98,9 @@ func (s *topicSubscription) DetailedItem(ctx context.Context) (DetailedTopicItem
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
-				return NewTopicMessage(String(subscriptionItem.Text), String(typedMsg.Item.PublisherId), typedMsg.Item.TopicSequenceNumber), nil
+				return NewTopicItem(String(subscriptionItem.Text), String(typedMsg.Item.PublisherId), typedMsg.Item.TopicSequenceNumber), nil
 			case *pb.XTopicValue_Binary:
-				return NewTopicMessage(Bytes(subscriptionItem.Binary), String(typedMsg.Item.PublisherId), typedMsg.Item.TopicSequenceNumber), nil
+				return NewTopicItem(Bytes(subscriptionItem.Binary), String(typedMsg.Item.PublisherId), typedMsg.Item.TopicSequenceNumber), nil
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Debug("received heartbeat item")
