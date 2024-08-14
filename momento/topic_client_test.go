@@ -147,17 +147,27 @@ var _ = Describe("topic-client", func() {
 				panic(err)
 			}
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Second * 10)
 		cancelFunction()
 
+		Expect(len(receivedItems)).To(BeNumerically(">=", len(publishedValues)+1)) // +1 for the heartbeat(s)
+
+		numberOfHeartbeats := 0
+		numberOfDiscontinuities := 0
 		for i, receivedItem := range receivedItems {
 			switch r := receivedItem.(type) {
 			case TopicItem:
 				Expect(r.GetValue()).To(Equal(expectedValues[i]))
 				Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
 				Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
+			case TopicHeartbeat:
+				numberOfHeartbeats++
+			case TopicDiscontinuity:
+				numberOfDiscontinuities++
 			}
 		}
+		Expect(numberOfHeartbeats).To(BeNumerically(">=", 1))
+		Expect(numberOfDiscontinuities).To(Equal(0))
 	})
 
 	It("Cancels the context immediately after subscribing and asserts as such", func() {
