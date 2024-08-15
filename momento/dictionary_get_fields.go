@@ -3,9 +3,8 @@ package momento
 import (
 	"context"
 
-	"github.com/momentohq/client-sdk-go/responses"
-
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type DictionaryGetFieldsRequest struct {
@@ -76,4 +75,8 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 	return nil
+}
+
+func (r *DictionaryGetFieldsRequest) getResponse() interface{} {
+	return r.response
 }

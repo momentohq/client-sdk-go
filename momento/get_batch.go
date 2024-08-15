@@ -83,3 +83,7 @@ func (r *GetBatchRequest) interpretGrpcResponse() error {
 	r.response = *responses.NewGetBatchSuccess(getResponses, r.byteKeys)
 	return nil
 }
+
+func (r *GetBatchRequest) getResponse() interface{} {
+	return r.response
+}

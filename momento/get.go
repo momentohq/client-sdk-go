@@ -3,9 +3,8 @@ package momento
 import (
 	"context"
 
-	"github.com/momentohq/client-sdk-go/responses"
-
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type GetRequest struct {
@@ -63,4 +62,8 @@ func (r *GetRequest) interpretGrpcResponse() error {
 	} else {
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
+}
+
+func (r *GetRequest) getResponse() interface{} {
+	return r.response
 }

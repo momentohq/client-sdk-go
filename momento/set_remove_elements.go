@@ -63,3 +63,7 @@ func (r *SetRemoveElementsRequest) interpretGrpcResponse() error {
 	r.response = &responses.SetRemoveElementsSuccess{}
 	return nil
 }
+
+func (r *SetRemoveElementsRequest) getResponse() interface{} {
+	return r.response
+}

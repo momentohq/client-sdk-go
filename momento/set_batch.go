@@ -85,3 +85,7 @@ func (r *SetBatchRequest) interpretGrpcResponse() error {
 	r.response = *responses.NewSetBatchSuccess(setResponses)
 	return nil
 }
+
+func (r *SetBatchRequest) getResponse() interface{} {
+	return r.response
+}

@@ -91,3 +91,7 @@ func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) ([]*pb.
 	}
 	return returnList, nil
 }
+
+func (r *SortedSetPutElementsRequest) getResponse() interface{} {
+	return r.response
+}

@@ -85,3 +85,7 @@ func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreRespon
 	}
 	return rList
 }
+
+func (r *SortedSetGetScoresRequest) getResponse() interface{} {
+	return r.response
+}

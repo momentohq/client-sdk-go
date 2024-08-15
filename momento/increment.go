@@ -66,3 +66,5 @@ func (r *IncrementRequest) interpretGrpcResponse() error {
 	r.response = responses.NewIncrementSuccess(r.grpcResponse.Value)
 	return nil
 }
+
+func (r *IncrementRequest) getResponse() interface{} { return r.response }

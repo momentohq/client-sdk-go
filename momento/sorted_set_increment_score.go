@@ -85,3 +85,7 @@ func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
 
 	return nil
 }
+
+func (r *SortedSetIncrementScoreRequest) getResponse() interface{} {
+	return r.response
+}
