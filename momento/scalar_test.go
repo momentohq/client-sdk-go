@@ -14,6 +14,10 @@ import (
 )
 
 var _ = Describe("cache-client scalar-methods", func() {
+	BeforeEach(func() {
+		time.Sleep(100 * time.Millisecond)
+	})
+
 	DescribeTable("Gets, Sets, and Deletes",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)

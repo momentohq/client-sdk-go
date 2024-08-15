@@ -3,6 +3,7 @@ package momento_test
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/momentohq/client-sdk-go/momento"
@@ -69,6 +70,7 @@ var _ = Describe("cache-client list-methods", func() {
 
 	BeforeEach(func() {
 		listName = uuid.NewString()
+		time.Sleep(100 * time.Millisecond)
 	})
 
 	DescribeTable("try using invalid cache and list names",

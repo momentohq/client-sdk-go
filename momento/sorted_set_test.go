@@ -19,6 +19,7 @@ var _ = Describe("cache-client sortedset-methods", func() {
 
 	BeforeEach(func() {
 		sortedSetName = uuid.NewString()
+		time.Sleep(100 * time.Millisecond)
 	})
 
 	// A convenience for adding elements to a sorted set.

@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"fmt"
+	"time"
 
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/responses"
@@ -61,6 +62,7 @@ var _ = Describe("leaderboard-client", func() {
 	Describe("Leaderboard", func() {
 		var testLeaderboard Leaderboard
 		BeforeEach(func() {
+			time.Sleep(100 * time.Millisecond)
 			testLeaderboard = createLeaderboard()
 			DeferCleanup(func() { deleteLeaderboard(testLeaderboard) })
 		})

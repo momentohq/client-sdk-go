@@ -18,6 +18,7 @@ var _ = Describe("cache-client dictionary-methods", func() {
 
 	BeforeEach(func() {
 		dictionaryName = uuid.NewString()
+		time.Sleep(100 * time.Millisecond)
 	})
 
 	DescribeTable("try using invalid cache and dictionary names",

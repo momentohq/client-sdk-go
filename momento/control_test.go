@@ -3,6 +3,7 @@ package momento_test
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
@@ -14,6 +15,10 @@ import (
 )
 
 var _ = Describe("control-ops", func() {
+	BeforeEach(func() {
+		time.Sleep(100 * time.Millisecond)
+	})
+
 	Describe("cache-client happy-path", func() {
 		It("creates, lists, and deletes caches", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}

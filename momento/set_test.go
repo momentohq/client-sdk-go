@@ -27,6 +27,7 @@ var _ = Describe("cache-client set-methods", func() {
 
 	BeforeEach(func() {
 		setName = uuid.NewString()
+		time.Sleep(100 * time.Millisecond)
 	})
 
 	DescribeTable("errors when the cache is missing",
