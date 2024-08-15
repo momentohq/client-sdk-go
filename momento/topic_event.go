@@ -1,12 +1,12 @@
 package momento
 
-type DetailedTopicItem interface {
-	isDetailedTopicItem()
+type TopicEvent interface {
+	isTopicEvent()
 }
 
 type TopicHeartbeat struct{}
 
-func (TopicHeartbeat) isDetailedTopicItem() {}
+func (TopicHeartbeat) isTopicEvent() {}
 
 type TopicDiscontinuity struct {
 	lastKnownSequenceNumber uint64
@@ -28,7 +28,7 @@ func NewTopicDiscontinuity(lastKnownSequenceNumber uint64, newSequenceNumber uin
 	}
 }
 
-func (TopicDiscontinuity) isDetailedTopicItem() {}
+func (TopicDiscontinuity) isTopicEvent() {}
 
 type TopicItem struct {
 	message             TopicValue
@@ -36,7 +36,7 @@ type TopicItem struct {
 	topicSequenceNumber uint64
 }
 
-func (m TopicItem) isDetailedTopicItem() {}
+func (m TopicItem) isTopicEvent() {}
 
 func (m TopicItem) GetValue() TopicValue {
 	return m.message

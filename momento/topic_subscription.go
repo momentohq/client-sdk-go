@@ -15,7 +15,7 @@ import (
 
 type TopicSubscription interface {
 	Item(ctx context.Context) (TopicValue, error)
-	DetailedItem(ctx context.Context) (DetailedTopicItem, error)
+	Event(ctx context.Context) (TopicEvent, error)
 	Close()
 }
 
@@ -33,7 +33,7 @@ type topicSubscription struct {
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 	for {
-		item, err := s.DetailedItem(ctx)
+		item, err := s.Event(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +49,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 	}
 }
 
-func (s *topicSubscription) DetailedItem(ctx context.Context) (DetailedTopicItem, error) {
+func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 	for {
 		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
 		// item, so we should check that here.

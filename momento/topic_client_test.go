@@ -117,7 +117,7 @@ var _ = Describe("topic-client", func() {
 		}
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
-		var receivedItems []DetailedTopicItem
+		var receivedItems []TopicEvent
 		ready := make(chan int, 1)
 		go func() {
 			ready <- 1
@@ -126,7 +126,7 @@ var _ = Describe("topic-client", func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					item, err := sub.DetailedItem(sharedContext.Ctx)
+					item, err := sub.Event(sharedContext.Ctx)
 					if err != nil {
 						panic(err)
 					}
