@@ -1,17 +1,21 @@
-.PHONY: install-devtools format imports tidy vet staticcheck lint \
+.PHONY: install-devtools install-ginkgo format imports tidy vet staticcheck lint \
 	install-protos-devtools protos build precommit \
-	test \
+	test test-auth-service test-cache-service test-leaderboard-service test-storage-service test-topics-service \
 	vendor build-examples run-docs-examples
 
 GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aws-lambda/infrastructure/*")
+TEST_DIRS = momento/ auth/ batchutils/
+GINKGO_OPTS = --no-color -v
 
-
-install-devtools:
+install-devtools: install-ginkgo
 	@echo "Installing dev tools..."
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install honnef.co/go/tools/cmd/staticcheck@v0.4.7
-	go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
 
+
+install-ginkgo:
+	@echo "Installing ginkgo..."
+	@go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
 
 format:
 	@echo "Formatting code..."
@@ -64,9 +68,34 @@ build:
 precommit: lint test
 
 
-test:
+test: install-ginkgo
 	@echo "Running tests..."
-	ginkgo momento/ auth/ batchutils/
+	@ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
+
+
+test-auth-service: install-ginkgo
+	@echo "Testing auth service..."
+	@ginkgo ${GINKGO_OPTS} --focus auth-client ${TEST_DIRS}
+
+
+test-cache-service: install-ginkgo
+	@echo "Testing cache service..."
+	@ginkgo ${GINKGO_OPTS} --focus "cache-client|batch-utils" ${TEST_DIRS}
+
+
+test-leaderboard-service: install-ginkgo
+	@echo "Testing leaderboard service..."
+	@ginkgo ${GINKGO_OPTS} --focus leaderboard-client ${TEST_DIRS}
+
+
+test-storage-service: install-ginkgo
+	@echo "Testing storage service..."
+	@ginkgo ${GINKGO_OPTS} --focus storage-client ${TEST_DIRS}
+
+
+test-topics-service: install-ginkgo
+	@echo "Testing topics service..."
+	@ginkgo ${GINKGO_OPTS} --focus topic-client ${TEST_DIRS}
 
 
 vendor:
