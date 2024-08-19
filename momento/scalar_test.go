@@ -1306,7 +1306,7 @@ var _ = Describe("cache-client scalar-methods", func() {
 
 	Describe("item get ttl", func() {
 		It("accurately reports the remaining TTL for a key", func() {
-			var ttl = time.Duration(time.Second * 60)
+			var ttl = time.Duration(time.Minute * 2)
 			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: sharedContext.CacheName,
 				Key:       String("hi"),
