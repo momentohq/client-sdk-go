@@ -31,6 +31,19 @@ type topicSubscription struct {
 	cancelFunction          context.CancelFunc
 }
 
+// Item returns only subscription events that contain a string or byte message.
+// Example:
+//
+//	item, err := sub.Item(ctx)
+//	if err != nil {
+//		panic(err)
+//	}
+//	switch msg := item.(type) {
+//	case momento.String:
+//		fmt.Printf("received message as string: '%v'\n", msg)
+//	case momento.Bytes:
+//		fmt.Printf("received message as bytes: '%v'\n", msg)
+//	}
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 	for {
 		item, err := s.Event(ctx)
@@ -49,6 +62,31 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 	}
 }
 
+// Event returns all possible topics subscription events, such as messages,
+// discontinuities, and heartbeats.
+//
+// Example:
+//
+//	event, err := sub.Event(ctx)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	switch e := event.(type) {
+//	case momento.TopicItem:
+//		fmt.Printf("received item with sequence number %d\n", e.GetTopicSequenceNumber())
+//		fmt.Printf("received item with publisher Id %s\n", e.GetPublisherId())
+//		switch msg := e.GetValue().(type) {
+//		case momento.String:
+//			fmt.Printf("received message as string: '%v'\n", msg)
+//		case momento.Bytes:
+//			fmt.Printf("received message as bytes: '%v'\n", msg)
+//		}
+//	case momento.TopicHeartbeat:
+//		fmt.Printf("received heartbeat\n")
+//	case momento.TopicDiscontinuity:
+//			fmt.Printf("received discontinuity\n")
+//	}
 func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 	for {
 		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
