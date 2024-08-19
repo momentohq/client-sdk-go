@@ -271,6 +271,7 @@ func (client *tokenClient) GenerateDisposableToken(ctx context.Context, request 
 				},
 			},
 		},
+		TokenId: *request.Props.TokenId,
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)

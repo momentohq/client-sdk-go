@@ -95,11 +95,16 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence), nil
 		case *pb.XSubscriptionItem_Item:
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
+			publisherId := typedMsg.Item.GetPublisherId()
+
+			logMessage := fmt.Sprintf("received item with sequence number %d and publisher Id %s", s.lastKnownSequenceNumber, publisherId)
+			s.log.Debug(logMessage)
+
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
-				return NewTopicItem(String(subscriptionItem.Text), String(typedMsg.Item.PublisherId), typedMsg.Item.TopicSequenceNumber), nil
+				return NewTopicItem(String(subscriptionItem.Text), String(publisherId), s.lastKnownSequenceNumber), nil
 			case *pb.XTopicValue_Binary:
-				return NewTopicItem(Bytes(subscriptionItem.Binary), String(typedMsg.Item.PublisherId), typedMsg.Item.TopicSequenceNumber), nil
+				return NewTopicItem(Bytes(subscriptionItem.Binary), String(publisherId), s.lastKnownSequenceNumber), nil
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Debug("received heartbeat item")
