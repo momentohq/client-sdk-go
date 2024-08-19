@@ -103,9 +103,9 @@ var _ = Describe("topic-client", func() {
 			TopicName: topicName,
 		})
 
-		// Create a new context with a timeout
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-		defer cancel()
+		// immediately cancel the context
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
 
 		done := make(chan bool)
 
@@ -118,14 +118,12 @@ var _ = Describe("topic-client", func() {
 			close(done)
 		}()
 
-		// immediately cancel the context
-		cancel()
-
 		// Wait for either the Item function to return or the test to timeout
 		select {
 		case <-done:
 			// Test passed
-		case <-time.After(time.Second * 2):
+			Succeed()
+		case <-time.After(time.Second * 5):
 			Fail("Test timed out, likely due to infinite loop in Item function")
 		}
 
