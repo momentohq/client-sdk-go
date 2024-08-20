@@ -259,6 +259,12 @@ func (client *tokenClient) GenerateDisposableToken(ctx context.Context, request 
 	if err := utils.ValidateDisposableTokenExpiry(request.ExpiresIn); err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
+
+	tokenId := ""
+	if request.Props.TokenId != nil {
+		tokenId = *request.Props.TokenId
+	}
+
 	resp, err := client.grpcClient.GenerateDisposableToken(ctx, &pb.XGenerateDisposableTokenRequest{
 		AuthToken: client.grpcManager.AuthToken,
 		Expires: &pb.XGenerateDisposableTokenRequest_Expires{
@@ -271,6 +277,7 @@ func (client *tokenClient) GenerateDisposableToken(ctx context.Context, request 
 				},
 			},
 		},
+		TokenId: tokenId,
 	})
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
