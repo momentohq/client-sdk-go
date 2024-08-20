@@ -35,6 +35,10 @@ func main() {
 
 	// Receive and print messages in a goroutine
 	go func() { pollForMessages(ctx, sub) }()
+
+	// Receive and print all events in a goroutine
+	go func() { pollForEvents(ctx, sub) }()
+
 	time.Sleep(time.Second)
 
 	// Publish messages for the subscriber
@@ -54,6 +58,28 @@ func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
 			fmt.Printf("received message as string: '%v'\n", msg)
 		case momento.Bytes:
 			fmt.Printf("received message as bytes: '%v'\n", msg)
+		}
+	}
+}
+
+func pollForEvents(ctx context.Context, sub momento.TopicSubscription) {
+	for {
+		event, err := sub.Event(ctx)
+		if err != nil {
+			panic(err)
+		}
+		switch e := event.(type) {
+		case momento.TopicHeartbeat:
+			fmt.Printf("received heartbeat\n")
+		case momento.TopicDiscontinuity:
+			fmt.Printf("received discontinuity\n")
+		case momento.TopicItem:
+			fmt.Printf(
+				"received message with sequence number %d and publisher id %s: %v \n",
+				e.GetTopicSequenceNumber(),
+				e.GetPublisherId(),
+				e.GetValue(),
+			)
 		}
 	}
 }

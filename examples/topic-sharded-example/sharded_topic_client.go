@@ -82,13 +82,19 @@ type shardedTopicItem struct {
 	err   error
 }
 
+type shardedTopicEvent struct {
+	event momento.TopicEvent
+	err   error
+}
+
 type shardedTopicSubscription struct {
-	cancelContext        context.Context
-	cancelFunction       context.CancelFunc
-	receivedItemsChannel chan shardedTopicItem
-	subscriptions        []namedTopicSubscription
-	wg                   *sync.WaitGroup
-	log                  logger.MomentoLogger
+	cancelContext         context.Context
+	cancelFunction        context.CancelFunc
+	receivedItemsChannel  chan shardedTopicItem
+	receivedEventsChannel chan shardedTopicEvent
+	subscriptions         []namedTopicSubscription
+	wg                    *sync.WaitGroup
+	log                   logger.MomentoLogger
 }
 
 func newShardedTopicSubscription(
@@ -146,6 +152,30 @@ func (s shardedTopicSubscription) Item(ctx context.Context) (momento.TopicValue,
 
 		item := <-s.receivedItemsChannel
 		return item.value, item.err
+	}
+}
+
+func (s shardedTopicSubscription) Event(ctx context.Context) (momento.TopicEvent, error) {
+
+	for {
+		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
+		// item, so we should check that here.
+		select {
+		case <-ctx.Done():
+			{
+				s.log.Debug("Context is Done, sharded subscription exiting item loop")
+			}
+			return nil, ctx.Err()
+		case <-s.cancelContext.Done():
+			s.log.Debug("Context is Cancelled, sharded subscription exiting item loop")
+			return nil, s.cancelContext.Err()
+
+		default:
+			// Proceed as is
+		}
+
+		e := <-s.receivedEventsChannel
+		return e.event, e.err
 	}
 }
 
