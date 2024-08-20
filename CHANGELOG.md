@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.27.0](https://github.com/momentohq/client-sdk-go/compare/v1.26.2...v1.27.0) (2024-08-20)
+
+
+### Features
+
+* return topics subscription items with value, publisher id, and sequence number ([#476](https://github.com/momentohq/client-sdk-go/issues/476)) ([4808388](https://github.com/momentohq/client-sdk-go/commit/4808388cc0ce89a61fafa522ae7a38ad2fe2b1a1))
+
+
+### Miscellaneous
+
+* add per-service makefile targets ([#481](https://github.com/momentohq/client-sdk-go/issues/481)) ([4e758ce](https://github.com/momentohq/client-sdk-go/commit/4e758ce806769f0276b732bcde17b31e6ee2850d))
+* clean up and try to speed up tests ([#477](https://github.com/momentohq/client-sdk-go/issues/477)) ([e2a9870](https://github.com/momentohq/client-sdk-go/commit/e2a987047625ae04368606520678414bab025c3b))
+* **deps:** bump github.com/momentohq/client-sdk-go in /examples ([#474](https://github.com/momentohq/client-sdk-go/issues/474)) ([55be217](https://github.com/momentohq/client-sdk-go/commit/55be21725315cc60fa3aad8a557c9fb2dc3ea3d1))
+* try to make flaky tests less flaky ([#482](https://github.com/momentohq/client-sdk-go/issues/482)) ([10500ea](https://github.com/momentohq/client-sdk-go/commit/10500ea2014a3ddeae45bc665a28a7f9cc1f9677))
+
 ## [1.26.2](https://github.com/momentohq/client-sdk-go/compare/v1.26.1...v1.26.2) (2024-08-07)
 
 
