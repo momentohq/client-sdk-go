@@ -1,5 +1,8 @@
 package momento
 
+// TopicEvent is an interface that represents all possible
+// events that can be received from a topic subscription.
+// This includes messages, heartbeats, and discontinuities.
 type TopicEvent interface {
 	isTopicEvent()
 }
