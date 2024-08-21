@@ -14,7 +14,7 @@ import (
 )
 
 var _ = Describe("control-ops", func() {
-	Describe("cache-client happy-path", func() {
+	Describe("cache-client happy-path", Label(CACHE_SERVICE_LABEL), func() {
 		It("creates, lists, and deletes caches", func() {
 			cacheNames := []string{uuid.NewString(), uuid.NewString()}
 			defer func() {
@@ -88,7 +88,7 @@ var _ = Describe("control-ops", func() {
 
 	})
 
-	Describe("storage-client happy-path", func() {
+	Describe("storage-client happy-path", Label(STORAGE_SERVICE_LABEL), func() {
 
 		It("creates, lists, and deletes stores", func() {
 			storeNames := []string{uuid.NewString(), uuid.NewString()}
@@ -162,7 +162,7 @@ var _ = Describe("control-ops", func() {
 		})
 	})
 
-	Describe("storage-client errors", func() {
+	Describe("storage-client errors", Label(STORAGE_SERVICE_LABEL), func() {
 		It("returns StoreNotFoundError when deleting a non-existent store", func() {
 			resp, err := sharedContext.StorageClient.DeleteStore(sharedContext.Ctx, &DeleteStoreRequest{StoreName: uuid.NewString()})
 			Expect(err).To(HaveMomentoErrorCode(StoreNotFoundError))
@@ -170,7 +170,7 @@ var _ = Describe("control-ops", func() {
 		})
 	})
 
-	Describe("cache-client default-cache-name", func() {
+	Describe("cache-client default-cache-name", Label(CACHE_SERVICE_LABEL), func() {
 		It("overrides default cache name", func() {
 			// Create a separate client with a default cache name to be used only in this test
 			// to avoid affecting the shared context when all tests run
@@ -210,7 +210,7 @@ var _ = Describe("control-ops", func() {
 		})
 	})
 
-	Describe("cache-client validate-cache-name", func() {
+	Describe("cache-client validate-cache-name", Label(CACHE_SERVICE_LABEL), func() {
 		It("CreateCache and DeleteCache errors on bad cache names", func() {
 			badCacheNames := []string{"", "   "}
 			for _, badCacheName := range badCacheNames {
@@ -230,7 +230,7 @@ var _ = Describe("control-ops", func() {
 		})
 	})
 
-	Describe("cache-client delete-cache", func() {
+	Describe("cache-client delete-cache", Label(CACHE_SERVICE_LABEL), func() {
 		It("succeeds even if the cache does not exist", func() {
 			Expect(
 				sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: uuid.NewString()}),

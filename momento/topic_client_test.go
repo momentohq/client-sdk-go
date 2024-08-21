@@ -13,7 +13,7 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 )
 
-var _ = Describe("topic-client", func() {
+var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 	var topicName string
 
 	BeforeEach(func() {

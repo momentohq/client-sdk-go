@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("cache-client get-batch set-batch", func() {
+var _ = Describe("cache-client get-batch set-batch", Label(CACHE_SERVICE_LABEL), func() {
 	var sharedContext SharedContext
 
 	BeforeEach(func() {

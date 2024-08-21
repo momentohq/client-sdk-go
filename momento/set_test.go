@@ -22,7 +22,7 @@ func getElements(numElements int) []Value {
 	return elements
 }
 
-var _ = Describe("cache-client set-methods", func() {
+var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() {
 	var setName string
 
 	BeforeEach(func() {

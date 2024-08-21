@@ -13,6 +13,11 @@ import (
 )
 
 var sharedContext helpers.SharedContext
+var AUTH_SERVICE_LABEL = "auth-service"
+var CACHE_SERVICE_LABEL = "cache-service"
+var LEADERBOARD_SERVICE_LABEL = "leaderboard-service"
+var STORAGE_SERVICE_LABEL = "storage-service"
+var TOPICS_SERVICE_LABEL = "topics-service"
 
 func TestMomento(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -22,12 +27,37 @@ func TestMomento(t *testing.T) {
 var _ = BeforeSuite(func() {
 	sharedContext = helpers.NewSharedContext()
 	sharedContext.CreateDefaultCaches()
-	sharedContext.CreateDefaultStores()
+
+	if includesStorageTests() {
+		sharedContext.CreateDefaultStores()
+	}
 })
 
 var _ = AfterSuite(func() {
 	sharedContext.Close()
 })
+
+// This assumes that when we narrow tests to a specific service, we are
+// doing so with labels (as per the Makefile).
+//
+// If we want to focus tests based on test regex pattern, we will need to
+// update this function to check the test regex pattern instead of labels.
+func includesStorageTests() bool {
+	labels := CurrentSpecReport().Labels()
+
+	// Case 1: we are testing all services unconditionaly, which includes storage tests
+	if len(labels) == 0 {
+		return true
+	}
+
+	for _, label := range labels {
+		// Case 2: we are specifically testing storage service
+		if label == STORAGE_SERVICE_LABEL {
+			return true
+		}
+	}
+	return false
+}
 
 func HaveMomentoErrorCode(code string) types.GomegaMatcher {
 	return WithTransform(

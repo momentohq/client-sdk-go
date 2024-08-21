@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("storage-client misc", func() {
+var _ = Describe("storage-client misc", Label(STORAGE_SERVICE_LABEL), func() {
 	It("errors on invalid timeout", func() {
 		badRequestTimeout := 0 * time.Second
 		sharedContext.StorageConfiguration = config.StorageLaptopLatest().WithClientTimeout(badRequestTimeout)
