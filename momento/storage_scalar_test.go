@@ -10,7 +10,7 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 )
 
-var _ = Describe("storage-client scalar", func() {
+var _ = Describe("storage-client scalar", Label(STORAGE_SERVICE_LABEL), func() {
 	DescribeTable("Sets with correct StorageValueType",
 		func(key string, value storageTypes.Value) {
 			_, err := sharedContext.StorageClient.Put(sharedContext.Ctx, &StoragePutRequest{

@@ -135,7 +135,7 @@ func newTopicClient(ctx SharedContext, provider auth.CredentialProvider) TopicCl
 	return tc
 }
 
-var _ = Describe("auth auth-client", func() {
+var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 	Describe("Generate disposable tokens", func() {
 		Describe("CacheKeyReadOnly tokens", func() {
 			It(`Generates disposable token CacheKeyReadOnly AllCaches, and validates its permissions`, func() {

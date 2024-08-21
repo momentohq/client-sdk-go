@@ -8,7 +8,7 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 )
 
-var _ = Describe("auth auth-client", func() {
+var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 	Describe("PermissionScope", func() {
 		It("should support assignment from PredefinedScope and AllDataReadWrite", func() {
 			var scope PermissionScope

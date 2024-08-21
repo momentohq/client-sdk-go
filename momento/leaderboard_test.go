@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("leaderboard-client", func() {
+var _ = Describe("leaderboard-client", Label(LEADERBOARD_SERVICE_LABEL), func() {
 	// Convenience method for creating temporary leaderboard
 	createLeaderboard := func() Leaderboard {
 		leaderboard, err := sharedContext.LeaderboardClient.Leaderboard(sharedContext.Ctx, &LeaderboardRequest{

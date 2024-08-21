@@ -26,6 +26,7 @@ type SharedContext struct {
 	TopicClient                     momento.TopicClient
 	CacheName                       string
 	StoreName                       string
+	CleanupStore                    bool
 	Ctx                             context.Context
 	DefaultTtl                      time.Duration
 	Configuration                   config.Configuration
@@ -139,11 +140,12 @@ func (shared SharedContext) CreateDefaultCaches() {
 	}
 }
 
-func (shared SharedContext) CreateDefaultStores() {
+func (shared *SharedContext) CreateDefaultStores() {
 	_, err := shared.StorageClient.CreateStore(shared.Ctx, &momento.CreateStoreRequest{StoreName: shared.StoreName})
 	if err != nil {
 		panic(err)
 	}
+	shared.CleanupStore = true
 }
 
 func (shared SharedContext) Close() {
@@ -155,10 +157,12 @@ func (shared SharedContext) Close() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = shared.StorageClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
-	if err != nil {
-		if err.(momento.MomentoError).Code() != momento.StoreNotFoundError {
-			panic(err)
+	if shared.CleanupStore {
+		_, err = shared.StorageClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
+		if err != nil {
+			if err.(momento.MomentoError).Code() != momento.StoreNotFoundError {
+				panic(err)
+			}
 		}
 	}
 

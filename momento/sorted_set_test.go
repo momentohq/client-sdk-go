@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("cache-client sortedset-methods", func() {
+var _ = Describe("cache-client sortedset-methods", Label(CACHE_SERVICE_LABEL), func() {
 	var sortedSetName string
 
 	BeforeEach(func() {

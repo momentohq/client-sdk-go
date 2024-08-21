@@ -75,27 +75,27 @@ test: install-ginkgo
 
 test-auth-service: install-ginkgo
 	@echo "Testing auth service..."
-	@ginkgo ${GINKGO_OPTS} --focus auth-client ${TEST_DIRS}
+	@ginkgo ${GINKGO_OPTS} --label-filter auth-service ${TEST_DIRS}
 
 
 test-cache-service: install-ginkgo
 	@echo "Testing cache service..."
-	@ginkgo ${GINKGO_OPTS} --focus "cache-client|batch-utils" ${TEST_DIRS}
+	@ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
 
 
 test-leaderboard-service: install-ginkgo
 	@echo "Testing leaderboard service..."
-	@ginkgo ${GINKGO_OPTS} --focus leaderboard-client ${TEST_DIRS}
+	@ginkgo ${GINKGO_OPTS} --label-filter leaderboard-service ${TEST_DIRS}
 
 
 test-storage-service: install-ginkgo
 	@echo "Testing storage service..."
-	@ginkgo ${GINKGO_OPTS} --focus storage-client ${TEST_DIRS}
+	@ginkgo ${GINKGO_OPTS} --label-filter storage-service ${TEST_DIRS}
 
 
 test-topics-service: install-ginkgo
 	@echo "Testing topics service..."
-	@ginkgo ${GINKGO_OPTS} --focus topic-client ${TEST_DIRS}
+	@ginkgo ${GINKGO_OPTS} --label-filter topics-service ${TEST_DIRS}
 
 
 vendor:

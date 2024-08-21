@@ -13,7 +13,7 @@ import (
 	. "github.com/momentohq/client-sdk-go/responses"
 )
 
-var _ = Describe("cache-client scalar-methods", func() {
+var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func() {
 	DescribeTable("Gets, Sets, and Deletes",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
