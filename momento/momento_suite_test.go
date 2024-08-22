@@ -43,20 +43,9 @@ var _ = AfterSuite(func() {
 // If we want to focus tests based on test regex pattern, we will need to
 // update this function to check the test regex pattern instead of labels.
 func includesStorageTests() bool {
-	labels := CurrentSpecReport().Labels()
-
-	// Case 1: we are testing all services unconditionaly, which includes storage tests
-	if len(labels) == 0 {
-		return true
-	}
-
-	for _, label := range labels {
-		// Case 2: we are specifically testing storage service
-		if label == STORAGE_SERVICE_LABEL {
-			return true
-		}
-	}
-	return false
+	// Case 1: No filter is set: run all tests, including storage tests
+	// Case 2: Filter is set and it matches storage tests
+	return Label("", STORAGE_SERVICE_LABEL).MatchesLabelFilter(GinkgoLabelFilter())
 }
 
 func HaveMomentoErrorCode(code string) types.GomegaMatcher {
