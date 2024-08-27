@@ -14,12 +14,6 @@ import (
 )
 
 var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), func() {
-	var dictionaryName string
-
-	BeforeEach(func() {
-		dictionaryName = uuid.NewString()
-	})
-
 	DescribeTable("try using invalid cache and dictionary names",
 		func(cacheName string, dictionaryName string, expectedErrorCode string) {
 			Expect(
@@ -94,15 +88,16 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				}),
 			).Error().To(HaveMomentoErrorCode(expectedErrorCode))
 		},
-		Entry("nonexistent cache name", uuid.NewString(), uuid.NewString(), CacheNotFoundError),
-		Entry("empty cache name", "", dictionaryName, InvalidArgumentError),
+		Entry("nonexistent cache name", NewRandomString(), NewRandomString(), CacheNotFoundError),
+		Entry("empty cache name", "", NewRandomString(), InvalidArgumentError),
 		Entry("empty dictionary name", sharedContext.CacheName, "", InvalidArgumentError),
 		Entry("nil dictionary name", sharedContext.CacheName, nil, InvalidArgumentError),
-		Entry("nil cache name", nil, dictionaryName, InvalidArgumentError),
+		Entry("nil cache name", nil, NewRandomString(), InvalidArgumentError),
 	)
 
 	DescribeTable("add string and bytes value for single field happy path",
 		func(clientType string, field Value, value Value, expectedFieldString string, expectedFieldBytes []byte, expectedValueString string, expectedValueBytes []byte) {
+			dictionaryName := NewRandomString()
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 			Expect(
 				client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
@@ -142,7 +137,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: dictionaryName,
+					DictionaryName: NewRandomString(),
 					Field:          field,
 					Value:          value,
 				}),
@@ -158,7 +153,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		Expect(
 			sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: dictionaryName,
+				DictionaryName: NewRandomString(),
 				Field:          String("myField"),
 				Value:          String("myValue"),
 				Ttl:            &CollectionTtl{Ttl: time.Duration(-1), RefreshTtl: true},
@@ -167,6 +162,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 	})
 
 	It("returns the correct dictionary length", func() {
+		dictionaryName := NewRandomString()
 		_, setErr := sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 			CacheName:      sharedContext.CacheName,
 			DictionaryName: dictionaryName,
@@ -189,7 +185,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 
 		resp, err = sharedContext.Client.DictionaryLength(sharedContext.Ctx, &DictionaryLengthRequest{
 			CacheName:      sharedContext.CacheName,
-			DictionaryName: "IdontExist",
+			DictionaryName: NewRandomString(),
 		})
 		Expect(err).To(BeNil())
 		Expect(resp).To(BeAssignableToTypeOf(&DictionaryLengthMiss{}))
@@ -198,6 +194,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 	DescribeTable("add string fields and string and bytes values for set fields happy path",
 		func(clientType string, elements []DictionaryElement, expectedItemsStringValue map[string]string, expectedItemsByteValue map[string][]byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+			dictionaryName := NewRandomString()
 			Expect(
 				client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      cacheName,
@@ -320,7 +317,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		Expect(
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: dictionaryName,
+				DictionaryName: NewRandomString(),
 				Elements: []DictionaryElement{
 					{Field: String("myField"), Value: String("myValue")},
 					{Field: String(""), Value: String("myOtherValue")},
@@ -333,7 +330,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		Expect(
 			sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: dictionaryName,
+				DictionaryName: NewRandomString(),
 				Elements: []DictionaryElement{
 					{Field: String("myField"), Value: String("myValue")},
 					{Field: String("myOtherField"), Value: nil},
@@ -381,6 +378,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		DescribeTable("populates nonexistent field",
 			func(clientType string) {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+				dictionaryName := NewRandomString()
 				incrResp, err := client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 					CacheName:      cacheName,
 					DictionaryName: dictionaryName,
@@ -399,6 +397,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		)
 
 		It("returns an error when called on a non-integer field", func() {
+			dictionaryName := NewRandomString()
 			Expect(
 				sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 					CacheName:      sharedContext.CacheName,
@@ -421,7 +420,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		It("returns an error when amount is zero", func() {
 			_, err := sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: dictionaryName,
+				DictionaryName: NewRandomString(),
 				Field:          String("myField"),
 				Amount:         0,
 			})
@@ -431,6 +430,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		DescribeTable("increments on the happy path",
 			func(clientType string) {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
+				dictionaryName := NewRandomString()
 				field := String("counter")
 				for i := 0; i < 10; i++ {
 					Expect(
@@ -464,7 +464,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 			Expect(
 				sharedContext.Client.DictionaryIncrement(sharedContext.Ctx, &DictionaryIncrementRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: dictionaryName,
+					DictionaryName: NewRandomString(),
 					Field:          nil,
 					Amount:         1,
 				}),
@@ -473,6 +473,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 	})
 
 	Describe("dictionary get", func() {
+		dictionaryName := NewRandomString()
 
 		BeforeEach(func() {
 			Expect(
@@ -495,7 +496,6 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		})
 
 		When("getting single field", func() {
-
 			DescribeTable("returns the correct string and byte values",
 				func(clientType string) {
 					client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
@@ -528,7 +528,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				getResp, err := sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: dictionaryName,
-					Field:          String("idontexist"),
+					Field:          NewRandomMomentoString(),
 				})
 				Expect(err).To(BeNil())
 				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldMiss{}))
@@ -537,8 +537,8 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 			It("returns a miss for a nonexistent dictionary", func() {
 				getResp, err := sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: uuid.NewString(),
-					Field:          String("idontexist"),
+					DictionaryName: NewRandomString(),
+					Field:          NewRandomMomentoString(),
 				})
 				Expect(err).To(BeNil())
 				Expect(getResp).To(BeAssignableToTypeOf(&DictionaryGetFieldMiss{}))
@@ -548,7 +548,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				Expect(
 					sharedContext.Client.DictionaryGetField(sharedContext.Ctx, &DictionaryGetFieldRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: dictionaryName,
+						DictionaryName: NewRandomString(),
 						Field:          nil,
 					}),
 				).Error().To(HaveMomentoErrorCode(InvalidArgumentError))
@@ -586,7 +586,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				Expect(
 					sharedContext.Client.DictionaryGetFields(sharedContext.Ctx, &DictionaryGetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
-						DictionaryName: uuid.NewString(),
+						DictionaryName: NewRandomString(),
 						Fields:         []Value{String("myField1")},
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryGetFieldsMiss{}))
@@ -638,6 +638,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 	})
 
 	Describe("dictionary fetch", func() {
+		dictionaryName := NewRandomString()
 
 		BeforeEach(func() {
 			Expect(
@@ -682,7 +683,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 			Expect(
 				sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: uuid.NewString(),
+					DictionaryName: NewRandomString(),
 				}),
 			).To(BeAssignableToTypeOf(&DictionaryFetchMiss{}))
 		})
@@ -690,7 +691,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 	})
 
 	Describe("dictionary remove", func() {
-
+		dictionaryName := NewRandomString()
 		BeforeEach(func() {
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
@@ -755,7 +756,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				removeResp, err := sharedContext.Client.DictionaryRemoveField(sharedContext.Ctx, &DictionaryRemoveFieldRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: dictionaryName,
-					Field:          String("bogusField1"),
+					Field:          NewRandomMomentoString(),
 				})
 				Expect(err).To(BeNil())
 				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
@@ -764,8 +765,8 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 			It("no-ops when using a nonexistent dictionary", func() {
 				removeResp, err := sharedContext.Client.DictionaryRemoveField(sharedContext.Ctx, &DictionaryRemoveFieldRequest{
 					CacheName:      sharedContext.CacheName,
-					DictionaryName: uuid.NewString(),
-					Field:          String("bogusField1"),
+					DictionaryName: NewRandomString(),
+					Field:          NewRandomMomentoString(),
 				})
 				Expect(err).To(BeNil())
 				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldSuccess{}))
@@ -817,7 +818,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				removeResp, err := sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: dictionaryName,
-					Fields:         []Value{String("bogusField1"), Bytes("bogusField2")},
+					Fields:         []Value{NewRandomMomentoString(), NewRandomMomentoBytes()},
 				})
 				Expect(err).To(BeNil())
 				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
@@ -827,7 +828,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 				removeResp, err := sharedContext.Client.DictionaryRemoveFields(sharedContext.Ctx, &DictionaryRemoveFieldsRequest{
 					CacheName:      sharedContext.CacheName,
 					DictionaryName: uuid.NewString(),
-					Fields:         []Value{String("bogusField1"), Bytes("bogusField2")},
+					Fields:         []Value{NewRandomMomentoString(), NewRandomMomentoBytes()},
 				})
 				Expect(err).To(BeNil())
 				Expect(removeResp).To(BeAssignableToTypeOf(&DictionaryRemoveFieldsSuccess{}))
@@ -861,6 +862,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		When("client TTL is exceeded", func() {
 
 			It("returns a miss for the collection", func() {
+				dictionaryName := NewRandomString()
 				Expect(
 					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
@@ -895,6 +897,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 	Describe("collection TTL", func() {
 
 		BeforeEach(func() {
+			dictionaryName := NewRandomString()
 			Expect(
 				sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 					CacheName:      sharedContext.CacheName,
@@ -909,7 +912,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		When("collection TTL is empty", func() {
 
 			It("will have a default ttl and refreshTtl and fetch will hit after client default ttl", func() {
-				time.Sleep(sharedContext.DefaultTtl / 2)
+				dictionaryName := NewRandomString()
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
@@ -934,6 +937,22 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 		When("collection TTL is configured", func() {
 
 			It("is ignored if refresh ttl is false", func() {
+				dictionaryName := NewRandomString()
+
+				// Create a new dictionary with a TTL
+				Expect(sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+					CacheName:      sharedContext.CacheName,
+					DictionaryName: dictionaryName,
+					Elements: DictionaryElementsFromMapStringValue(
+						map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+					),
+					Ttl: &CollectionTtl{
+						Ttl:        sharedContext.DefaultTtl,
+						RefreshTtl: false,
+					},
+				})).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
+
+				// Set a field in the dictionary but do not refresh TTL
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
@@ -958,6 +977,21 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 			})
 
 			It("is respected if refresh TTL is true", func() {
+				dictionaryName := NewRandomString()
+
+				// Create a new dictionary with a TTL
+				Expect(sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
+					CacheName:      sharedContext.CacheName,
+					DictionaryName: dictionaryName,
+					Elements: DictionaryElementsFromMapStringValue(
+						map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
+					),
+					Ttl: &CollectionTtl{
+						Ttl:        sharedContext.DefaultTtl,
+						RefreshTtl: false,
+					},
+				})).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
+
 				Expect(
 					sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 						CacheName:      sharedContext.CacheName,
