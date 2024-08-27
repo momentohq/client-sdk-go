@@ -1237,10 +1237,16 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 	})
 
 	Describe("ItemGetType", func() {
+		scalarName := NewRandomMomentoString()
+		dictionaryName := NewRandomString()
+		listName := NewRandomString()
+		setName := NewRandomString()
+		sortedSetName := NewRandomString()
+
 		BeforeEach(func() {
 			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: sharedContext.CacheName,
-				Key:       String("SCALAR"),
+				Key:       scalarName,
 				Value:     String("hi"),
 			})
 			if err != nil {
@@ -1248,7 +1254,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: "DICTIONARY",
+				DictionaryName: dictionaryName,
 				Field:          String("hi"),
 				Value:          String("there"),
 			})
@@ -1257,7 +1263,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
 				CacheName: sharedContext.CacheName,
-				ListName:  "LIST",
+				ListName:  listName,
 				Value:     String("hi"),
 			})
 			if err != nil {
@@ -1265,7 +1271,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   "SET",
+				SetName:   setName,
 				Element:   String("hi"),
 			})
 			if err != nil {
@@ -1273,7 +1279,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   "SORTED_SET",
+				SetName:   sortedSetName,
 				Value:     String("hi"),
 				Score:     1.0,
 			})
@@ -1296,27 +1302,29 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 					Fail(fmt.Sprintf("expected ItemGetTypeHit but got %s", result))
 				}
 			},
-			Entry("scalar", String("SCALAR"), ItemTypeScalar),
-			Entry("dictionary", String("DICTIONARY"), ItemTypeDictionary),
-			Entry("set", String("SET"), ItemTypeSet),
-			Entry("list", String("LIST"), ItemTypeList),
-			Entry("sorted set", String("SORTED_SET"), ItemTypeSortedSet),
+			Entry("Scalar", scalarName, ItemTypeScalar),
+			Entry("Dictionary", String(dictionaryName), ItemTypeDictionary),
+			Entry("Set", String(setName), ItemTypeSet),
+			Entry("List", String(listName), ItemTypeList),
+			Entry("Sorted set", String(sortedSetName), ItemTypeSortedSet),
 		)
 	})
 
 	Describe("item get ttl", func() {
 		It("accurately reports the remaining TTL for a key", func() {
+			key := NewRandomMomentoString()
+			value := NewRandomMomentoString()
 			var ttl = time.Duration(time.Minute * 2)
 			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: sharedContext.CacheName,
-				Key:       String("hi"),
-				Value:     String("there"),
+				Key:       key,
+				Value:     value,
 				Ttl:       ttl,
 			})
 			Expect(err).To(BeNil())
 			resp, err := sharedContext.Client.ItemGetTtl(sharedContext.Ctx, &ItemGetTtlRequest{
 				CacheName: sharedContext.CacheName,
-				Key:       String("hi"),
+				Key:       key,
 			})
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&ItemGetTtlHit{}))
