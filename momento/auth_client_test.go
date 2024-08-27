@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -65,28 +64,28 @@ func assertGetFailure(cc CacheClient, key Value, cacheName string) {
 }
 
 func assertSetSuccess(cc CacheClient, key Value, cacheName string) {
-	_, err := cc.Set(context.Background(), &SetRequest{Key: key, Value: String(uuid.NewString()), CacheName: cacheName})
+	_, err := cc.Set(context.Background(), &SetRequest{Key: key, Value: NewRandomMomentoString(), CacheName: cacheName})
 	if err != nil {
 		panic(err)
 	}
 }
 
 func assertSetFailure(cc CacheClient, key Value, cacheName string) {
-	_, err := cc.Set(context.Background(), &SetRequest{Key: key, Value: String(uuid.NewString()), CacheName: cacheName})
+	_, err := cc.Set(context.Background(), &SetRequest{Key: key, Value: NewRandomMomentoString(), CacheName: cacheName})
 	if err == nil {
 		panic("expected Set to fail but it succeeded")
 	}
 }
 
 func assertPublishSuccess(tc TopicClient, topicName string, cacheName string) {
-	_, err := tc.Publish(context.Background(), &TopicPublishRequest{TopicName: topicName, Value: String(uuid.NewString()), CacheName: cacheName})
+	_, err := tc.Publish(context.Background(), &TopicPublishRequest{TopicName: topicName, Value: NewRandomMomentoString(), CacheName: cacheName})
 	if err != nil {
 		panic(err)
 	}
 }
 
 func assertPublishFailure(tc TopicClient, topicName string, cacheName string) {
-	_, err := tc.Publish(context.Background(), &TopicPublishRequest{TopicName: topicName, Value: String(uuid.NewString()), CacheName: cacheName})
+	_, err := tc.Publish(context.Background(), &TopicPublishRequest{TopicName: topicName, Value: NewRandomMomentoString(), CacheName: cacheName})
 	if err == nil {
 		panic("expected publish to fail but it succeeded")
 	}
@@ -139,7 +138,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 	Describe("Generate disposable tokens", func() {
 		Describe("CacheKeyReadOnly tokens", func() {
 			It(`Generates disposable token CacheKeyReadOnly AllCaches, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				resp := generateDisposableTokenSuccess(sharedContext, CacheKeyReadOnly(AllCaches{}, key))
 				credProvider := credProviderFromDisposableToken(resp)
 
@@ -160,12 +159,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheKeyReadOnly for a specific cache, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				resp := generateDisposableTokenSuccess(sharedContext, CacheKeyReadOnly(CacheName{Name: sharedContext.CacheName}, key))
 				credProvider := credProviderFromDisposableToken(resp)
 
@@ -186,14 +185,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheKeyWriteOnly tokens", func() {
 			It(`Generates disposable token CacheKeyWriteOnly for a specific cache, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyWriteOnly(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -217,12 +216,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheKeyWriteOnly for all caches, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyWriteOnly(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -248,14 +247,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheKeyReadWrite tokens", func() {
 			It(`Generates disposable token CacheKeyReadWrite for all caches, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyReadWrite(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -283,12 +282,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheKeyReadWrite for a specific cache, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyReadWrite(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -316,14 +315,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheKeyPrefixReadWrite tokens", func() {
 			It(`Generates disposable token CacheKeyPrefixReadWrite for a specific cache, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyPrefixReadWrite(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -351,12 +350,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheKeyPrefixReadWrite for all caches, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyPrefixReadWrite(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -384,14 +383,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheKeyPrefixReadOnly tokens", func() {
 			It(`Generates disposable token CacheKeyPrefixReadOnly for a specific cache, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyPrefixReadOnly(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -419,12 +418,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheKeyPrefixReadOnly for all caches, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyPrefixReadOnly(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -452,14 +451,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheKeyPrefixWriteOnly tokens", func() {
 			It(`Generates disposable token CacheKeyPrefixWriteOnly for a specific cache, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyPrefixWriteOnly(CacheName{Name: sharedContext.CacheName}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -489,12 +488,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheKeyPrefixWriteOnly for all caches, and validates its permissions`, func() {
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				scope := CacheKeyPrefixWriteOnly(AllCaches{}, key)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
 				credProvider := credProviderFromDisposableToken(resp)
@@ -524,14 +523,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("TopicNamePrefixPublishSubscribe tokens", func() {
 			It(`Generates disposable token TopicNamePrefixPublishSubscribe for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicNamePrefixPublishSubscribe(CacheName{Name: sharedContext.CacheName}, topicName)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -571,7 +570,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			})
 
 			It(`Generates disposable token TopicNamePrefixPublishSubscribe for all caches, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicNamePrefixPublishSubscribe(AllCaches{}, topicName)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -613,7 +612,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 
 		Describe("TopicNamePrefixPublishOnly tokens", func() {
 			It(`Generates disposable token TopicNamePrefixPublishOnly for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicNamePrefixPublishOnly(CacheName{Name: sharedContext.CacheName}, topicName)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -653,7 +652,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			})
 
 			It(`Generates disposable token TopicNamePrefixPublishOnly for all caches, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicNamePrefixPublishOnly(AllCaches{}, topicName)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -695,7 +694,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 
 		Describe("TopicNamePrefixSubscribeOnly tokens", func() {
 			It(`Generates disposable token TopicNamePrefixSubscribeOnly for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicNamePrefixSubscribeOnly(CacheName{Name: sharedContext.CacheName}, topicName)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -735,7 +734,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			})
 
 			It(`Generates disposable token TopicNamePrefixSubscribeOnly for all caches, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicNamePrefixSubscribeOnly(AllCaches{}, topicName)
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -777,7 +776,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 
 		Describe("TopicPublishOnly tokens", func() {
 			It(`Generates disposable token TopicPublishOnly for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicPublishOnly(CacheName{Name: sharedContext.CacheName}, TopicName{Name: topicName})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -817,7 +816,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			})
 
 			It(`Generates disposable token TopicPublishOnly for all caches and all topics, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicPublishOnly(AllCaches{}, AllTopics{})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -859,7 +858,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 
 		Describe("TopicSubscribeOnly tokens", func() {
 			It(`Generates disposable token TopicSubscribeOnly for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicSubscribeOnly(CacheName{Name: sharedContext.CacheName}, TopicName{Name: topicName})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -899,7 +898,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			})
 
 			It(`Generates disposable token TopicSubscribeOnly for all caches and all topics, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicSubscribeOnly(AllCaches{}, AllTopics{})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -941,7 +940,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 
 		Describe("TopicPublishSubscribe tokens", func() {
 			It(`Generates disposable token TopicPublishSubscribe for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicPublishSubscribe(CacheName{Name: sharedContext.CacheName}, TopicName{Name: topicName})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -981,7 +980,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			})
 
 			It(`Generates disposable token TopicPublishSubscribe for all caches and all topics, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := TopicPublishSubscribe(AllCaches{}, AllTopics{})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1023,7 +1022,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 
 		Describe("CacheReadWrite tokens", func() {
 			It(`Generates disposable token CacheReadWrite for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := CacheReadWrite(CacheName{Name: sharedContext.CacheName})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1054,12 +1053,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token TopicPublishSubscribe for all caches, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := CacheReadWrite(AllCaches{})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1090,14 +1089,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheReadOnly tokens", func() {
 			It(`Generates disposable token CacheReadOnly for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := CacheReadOnly(CacheName{Name: sharedContext.CacheName})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1128,12 +1127,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheReadOnly for all caches, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := CacheReadOnly(AllCaches{})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1164,14 +1163,14 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 
 		Describe("CacheWriteOnly tokens", func() {
 			It(`Generates disposable token CacheWriteOnly for a specific cache, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := CacheWriteOnly(CacheName{Name: sharedContext.CacheName})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1202,12 +1201,12 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 
 			It(`Generates disposable token CacheWriteOnly for all caches, and validates its permissions`, func() {
-				topicName := uuid.NewString()
+				topicName := NewRandomString()
 				key := String(topicName)
 				scope := CacheWriteOnly(AllCaches{})
 				resp := generateDisposableTokenSuccess(sharedContext, scope)
@@ -1238,8 +1237,8 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				// asserting topic permissions
 				tc := newTopicClient(sharedContext, credProvider)
 				defer tc.Close()
-				assertPublishFailure(tc, uuid.NewString(), sharedContext.CacheName)
-				assertSubscribeFailure(tc, uuid.NewString(), sharedContext.CacheName)
+				assertPublishFailure(tc, NewRandomString(), sharedContext.CacheName)
+				assertSubscribeFailure(tc, NewRandomString(), sharedContext.CacheName)
 			})
 		})
 	})
@@ -1257,8 +1256,8 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 			}
 
 			authTestingCacheClient := newCacheClient(sharedContext, sharedContext.CredentialProvider)
-			authTestCache1 = fmt.Sprintf("golang-auth-%s", uuid.NewString())
-			authTestCache2 = fmt.Sprintf("golang-auth-%s", uuid.NewString())
+			authTestCache1 = fmt.Sprintf("golang-auth-%s", NewRandomString())
+			authTestCache2 = fmt.Sprintf("golang-auth-%s", NewRandomString())
 
 			_, err = authTestingCacheClient.CreateCache(context.Background(), &CreateCacheRequest{
 				CacheName: authTestCache1,
@@ -1405,7 +1404,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				Expect(err.(MomentoError).Code()).To(Equal(momentoerrors.PermissionError))
 
 				// Can set values in an existing cache
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				setResp, err := cacheClient.Set(sharedContext.Ctx, &SetRequest{
 					CacheName: authTestCache1,
 					Key:       key,
@@ -1644,7 +1643,7 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				defer topicClient.Close()
 
 				// 1. Cache get/set on authTestCache1 should succeed
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				setResp, err := cacheClient.Set(sharedContext.Ctx, &SetRequest{
 					CacheName: authTestCache1,
 					Key:       key,

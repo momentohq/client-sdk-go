@@ -53,16 +53,16 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("using a consistent read concern client", WithConsistentReadConcern, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("using a balanced read concern client", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("using a consistent read concern client", WithConsistentReadConcern, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("using a balanced read concern client", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
 	)
 
 	DescribeTable("Set if not exists",
@@ -133,14 +133,14 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("Set if present",
@@ -189,14 +189,14 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Fail("Unexpected type from Get")
 			}
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("Set if absent",
@@ -253,14 +253,14 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Fail("Unexpected type from Get")
 			}
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("Set if present and not equal",
@@ -332,14 +332,14 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			})
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("Set if equal",
@@ -412,14 +412,14 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("Set if absent or equal",
@@ -496,14 +496,14 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("Set if not equal",
@@ -580,21 +580,21 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 
 		},
-		Entry("when the key and value are strings", DefaultClient, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("when the key and value are bytes", DefaultClient, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("when the value is empty", DefaultClient, NewStringKey(), String(""), "", []byte("")),
-		Entry("when the value is blank", DefaultClient, NewStringKey(), String("  "), "  ", []byte("  ")),
-		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewStringKey(), String("value"), "value", []byte("value")),
-		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewByteKey(), Bytes("string"), "string", []byte("string")),
-		Entry("with default cache name when the value is empty", WithDefaultCache, NewStringKey(), String(""), "", []byte("")),
-		Entry("with default cache name when the value is blank", WithDefaultCache, NewStringKey(), String("  "), "  ", []byte("  ")),
+		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("when the key and value are bytes", DefaultClient, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("when the value is empty", DefaultClient, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("when the value is blank", DefaultClient, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
+		Entry("with default cache name when the key and value are strings", WithDefaultCache, NewRandomMomentoString(), String("value"), "value", []byte("value")),
+		Entry("with default cache name when the key and value are bytes", WithDefaultCache, NewRandomMomentoBytes(), Bytes("string"), "string", []byte("string")),
+		Entry("with default cache name when the value is empty", WithDefaultCache, NewRandomMomentoString(), String(""), "", []byte("")),
+		Entry("with default cache name when the value is blank", WithDefaultCache, NewRandomMomentoString(), String("  "), "  ", []byte("  ")),
 	)
 
 	DescribeTable("errors when the cache is missing",
 		func(clientType string) {
 			client, _ := sharedContext.GetClientPrereqsForType(clientType)
 			cacheName := uuid.NewString()
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			getResp, err := client.Get(sharedContext.Ctx, &GetRequest{
@@ -655,7 +655,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			Expect(
 				client.Get(sharedContext.Ctx, &GetRequest{
 					CacheName: cacheName,
-					Key:       NewStringKey(),
+					Key:       NewRandomMomentoString(),
 				}),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
 		},
@@ -688,16 +688,16 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			Expect(deleteResp).To(BeNil())
 			Expect(err).To(HaveMomentoErrorCode(InvalidArgumentError))
 		},
-		Entry("With default client and an empty cache name", DefaultClient, "", NewStringKey(), String("value")),
-		Entry("With default client and  an bank cache name", DefaultClient, "   ", NewStringKey(), String("value")),
+		Entry("With default client and an empty cache name", DefaultClient, "", NewRandomMomentoString(), String("value")),
+		Entry("With default client and  an bank cache name", DefaultClient, "   ", NewRandomMomentoString(), String("value")),
 		Entry("With default client and  an empty key", DefaultClient, uuid.NewString(), String(""), String("value")),
-		Entry("With client with default cache and an bank cache name", WithDefaultCache, "   ", NewStringKey(), String("value")),
+		Entry("With client with default cache and an bank cache name", WithDefaultCache, "   ", NewRandomMomentoString(), String("value")),
 		Entry("With client with default cache and an empty key", WithDefaultCache, uuid.NewString(), String(""), String("value")),
 	)
 
 	Describe("Set", func() {
 		It("Uses the default TTL", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			Expect(
@@ -728,7 +728,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		})
 
 		It("Overrides the default TTL", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			Expect(
@@ -769,7 +769,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		})
 
 		It("Overrides the default TTL without unit and invalid", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			resp, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
@@ -791,7 +791,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		})
 
 		It("returns an error for a nil value", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			Expect(
 				sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 					CacheName: sharedContext.CacheName,
@@ -851,7 +851,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		DescribeTable("Overwrites Ttl",
 			func(clientType string) {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				value := String("value")
 
 				Expect(
@@ -886,7 +886,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		DescribeTable("Increases Ttl",
 			func(clientType string) {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				value := String("value")
 
 				Expect(
@@ -923,7 +923,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			func(clientType string) {
 				client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
 
-				key := NewStringKey()
+				key := NewRandomMomentoString()
 				value := String("value")
 
 				Expect(
@@ -956,7 +956,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		)
 
 		It("Returns InvalidArgumentError with negative or zero Ttl value for UpdateTtl", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			Expect(
@@ -985,7 +985,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		})
 
 		It("Returns InvalidArgumentError with negative or zero Ttl value for IncreaseTtl", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			Expect(
@@ -1014,7 +1014,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		})
 
 		It("Returns InvalidArgumentError with negative or zero Ttl value for DecreaseTtl", func() {
-			key := NewStringKey()
+			key := NewRandomMomentoString()
 			value := String("value")
 
 			Expect(
@@ -1127,7 +1127,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 		})
 
 		It("Increments from 0 to expected amount with bytes field", func() {
-			field := NewByteKey()
+			field := NewRandomMomentoBytes()
 
 			resp, err := sharedContext.Client.Increment(sharedContext.Ctx, &IncrementRequest{
 				CacheName: sharedContext.CacheName,
@@ -1237,10 +1237,16 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 	})
 
 	Describe("ItemGetType", func() {
+		scalarName := NewRandomMomentoString()
+		dictionaryName := NewRandomString()
+		listName := NewRandomString()
+		setName := NewRandomString()
+		sortedSetName := NewRandomString()
+
 		BeforeEach(func() {
 			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: sharedContext.CacheName,
-				Key:       String("SCALAR"),
+				Key:       scalarName,
 				Value:     String("hi"),
 			})
 			if err != nil {
@@ -1248,7 +1254,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.DictionarySetField(sharedContext.Ctx, &DictionarySetFieldRequest{
 				CacheName:      sharedContext.CacheName,
-				DictionaryName: "DICTIONARY",
+				DictionaryName: dictionaryName,
 				Field:          String("hi"),
 				Value:          String("there"),
 			})
@@ -1257,7 +1263,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.ListPushFront(sharedContext.Ctx, &ListPushFrontRequest{
 				CacheName: sharedContext.CacheName,
-				ListName:  "LIST",
+				ListName:  listName,
 				Value:     String("hi"),
 			})
 			if err != nil {
@@ -1265,7 +1271,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.SetAddElement(sharedContext.Ctx, &SetAddElementRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   "SET",
+				SetName:   setName,
 				Element:   String("hi"),
 			})
 			if err != nil {
@@ -1273,7 +1279,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			}
 			_, err = sharedContext.Client.SortedSetPutElement(sharedContext.Ctx, &SortedSetPutElementRequest{
 				CacheName: sharedContext.CacheName,
-				SetName:   "SORTED_SET",
+				SetName:   sortedSetName,
 				Value:     String("hi"),
 				Score:     1.0,
 			})
@@ -1296,27 +1302,29 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 					Fail(fmt.Sprintf("expected ItemGetTypeHit but got %s", result))
 				}
 			},
-			Entry("scalar", String("SCALAR"), ItemTypeScalar),
-			Entry("dictionary", String("DICTIONARY"), ItemTypeDictionary),
-			Entry("set", String("SET"), ItemTypeSet),
-			Entry("list", String("LIST"), ItemTypeList),
-			Entry("sorted set", String("SORTED_SET"), ItemTypeSortedSet),
+			Entry("Scalar", scalarName, ItemTypeScalar),
+			Entry("Dictionary", String(dictionaryName), ItemTypeDictionary),
+			Entry("Set", String(setName), ItemTypeSet),
+			Entry("List", String(listName), ItemTypeList),
+			Entry("Sorted set", String(sortedSetName), ItemTypeSortedSet),
 		)
 	})
 
 	Describe("item get ttl", func() {
 		It("accurately reports the remaining TTL for a key", func() {
+			key := NewRandomMomentoString()
+			value := NewRandomMomentoString()
 			var ttl = time.Duration(time.Minute * 2)
 			_, err := sharedContext.Client.Set(sharedContext.Ctx, &SetRequest{
 				CacheName: sharedContext.CacheName,
-				Key:       String("hi"),
-				Value:     String("there"),
+				Key:       key,
+				Value:     value,
 				Ttl:       ttl,
 			})
 			Expect(err).To(BeNil())
 			resp, err := sharedContext.Client.ItemGetTtl(sharedContext.Ctx, &ItemGetTtlRequest{
 				CacheName: sharedContext.CacheName,
-				Key:       String("hi"),
+				Key:       key,
 			})
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&ItemGetTtlHit{}))

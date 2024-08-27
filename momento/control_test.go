@@ -16,7 +16,7 @@ import (
 var _ = Describe("control-ops", func() {
 	Describe("cache-client happy-path", Label(CACHE_SERVICE_LABEL), func() {
 		It("creates, lists, and deletes caches", func() {
-			cacheNames := []string{uuid.NewString(), uuid.NewString()}
+			cacheNames := []string{helpers.NewRandomString(), helpers.NewRandomString()}
 			defer func() {
 				for _, cacheName := range cacheNames {
 					_, err := sharedContext.Client.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName})
@@ -69,7 +69,7 @@ var _ = Describe("control-ops", func() {
 		It("creates and deletes using a default cache", func() {
 			// Create a separate client with a default cache name to be used only in this test
 			// to avoid affecting the shared context when all tests run
-			defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
+			defaultCacheName := fmt.Sprintf("golang-default-%s", helpers.NewRandomString())
 			clientWithDefaultCacheName, err := NewCacheClientWithDefaultCache(
 				sharedContext.Configuration, sharedContext.CredentialProvider, sharedContext.DefaultTtl, defaultCacheName,
 			)
@@ -191,14 +191,14 @@ var _ = Describe("control-ops", func() {
 			).Error().NotTo(HaveOccurred())
 			Expect(
 				clientWithDefaultCacheName.Get(
-					sharedContext.Ctx, &GetRequest{Key: helpers.NewStringKey()},
+					sharedContext.Ctx, &GetRequest{Key: helpers.NewRandomMomentoString()},
 				),
 			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 			Expect(
 				clientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{
 						CacheName: newCacheName,
-						Key:       helpers.NewStringKey(),
+						Key:       helpers.NewRandomMomentoString(),
 					},
 				),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
