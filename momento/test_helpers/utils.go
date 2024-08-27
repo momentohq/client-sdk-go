@@ -5,10 +5,14 @@ import (
 	"github.com/momentohq/client-sdk-go/momento"
 )
 
-func NewStringKey() momento.String {
-	return momento.String(uuid.NewString())
+func NewRandomString() string {
+	return uuid.NewString()
 }
 
-func NewByteKey() momento.Bytes {
+func NewRandomMomentoString() momento.String {
+	return momento.String(NewRandomString())
+}
+
+func NewRandomMomentoBytes() momento.Bytes {
 	return momento.Bytes([]byte(uuid.NewString()))
 }

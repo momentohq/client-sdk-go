@@ -191,14 +191,14 @@ var _ = Describe("control-ops", func() {
 			).Error().NotTo(HaveOccurred())
 			Expect(
 				clientWithDefaultCacheName.Get(
-					sharedContext.Ctx, &GetRequest{Key: helpers.NewStringKey()},
+					sharedContext.Ctx, &GetRequest{Key: helpers.NewRandomMomentoString()},
 				),
 			).Error().To(HaveMomentoErrorCode(CacheNotFoundError))
 			Expect(
 				clientWithDefaultCacheName.Get(
 					sharedContext.Ctx, &GetRequest{
 						CacheName: newCacheName,
-						Key:       helpers.NewStringKey(),
+						Key:       helpers.NewRandomMomentoString(),
 					},
 				),
 			).To(BeAssignableToTypeOf(&GetMiss{}))
