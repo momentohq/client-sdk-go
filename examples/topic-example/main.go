@@ -37,7 +37,7 @@ func main() {
 	go func() { pollForMessages(ctx, sub) }()
 
 	// Receive and print all events in a goroutine
-	go func() { pollForEvents(ctx, sub) }()
+	// go func() { pollForEvents(ctx, sub) }()
 
 	time.Sleep(time.Second)
 
@@ -75,9 +75,8 @@ func pollForEvents(ctx context.Context, sub momento.TopicSubscription) {
 			fmt.Printf("received discontinuity\n")
 		case momento.TopicItem:
 			fmt.Printf(
-				"received message with sequence number %d and publisher id %s: %v \n",
+				"received message with sequence number %d: %v \n",
 				e.GetTopicSequenceNumber(),
-				e.GetPublisherId(),
 				e.GetValue(),
 			)
 		}
