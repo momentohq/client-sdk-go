@@ -159,11 +159,11 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context) {
-	// try and reconnect every n seconds. This will attempt to reconnect indefinetly
-	seconds := 5 * time.Second
+	// This will attempt to reconnect indefinetly
+	reconnectDelay := 500 * time.Millisecond
 	for {
 		s.log.Debug("Attempting reconnecting to client stream")
-		time.Sleep(seconds)
+		time.Sleep(reconnectDelay)
 		newTopicManager, newStream, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
@@ -171,7 +171,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 		})
 
 		if err != nil {
-			s.log.Debug("failed to reconnect to stream, will continue to try in %s seconds", fmt.Sprint(seconds))
+			s.log.Debug("failed to reconnect to stream, will continue to try in %s milliseconds", fmt.Sprint(reconnectDelay))
 		} else {
 			s.log.Debug("successfully reconnected to subscription stream")
 			s.topicManager = newTopicManager
