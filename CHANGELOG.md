@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.27.1](https://github.com/momentohq/client-sdk-go/compare/v1.27.0...v1.27.1) (2024-08-30)
+
+
+### Bug Fixes
+
+* use ginkgo label matching to match on storage filter ([#487](https://github.com/momentohq/client-sdk-go/issues/487)) ([7f36e7d](https://github.com/momentohq/client-sdk-go/commit/7f36e7d82367a498060813861d58097a470e380e))
+* use unique test keys ([#488](https://github.com/momentohq/client-sdk-go/issues/488)) ([f8fbd5e](https://github.com/momentohq/client-sdk-go/commit/f8fbd5ea7b666ab39793895d66fd42d5cb2d1cf0))
+
+
+### Miscellaneous
+
+* remove publisher id from simple topics example and use only one polling function at a time ([#489](https://github.com/momentohq/client-sdk-go/issues/489)) ([d97e718](https://github.com/momentohq/client-sdk-go/commit/d97e7182b473e92349f2d9e7fad5c6e3a51e6bc7))
+* set topics resubscribe delay to 500ms ([#490](https://github.com/momentohq/client-sdk-go/issues/490)) ([8d70251](https://github.com/momentohq/client-sdk-go/commit/8d702518c8ea6fc2fb681b530aba6bb8ff7f11b2))
+* update go topics examples ([#483](https://github.com/momentohq/client-sdk-go/issues/483)) ([ff0332f](https://github.com/momentohq/client-sdk-go/commit/ff0332f2d0efa2d9deb82915cc7ed9988f35bc65))
+
 ## [1.27.0](https://github.com/momentohq/client-sdk-go/compare/v1.26.2...v1.27.0) (2024-08-20)
 
 
