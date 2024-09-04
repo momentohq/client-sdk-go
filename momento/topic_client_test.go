@@ -157,7 +157,8 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		for i, receivedItem := range receivedItems {
 			switch r := receivedItem.(type) {
 			case TopicItem:
-				Expect(r.GetValue()).To(Equal(expectedValues[i]))
+				// Since Momento Topics do not guarantee delivery order, we can't check for equality
+				Expect(r.GetValue()).To(BeElementOf(expectedValues))
 				Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
 				Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
 			case TopicHeartbeat:
