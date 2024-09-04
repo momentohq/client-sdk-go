@@ -154,6 +154,14 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 
 		numberOfHeartbeats := 0
 		numberOfDiscontinuities := 0
+
+		for i, receivedItem := range receivedItems {
+			if r, ok := receivedItem.(TopicItem); ok {
+				fmt.Printf("Received item value %d: %v\n", i, r.GetValue())
+				fmt.Println("Received item topic sequence number: ", r.GetTopicSequenceNumber())
+			}
+		}
+
 		for i, receivedItem := range receivedItems {
 			switch r := receivedItem.(type) {
 			case TopicItem:
