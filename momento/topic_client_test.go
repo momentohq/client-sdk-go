@@ -154,11 +154,19 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 
 		numberOfHeartbeats := 0
 		numberOfDiscontinuities := 0
+
+		for i, receivedItem := range receivedItems {
+			if r, ok := receivedItem.(TopicItem); ok {
+				fmt.Printf("Received item value %d: %v\n", i, r.GetValue())
+				fmt.Println("Received item topic sequence number: ", r.GetTopicSequenceNumber())
+			}
+		}
+
 		for i, receivedItem := range receivedItems {
 			switch r := receivedItem.(type) {
 			case TopicItem:
-				// Since Momento Topics do not guarantee delivery order, we can't check for equality
-				Expect(r.GetValue()).To(BeElementOf(expectedValues))
+				//fmt.Println("Received item - i, value: ", i, r.GetValue())
+				Expect(r.GetValue()).To(Equal(expectedValues[i]))
 				Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
 				Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
 			case TopicHeartbeat:
