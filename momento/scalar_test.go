@@ -1322,6 +1322,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Ttl:       ttl,
 			})
 			Expect(err).To(BeNil())
+
 			resp, err := sharedContext.Client.ItemGetTtl(sharedContext.Ctx, &ItemGetTtlRequest{
 				CacheName: sharedContext.CacheName,
 				Key:       key,
@@ -1330,7 +1331,8 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			Expect(resp).To(BeAssignableToTypeOf(&ItemGetTtlHit{}))
 			switch result := resp.(type) {
 			case *ItemGetTtlHit:
-				Expect(ttl > result.RemainingTtl()).To(BeTrue())
+				fmt.Printf("Original TTL: %v, Remaining TTL: %v\n", ttl, result.RemainingTtl())
+				Expect(result.RemainingTtl()).To(BeNumerically("<", ttl))
 				Expect(result.RemainingTtl() > (time.Second * 30)).To(BeTrue())
 			default:
 				Fail(fmt.Sprintf("expected ItemGetTtlHit but got %s", result))

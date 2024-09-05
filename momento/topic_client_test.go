@@ -155,25 +155,29 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		numberOfHeartbeats := 0
 		numberOfDiscontinuities := 0
 
-		for i, receivedItem := range receivedItems {
-			if r, ok := receivedItem.(TopicItem); ok {
-				fmt.Printf("Received item value %d: %v\n", i, r.GetValue())
-				fmt.Println("Received item topic sequence number: ", r.GetTopicSequenceNumber())
-			}
-		}
-
-		for i, receivedItem := range receivedItems {
+		// Collect only TopicItem events for comparison
+		receivedTopicItems := []TopicItem{}
+		for _, receivedItem := range receivedItems {
 			switch r := receivedItem.(type) {
 			case TopicItem:
-				Expect(r.GetValue()).To(Equal(expectedValues[i]))
-				Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
-				Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
+				receivedTopicItems = append(receivedTopicItems, r)
 			case TopicHeartbeat:
 				numberOfHeartbeats++
 			case TopicDiscontinuity:
 				numberOfDiscontinuities++
 			}
 		}
+
+		// Ensure we have received the expected number of TopicItems
+		Expect(len(receivedTopicItems)).To(Equal(len(expectedValues)))
+
+		// Now, compare the received TopicItems to the expected values
+		for i, r := range receivedTopicItems {
+			Expect(r.GetValue()).To(Equal(expectedValues[i]))
+			Expect(r.GetTopicSequenceNumber()).To(BeNumerically(">", 0))
+			Expect(r.GetTopicSequenceNumber()).To(Equal(uint64(i + 1)))
+		}
+
 		Expect(numberOfHeartbeats).To(BeNumerically(">=", 1))
 		Expect(numberOfDiscontinuities).To(Equal(0))
 	})
