@@ -158,11 +158,12 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		// Collect only TopicItem events for comparison
 		receivedTopicItems := []TopicItem{}
 		for _, receivedItem := range receivedItems {
-			if r, ok := receivedItem.(TopicItem); ok {
+			switch r := receivedItem.(type) {
+			case TopicItem:
 				receivedTopicItems = append(receivedTopicItems, r)
-			} else if _, ok := receivedItem.(TopicHeartbeat); ok {
+			case TopicHeartbeat:
 				numberOfHeartbeats++
-			} else if _, ok := receivedItem.(TopicDiscontinuity); ok {
+			case TopicDiscontinuity:
 				numberOfDiscontinuities++
 			}
 		}
