@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.3](https://github.com/momentohq/client-sdk-go/compare/v1.27.2...v1.27.3) (2024-09-05)
+
+
+### Miscellaneous
+
+* debug canary tests ([#494](https://github.com/momentohq/client-sdk-go/issues/494)) ([8a5d399](https://github.com/momentohq/client-sdk-go/commit/8a5d39922d95bc3b70f729f7bca2f95bc96fe5d4))
+
 ## [1.27.2](https://github.com/momentohq/client-sdk-go/compare/v1.27.1...v1.27.2) (2024-09-04)
 
 
