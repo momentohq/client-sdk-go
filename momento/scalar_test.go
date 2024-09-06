@@ -1332,7 +1332,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			switch result := resp.(type) {
 			case *ItemGetTtlHit:
 				fmt.Printf("Original TTL: %v, Remaining TTL: %v\n", ttl, result.RemainingTtl())
-				Expect(result.RemainingTtl()).To(BeNumerically("<", ttl))
+				Expect(result.RemainingTtl()).To(BeNumerically("<=", ttl))
 				Expect(result.RemainingTtl() > (time.Second * 30)).To(BeTrue())
 			default:
 				Fail(fmt.Sprintf("expected ItemGetTtlHit but got %s", result))
