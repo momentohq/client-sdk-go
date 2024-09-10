@@ -15,7 +15,7 @@ install-devtools: install-ginkgo
 
 install-ginkgo:
 	@echo "Installing ginkgo..."
-	@go install github.com/onsi/ginkgo/v2/ginkgo@latest
+	@go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
 
 format:
 	@echo "Formatting code..."
