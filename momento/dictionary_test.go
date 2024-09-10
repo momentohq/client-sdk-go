@@ -863,6 +863,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 
 			It("returns a miss for the collection", func() {
 				dictionaryName := NewRandomString()
+				var cacheTtl = 500 * time.Millisecond
 				Expect(
 					sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
 						CacheName:      sharedContext.CacheName,
@@ -870,6 +871,9 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 						Elements: DictionaryElementsFromMapStringValue(
 							map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 						),
+						Ttl: &CollectionTtl{
+							Ttl: cacheTtl,
+						},
 					}),
 				).Error().To(BeNil())
 
@@ -880,7 +884,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 					}),
 				).To(BeAssignableToTypeOf(&DictionaryFetchHit{}))
 
-				time.Sleep(sharedContext.DefaultTtl)
+				time.Sleep(1 * time.Second)
 
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{
@@ -938,6 +942,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 
 			It("is ignored if refresh ttl is false", func() {
 				dictionaryName := NewRandomString()
+				var cacheTtl = 500 * time.Millisecond
 
 				// Create a new dictionary with a TTL
 				Expect(sharedContext.Client.DictionarySetFields(sharedContext.Ctx, &DictionarySetFieldsRequest{
@@ -947,7 +952,7 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 						map[string]Value{"myField1": String("myValue1"), "myField2": String("myValue2")},
 					),
 					Ttl: &CollectionTtl{
-						Ttl:        sharedContext.DefaultTtl,
+						Ttl:        cacheTtl,
 						RefreshTtl: false,
 					},
 				})).To(BeAssignableToTypeOf(&DictionarySetFieldsSuccess{}))
@@ -960,13 +965,13 @@ var _ = Describe("cache-client dictionary-methods", Label(CACHE_SERVICE_LABEL), 
 						Field:          String("myField3"),
 						Value:          String("myValue3"),
 						Ttl: &CollectionTtl{
-							Ttl:        sharedContext.DefaultTtl + time.Second*60,
+							Ttl:        cacheTtl + time.Second*60,
 							RefreshTtl: false,
 						},
 					}),
 				).To(BeAssignableToTypeOf(&DictionarySetFieldSuccess{}))
 
-				time.Sleep(sharedContext.DefaultTtl)
+				time.Sleep(1 * time.Second)
 
 				Expect(
 					sharedContext.Client.DictionaryFetch(sharedContext.Ctx, &DictionaryFetchRequest{

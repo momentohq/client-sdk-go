@@ -108,7 +108,7 @@ var _ = Describe("cache-client get-batch set-batch", Label(CACHE_SERVICE_LABEL),
 			setBatchResp, setBatchErr := sharedContext.Client.SetBatch(sharedContext.Ctx, &SetBatchRequest{
 				CacheName: sharedContext.DefaultCacheName,
 				Items:     items,
-				Ttl:       1 * time.Second,
+				Ttl:       500 * time.Millisecond,
 			})
 			Expect(setBatchErr).To(BeNil())
 			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
@@ -118,7 +118,7 @@ var _ = Describe("cache-client get-batch set-batch", Label(CACHE_SERVICE_LABEL),
 				Expect(setResp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
 			}
 
-			time.Sleep(3 * time.Second)
+			time.Sleep(2 * time.Second)
 
 			getBatchResp, getBatchErr := sharedContext.Client.GetBatch(sharedContext.Ctx, &GetBatchRequest{
 				CacheName: sharedContext.DefaultCacheName,

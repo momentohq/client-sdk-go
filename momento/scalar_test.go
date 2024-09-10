@@ -719,7 +719,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(sharedContext.DefaultTtl)
+			time.Sleep(sharedContext.DefaultTtl + 100*time.Millisecond)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -760,7 +760,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				}),
 			).To(BeAssignableToTypeOf(&GetHit{}))
 
-			time.Sleep(sharedContext.DefaultTtl)
+			time.Sleep(sharedContext.DefaultTtl + 100*time.Millisecond)
 
 			Expect(
 				sharedContext.Client.Get(sharedContext.Ctx, &GetRequest{
@@ -933,6 +933,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 						CacheName: cacheName,
 						Key:       key,
 						Value:     value,
+						Ttl:       4 * time.Second,
 					}),
 				).To(BeAssignableToTypeOf(&SetSuccess{}))
 
@@ -940,7 +941,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 					client.DecreaseTtl(sharedContext.Ctx, &DecreaseTtlRequest{
 						CacheName: cacheName,
 						Key:       key,
-						Ttl:       2 * time.Second,
+						Ttl:       1*time.Second + 500*time.Millisecond,
 					}),
 				).To(BeAssignableToTypeOf(&DecreaseTtlSet{}))
 
