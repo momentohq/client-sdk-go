@@ -36,6 +36,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
+				fmt.Println(`Expected GetHit, got:`, result)
 				Fail("Unexpected type from Get")
 			}
 

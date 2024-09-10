@@ -174,6 +174,7 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 					Expect(result.ValueString()).To(Equal(expectedStrings))
 					Expect(result.ValueByte()).To(Equal(expectedBytes))
 				default:
+					fmt.Println(`Expected SetFetchHit but got:`, result)
 					Fail("Unexpected result for Set Fetch")
 				}
 			},
