@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.27.4](https://github.com/momentohq/client-sdk-go/compare/v1.27.3...v1.27.4) (2024-09-10)
+
+
+### Bug Fixes
+
+* remaining ttl &lt;= ttl ([#497](https://github.com/momentohq/client-sdk-go/issues/497)) ([e3593cd](https://github.com/momentohq/client-sdk-go/commit/e3593cd3282ede37660c9ad8a9e493bf1efc392b))
+
+
+### Miscellaneous
+
+* add logging to failing canary tests ([#499](https://github.com/momentohq/client-sdk-go/issues/499)) ([bfe58f2](https://github.com/momentohq/client-sdk-go/commit/bfe58f21167bcda5ef2c319f00313a3be95c261c))
+
 ## [1.27.3](https://github.com/momentohq/client-sdk-go/compare/v1.27.2...v1.27.3) (2024-09-05)
 
 
