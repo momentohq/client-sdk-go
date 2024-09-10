@@ -499,6 +499,9 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 						CacheName: sharedContext.CacheName,
 						SetName:   setName,
 						Element:   String("hello"),
+						Ttl: &utils.CollectionTtl{
+							Ttl: 500 * time.Millisecond,
+						},
 					}),
 				).Error().To(BeNil())
 
