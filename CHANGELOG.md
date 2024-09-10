@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.5](https://github.com/momentohq/client-sdk-go/compare/v1.27.4...v1.27.5) (2024-09-10)
+
+
+### Miscellaneous
+
+* add epsilon sleep durations/reduce default ttl on tests ([#500](https://github.com/momentohq/client-sdk-go/issues/500)) ([b1241a9](https://github.com/momentohq/client-sdk-go/commit/b1241a954f9cf9f0f77de68a837eed075561e261))
+
 ## [1.27.4](https://github.com/momentohq/client-sdk-go/compare/v1.27.3...v1.27.4) (2024-09-10)
 
 
