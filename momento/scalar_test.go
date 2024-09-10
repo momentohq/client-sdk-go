@@ -36,6 +36,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
+				fmt.Println(`Expected GetHit, got:`, result)
 				Fail("Unexpected type from Get")
 			}
 
@@ -90,7 +91,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// we make another call and make sure that the value is not stored again
@@ -116,7 +117,8 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
+
 			}
 
 			Expect(
@@ -186,7 +188,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 		},
 		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
@@ -224,7 +226,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// we make another call and make sure that the value is not stored again
@@ -250,7 +252,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 		},
 		Entry("when the key and value are strings", DefaultClient, NewRandomMomentoString(), String("value"), "value", []byte("value")),
@@ -321,7 +323,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// make sure we error when NotEqual is nil
@@ -400,7 +402,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// make sure we error when Equal is nil
@@ -447,7 +449,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// make sure we don't overwrite the value when current value is different from Equal
@@ -484,7 +486,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			case *GetHit:
 				Expect(result.ValueString()).To(Equal("overwritten value"))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// make sure we error when Equal is nil
@@ -531,7 +533,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				Expect(result.ValueByte()).To(Equal(expectedBytes))
 				Expect(result.ValueString()).To(Equal(expectedString))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// make sure we don't overwrite the value when current value is the same as from NotEqual
@@ -568,7 +570,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 			case *GetHit:
 				Expect(result.ValueString()).To(Equal("bingo!"))
 			default:
-				Fail("Unexpected type from Get")
+				Fail(fmt.Sprintf("Expected GetHit, got: %T, %v", result, result))
 			}
 
 			// make sure we error when Equal is nil

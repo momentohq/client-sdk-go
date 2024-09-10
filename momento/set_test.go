@@ -174,6 +174,7 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 					Expect(result.ValueString()).To(Equal(expectedStrings))
 					Expect(result.ValueByte()).To(Equal(expectedBytes))
 				default:
+					fmt.Println(`Expected SetFetchHit but got:`, result)
 					Fail("Unexpected result for Set Fetch")
 				}
 			},
@@ -205,7 +206,7 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 					Expect(result.ValueString()).To(ConsistOf(expectedStrings))
 					Expect(result.ValueByte()).To(ConsistOf(expectedBytes))
 				default:
-					Fail("Unexpected results for Set Fetch")
+					Fail(fmt.Sprintf("Expected SetFetchHit, got: %T, %v", result, result))
 				}
 			},
 			Entry(
@@ -334,7 +335,7 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 				case *SetFetchHit:
 					Expect(result.ValueString()).ToNot(ContainElement(toRemove))
 				default:
-					Fail("something really weird happened")
+					Fail(fmt.Sprintf("Expected SetFetchHit, got: %T, %v", result, result))
 				}
 			},
 			Entry("with default client as string", DefaultClient, String("#5"), 9),
@@ -366,7 +367,7 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 				case *SetFetchHit:
 					Expect(result.ValueString()).ToNot(ContainElements(toRemove))
 				default:
-					Fail("something really weird happened")
+					Fail(fmt.Sprintf("Expected SetFetchHit, got: %T, %v", result, result))
 				}
 			},
 			Entry("with default client as strings", DefaultClient, getElements(5), 5),
@@ -424,7 +425,7 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 		case *SetLengthHit:
 			Expect(result.Length()).To(Equal(uint32(len(elements))))
 		default:
-			Fail("expected a hit for set length but got a miss")
+			Fail(fmt.Sprintf("Expected SetLengthHit, got: %T, %v", result, result))
 		}
 
 		resp, err = sharedContext.Client.SetLength(sharedContext.Ctx, &SetLengthRequest{
@@ -466,6 +467,8 @@ var _ = Describe("cache-client set-methods", Label(CACHE_SERVICE_LABEL), func() 
 				switch result := containsResp.(type) {
 				case *SetContainsElementsHit:
 					Expect(result.ContainsElements()).To(Equal(expected))
+				default:
+					Fail(fmt.Sprintf("Expected SetContainsElementsHit, got: %T, %v", result, result))
 				}
 			},
 			Entry("with default client all hits", DefaultClient, []Value{String("#1"), String("#2"), String("#3")}, []bool{true, true, true}),
