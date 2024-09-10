@@ -9,7 +9,7 @@ GINKGO_OPTS = --no-color -v
 
 install-devtools: install-ginkgo
 	@echo "Installing dev tools..."
-	go install golang.org/x/tools/cmd/goimports@latest
+	go install golang.org/x/tools/cmd/goimports@v0.24.0
 	go install honnef.co/go/tools/cmd/staticcheck@v0.4.7
 
 
