@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.6](https://github.com/momentohq/client-sdk-go/compare/v1.27.5...v1.27.6) (2024-09-12)
+
+
+### Miscellaneous
+
+* better debug logging on discontinuities ([#503](https://github.com/momentohq/client-sdk-go/issues/503)) ([0133f21](https://github.com/momentohq/client-sdk-go/commit/0133f2124dc1c52bde70707ca5e3200d2cc15a86))
+
 ## [1.27.5](https://github.com/momentohq/client-sdk-go/compare/v1.27.4...v1.27.5) (2024-09-10)
 
 
