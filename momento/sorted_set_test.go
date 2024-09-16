@@ -1440,7 +1440,7 @@ var _ = Describe("cache-client sortedset-methods", Label(CACHE_SERVICE_LABEL), f
 				Expect(err).To(BeNil())
 				Expect(sortedSetRemoveElementsResponse).To(BeAssignableToTypeOf(&SortedSetRemoveElementsSuccess{}))
 
-				sortedFetchByRankResponse, err := client.SortedSetFetchByRank(
+				sortedSetFetchByRankResponse, err := client.SortedSetFetchByRank(
 					sharedContext.Ctx,
 					&SortedSetFetchByRankRequest{
 						CacheName: cacheName,
@@ -1448,7 +1448,8 @@ var _ = Describe("cache-client sortedset-methods", Label(CACHE_SERVICE_LABEL), f
 					},
 				)
 				Expect(err).To(BeNil())
-				Expect(sortedFetchByRankResponse).To(HaveSortedSetElements(
+				fmt.Printf("SortedSetFetchByRankResponse type: %T, value: %+v\n", sortedSetFetchByRankResponse, sortedSetFetchByRankResponse)
+				Expect(sortedSetFetchByRankResponse).To(HaveSortedSetElements(
 					[]SortedSetBytesElement{
 						{Value: []byte("last"), Score: -9999},
 						{Value: []byte("middle"), Score: 50},
