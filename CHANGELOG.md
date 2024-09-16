@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.27.7](https://github.com/momentohq/client-sdk-go/compare/v1.27.6...v1.27.7) (2024-09-16)
+
+
+### Miscellaneous
+
+* add logging to list fetch test ([#506](https://github.com/momentohq/client-sdk-go/issues/506)) ([c2601d1](https://github.com/momentohq/client-sdk-go/commit/c2601d1733a1a9732cc1d913edb9b16aa7df74b7))
+* debug sorted fetch by rank - remove elements test ([#509](https://github.com/momentohq/client-sdk-go/issues/509)) ([46ac38b](https://github.com/momentohq/client-sdk-go/commit/46ac38b59897213adea49eb865d0673c0122bc81))
+
 ## [1.27.6](https://github.com/momentohq/client-sdk-go/compare/v1.27.5...v1.27.6) (2024-09-12)
 
 
