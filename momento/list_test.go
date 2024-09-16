@@ -910,6 +910,10 @@ var _ = Describe("cache-client list-methods", Label(CACHE_SERVICE_LABEL), func()
 						StartIndex: &startIndex,
 					})
 
+					for _, vals := range fetchResp.(*ListFetchHit).ValueList() {
+						fmt.Println(`Values: `, vals)
+					}
+
 					Expect(err).To(BeNil())
 					Expect(fetchResp).To(HaveListLength(numItems - 1))
 					_, expectedVals := getValueAndExpectedValueListsRange(1, numItems)
