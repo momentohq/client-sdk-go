@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.1](https://github.com/momentohq/client-sdk-go/compare/v1.28.0...v1.28.1) (2024-09-17)
+
+
+### Miscellaneous
+
+* minor tweaks to logging inside of topic client ([#513](https://github.com/momentohq/client-sdk-go/issues/513)) ([fccfc5e](https://github.com/momentohq/client-sdk-go/commit/fccfc5e3e7a260c2ffb6c899d9e9e583d8bf3f34))
+
 ## [1.28.0](https://github.com/momentohq/client-sdk-go/compare/v1.27.7...v1.28.0) (2024-09-17)
 
 
