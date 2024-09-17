@@ -7,6 +7,9 @@
 
 * improve logger interface to accept `any` ([#507](https://github.com/momentohq/client-sdk-go/issues/507)) ([5dd3929](https://github.com/momentohq/client-sdk-go/commit/5dd39296028e1fea7ef7b4b77d741bcdace8e137))
 
+NOTE: for existing users, if you have written a custom logger that implements the `MomentoLogger` interface, you will need to make a minor change to convert the signatures of the log functions from accepting `...string` to `...any`. This improves interopability with existing go logging libraries, because it allows you to pass in non-string data types and use other formatting strings like `%d` and `%v` to interpolate them into your log messages.
+
+
 
 ### Miscellaneous
 
