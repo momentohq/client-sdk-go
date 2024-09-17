@@ -56,7 +56,7 @@ func NewSharedContext() SharedContext {
 	shared.StorageConfiguration = config.StorageLaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
-	client, err := momento.NewCacheClient(shared.Configuration, shared.CredentialProvider, shared.DefaultTtl)
+	client, err := momento.NewCacheClient(shared.Configuration.WithReadConcern(config.CONSISTENT), shared.CredentialProvider, shared.DefaultTtl)
 	if err != nil {
 		panic(err)
 	}
