@@ -132,14 +132,13 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
-			s.log.Debug(fmt.Sprintf("received discontinuity item: %+v", typedMsg.Discontinuity))
+			s.log.Debug("received discontinuity item: %+v", typedMsg.Discontinuity)
 			return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence), nil
 		case *pb.XSubscriptionItem_Item:
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			publisherId := typedMsg.Item.GetPublisherId()
 
-			logMessage := fmt.Sprintf("received item with sequence number %d and publisher Id %s", s.lastKnownSequenceNumber, publisherId)
-			s.log.Debug(logMessage)
+			s.log.Trace("received item with sequence number %d and publisher Id %s", s.lastKnownSequenceNumber, publisherId)
 
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
@@ -148,10 +147,10 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 				return NewTopicItem(Bytes(subscriptionItem.Binary), String(publisherId), s.lastKnownSequenceNumber), nil
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
-			s.log.Debug("received heartbeat item")
+			s.log.Trace("received heartbeat item")
 			return TopicHeartbeat{}, nil
 		default:
-			s.log.Trace("Unrecognized response detected.",
+			s.log.Warn("Unrecognized response detected.",
 				"response", fmt.Sprint(typedMsg))
 			continue
 		}
@@ -162,7 +161,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	// This will attempt to reconnect indefinetly
 	reconnectDelay := 500 * time.Millisecond
 	for {
-		s.log.Debug("Attempting reconnecting to client stream")
+		s.log.Info("Attempting reconnecting to client stream")
 		time.Sleep(reconnectDelay)
 		newTopicManager, newStream, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
@@ -171,9 +170,9 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 		})
 
 		if err != nil {
-			s.log.Debug("failed to reconnect to stream, will continue to try in %s milliseconds", fmt.Sprint(reconnectDelay))
+			s.log.Warn("failed to reconnect to stream, will continue to try in %s milliseconds", fmt.Sprint(reconnectDelay))
 		} else {
-			s.log.Debug("successfully reconnected to subscription stream")
+			s.log.Info("successfully reconnected to subscription stream")
 			s.topicManager = newTopicManager
 			s.grpcClient = newStream
 			s.cancelContext = cancelContext
