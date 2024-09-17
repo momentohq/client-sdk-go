@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -33,11 +35,21 @@ func main() {
 		panic(err)
 	}
 
-	// Receive and print messages in a goroutine
-	go func() { pollForMessages(ctx, sub) }()
+	var pollForMessagesWg sync.WaitGroup
+	pollForMessagesWg.Add(1)
 
-	// Receive and print all events in a goroutine
-	// go func() { pollForEvents(ctx, sub) }()
+	// Receive and print messages in a goroutine
+	go func() {
+		defer pollForMessagesWg.Done()
+		pollForMessages(ctx, sub)
+	}()
+
+	// Alternately, receive and print all events in a goroutine. Events include Items as well as other message types
+	// such as heartbeats and discontinuities.
+	//go func() {
+	//	defer pollForMessagesWg.Done()
+	//	pollForEvents(ctx, sub)
+	//}()
 
 	time.Sleep(time.Second)
 
@@ -45,12 +57,20 @@ func main() {
 	publishMessages(topicClient, ctx)
 
 	sub.Close()
+
+	fmt.Printf("closed subscription, waiting for pollForMessages wg\n")
+	pollForMessagesWg.Wait()
+	fmt.Printf("pollForMessages wg done\n")
 }
 
 func pollForMessages(ctx context.Context, sub momento.TopicSubscription) {
 	for {
 		item, err := sub.Item(ctx)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				fmt.Printf("pollForMessages context canceled\n")
+				break
+			}
 			panic(err)
 		}
 		switch msg := item.(type) {
@@ -66,6 +86,10 @@ func pollForEvents(ctx context.Context, sub momento.TopicSubscription) {
 	for {
 		event, err := sub.Event(ctx)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				fmt.Printf("pollForEvents context canceled\n")
+				break
+			}
 			panic(err)
 		}
 		switch e := event.(type) {
