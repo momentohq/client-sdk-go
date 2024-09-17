@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.28.0](https://github.com/momentohq/client-sdk-go/compare/v1.27.7...v1.28.0) (2024-09-17)
+
+
+### Features
+
+* improve logger interface to accept `any` ([#507](https://github.com/momentohq/client-sdk-go/issues/507)) ([5dd3929](https://github.com/momentohq/client-sdk-go/commit/5dd39296028e1fea7ef7b4b77d741bcdace8e137))
+
+
+### Miscellaneous
+
+* update topics example to illustrate how to wait for subscription close ([#511](https://github.com/momentohq/client-sdk-go/issues/511)) ([38843bf](https://github.com/momentohq/client-sdk-go/commit/38843bffef807ecdc29f4ba86761ba8202107767))
+
 ## [1.27.7](https://github.com/momentohq/client-sdk-go/compare/v1.27.6...v1.27.7) (2024-09-16)
 
 
