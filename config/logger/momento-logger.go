@@ -1,11 +1,11 @@
 package logger
 
 type MomentoLogger interface {
-	Trace(message string, args ...string)
-	Debug(message string, args ...string)
-	Info(message string, args ...string)
-	Warn(message string, args ...string)
-	Error(message string, args ...string)
+	Trace(message string, args ...any)
+	Debug(message string, args ...any)
+	Info(message string, args ...any)
+	Warn(message string, args ...any)
+	Error(message string, args ...any)
 }
 
 type MomentoLoggerFactory interface {

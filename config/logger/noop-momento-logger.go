@@ -3,23 +3,23 @@ package logger
 type NoopMomentoLogger struct {
 }
 
-func (*NoopMomentoLogger) Trace(message string, args ...string) {
+func (*NoopMomentoLogger) Trace(message string, args ...any) {
 	// no-op
 }
 
-func (*NoopMomentoLogger) Debug(message string, args ...string) {
+func (*NoopMomentoLogger) Debug(message string, args ...any) {
 	// no-op
 }
 
-func (*NoopMomentoLogger) Info(message string, args ...string) {
+func (*NoopMomentoLogger) Info(message string, args ...any) {
 	// no-op
 }
 
-func (*NoopMomentoLogger) Warn(message string, args ...string) {
+func (*NoopMomentoLogger) Warn(message string, args ...any) {
 	// no-op
 }
 
-func (*NoopMomentoLogger) Error(message string, args ...string) {
+func (*NoopMomentoLogger) Error(message string, args ...any) {
 	// no-op
 }
 
