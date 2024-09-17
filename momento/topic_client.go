@@ -84,7 +84,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 
 	for failedAttempts < maxAttempts {
 		if failedAttempts > 0 {
-			c.log.Info(fmt.Sprintf("Retrying topic subscription due to subscription limit; retry attempt %d of %d", failedAttempts, maxAttempts-1))
+			c.log.Info("Retrying topic subscription due to subscription limit; retry attempt %d of %d", failedAttempts, maxAttempts-1)
 		}
 
 		topicManager, clientStream, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
