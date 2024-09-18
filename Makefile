@@ -72,6 +72,10 @@ test: install-ginkgo
 	@echo "Running tests..."
 	@ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
 
+prod-test: install-ginkgo
+	@echo "Running tests with consistent reads..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
+
 
 test-auth-service: install-ginkgo
 	@echo "Testing auth service..."

@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,12 @@ const (
 	WithDefaultCache          = "withDefaultCache"
 	WithConsistentReadConcern = "withConsistentReadConcern"
 )
+
+var consistentReads bool
+
+func init() {
+	consistentReads = os.Getenv("CONSISTENT_READS") != ""
+}
 
 type SharedContext struct {
 	Client                          momento.CacheClient
@@ -56,14 +63,22 @@ func NewSharedContext() SharedContext {
 	shared.StorageConfiguration = config.StorageLaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
 
-	client, err := momento.NewCacheClient(shared.Configuration.WithReadConcern(config.CONSISTENT), shared.CredentialProvider, shared.DefaultTtl)
+	var clientConfig config.Configuration
+	if consistentReads {
+		clientConfig = shared.Configuration.WithReadConcern(config.CONSISTENT)
+	} else {
+		clientConfig = shared.Configuration
+	}
+
+	client, err := momento.NewCacheClient(clientConfig, shared.CredentialProvider, shared.DefaultTtl)
+
 	if err != nil {
 		panic(err)
 	}
 
 	defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
 	clientDefaultCacheName, err := momento.NewCacheClientWithDefaultCache(
-		shared.Configuration, shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
+		clientConfig, shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
 	)
 	if err != nil {
 		panic(err)
