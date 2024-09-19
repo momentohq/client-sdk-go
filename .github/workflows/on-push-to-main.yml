@@ -83,7 +83,7 @@ jobs:
         run: make build-examples
 
       - name: Run test
-        run: make test
+        run: make prod-test
 
   release-please:
     runs-on: ubuntu-latest
