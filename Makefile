@@ -84,7 +84,7 @@ test-auth-service: install-ginkgo
 
 test-cache-service: install-ginkgo
 	@echo "Testing cache service..."
-	@ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
 
 
 test-leaderboard-service: install-ginkgo
