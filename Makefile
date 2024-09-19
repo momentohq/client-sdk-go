@@ -72,6 +72,10 @@ test: install-ginkgo
 	@echo "Running tests..."
 	@ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
 
+prod-test: install-ginkgo
+	@echo "Running tests with consistent reads..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
+
 
 test-auth-service: install-ginkgo
 	@echo "Testing auth service..."
@@ -80,7 +84,7 @@ test-auth-service: install-ginkgo
 
 test-cache-service: install-ginkgo
 	@echo "Testing cache service..."
-	@ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
 
 
 test-leaderboard-service: install-ginkgo
