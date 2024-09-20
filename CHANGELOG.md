@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.28.2](https://github.com/momentohq/client-sdk-go/compare/v1.28.1...v1.28.2) (2024-09-20)
+
+
+### Miscellaneous
+
+* Add a flag and make command to use consistent reads in tests ([#518](https://github.com/momentohq/client-sdk-go/issues/518)) ([79a60df](https://github.com/momentohq/client-sdk-go/commit/79a60dfef3d19003bf7c67836ec829cef032aa4b))
+* improve logging if we exceed the max number of concurrent streams ([#520](https://github.com/momentohq/client-sdk-go/issues/520)) ([2cc3ec2](https://github.com/momentohq/client-sdk-go/commit/2cc3ec2be2e686870790c9fb355d027da2c78cbe))
+* log whether consistent reads are enabled for integration tests ([#519](https://github.com/momentohq/client-sdk-go/issues/519)) ([22af385](https://github.com/momentohq/client-sdk-go/commit/22af385fe32439ea83aca465844176ba08229131))
+* Use the consistent reads flag in integration tests ([#515](https://github.com/momentohq/client-sdk-go/issues/515)) ([0f25f1c](https://github.com/momentohq/client-sdk-go/commit/0f25f1c89d964ddc431bf1e0a00980b26f24c64c))
+
 ## [1.28.1](https://github.com/momentohq/client-sdk-go/compare/v1.28.0...v1.28.1) (2024-09-17)
 
 
