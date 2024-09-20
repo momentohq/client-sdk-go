@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -23,6 +24,7 @@ var consistentReads bool
 
 func init() {
 	consistentReads = os.Getenv("CONSISTENT_READS") != ""
+	log.Printf("consistent reads set to %t for integration tests", consistentReads)
 }
 
 type SharedContext struct {
