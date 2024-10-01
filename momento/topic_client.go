@@ -94,12 +94,11 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		// Ping the stream to provide a nice error message if the cache does not exist.
 		err = clientStream.RecvMsg(firstMsg)
 		if err != nil {
+			failedAttempts += 1
 			rpcError, _ := status.FromError(err)
 			if rpcError != nil {
 				if rpcError.Code() == codes.ResourceExhausted {
 					c.log.Info("Topic subscription limit reached, checking to see if subscription is eligible for retry")
-					// Failed attempts only need to be incremented before we retry due to resource exhausted error.
-					failedAttempts += 1
 					continue
 				}
 			}
