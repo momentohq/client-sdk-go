@@ -79,7 +79,7 @@ prod-test: install-ginkgo
 
 test-auth-service: install-ginkgo
 	@echo "Testing auth service..."
-	@ginkgo ${GINKGO_OPTS} --label-filter auth-service ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter auth-service ${TEST_DIRS}
 
 
 test-cache-service: install-ginkgo
@@ -89,17 +89,17 @@ test-cache-service: install-ginkgo
 
 test-leaderboard-service: install-ginkgo
 	@echo "Testing leaderboard service..."
-	@ginkgo ${GINKGO_OPTS} --label-filter leaderboard-service ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter leaderboard-service ${TEST_DIRS}
 
 
 test-storage-service: install-ginkgo
 	@echo "Testing storage service..."
-	@ginkgo ${GINKGO_OPTS} --label-filter storage-service ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter storage-service ${TEST_DIRS}
 
 
 test-topics-service: install-ginkgo
 	@echo "Testing topics service..."
-	@ginkgo ${GINKGO_OPTS} --label-filter topics-service ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter topics-service ${TEST_DIRS}
 
 
 vendor:
