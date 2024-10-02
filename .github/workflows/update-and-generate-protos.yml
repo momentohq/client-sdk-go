@@ -1,0 +1,52 @@
+name: Update and Build Protos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-and-generate:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessary to push branches
+          persist-credentials: false # Required to use a custom token later
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19.x"
+
+      - name: Install protoc
+        run: make install-protoc-from-client-protos
+
+      - name: install protoc devtools
+        run: make install-protos-devtools
+
+      - name: Update and Build Protos
+        run: make update-and-build-protos
+
+      - name: Check for Changes
+        id: check_changes
+        run: |
+          git add .
+          if git diff --cached --quiet; then
+              echo "No changes detected."
+              echo "changes_detected=false" >> $GITHUB_OUTPUT
+          else
+              echo "Changes detected."
+              echo "changes_detected=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes_detected == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
+          commit-message: "chore: update protos to latest release and regenerate code"
+          branch: "chore/update-protos"
+          title: "chore: update protos to latest release and regenerate code"
+          body: This PR was created automatically by the CI pipeline to update the `.proto` files to the latest release from `client_protos` and regenerate the Go code.
+          labels: "automated pr, proto-update"

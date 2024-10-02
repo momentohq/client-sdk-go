@@ -1,5 +1,5 @@
 .PHONY: install-devtools install-ginkgo format imports tidy vet staticcheck lint \
-	install-protos-devtools update-protos build-protos update-and-build-protos \
+	install-protoc-from-client-protos install-protos-devtools update-protos build-protos update-and-build-protos \
 	build precommit \
 	test test-auth-service test-cache-service test-leaderboard-service test-storage-service test-topics-service \
 	vendor build-examples run-docs-examples
@@ -45,17 +45,28 @@ staticcheck:
 
 lint: format imports tidy vet staticcheck
 
+install-protoc-from-client-protos:
+	@echo "Installing protoc from latest client_protos release..."
+	@temp_dir=$$(mktemp -d) && \
+		latest_tag=$$(git ls-remote --tags --sort="v:refname" https://github.com/momentohq/client_protos.git | tail -n 1 | sed 's!.*/!!') && \
+		echo "Latest release tag: $$latest_tag" && \
+		git -c advice.detachedHead=false clone --branch "$$latest_tag" https://github.com/momentohq/client_protos.git $$temp_dir && \
+		cd $$temp_dir && \
+		./install-protoc.sh && \
+		rm -rf $$temp_dir
 
 install-protos-devtools:
 	@echo "Installing protos dev tools..."
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 
 update-protos:
-	@echo "Updating .proto files from client_protos repository..."
+	@echo "Updating .proto files from the latest release of the client_protos repository..."
 # Note: httpcache.proto is not needed and causes errors, so make sure it's not present
 	@temp_dir=$$(mktemp -d) && \
-		git clone https://github.com/momentohq/client_protos.git $$temp_dir && \
+		latest_tag=$$(git ls-remote --tags --sort="v:refname" https://github.com/momentohq/client_protos.git | tail -n 1 | sed 's!.*/!!') && \
+		echo "Latest release tag: $$latest_tag" && \
+		git -c advice.detachedHead=false clone --branch "$$latest_tag" https://github.com/momentohq/client_protos.git $$temp_dir && \
 		cp $$temp_dir/proto/*.proto internal/protos/ && \
 		rm -f internal/protos/httpcache.proto && \
 		rm -rf $$temp_dir
