@@ -52,7 +52,7 @@ Currently the protos are vendored in the `protos` directory. The core operations
 
 - update the protos to the latest version
 - build the go code from the protos
-- update and
+- update and build the go code from the protos
 
 To update them, run `make update-protos`. This will download the latest protos from the [client-protos library](https://github.com/momentohq/client-protos).
 
