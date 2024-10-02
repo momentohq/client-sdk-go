@@ -1,5 +1,6 @@
 .PHONY: install-devtools install-ginkgo format imports tidy vet staticcheck lint \
-	install-protos-devtools protos build precommit \
+	install-protos-devtools update-protos build-protos update-and-build-protos \
+	build precommit \
 	test test-auth-service test-cache-service test-leaderboard-service test-storage-service test-topics-service \
 	vendor build-examples run-docs-examples
 
@@ -50,15 +51,21 @@ install-protos-devtools:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
+update-protos:
+	@echo "Updating .proto files from client_protos repository..."
+# Note: httpcache.proto is not needed and causes errors, so make sure it's not present
+	@temp_dir=$$(mktemp -d) && \
+		git clone https://github.com/momentohq/client_protos.git $$temp_dir && \
+		cp $$temp_dir/proto/*.proto internal/protos/ && \
+		rm -f internal/protos/httpcache.proto && \
+		rm -rf $$temp_dir
 
-protos:
-	@echo "Generating protos..."
+build-protos:
+	@echo "Generating go code from protos..."
 	@echo "Run `make install-protos-devtools` if you're missing the Go grpc tools."
-	@echo "Did you copy momentohq/client_protos/proto/*.proto to internal/protos?"
-	# this file is not needed and causes errors, so make sure it's not present
-	rm -f internal/protos/httpcache.proto
 	protoc -I=internal/protos --go_out=internal/protos --go_opt=paths=source_relative --go-grpc_out=internal/protos --go-grpc_opt=paths=source_relative internal/protos/*.proto
 
+update-and-build-protos: update-protos build-protos
 
 build:
 	@echo "Building..."
