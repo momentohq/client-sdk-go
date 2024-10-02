@@ -52,7 +52,7 @@ install-protoc-from-client-protos:
 		echo "Latest release tag: $$latest_tag" && \
 		git -c advice.detachedHead=false clone --branch "$$latest_tag" https://github.com/momentohq/client_protos.git $$temp_dir && \
 		cd $$temp_dir && \
-		./install-protoc.sh && \
+		ls install_protoc.sh && \
 		rm -rf $$temp_dir
 
 install-protos-devtools:
