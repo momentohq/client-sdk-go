@@ -52,10 +52,12 @@ install-protos-devtools:
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 update-protos:
-	@echo "Updating .proto files from client_protos repository..."
+	@echo "Updating .proto files from the latest release of the client_protos repository..."
 # Note: httpcache.proto is not needed and causes errors, so make sure it's not present
 	@temp_dir=$$(mktemp -d) && \
-		git clone https://github.com/momentohq/client_protos.git $$temp_dir && \
+		latest_tag=$$(git ls-remote --tags --sort="v:refname" https://github.com/momentohq/client_protos.git | tail -n 1 | sed 's!.*/!!') && \
+		echo "Latest release tag: $$latest_tag" && \
+		git -c advice.detachedHead=false clone --branch "$$latest_tag" https://github.com/momentohq/client_protos.git $$temp_dir && \
 		cp $$temp_dir/proto/*.proto internal/protos/ && \
 		rm -f internal/protos/httpcache.proto && \
 		rm -rf $$temp_dir
