@@ -3,7 +3,6 @@
 [![project status](https://momentohq.github.io/standards-and-practices/badges/project-status-official.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md)
 [![project stability](https://momentohq.github.io/standards-and-practices/badges/project-stability-stable.svg)](https://github.com/momentohq/standards-and-practices/blob/main/docs/momento-on-github.md)
 
-
 # Welcome to client-sdk-go contributing guide :wave:
 
 Thank you for taking your time to contribute to our Go SDK!
@@ -40,10 +39,26 @@ And retry running `ginkgo`. If that works, then add the above line to your shell
 
 ## Developing :computer:
 
+### Core workflow
+
 Running `make precommit` will run all formatters, linters, and the tests. Run this before submitting a PR to ensure the code passes tests and follows our project conventions.
 
 - `make test` will just run the tests
 - `make lint` will just run the formatting and linters
+
+### Updating the protos
+
+Currently the protos are vendored in the `protos` directory. The core operations are:
+
+- update the protos to the latest version
+- build the go code from the protos
+- update and
+
+To update them, run `make update-protos`. This will download the latest protos from the [client-protos library](https://github.com/momentohq/client-protos).
+
+To generate the go code from the protos, run `make build-protos`.
+
+To do both, run `make update-and-build-protos`.
 
 ## Tests :zap:
 
@@ -53,5 +68,6 @@ Integration tests require an auth token for testing. Set the env var `MOMENTO_AP
 
 Then run `make test`.
 
-----------------------------------------------------------------------------------------
+---
+
 For more info, visit our website at [https://gomomento.com](https://gomomento.com)!
