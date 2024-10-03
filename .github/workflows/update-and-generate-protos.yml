@@ -37,13 +37,19 @@ jobs:
               echo "changes_detected=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Detect latest version
+        id: detect_latest_version
+        run: |
+          LATEST_VERSION=$(make fetch-latest-client-protos-version)
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+
       - name: Create Pull Request
         if: steps.check_changes.outputs.changes_detected == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.MOMENTO_MACHINE_USER_GITHUB_TOKEN }}
-          commit-message: "chore: update protos to latest release and regenerate code"
+          commit-message: "chore(protos): update protos to ${{ steps.detect_latest_version.outputs.latest_version }} and regenerate code"
           branch: "chore/update-protos"
-          title: "chore: update protos to latest release and regenerate code"
-          body: This PR was created automatically by the CI pipeline to update the `.proto` files to the latest release from `client_protos` and regenerate the Go code.
+          title: "chore(protos): update protos to ${{ steps.detect_latest_version.outputs.latest_version }} and regenerate code"
+          body: This PR was created automatically by the CI pipeline to update the `.proto` files to the latest release from `client_protos`, $${{ steps.detect_latest_version.outputs.latest_version }} and regenerate the go protobuf code.
           labels: "automated pr, proto-update"
