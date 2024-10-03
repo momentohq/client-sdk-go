@@ -51,5 +51,5 @@ jobs:
           commit-message: "chore(protos): update protos to ${{ steps.detect_latest_version.outputs.latest_version }} and regenerate code"
           branch: "chore/update-protos"
           title: "chore(protos): update protos to ${{ steps.detect_latest_version.outputs.latest_version }} and regenerate code"
-          body: This PR was created automatically by the CI pipeline to update the `.proto` files to the latest release from `client_protos`, $${{ steps.detect_latest_version.outputs.latest_version }} and regenerate the go protobuf code.
+          body: This PR was created automatically by the CI pipeline to update the `.proto` files to the latest release from `client_protos`, ${{ steps.detect_latest_version.outputs.latest_version }}, and regenerate the go protobuf code.
           labels: "automated pr, proto-update"
