@@ -108,7 +108,7 @@ var _ = Describe("cache-client", Label(CACHE_SERVICE_LABEL), func() {
 			config.LambdaLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)),
 			sharedContext.CredentialProvider,
 			sharedContext.DefaultTtl,
-			1*time.Millisecond,
+			1*time.Microsecond,
 		)
 
 		Expect(client).To(BeNil())
