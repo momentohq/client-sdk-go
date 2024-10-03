@@ -37,7 +37,7 @@ jobs:
               echo "changes_detected=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Detect latest version
+      - name: Detect latest client-protos version
         id: detect_latest_version
         run: |
           LATEST_VERSION=$(make fetch-latest-client-protos-version)
