@@ -1,4 +1,5 @@
-.PHONY: install-devtools install-ginkgo format imports tidy vet staticcheck lint \
+.PHONY: install-goimport install-staticcheck install-ginkgo install-devtools \
+	format imports tidy vet staticcheck lint \
 	install-protoc-from-client-protos install-protos-devtools update-protos build-protos update-and-build-protos \
 	build precommit \
 	test test-auth-service test-cache-service test-leaderboard-service test-storage-service test-topics-service \
@@ -8,22 +9,33 @@ GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aw
 TEST_DIRS = momento/ auth/ batchutils/
 GINKGO_OPTS = --no-color -v
 
-install-devtools: install-ginkgo
-	@echo "Installing dev tools..."
-	go install golang.org/x/tools/cmd/goimports@v0.24.0
-	go install honnef.co/go/tools/cmd/staticcheck@v0.4.7
 
+install-goimport:
+	@if ! command -v goimports &> /dev/null; then \
+		echo "goimports not found, installing..."; \
+		go install golang.org/x/tools/cmd/goimports@v0.24.0; \
+	fi
+
+install-staticcheck:
+	@if ! command -v staticcheck &> /dev/null; then \
+		echo "staticcheck not found, installing..."; \
+		go install honnef.co/go/tools/cmd/staticcheck@v0.4.7; \
+	fi
 
 install-ginkgo:
-	@echo "Installing ginkgo..."
-	@go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1
+	@if ! command -v ginkgo &> /dev/null; then \
+        echo "ginkgo not found, installing..."; \
+        go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1; \
+    fi
+
+install-devtools: install-goimport install-staticcheck install-ginkgo
 
 format:
 	@echo "Formatting code..."
 	gofmt -s -w ${GOFILES_NOT_NODE}
 
 
-imports:
+imports: install-goimport
 	@echo "Running goimports..."
 	goimports -l -w ${GOFILES_NOT_NODE}
 
@@ -38,14 +50,24 @@ vet:
 	go vet ./...
 
 
-staticcheck:
+staticcheck: install-staticcheck
 	@echo "Running staticcheck..."
 	staticcheck ./...
 
 
 lint: format imports tidy vet staticcheck
 
-install-protoc-from-client-protos:
+install-protos-devtools:
+	@if ! command -v protoc-gen-go &> /dev/null; then \
+		echo "protoc-gen-go not found, installing..."; \
+		go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2; \
+	fi
+	@if ! command -v protoc-gen-go-grpc &> /dev/null; then \
+		echo "protoc-gen-go-grpc not found, installing..."; \
+		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0; \
+	fi
+
+install-protoc-from-client-protos: install-protos-devtools
 	@echo "Installing protoc from latest client_protos release..."
 	@temp_dir=$$(mktemp -d) && \
 		latest_tag=$$(git ls-remote --tags --sort="v:refname" https://github.com/momentohq/client_protos.git | tail -n 1 | sed 's!.*/!!') && \
@@ -54,11 +76,6 @@ install-protoc-from-client-protos:
 		cd $$temp_dir && \
 		./install_protoc.sh && \
 		rm -rf $$temp_dir
-
-install-protos-devtools:
-	@echo "Installing protos dev tools..."
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 
 update-protos:
 	@echo "Updating .proto files from the latest release of the client_protos repository..."

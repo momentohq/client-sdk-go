@@ -22,9 +22,6 @@ jobs:
       - name: Install protoc
         run: make install-protoc-from-client-protos
 
-      - name: install protoc devtools
-        run: make install-protos-devtools
-
       - name: Update and Build Protos
         run: make update-and-build-protos
 
