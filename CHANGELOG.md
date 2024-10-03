@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.4](https://github.com/momentohq/client-sdk-go/compare/v1.28.3...v1.28.4) (2024-10-03)
+
+
+### Miscellaneous
+
+* **protos:** update protos to v0.119.0 and regenerate code ([#533](https://github.com/momentohq/client-sdk-go/issues/533)) ([f1ac517](https://github.com/momentohq/client-sdk-go/commit/f1ac5177f57799a697cd5a05e014a6b09b7e6a34))
+
 ## [1.28.3](https://github.com/momentohq/client-sdk-go/compare/v1.28.2...v1.28.3) (2024-10-03)
 
 
