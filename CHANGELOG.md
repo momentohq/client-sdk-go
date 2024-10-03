@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.28.3](https://github.com/momentohq/client-sdk-go/compare/v1.28.2...v1.28.3) (2024-10-03)
+
+
+### Miscellaneous
+
+* add makefile targets to update and build protos ([#525](https://github.com/momentohq/client-sdk-go/issues/525)) ([86b747d](https://github.com/momentohq/client-sdk-go/commit/86b747d002f9489eb184165901c079f80e8e4389))
+* enable consistent reads on all canary test targets ([#523](https://github.com/momentohq/client-sdk-go/issues/523)) ([a6948b9](https://github.com/momentohq/client-sdk-go/commit/a6948b98e18ec458f64591c0a59ef9a6c3e0fc7b))
+* fix formatting in Makefile ([#535](https://github.com/momentohq/client-sdk-go/issues/535)) ([d97f229](https://github.com/momentohq/client-sdk-go/commit/d97f229a0c8b269f612b3101b5f3674c8554aef7))
+
 ## [1.28.2](https://github.com/momentohq/client-sdk-go/compare/v1.28.1...v1.28.2) (2024-09-20)
 
 
