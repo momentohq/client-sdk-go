@@ -75,6 +75,7 @@ build-protos:
 	@echo "Generating go code from protos..."
 	@echo "Run `make install-protos-devtools` if you're missing the Go grpc tools."
 	protoc -I=internal/protos --go_out=internal/protos --go_opt=paths=source_relative --go-grpc_out=internal/protos --go-grpc_opt=paths=source_relative internal/protos/*.proto
+	$(MAKE) lint
 
 update-and-build-protos: update-protos build-protos
 
