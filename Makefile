@@ -58,7 +58,7 @@ install-protoc-from-client-protos:
 install-protos-devtools:
 	@echo "Installing protos dev tools..."
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 
 update-protos:
 	@echo "Updating .proto files from the latest release of the client_protos repository..."
