@@ -24,9 +24,9 @@ install-staticcheck:
 
 install-ginkgo:
 	@if ! command -v ginkgo &> /dev/null; then \
-        echo "ginkgo not found, installing..."; \
-        go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1; \
-    fi
+		echo "ginkgo not found, installing..."; \
+		go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1; \
+	fi
 
 install-devtools: install-goimport install-staticcheck install-ginkgo
 
