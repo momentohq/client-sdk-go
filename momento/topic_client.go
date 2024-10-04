@@ -4,6 +4,7 @@ package momento
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"google.golang.org/grpc"
@@ -67,13 +68,6 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, err
 	}
 
-	maxAttempts := c.numChannels
-	if maxAttempts == 0 {
-		maxAttempts = 1
-	}
-
-	failedAttempts := uint32(0)
-
 	var topicManager *grpcmanagers.TopicGrpcManager
 	var clientStream grpc.ClientStream
 	var cancelContext context.Context
@@ -82,9 +76,11 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 
 	firstMsg := new(pb.XSubscriptionItem)
 
-	for failedAttempts < maxAttempts {
+	failedAttempts := uint32(0)
+	for {
 		if failedAttempts > 0 {
-			c.log.Info("Retrying topic subscription due to subscription limit; retry attempt %d of %d", failedAttempts, maxAttempts-1)
+			c.log.Info("Retrying topic subscription in 500ms due to subscription limit; retry attempt %d", failedAttempts)
+			time.Sleep(500 * time.Millisecond)
 		}
 
 		topicManager, clientStream, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
@@ -98,14 +94,15 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		// Ping the stream to provide a nice error message if the cache does not exist.
 		err = clientStream.RecvMsg(firstMsg)
 		if err != nil {
+			failedAttempts += 1
 			rpcError, _ := status.FromError(err)
 			if rpcError != nil {
 				if rpcError.Code() == codes.ResourceExhausted {
 					c.log.Info("Topic subscription limit reached, checking to see if subscription is eligible for retry")
-					failedAttempts += 1
 					continue
 				}
 			}
+			// For all other errors, we return the error and exit the loop.
 			return nil, momentoerrors.ConvertSvcErr(err)
 		}
 		break
