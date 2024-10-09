@@ -84,11 +84,19 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		}
 
 		topicManager, clientStream, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
-			CacheName: request.CacheName,
-			TopicName: request.TopicName,
+			CacheName:                   request.CacheName,
+			TopicName:                   request.TopicName,
+			ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
+			SequencePage:                request.SequencePage,
 		})
 		if err != nil {
 			return nil, err
+		}
+
+		if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
+			c.log.Debug("Starting new subscription from latest messages.")
+		} else {
+			c.log.Debug("Resuming subscription from sequence number %d and sequence page %d.", request.ResumeAtTopicSequenceNumber, request.SequencePage)
 		}
 
 		// Ping the stream to provide a nice error message if the cache does not exist.

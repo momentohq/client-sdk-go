@@ -70,13 +70,20 @@ message _SubscriptionRequest {
   // The literal topic name to which you want to subscribe.
   string topic = 2;
 
-  // --> Providing this is not required. <--
-  //
   // If provided, attempt to reconnect to the topic and replay messages starting from
   // the provided sequence number. You may get a discontinuity if some (or all) of the
   // messages are not available.
+  // If provided at 1, you may receive some messages leading up to whatever the
+  // newest message is. The exact amount is unspecified and subject to change.
   // If not provided (or 0), the subscription will begin with the latest messages.
   uint64 resume_at_topic_sequence_number = 3;
+
+  // Determined by the service when a topic is created. This clarifies the intent of
+  // a subscription, and ensures the right messages are sent for a given
+  // `resume_at_topic_sequence_number`.
+  // Include this in your Subscribe() calls when you are reconnecting. The right value
+  // is the last sequence_page you received.
+  uint64 sequence_page = 4;
 }
 
 // Possible message kinds from a topic. They can be items when they're from you, or
@@ -101,19 +108,22 @@ message _SubscriptionItem {
 
 // Your subscription has yielded an item you previously published. Here it is!
 message _TopicItem {
-  // Topic sequence numbers are **best-effort** and **informational**.
-  // They are not transactional.
-  // They exist:
-  // * to help reconnect to an existing topic while trying to avoid missing items.
-  // * to facilitate richer monitoring and logging.
-  // * to provide a best-effort awareness of stream contiguity, or lack thereof,
-  //   in case you need to know.
-  // You can safely ignore them if none of that matters to you!
+  // Topic sequence numbers give an order of messages per-topic.
+  // All subscribers to a topic will receive messages in the same order, with the same sequence numbers.
   uint64 topic_sequence_number = 1;
+  
   // The value you previously published to this topic.
   _TopicValue value = 2;
+  
   // Authenticated id from Publisher's disposable token
   string publisher_id = 3;
+
+  // Sequence pages exist to determine which sequence number range a message belongs to. On a topic reset,
+  // the sequence numbers reset and a new sequence_page is given.
+  // For a given sequence_page, the next message in a topic is topic_sequence_number + 1.
+  //
+  // Later sequence pages are numbered greater than earlier pages, but they don't go one-by-one.
+  uint64 sequence_page = 4;
 }
 
 // A value in a topic - published, duplicated and received in a subscription.
@@ -135,6 +145,11 @@ message _Discontinuity {
   uint64 last_topic_sequence = 1;
   // The new topic sequence number after which TopicItems will ostensibly resume.
   uint64 new_topic_sequence = 2;
+  // The new topic sequence_page. If you had one before and this one is different, then your topic reset.
+  // If you didn't have one, then this is just telling you what the sequence page is expected to be.
+  // If you had one before, and this one is the same, then it's just telling you that you missed some messages
+  // in the topic. Probably your client is consuming messages a little too slowly in this case!
+  uint64 new_sequence_page = 3;
 }
 
 // A message from Momento for when we want to reassure clients or frameworks that a

@@ -68,6 +68,7 @@ type topicSubscription struct {
 	topicName               string
 	log                     logger.MomentoLogger
 	lastKnownSequenceNumber uint64
+	lastKnownSequencePage   uint64
 	cancelContext           context.Context
 	cancelFunction          context.CancelFunc
 }
@@ -133,18 +134,19 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
 			s.log.Debug("received discontinuity item: %+v", typedMsg.Discontinuity)
-			return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence), nil
+			return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence, typedMsg.Discontinuity.NewSequencePage), nil
 		case *pb.XSubscriptionItem_Item:
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
+			s.lastKnownSequencePage = typedMsg.Item.GetSequencePage()
 			publisherId := typedMsg.Item.GetPublisherId()
 
-			s.log.Trace("received item with sequence number %d and publisher Id %s", s.lastKnownSequenceNumber, publisherId)
+			s.log.Trace("received item with sequence number %d, sequence page %d, and publisher Id %s", s.lastKnownSequenceNumber, s.lastKnownSequencePage, publisherId)
 
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
-				return NewTopicItem(String(subscriptionItem.Text), String(publisherId), s.lastKnownSequenceNumber), nil
+				return NewTopicItem(String(subscriptionItem.Text), String(publisherId), s.lastKnownSequenceNumber, s.lastKnownSequencePage), nil
 			case *pb.XTopicValue_Binary:
-				return NewTopicItem(Bytes(subscriptionItem.Binary), String(publisherId), s.lastKnownSequenceNumber), nil
+				return NewTopicItem(Bytes(subscriptionItem.Binary), String(publisherId), s.lastKnownSequenceNumber, s.lastKnownSequencePage), nil
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Trace("received heartbeat item")
@@ -167,6 +169,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
+			SequencePage:                s.lastKnownSequencePage,
 		})
 
 		if err != nil {

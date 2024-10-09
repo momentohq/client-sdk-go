@@ -91,6 +91,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
+		SequencePage:                request.SequencePage,
 	})
 
 	if err != nil {
