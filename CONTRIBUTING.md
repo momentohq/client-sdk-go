@@ -8,7 +8,6 @@
 
 Thank you for taking your time to contribute to our Go SDK!
 This guide will provide you information to start your own development and testing.
-Happy coding :dancer:
 
 ## Submitting
 
