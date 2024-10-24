@@ -1,18 +1,5 @@
 # Changelog
 
-## [1.28.5](https://github.com/momentohq/client-sdk-go/compare/v1.28.4...v1.28.5) (2024-10-24)
-
-
-### Bug Fixes
-
-* interpret get rank response when sorted set found ([#541](https://github.com/momentohq/client-sdk-go/issues/541)) ([ffe0e9c](https://github.com/momentohq/client-sdk-go/commit/ffe0e9cc511b44879ffc5d19d543793eaa708dd7))
-
-
-### Miscellaneous
-
-* add delay between retries when topic subscription limit is reached ([#522](https://github.com/momentohq/client-sdk-go/issues/522)) ([81b9ebc](https://github.com/momentohq/client-sdk-go/commit/81b9ebc27b6456a7811e81b47f134b1bd09cd752))
-* reduce eager connection timeout for test for low latency test environments ([#537](https://github.com/momentohq/client-sdk-go/issues/537)) ([9b61f23](https://github.com/momentohq/client-sdk-go/commit/9b61f238e84a7e4485fff1b2092800894409c104))
-
 ## [1.28.4](https://github.com/momentohq/client-sdk-go/compare/v1.28.3...v1.28.4) (2024-10-03)
 
 
