@@ -24,7 +24,6 @@ var Version = "1.28.4" // x-release-please-version
 type ClientType string
 
 const (
-
 	Cache       ClientType = "cache"
 	Store       ClientType = "store"
 	Leaderboard ClientType = "leaderboard"
