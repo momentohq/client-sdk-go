@@ -19,7 +19,7 @@ func init() {
 	FirstTimeHeadersSent.Store(Auth, false)
 }
 
-var Version = "1.28.4" // x-release-please-version
+var Version = "1.28.6" // x-release-please-version
 
 type ClientType string
 
