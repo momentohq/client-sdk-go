@@ -39,15 +39,15 @@ const (
 	AuthenticationError = "AuthenticationError"
 	// LimitExceededError occurs when request rate, bandwidth, or object size exceeded the limits for the account.
 	LimitExceededError = "LimitExceededError"
-	// NotFoundError occurs when a cache with specified name doesn"t exist.
+	// NotFoundError occurs when a cache with specified name doesn't exist.
 	//
 	// Deprecated: Use more specific CacheNotFoundError, StoreNotFoundError, or ItemNotFoundError instead.
 	NotFoundError = "NotFoundError"
-	// CacheNotFoundError occurs when a cache with specified name doesn"t exist.
+	// CacheNotFoundError occurs when a cache with specified name doesn't exist.
 	CacheNotFoundError = "NotFoundError"
-	// StoreNotFoundError occurs when a store with specified name doesn"t exist.
+	// StoreNotFoundError occurs when a store with specified name doesn't exist.
 	StoreNotFoundError = "StoreNotFoundError"
-	// ItemNotFoundError occurs when an item with specified key doesn"t exist.
+	// ItemNotFoundError occurs when an item with specified key doesn't exist.
 	ItemNotFoundError = "ItemNotFoundError"
 	// AlreadyExistsError occurs when a cache with specified name already exists.
 	//
@@ -61,7 +61,7 @@ const (
 	UnknownServiceError = "UnknownServiceError"
 	// ServerUnavailableError occurs when the server was unable to handle the request.
 	ServerUnavailableError = "ServerUnavailableError"
-	// FailedPreconditionError occurs when the system is not in a state required for the operation"s execution.
+	// FailedPreconditionError occurs when the system is not in a state required for the operation's execution.
 	FailedPreconditionError = "FailedPreconditionError"
 	// InternalServerErrorMessage is the message for an unexpected error occurring while trying to fulfill the request.
 	InternalServerErrorMessage = "CacheService failed with an internal error"
