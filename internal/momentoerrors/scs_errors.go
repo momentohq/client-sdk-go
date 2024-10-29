@@ -16,7 +16,12 @@ type MomentoSvcErr interface {
 }
 
 // NewMomentoSvcErr returns a new Momento service error.
+// Used internally, mostly for invalid argument errors.
+// Default to using the code as the message wrapper otherwise.
 func NewMomentoSvcErr(code string, message string, originalErr error) MomentoSvcErr {
+	if code == InvalidArgumentError {
+		return newMomentoSvcErr(code, message, originalErr, "Invalid argument passed to Momento client")
+	}
 	return newMomentoSvcErr(code, message, originalErr, code)
 }
 
