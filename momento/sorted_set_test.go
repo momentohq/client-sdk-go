@@ -773,7 +773,10 @@ var _ = Describe("cache-client sortedset-methods", Label(CACHE_SERVICE_LABEL), f
 	})
 
 	Describe("SortedSetGetRank", func() {
-		It("Misses when the element does not exist", func() {
+		It("Misses when the element does not exist but the sorted set does", func() {
+			putElements([]SortedSetElement{
+				{Value: String("bar"), Score: 0},
+			})
 			Expect(
 				sharedContext.Client.SortedSetGetRank(
 					sharedContext.Ctx,

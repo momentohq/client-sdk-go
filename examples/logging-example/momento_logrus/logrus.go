@@ -11,24 +11,24 @@ type LogrusMomentoLogger struct {
 	logrusLogger *logrus.Entry
 }
 
-func (l LogrusMomentoLogger) Trace(message string, args ...string) {
-	l.logrusLogger.Tracef(message, args)
+func (l LogrusMomentoLogger) Trace(message string, args ...any) {
+	l.logrusLogger.Tracef(message, args...)
 }
 
-func (l LogrusMomentoLogger) Debug(message string, args ...string) {
-	l.logrusLogger.Debugf(message, args)
+func (l LogrusMomentoLogger) Debug(message string, args ...any) {
+	l.logrusLogger.Debugf(message, args...)
 }
 
-func (l LogrusMomentoLogger) Info(message string, args ...string) {
-	l.logrusLogger.Infof(message, args)
+func (l LogrusMomentoLogger) Info(message string, args ...any) {
+	l.logrusLogger.Infof(message, args...)
 }
 
-func (l LogrusMomentoLogger) Warn(message string, args ...string) {
-	l.logrusLogger.Warnf(message, args)
+func (l LogrusMomentoLogger) Warn(message string, args ...any) {
+	l.logrusLogger.Warnf(message, args...)
 }
 
-func (l LogrusMomentoLogger) Error(message string, args ...string) {
-	l.logrusLogger.Errorf(message, args)
+func (l LogrusMomentoLogger) Error(message string, args ...any) {
+	l.logrusLogger.Errorf(message, args...)
 }
 
 type LogrusMomentoLoggerFactory struct{}

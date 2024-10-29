@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.28.7](https://github.com/momentohq/client-sdk-go/compare/v1.28.6...v1.28.7) (2024-10-24)
+
+
+### Miscellaneous
+
+* update contributing documentation ([#546](https://github.com/momentohq/client-sdk-go/issues/546)) ([babefcc](https://github.com/momentohq/client-sdk-go/commit/babefcc1c73283a70085d329cbe4861f4ac66358))
+
+## [1.28.6](https://github.com/momentohq/client-sdk-go/compare/v1.28.4...v1.28.6) (2024-10-24)
+
+### Bug Fixes
+
+* interpret get rank response when sorted set found ([#541](https://github.com/momentohq/client-sdk-go/issues/541)) ([ffe0e9c](https://github.com/momentohq/client-sdk-go/commit/ffe0e9cc511b44879ffc5d19d543793eaa708dd7))
+
 ## [1.28.4](https://github.com/momentohq/client-sdk-go/compare/v1.28.3...v1.28.4) (2024-10-03)
 
 
