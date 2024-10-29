@@ -12,6 +12,8 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	auth_responses "github.com/momentohq/client-sdk-go/responses/auth"
 	"github.com/momentohq/client-sdk-go/utils"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type tokenClient struct {
@@ -265,6 +267,7 @@ func (client *tokenClient) GenerateDisposableToken(ctx context.Context, request 
 		tokenId = *request.Props.TokenId
 	}
 
+	var header, trailer metadata.MD
 	resp, err := client.grpcClient.GenerateDisposableToken(ctx, &pb.XGenerateDisposableTokenRequest{
 		AuthToken: client.grpcManager.AuthToken,
 		Expires: &pb.XGenerateDisposableTokenRequest_Expires{
@@ -278,9 +281,9 @@ func (client *tokenClient) GenerateDisposableToken(ctx context.Context, request 
 			},
 		},
 		TokenId: tokenId,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
 	jsonObject := map[string]string{

@@ -8,6 +8,7 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
+	"google.golang.org/grpc/metadata"
 )
 
 type SetBatchRequest struct {
@@ -54,14 +55,18 @@ func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *SetBatchRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
-	resp, err := client.grpcClient.SetBatch(metadata, r.grpcRequest)
+func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+	var header, trailer metadata.MD
+	resp, err := client.grpcClient.SetBatch(requestMetadata, r.grpcRequest)
+	header, _ = resp.Header()
+	trailer = resp.Trailer()
+	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
-		return nil, err
+		return nil, responseMetadata, err
 	}
 	r.grpcStream = resp
 	// Not sure what to return here, don't think it's even used
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (r *SetBatchRequest) interpretGrpcResponse() error {

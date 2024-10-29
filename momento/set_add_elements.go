@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/responses"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/utils"
@@ -59,13 +61,15 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 	return nil
 }
 
-func (r *SetAddElementsRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
-	resp, err := client.grpcClient.SetUnion(metadata, r.grpcRequest)
+func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+	var header, trailer metadata.MD
+	resp, err := client.grpcClient.SetUnion(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
-		return nil, err
+		return nil, responseMetadata, err
 	}
 	r.grpcResponse = resp
-	return resp, nil
+	return resp, nil, nil
 }
 
 func (r *SetAddElementsRequest) interpretGrpcResponse() error {

@@ -39,9 +39,15 @@ func (client *ScsControlClient) Close() momentoerrors.MomentoSvcErr {
 func (client *ScsControlClient) CreateCache(ctx context.Context, request *models.CreateCacheRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
-	_, err := client.grpcClient.CreateCache(ctx, &pb.XCreateCacheRequest{CacheName: request.CacheName})
+	var header, trailer metadata.MD
+	_, err := client.grpcClient.CreateCache(
+		ctx,
+		&pb.XCreateCacheRequest{CacheName: request.CacheName},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }
@@ -49,9 +55,15 @@ func (client *ScsControlClient) CreateCache(ctx context.Context, request *models
 func (client *ScsControlClient) DeleteCache(ctx context.Context, request *models.DeleteCacheRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
-	_, err := client.grpcClient.DeleteCache(ctx, &pb.XDeleteCacheRequest{CacheName: request.CacheName})
+	var header, trailer metadata.MD
+	_, err := client.grpcClient.DeleteCache(
+		ctx,
+		&pb.XDeleteCacheRequest{CacheName: request.CacheName},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }
@@ -59,9 +71,15 @@ func (client *ScsControlClient) DeleteCache(ctx context.Context, request *models
 func (client *ScsControlClient) ListCaches(ctx context.Context, request *models.ListCachesRequest) (*models.ListCachesResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
-	resp, err := client.grpcClient.ListCaches(ctx, &pb.XListCachesRequest{NextToken: request.NextToken})
+	var header, trailer metadata.MD
+	resp, err := client.grpcClient.ListCaches(
+		ctx,
+		&pb.XListCachesRequest{NextToken: request.NextToken},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return models.NewListCacheResponse(resp), nil
 }
@@ -69,9 +87,15 @@ func (client *ScsControlClient) ListCaches(ctx context.Context, request *models.
 func (client *ScsControlClient) CreateStore(ctx context.Context, request *models.CreateStoreRequest) momentoerrors.MomentoSvcErr {
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
-	_, err := client.grpcClient.CreateStore(ctx, &pb.XCreateStoreRequest{StoreName: request.StoreName})
+	var header, trailer metadata.MD
+	_, err := client.grpcClient.CreateStore(
+		ctx,
+		&pb.XCreateStoreRequest{StoreName: request.StoreName},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }
@@ -95,9 +119,15 @@ func (client *ScsControlClient) DeleteStore(ctx context.Context, request *models
 func (client *ScsControlClient) ListStores(ctx context.Context, request *models.ListStoresRequest) (*models.ListStoresResponse, momentoerrors.MomentoSvcErr) {
 	ctx, cancel := context.WithTimeout(ctx, ControlCtxTimeout)
 	defer cancel()
-	resp, err := client.grpcClient.ListStores(ctx, &pb.XListStoresRequest{NextToken: request.NextToken})
+	var header, trailer metadata.MD
+	resp, err := client.grpcClient.ListStores(
+		ctx,
+		&pb.XListStoresRequest{NextToken: request.NextToken},
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return models.NewListStoresResponse(resp), nil
 }

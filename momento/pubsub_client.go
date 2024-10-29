@@ -14,6 +14,7 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type pubSubClient struct {
@@ -85,6 +86,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	// add withCancel to context
 	cancelContext, cancelFunction := context.WithCancel(requestMetadata)
 
+	var header, trailer metadata.MD
 	atomic.AddInt64(&numGrpcStreams, 1)
 	topicManager := client.getNextStreamTopicManager()
 	clientStream, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
@@ -96,7 +98,9 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	if err != nil {
 		atomic.AddInt64(&numGrpcStreams, -1)
 		cancelFunction()
-		return nil, nil, nil, nil, err
+		header, _ = clientStream.Header()
+		trailer = clientStream.Trailer()
+		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
 	if numGrpcStreams > 0 && (int64(numChannels*100)-numGrpcStreams < 10) {
@@ -111,6 +115,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 
 	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
 	topicManager := client.getNextStreamTopicManager()
+	var header, trailer metadata.MD
 	switch value := request.Value.(type) {
 	case String:
 		atomic.AddInt64(&numGrpcStreams, 1)
@@ -122,8 +127,11 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 					Text: value.asString(),
 				},
 			},
-		})
+		}, grpc.Header(&header), grpc.Trailer(&trailer))
 		atomic.AddInt64(&numGrpcStreams, -1)
+		if err != nil {
+			return momentoerrors.ConvertSvcErr(err, header, trailer)
+		}
 		return err
 	case Bytes:
 		atomic.AddInt64(&numGrpcStreams, 1)
@@ -135,8 +143,11 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 					Binary: value.asBytes(),
 				},
 			},
-		})
+		}, grpc.Header(&header), grpc.Trailer(&trailer))
 		atomic.AddInt64(&numGrpcStreams, -1)
+		if err != nil {
+			return momentoerrors.ConvertSvcErr(err, header, trailer)
+		}
 		return err
 	default:
 		return momentoerrors.NewMomentoSvcErr(
