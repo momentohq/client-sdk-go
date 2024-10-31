@@ -176,23 +176,23 @@ func determineLimitExceededMessageWrapper(errorMessage string, metadata ...metad
 			case "element_size_limit_exceeded":
 				messageWrapper = ElementSizeLimitExceeded
 			}
-		} else {
-			// If err metadata is not available, try string matching on the
-			// error details to return the most specific message wrapper.
-			lowerCasedMessage := strings.ToLower(errorMessage)
-			if strings.Contains(lowerCasedMessage, "subscribers") {
-				messageWrapper = TopicSubscriptionsLimitExceeded
-			} else if strings.Contains(lowerCasedMessage, "operations") {
-				messageWrapper = OperationsRateLimitExceeded
-			} else if strings.Contains(lowerCasedMessage, "throughput") {
-				messageWrapper = ThroughputRateLimitExceeded
-			} else if strings.Contains(lowerCasedMessage, "request limit") {
-				messageWrapper = RequestSizeLimitExceeded
-			} else if strings.Contains(lowerCasedMessage, "item size") {
-				messageWrapper = ItemSizeLimitExceeded
-			} else if strings.Contains(lowerCasedMessage, "element size") {
-				messageWrapper = ElementSizeLimitExceeded
-			}
+		}
+	} else {
+		// If err metadata is not available, try string matching on the
+		// error details to return the most specific message wrapper.
+		lowerCasedMessage := strings.ToLower(errorMessage)
+		if strings.Contains(lowerCasedMessage, "subscribers") {
+			messageWrapper = TopicSubscriptionsLimitExceeded
+		} else if strings.Contains(lowerCasedMessage, "operations") {
+			messageWrapper = OperationsRateLimitExceeded
+		} else if strings.Contains(lowerCasedMessage, "throughput") {
+			messageWrapper = ThroughputRateLimitExceeded
+		} else if strings.Contains(lowerCasedMessage, "request limit") {
+			messageWrapper = RequestSizeLimitExceeded
+		} else if strings.Contains(lowerCasedMessage, "item size") {
+			messageWrapper = ItemSizeLimitExceeded
+		} else if strings.Contains(lowerCasedMessage, "element size") {
+			messageWrapper = ElementSizeLimitExceeded
 		}
 	}
 	return messageWrapper
