@@ -60,6 +60,10 @@ func (m TopicItem) GetTopicSequenceNumber() uint64 {
 	return m.topicSequenceNumber
 }
 
+func (m TopicItem) GetTopicSequencePage() uint64 {
+	return m.topicSequencePage
+}
+
 func NewTopicItem(message TopicValue, publisherId String, topicSequenceNumber uint64, topicSequencePage uint64) TopicItem {
 	return TopicItem{
 		message:             message,
