@@ -76,121 +76,29 @@ const (
 	ConnectionError = "ConnectionError"
 )
 
-const (
-	TopicSubscriptionsLimitExceeded = "Topic subscriptions limit exceeded for this account"
-	OperationsRateLimitExceeded     = "Request rate limit exceeded for this account"
-	ThroughputRateLimitExceeded     = "Bandwidth limit exceeded for this account"
-	RequestSizeLimitExceeded        = "Request size limit exceeded for this account"
-	ItemSizeLimitExceeded           = "Item size limit exceeded for this account"
-	ElementSizeLimitExceeded        = "Element size limit exceeded for this account"
-	UnknownLimitExceeded            = "Limit exceeded for this account"
-)
-
 // ConvertSvcErr converts gRPC error to MomentoSvcErr.
 func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 	if grpcStatus, ok := status.FromError(err); ok {
 		switch grpcStatus.Code() {
 		case codes.InvalidArgument:
-			return newMomentoSvcErr(
-				InvalidArgumentError,
-				grpcStatus.Message(),
-				err,
-				"Invalid argument passed to Momento client",
-			)
+			return newMomentoSvcErr(InvalidArgumentError, grpcStatus.Message(), err, InvalidArgumentMessageWrapper)
 		case codes.Unimplemented:
-			return newMomentoSvcErr(
-				BadRequestError,
-				grpcStatus.Message(),
-				err,
-				"The request was invalid; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(BadRequestError, grpcStatus.Message(), err, BadRequestMessageWrapper)
 		case codes.OutOfRange:
-			return newMomentoSvcErr(
-				BadRequestError,
-				grpcStatus.Message(),
-				err,
-				"The request was invalid; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(BadRequestError, grpcStatus.Message(), err, BadRequestMessageWrapper)
 		case codes.FailedPrecondition:
-			return newMomentoSvcErr(
-				FailedPreconditionError,
-				grpcStatus.Message(),
-				err,
-				"System is not in a state required for the operation's execution",
-			)
+			return newMomentoSvcErr(FailedPreconditionError, grpcStatus.Message(), err, FailedPreconditionMessageWrapper)
 		case codes.Canceled:
-			return newMomentoSvcErr(
-				CanceledError,
-				grpcStatus.Message(),
-				err,
-				"The request was cancelled by the server; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(CanceledError, grpcStatus.Message(), err, CanceledMessageWrapper)
 		case codes.DeadlineExceeded:
-			return newMomentoSvcErr(
-				TimeoutError,
-				grpcStatus.Message(),
-				err,
-				"The client's configured timeout was exceeded; you may need to use a Configuration with more lenient timeouts",
-			)
+			return newMomentoSvcErr(TimeoutError, grpcStatus.Message(), err, TimeoutMessageWrapper)
 		case codes.PermissionDenied:
-			return newMomentoSvcErr(
-				PermissionError,
-				grpcStatus.Message(),
-				err,
-				"Insufficient permissions to perform operation",
-			)
+			return newMomentoSvcErr(PermissionError, grpcStatus.Message(), err, PermissionMessageWrapper)
 		case codes.Unauthenticated:
-			return newMomentoSvcErr(
-				AuthenticationError,
-				grpcStatus.Message(),
-				err,
-				"Invalid authentication credentials to connect to Momento service",
-			)
+			return newMomentoSvcErr(AuthenticationError, grpcStatus.Message(), err, AuthenticationMessageWrapper)
 		case codes.ResourceExhausted:
-			// By default, use the generic limit exceeded message wrapper.
-			messageWrapper := UnknownLimitExceeded
-
-			// If available, use metadata to determine cause of resource exhausted error.
-			if len(metadata) > 1 {
-				errData, ok := metadata[1]["err"]
-				if ok && errData[0] != "" {
-					switch errData[0] {
-					case "topic_subscriptions_limit_exceeded":
-						messageWrapper = TopicSubscriptionsLimitExceeded
-					case "operations_rate_limit_exceeded":
-						messageWrapper = OperationsRateLimitExceeded
-					case "throughput_rate_limit_exceeded":
-						messageWrapper = ThroughputRateLimitExceeded
-					case "request_size_limit_exceeded":
-						messageWrapper = RequestSizeLimitExceeded
-					case "item_size_limit_exceeded":
-						messageWrapper = ItemSizeLimitExceeded
-					case "element_size_limit_exceeded":
-						messageWrapper = ElementSizeLimitExceeded
-					}
-				} else {
-					// If err metadata is not available, try string matching on the
-					// error details to return the most specific message wrapper.
-					lowerCasedMessage := strings.ToLower(grpcStatus.Message())
-					if strings.Contains(lowerCasedMessage, "subscribers") {
-						messageWrapper = TopicSubscriptionsLimitExceeded
-					} else if strings.Contains(lowerCasedMessage, "operations") {
-						messageWrapper = OperationsRateLimitExceeded
-					} else if strings.Contains(lowerCasedMessage, "throughput") {
-						messageWrapper = ThroughputRateLimitExceeded
-					} else if strings.Contains(lowerCasedMessage, "request limit") {
-						messageWrapper = RequestSizeLimitExceeded
-					} else if strings.Contains(lowerCasedMessage, "item size") {
-						messageWrapper = ItemSizeLimitExceeded
-					} else if strings.Contains(lowerCasedMessage, "element size") {
-						messageWrapper = ElementSizeLimitExceeded
-					}
-				}
-			}
-			return newMomentoSvcErr(LimitExceededError, grpcStatus.Message(), err, messageWrapper)
+			return newMomentoSvcErr(LimitExceededError, grpcStatus.Message(), err, determineLimitExceededMessageWrapper(grpcStatus.Message(), metadata...))
 		case codes.NotFound:
-			cacheMessageWrapper := "A cache with the specified name does not exist.  To resolve this error, make sure you have created the cache before attempting to use it"
-			storeMessageWrapper := "A store with the specified name does not exist.  To resolve this error, make sure you have created the store before attempting to use it"
 			// Use metadata to determine cause of not found error
 			if len(metadata) > 1 {
 				errData, ok := metadata[1]["err"]
@@ -198,82 +106,45 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 				// This is currently re-mapped to a StoreNotFoundError in the PreviewStorageClient"s
 				// DeleteStore method.
 				if !ok {
-					return newMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err, cacheMessageWrapper)
+					return newMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err, CacheNotFoundMessageWrapper)
 				}
 				errCause := errData[0]
 				if errCause == "item_not_found" {
-					return newMomentoSvcErr(
-						ItemNotFoundError,
-						grpcStatus.Message(),
-						err,
-						"An item with the specified key does not exist",
-					)
+					return newMomentoSvcErr(ItemNotFoundError, grpcStatus.Message(), err, ItemNotFoundMessageWrapper)
 				} else if errCause == "store_not_found" {
-					return newMomentoSvcErr(StoreNotFoundError, grpcStatus.Message(), err, storeMessageWrapper)
+					return newMomentoSvcErr(StoreNotFoundError, grpcStatus.Message(), err, StoreNotFoundMessageWrapper)
 				}
 			}
-			return newMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err, cacheMessageWrapper)
+			return newMomentoSvcErr(CacheNotFoundError, grpcStatus.Message(), err, CacheNotFoundMessageWrapper)
 		case codes.AlreadyExists:
-			cacheMessageWrapper := "A cache with the specified name already exists.  To resolve this error, either delete the existing cache and make a new one, or use a different name"
-			storeMessageWrapper := "A store with the specified name already exists.  To resolve this error, either delete the existing store and make a new one, or use a different name"
 			if len(metadata) > 1 {
 				errData, ok := metadata[1]["err"]
 				// In the absence of error metadata, return CacheAlreadyExistsError.
 				if !ok {
-					return newMomentoSvcErr(CacheAlreadyExistsError, grpcStatus.Message(), err, cacheMessageWrapper)
+					return newMomentoSvcErr(CacheAlreadyExistsError, grpcStatus.Message(), err, CacheAlreadyExistsMessageWrapper)
 				}
 				errCause := errData[0]
 				switch errCause {
 				case "store_already_exists":
-					return newMomentoSvcErr(StoreAlreadyExistsError, grpcStatus.Message(), err, storeMessageWrapper)
+					return newMomentoSvcErr(StoreAlreadyExistsError, grpcStatus.Message(), err, StoreAlreadyExistsMessageWrapper)
 				default:
-					return newMomentoSvcErr(CacheAlreadyExistsError, grpcStatus.Message(), err, cacheMessageWrapper)
+					return newMomentoSvcErr(CacheAlreadyExistsError, grpcStatus.Message(), err, CacheAlreadyExistsMessageWrapper)
 				}
 			}
 			// If no metadata is available, return CacheAlreadyExistsError by default.
-			return newMomentoSvcErr(CacheAlreadyExistsError, grpcStatus.Message(), err, cacheMessageWrapper)
+			return newMomentoSvcErr(CacheAlreadyExistsError, grpcStatus.Message(), err, CacheAlreadyExistsMessageWrapper)
 		case codes.Unknown:
-			return newMomentoSvcErr(
-				UnknownServiceError,
-				grpcStatus.Message(),
-				err,
-				"Service returned an unknown response; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(UnknownServiceError, grpcStatus.Message(), err, UnknownServiceErrorMessageWrapper)
 		case codes.Aborted:
-			return newMomentoSvcErr(
-				InternalServerError,
-				grpcStatus.Message(),
-				err,
-				"Unexpected error encountered while trying to fulfill the request; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(InternalServerError, grpcStatus.Message(), err, InternalServerErrorMessageWrapper)
 		case codes.Internal:
-			return newMomentoSvcErr(
-				InternalServerError,
-				grpcStatus.Message(),
-				err,
-				"Unexpected error encountered while trying to fulfill the request; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(InternalServerError, grpcStatus.Message(), err, InternalServerErrorMessageWrapper)
 		case codes.Unavailable:
-			return newMomentoSvcErr(
-				ServerUnavailableError,
-				grpcStatus.Message(),
-				err,
-				"The server was unable to handle the request; consider retrying.  If the error persists, please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(ServerUnavailableError, grpcStatus.Message(), err, ServerUnavailableMessageWrapper)
 		case codes.DataLoss:
-			return newMomentoSvcErr(
-				InternalServerError,
-				grpcStatus.Message(),
-				err,
-				"Unexpected error encountered while trying to fulfill the request; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(InternalServerError, grpcStatus.Message(), err, InternalServerErrorMessageWrapper)
 		default:
-			return newMomentoSvcErr(
-				UnknownServiceError,
-				InternalServerErrorMessage,
-				err,
-				"Service returned an unknown response; please contact us at support@momentohq.com",
-			)
+			return newMomentoSvcErr(UnknownServiceError, grpcStatus.Message(), err, UnknownServiceErrorMessageWrapper)
 		}
 	}
 	return NewMomentoSvcErr(ClientSdkError, ClientSdkErrorMessage, err)
@@ -281,4 +152,48 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 
 func NewConnectionError(err error) MomentoSvcErr {
 	return NewMomentoSvcErr(ConnectionError, "Connection is in an unexpected state", err)
+}
+
+func determineLimitExceededMessageWrapper(errorMessage string, metadata ...metadata.MD) string {
+	// By default, use the generic limit exceeded message wrapper.
+	messageWrapper := UnknownLimitExceeded
+
+	// If available, use metadata to determine cause of resource exhausted error.
+	if len(metadata) > 1 {
+		errData, ok := metadata[1]["err"]
+		if ok && errData[0] != "" {
+			switch errData[0] {
+			case "topic_subscriptions_limit_exceeded":
+				messageWrapper = TopicSubscriptionsLimitExceeded
+			case "operations_rate_limit_exceeded":
+				messageWrapper = OperationsRateLimitExceeded
+			case "throughput_rate_limit_exceeded":
+				messageWrapper = ThroughputRateLimitExceeded
+			case "request_size_limit_exceeded":
+				messageWrapper = RequestSizeLimitExceeded
+			case "item_size_limit_exceeded":
+				messageWrapper = ItemSizeLimitExceeded
+			case "element_size_limit_exceeded":
+				messageWrapper = ElementSizeLimitExceeded
+			}
+		} else {
+			// If err metadata is not available, try string matching on the
+			// error details to return the most specific message wrapper.
+			lowerCasedMessage := strings.ToLower(errorMessage)
+			if strings.Contains(lowerCasedMessage, "subscribers") {
+				messageWrapper = TopicSubscriptionsLimitExceeded
+			} else if strings.Contains(lowerCasedMessage, "operations") {
+				messageWrapper = OperationsRateLimitExceeded
+			} else if strings.Contains(lowerCasedMessage, "throughput") {
+				messageWrapper = ThroughputRateLimitExceeded
+			} else if strings.Contains(lowerCasedMessage, "request limit") {
+				messageWrapper = RequestSizeLimitExceeded
+			} else if strings.Contains(lowerCasedMessage, "item size") {
+				messageWrapper = ItemSizeLimitExceeded
+			} else if strings.Contains(lowerCasedMessage, "element size") {
+				messageWrapper = ElementSizeLimitExceeded
+			}
+		}
+	}
+	return messageWrapper
 }
