@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/responses"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -71,13 +73,15 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 	return nil
 }
 
-func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
-	resp, err := client.grpcClient.SortedSetIncrement(metadata, r.grpcRequest)
+func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+	var header, trailer metadata.MD
+	resp, err := client.grpcClient.SortedSetIncrement(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
-		return nil, err
+		return nil, responseMetadata, err
 	}
 	r.grpcResponse = resp
-	return resp, nil
+	return resp, nil, nil
 }
 
 func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {

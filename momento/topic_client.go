@@ -168,7 +168,7 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 
 	if err != nil {
 		c.log.Debug("failed to topic publish...")
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, err
 	}
 
 	return &responses.TopicPublishSuccess{}, err

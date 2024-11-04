@@ -3,16 +3,18 @@ package momentoerrors
 import "fmt"
 
 type momentoSvcError struct {
-	code        string
-	message     string
-	originalErr error
+	code           string
+	message        string
+	originalErr    error
+	messageWrapper string
 }
 
-func newMomentoSvcErr(code string, message string, originalErr error) *momentoSvcError {
+func newMomentoSvcErr(code string, message string, originalErr error, messageWrapper string) *momentoSvcError {
 	return &momentoSvcError{
 		code,
 		message,
 		originalErr,
+		messageWrapper,
 	}
 }
 
@@ -21,7 +23,10 @@ func (err momentoSvcError) Code() string {
 }
 
 func (err momentoSvcError) Message() string {
-	return err.message
+	if err.messageWrapper == "" {
+		return err.message
+	}
+	return err.messageWrapper + ": " + err.message
 }
 
 func (err momentoSvcError) OriginalErr() error {

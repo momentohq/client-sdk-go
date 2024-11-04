@@ -9,6 +9,8 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type leaderboardDataClient struct {
@@ -42,12 +44,13 @@ func (client *leaderboardDataClient) delete(ctx context.Context, request *Leader
 
 	requestMetadata := internal.CreateLeaderboardMetadata(ctx, request.CacheName)
 
+	var header, trailer metadata.MD
 	_, err := client.leaderboardClient.DeleteLeaderboard(requestMetadata, &pb.XDeleteLeaderboardRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }
@@ -68,14 +71,15 @@ func (client *leaderboardDataClient) fetchByRank(ctx context.Context, request *L
 		leaderboardOrder = pb.XOrder_DESCENDING
 	}
 
+	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetByRank(requestMetadata, &pb.XGetByRankRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		RankRange:   rankRange,
 		Order:       leaderboardOrder,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return result.Elements, nil
 }
@@ -115,6 +119,7 @@ func (client *leaderboardDataClient) fetchByScore(ctx context.Context, request *
 		count = *request.Count
 	}
 
+	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetByScore(requestMetadata, &pb.XGetByScoreRequest{
 		CacheName:     request.CacheName,
 		Leaderboard:   request.LeaderboardName,
@@ -122,9 +127,9 @@ func (client *leaderboardDataClient) fetchByScore(ctx context.Context, request *
 		Offset:        offset,
 		LimitElements: count,
 		Order:         leaderboardOrder,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return result.Elements, nil
 }
@@ -140,14 +145,15 @@ func (client *leaderboardDataClient) getRank(ctx context.Context, request *Leade
 
 	requestMetadata := internal.CreateLeaderboardMetadata(ctx, request.CacheName)
 
+	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetRank(requestMetadata, &pb.XGetRankRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Ids:         request.Ids,
 		Order:       leaderboardOrder,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return nil, momentoerrors.ConvertSvcErr(err)
+		return nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return result.Elements, nil
 }
@@ -158,12 +164,13 @@ func (client *leaderboardDataClient) length(ctx context.Context, request *Leader
 
 	requestMetadata := internal.CreateLeaderboardMetadata(ctx, request.CacheName)
 
+	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetLeaderboardLength(requestMetadata, &pb.XGetLeaderboardLengthRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return 0, momentoerrors.ConvertSvcErr(err)
+		return 0, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return result.Count, nil
 }
@@ -174,13 +181,14 @@ func (client *leaderboardDataClient) removeElements(ctx context.Context, request
 
 	requestMetadata := internal.CreateLeaderboardMetadata(ctx, request.CacheName)
 
+	var header, trailer metadata.MD
 	_, err := client.leaderboardClient.RemoveElements(requestMetadata, &pb.XRemoveElementsRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Ids:         request.Ids,
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }
@@ -191,13 +199,14 @@ func (client *leaderboardDataClient) upsert(ctx context.Context, request *Leader
 
 	requestMetadata := internal.CreateLeaderboardMetadata(ctx, request.CacheName)
 
+	var header, trailer metadata.MD
 	_, err := client.leaderboardClient.UpsertElements(requestMetadata, &pb.XUpsertElementsRequest{
 		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Elements:    leaderboardUpsertElementToGrpc(request.Elements),
-	})
+	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 	return nil
 }

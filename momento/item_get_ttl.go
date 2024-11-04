@@ -5,6 +5,8 @@ import (
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"github.com/momentohq/client-sdk-go/responses"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type ItemGetTtlRequest struct {
@@ -34,15 +36,17 @@ func (r *ItemGetTtlRequest) initGrpcRequest(scsDataClient) error {
 	return nil
 }
 
-func (r *ItemGetTtlRequest) makeGrpcRequest(metadata context.Context, client scsDataClient) (grpcResponse, error) {
-	resp, err := client.grpcClient.ItemGetTtl(metadata, r.grpcRequest)
+func (r *ItemGetTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+	var header, trailer metadata.MD
+	resp, err := client.grpcClient.ItemGetTtl(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
-		return nil, err
+		return nil, responseMetadata, err
 	}
 
 	r.grpcResponse = resp
 
-	return resp, nil
+	return resp, nil, nil
 }
 
 func (r *ItemGetTtlRequest) interpretGrpcResponse() error {

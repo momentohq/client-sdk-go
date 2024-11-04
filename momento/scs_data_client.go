@@ -68,9 +68,9 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
-	_, err := r.makeGrpcRequest(requestMetadata, client)
+	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)
 	if err != nil {
-		return momentoerrors.ConvertSvcErr(err)
+		return momentoerrors.ConvertSvcErr(err, responseMetadata...)
 	}
 
 	if err := r.interpretGrpcResponse(); err != nil {

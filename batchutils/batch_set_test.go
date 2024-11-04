@@ -193,7 +193,7 @@ var _ = Describe("batch-utils", Label("cache-service"), func() {
 			// Assuming errors is an instance of *BatchSetError
 			Expect(len(errors.Errors())).To(Equal(len(batchSetErrorKeys)))
 			for v, e := range errors.Errors() {
-				Expect(e.Error()).To(Equal("InvalidArgumentError: value cannot be nil"))
+				Expect(e.(MomentoError).Code()).To(Equal("InvalidArgumentError"))
 				isValidKey := false
 				for _, erroredKey := range batchSetErrorKeys {
 					if v == erroredKey {
