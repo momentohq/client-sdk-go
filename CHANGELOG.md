@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.29.0](https://github.com/momentohq/client-sdk-go/compare/v1.28.7...v1.29.0) (2024-11-04)
+
+
+### Features
+
+* support topic sequence page ([#540](https://github.com/momentohq/client-sdk-go/issues/540)) ([cae3b3d](https://github.com/momentohq/client-sdk-go/commit/cae3b3d0db95d00348e7f7e3e0a195e251bba1ec))
+
+
+### Bug Fixes
+
+* add message wrapper to errors and improve resource exhausted error message by using metadata ([#551](https://github.com/momentohq/client-sdk-go/issues/551)) ([19bd021](https://github.com/momentohq/client-sdk-go/commit/19bd021c31935115fc9ca403e6b00eb150f5d1b5))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/momentohq/client-sdk-go from 1.27.0 to 1.28.7 in /examples ([#548](https://github.com/momentohq/client-sdk-go/issues/548)) ([2126ca8](https://github.com/momentohq/client-sdk-go/commit/2126ca886e102dfc2b58670bef602059b6e7cd3d))
+* remove unused publish-golang step ([#549](https://github.com/momentohq/client-sdk-go/issues/549)) ([53ece53](https://github.com/momentohq/client-sdk-go/commit/53ece531fe36075ea224165c39b9591c072c172e))
+
 ## [1.28.7](https://github.com/momentohq/client-sdk-go/compare/v1.28.6...v1.28.7) (2024-10-24)
 
 
