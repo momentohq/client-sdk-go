@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.29.1](https://github.com/momentohq/client-sdk-go/compare/v1.29.0...v1.29.1) (2024-11-06)
+
+
+### Bug Fixes
+
+* add nil check before grabbing metadata when retrying subscribe ([#553](https://github.com/momentohq/client-sdk-go/issues/553)) ([da47ccb](https://github.com/momentohq/client-sdk-go/commit/da47ccb01b2d578e29a030d572b65ebddcaed523))
+
 ## [1.29.0](https://github.com/momentohq/client-sdk-go/compare/v1.28.7...v1.29.0) (2024-11-04)
 
 
