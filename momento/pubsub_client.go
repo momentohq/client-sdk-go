@@ -99,8 +99,10 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	if err != nil {
 		atomic.AddInt64(&numGrpcStreams, -1)
 		cancelFunction()
-		header, _ = clientStream.Header()
-		trailer = clientStream.Trailer()
+		if clientStream != nil {
+			header, _ = clientStream.Header()
+			trailer = clientStream.Trailer()
+		}
 		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
