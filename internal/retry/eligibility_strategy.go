@@ -25,7 +25,7 @@ var retryableRequestMethods = map[string]bool{
 	"/cache_client.Scs/Delete":         true,
 	"/cache_client.Scs/KeysExist":      true,
 	"/cache_client.Scs/Increment":      false,
-	// Idempotent on the server but return values can be different if the first call is successful.
+	// UpdateTtl is idempotent on the server but return values can be different if the first call is successful.
 	"/cache_client.Scs/UpdateTtl":   true,
 	"/cache_client.Scs/ItemGetTtl":  true,
 	"/cache_client.Scs/ItemGetType": true,
