@@ -15,9 +15,9 @@ var retryableStatusCodes = map[codes.Code]bool{
 }
 
 var retryableRequestMethods = map[string]bool{
-	"/cache_client.Scs/Get":    true,
+	"/cache_client.Scs/Get": true,
 	// NEW and idempotent "/cache_client.Scs/GetBatch"
-	"/cache_client.Scs/Set":    true,
+	"/cache_client.Scs/Set": true,
 	// NEW and idempotent "/cache_client.Scs/SetBatch"
 	// NEW and _NOT_ idempotent "/cache_client.Scs/SetIf"
 
@@ -29,17 +29,17 @@ var retryableRequestMethods = map[string]bool{
 	// NEW and idempotent "/cache_client.Scs/ItemGetTtl"
 	// NEW and idempotent "/cache_client.Scs/ItemGetType"
 
-	"/cache_client.Scs/DictionaryGet":    true,
-	"/cache_client.Scs/DictionaryFetch":  true,
-	"/cache_client.Scs/DictionarySet": true,
+	"/cache_client.Scs/DictionaryGet":   true,
+	"/cache_client.Scs/DictionaryFetch": true,
+	"/cache_client.Scs/DictionarySet":   true,
 	// not idempotent: "/cache_client.Scs/DictionaryIncrement",
 	"/cache_client.Scs/DictionaryDelete": true,
 	// NEW and idempotent "/cache_client.Scs/DictionaryLength"
 
-	"/cache_client.Scs/SetFetch":         true,
+	"/cache_client.Scs/SetFetch": true,
 	// NEW and idempotent "/cache_client.Scs/SetSample"
-	"/cache_client.Scs/SetUnion":         true,
-	"/cache_client.Scs/SetDifference":    true,
+	"/cache_client.Scs/SetUnion":      true,
+	"/cache_client.Scs/SetDifference": true,
 	// NEW and idempotent "/cache_client.Scs/SetContains"
 	// NEW and idempotent "/cache_client.Scs/SetLength"
 	// NEW and _NOT_ idempotent "/cache_client.Scs/SetPop"
@@ -54,7 +54,7 @@ var retryableRequestMethods = map[string]bool{
 	// In the future, we may also add "the first/last N occurrences of a value".
 	// In the latter case it is not idempotent.
 	"/cache_client.Scs/ListRemove": true,
-	"/cache_client.Scs/ListFetch": true,
+	"/cache_client.Scs/ListFetch":  true,
 	"/cache_client.Scs/ListLength": true,
 	// not idempotent: "/cache_client.Scs/ListConcatenateFront",
 	// not idempotent: "/cache_client.Scs/ListConcatenateBack"
