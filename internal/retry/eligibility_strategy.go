@@ -49,7 +49,7 @@ var retryableRequestMethods = map[string]bool{
 	"/cache_client.Scs/ListPopFront":  false,
 	"/cache_client.Scs/ListPopBack":   false,
 	// Not used, and unknown "/cache_client.Scs/ListErase",
-	"/cache_client.Scs/ListRemove":           false,
+	"/cache_client.Scs/ListRemove":           true,
 	"/cache_client.Scs/ListFetch":            true,
 	"/cache_client.Scs/ListLength":           true,
 	"/cache_client.Scs/ListConcatenateFront": false,
