@@ -25,10 +25,9 @@ var retryableRequestMethods = map[string]bool{
 	"/cache_client.Scs/Delete":         true,
 	"/cache_client.Scs/KeysExist":      true,
 	"/cache_client.Scs/Increment":      false,
-	// UpdateTtl is idempotent on the server but return values can be different if the first call is successful.
-	"/cache_client.Scs/UpdateTtl":   true,
-	"/cache_client.Scs/ItemGetTtl":  true,
-	"/cache_client.Scs/ItemGetType": true,
+	"/cache_client.Scs/UpdateTtl":      false,
+	"/cache_client.Scs/ItemGetTtl":     true,
+	"/cache_client.Scs/ItemGetType":    true,
 
 	"/cache_client.Scs/DictionaryGet":       true,
 	"/cache_client.Scs/DictionaryFetch":     true,
@@ -50,11 +49,7 @@ var retryableRequestMethods = map[string]bool{
 	"/cache_client.Scs/ListPopFront":  false,
 	"/cache_client.Scs/ListPopBack":   false,
 	// Not used, and unknown "/cache_client.Scs/ListErase",
-	// Warning: in the future, ListRemove may not be idempotent
-	// Currently it supports removing all occurrences of a value.
-	// In the future, we may also add "the first/last N occurrences of a value".
-	// In the latter case it is not idempotent.
-	"/cache_client.Scs/ListRemove":           true,
+	"/cache_client.Scs/ListRemove":           false,
 	"/cache_client.Scs/ListFetch":            true,
 	"/cache_client.Scs/ListLength":           true,
 	"/cache_client.Scs/ListConcatenateFront": false,
