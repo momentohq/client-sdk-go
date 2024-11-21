@@ -18,6 +18,7 @@ const (
 	DefaultClient             = "defaultClient"
 	WithDefaultCache          = "withDefaultCache"
 	WithConsistentReadConcern = "withConsistentReadConcern"
+	WithBalancedReadConcern   = "withBalancedReadConcern"
 )
 
 var consistentReads bool
@@ -31,6 +32,7 @@ type SharedContext struct {
 	Client                          momento.CacheClient
 	ClientWithDefaultCacheName      momento.CacheClient
 	ClientWithConsistentReadConcern momento.CacheClient
+	ClientWithBalancedReadConcern   momento.CacheClient
 	DefaultCacheName                string
 	TopicClient                     momento.TopicClient
 	CacheName                       string
@@ -93,6 +95,13 @@ func NewSharedContext() SharedContext {
 		panic(err)
 	}
 
+	balancedReadConcernClient, err := momento.NewCacheClientWithDefaultCache(
+		shared.Configuration.WithReadConcern(config.BALANCED), shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	topicClient, err := momento.NewTopicClient(shared.TopicConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
@@ -116,6 +125,7 @@ func NewSharedContext() SharedContext {
 	shared.Client = client
 	shared.ClientWithDefaultCacheName = clientDefaultCacheName
 	shared.ClientWithConsistentReadConcern = consistentReadConcernClient
+	shared.ClientWithBalancedReadConcern = balancedReadConcernClient
 	shared.DefaultCacheName = defaultCacheName
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
@@ -140,6 +150,8 @@ func (shared SharedContext) GetClientPrereqsForType(clientType string) (momento.
 	} else if clientType == WithConsistentReadConcern {
 		client = shared.ClientWithConsistentReadConcern
 		cacheName = ""
+	} else if clientType == WithBalancedReadConcern {
+		client = shared.ClientWithBalancedReadConcern
 	} else {
 		panic("invalid client type")
 	}
