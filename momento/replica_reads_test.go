@@ -3,14 +3,15 @@ package momento_test
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"math/rand"
-	"sync"
-	"time"
 )
 
 var _ = Describe("replica-reads", Label(CACHE_SERVICE_LABEL), func() {
