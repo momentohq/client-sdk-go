@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.30.0](https://github.com/momentohq/client-sdk-go/compare/v1.29.1...v1.30.0) (2024-11-23)
+
+
+### Features
+
+* add replica-reads test ([#559](https://github.com/momentohq/client-sdk-go/issues/559)) ([735593a](https://github.com/momentohq/client-sdk-go/commit/735593ac6800eda2cd210d101c2b16274effbda5))
+* document all rpc's and if they are idempotent or not ([#558](https://github.com/momentohq/client-sdk-go/issues/558)) ([622b7d0](https://github.com/momentohq/client-sdk-go/commit/622b7d0057480515ad66694b2735b036676b597c))
+* retry on cancelled status code ([#557](https://github.com/momentohq/client-sdk-go/issues/557)) ([d62e27d](https://github.com/momentohq/client-sdk-go/commit/d62e27dcc8ee9650ee2fbb2485547dbfaf09ffc2))
+
+
+### Miscellaneous
+
+* update license file ([#552](https://github.com/momentohq/client-sdk-go/issues/552)) ([f9ab3e4](https://github.com/momentohq/client-sdk-go/commit/f9ab3e4621bb4320e817385137c474237e0c4e74))
+
 ## [1.29.1](https://github.com/momentohq/client-sdk-go/compare/v1.29.0...v1.29.1) (2024-11-06)
 
 
