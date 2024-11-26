@@ -169,7 +169,7 @@ func worker(
 }
 
 func printStats(gets *hdrhistogram.Histogram, sets *hdrhistogram.Histogram, errorCounter ErrorCounter, startTime time.Duration) {
-	totalRequests := gets.TotalCount() + sets.TotalCount() + errorCounter.timeout + errorCounter.unavailable + errorCounter.unavailable
+	totalRequests := gets.TotalCount() + sets.TotalCount() + errorCounter.timeout + errorCounter.unavailable + errorCounter.limitExceeded
 	totalTps := int(math.Round(
 		float64(totalRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
 	))
