@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.31.0](https://github.com/momentohq/client-sdk-go/compare/v1.30.0...v1.31.0) (2024-11-26)
+
+
+### Features
+
+* do not retry on cancelled codes ([#561](https://github.com/momentohq/client-sdk-go/issues/561)) ([be8848f](https://github.com/momentohq/client-sdk-go/commit/be8848f89d13dce2c48811fc393e14a7c0ca6b8c))
+
+
+### Bug Fixes
+
+* adjust total count in loadgen example ([#562](https://github.com/momentohq/client-sdk-go/issues/562)) ([d8bd37c](https://github.com/momentohq/client-sdk-go/commit/d8bd37cc776ff29a8926c776376081bc76b72cac))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/momentohq/client-sdk-go in /examples ([#555](https://github.com/momentohq/client-sdk-go/issues/555)) ([95a4193](https://github.com/momentohq/client-sdk-go/commit/95a41936c08c8db0abcded0e5c8f0ccdbe21cb3e))
+
 ## [1.30.0](https://github.com/momentohq/client-sdk-go/compare/v1.29.1...v1.30.0) (2024-11-23)
 
 
