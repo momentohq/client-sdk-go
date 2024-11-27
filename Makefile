@@ -2,7 +2,7 @@
 	format imports tidy vet staticcheck lint \
 	fetch-latest-client-protos-version install-protoc-from-client-protos install-protos-devtools update-protos build-protos update-and-build-protos \
 	build precommit \
-	test test-auth-service test-cache-service test-leaderboard-service test-storage-service test-topics-service \
+	test test-auth-service test-cache-service test-leaderboard-service test-storage-service test-topics-service test-http-service \
 	vendor build-examples run-docs-examples
 
 GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aws-lambda/infrastructure/*")
