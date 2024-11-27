@@ -140,6 +140,8 @@ test-topics-service: install-ginkgo
 	@echo "Testing topics service..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter topics-service ${TEST_DIRS}
 
+test-http-service:
+	@echo "No tests for http service."
 
 vendor:
 	@echo "Vendoring..."
