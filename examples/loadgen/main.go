@@ -46,6 +46,7 @@ type ErrorCounter struct {
 	unavailable   int64
 	timeout       int64
 	limitExceeded int64
+	canceled      int64
 }
 
 func newLoadGenerator(config config.Configuration, options loadGeneratorOptions) *loadGenerator {
@@ -101,7 +102,8 @@ func processError(err error, errChan chan string) {
 	case momento.MomentoError:
 		if mErr.Code() == momento.ServerUnavailableError ||
 			mErr.Code() == momento.TimeoutError ||
-			mErr.Code() == momento.LimitExceededError {
+			mErr.Code() == momento.LimitExceededError ||
+			mErr.Code() == momento.CanceledError {
 			errChan <- mErr.Code()
 		} else {
 			panic(fmt.Sprintf("unrecognized result: %T", mErr))
@@ -169,7 +171,7 @@ func worker(
 }
 
 func printStats(gets *hdrhistogram.Histogram, sets *hdrhistogram.Histogram, errorCounter ErrorCounter, startTime time.Duration) {
-	totalRequests := gets.TotalCount() + sets.TotalCount() + errorCounter.timeout + errorCounter.unavailable + errorCounter.limitExceeded
+	totalRequests := gets.TotalCount() + sets.TotalCount() + errorCounter.timeout + errorCounter.unavailable + errorCounter.limitExceeded + errorCounter.canceled
 	totalTps := int(math.Round(
 		float64(totalRequests * 1000 / hrtime.Since(startTime).Milliseconds()),
 	))
@@ -188,7 +190,8 @@ func printStats(gets *hdrhistogram.Histogram, sets *hdrhistogram.Histogram, erro
 	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "success", successfulRequests, successfulRequests/totalRequests*100, successTps)
 	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", errorCounter.unavailable, errorCounter.unavailable/totalRequests*100)
 	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", errorCounter.timeout, errorCounter.timeout/totalRequests*100)
-	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", errorCounter.limitExceeded, errorCounter.limitExceeded/totalRequests*100)
+	fmt.Printf("%20s: %d (%d%%)\n", "limit exceeded", errorCounter.limitExceeded, errorCounter.limitExceeded/totalRequests*100)
+	fmt.Printf("%20s: %d (%d%%)\n\n", "canceled", errorCounter.canceled, errorCounter.canceled/totalRequests*100)
 
 	fmt.Printf(
 		"cumulative get latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
@@ -230,6 +233,8 @@ func (ec *ErrorCounter) updateErrors(err string) {
 		ec.timeout++
 	} else if err == momento.LimitExceededError {
 		ec.limitExceeded++
+	} else if err == momento.CanceledError {
+		ec.canceled++
 	}
 }
 
@@ -318,7 +323,8 @@ func main() {
 		howLongToRun:               time.Minute,
 	}
 
-	loadGenerator := newLoadGenerator(config.LaptopLatest(), opts)
+	momentoConfig := config.LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(opts.logLevel))
+	loadGenerator := newLoadGenerator(momentoConfig, opts)
 	client, workerDelayBetweenRequests := loadGenerator.init(ctx)
 
 	runStart := time.Now()
