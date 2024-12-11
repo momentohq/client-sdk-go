@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.31.1](https://github.com/momentohq/client-sdk-go/compare/v1.31.0...v1.31.1) (2024-12-11)
+
+
+### Bug Fixes
+
+* add test-http-service to PHONEY ([#567](https://github.com/momentohq/client-sdk-go/issues/567)) ([9ebbbe6](https://github.com/momentohq/client-sdk-go/commit/9ebbbe63aefbfdfee3c0fcbe574973980838b54b))
+* use atomic reads when using atomic writes ([#569](https://github.com/momentohq/client-sdk-go/issues/569)) ([22599bb](https://github.com/momentohq/client-sdk-go/commit/22599bbebf239f7e6436cdfb7c38736861397bb2))
+
+
+### Miscellaneous
+
+* add test-http-service target ([#565](https://github.com/momentohq/client-sdk-go/issues/565)) ([ced483d](https://github.com/momentohq/client-sdk-go/commit/ced483d298181d71a472234af0c2f997af5682cb))
+* **deps:** bump github.com/momentohq/client-sdk-go in /examples ([#564](https://github.com/momentohq/client-sdk-go/issues/564)) ([c61f33f](https://github.com/momentohq/client-sdk-go/commit/c61f33f759b357db5addfd630dcda7885c49f4d9))
+* **loadgen:** track cancelled errors in the load generator ([#568](https://github.com/momentohq/client-sdk-go/issues/568)) ([8d8ba5c](https://github.com/momentohq/client-sdk-go/commit/8d8ba5cbd4c083d8e8de660479afc868a3f30e53))
+
 ## [1.31.0](https://github.com/momentohq/client-sdk-go/compare/v1.30.0...v1.31.0) (2024-11-26)
 
 
