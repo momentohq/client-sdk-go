@@ -18,7 +18,7 @@ import (
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
-var dataClientCount uint64
+var dataClientCount atomic.Uint64
 
 type CacheClient interface {
 	Logger() logger.MomentoLogger
@@ -312,8 +312,8 @@ func (c defaultScsClient) getCacheNameForRequest(request hasCacheName) string {
 }
 
 func (c defaultScsClient) getNextDataClient() *scsDataClient {
-	nextClientIndex := atomic.AddUint64(&dataClientCount, 1)
-	dataClient := c.dataClients[atomic.LoadUint64(&nextClientIndex)%uint64(len(c.dataClients))]
+	nextClientIndex := dataClientCount.Add(1)
+	dataClient := c.dataClients[nextClientIndex%uint64(len(c.dataClients))]
 	return dataClient
 }
 

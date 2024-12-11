@@ -3,7 +3,6 @@ package momento
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -186,6 +185,6 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 }
 
 func (s *topicSubscription) Close() {
-	atomic.AddInt64(&numGrpcStreams, -1)
+	numGrpcStreams.Add(-1)
 	s.cancelFunction()
 }

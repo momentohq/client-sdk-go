@@ -14,7 +14,7 @@ import (
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
-var storageDataClientCount uint64
+var storageDataClientCount atomic.Uint64
 
 // PreviewStorageClient PREVIEW Momento Storage Client
 //
@@ -95,8 +95,8 @@ func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, c
 }
 
 func (c defaultPreviewStorageClient) getNextStorageDataClient() *storageDataClient {
-	nextClientIndex := atomic.AddUint64(&storageDataClientCount, 1)
-	dataClient := c.storageDataClients[atomic.LoadUint64(&nextClientIndex)%uint64(len(c.storageDataClients))]
+	nextClientIndex := storageDataClientCount.Add(1)
+	dataClient := c.storageDataClients[nextClientIndex%uint64(len(c.storageDataClients))]
 	return dataClient
 }
 
