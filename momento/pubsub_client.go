@@ -23,8 +23,8 @@ type pubSubClient struct {
 	log                 logger.MomentoLogger
 }
 
-var streamTopicManagerCount uint64
-var numGrpcStreams int64
+var streamTopicManagerCount atomic.Uint64
+var numGrpcStreams atomic.Int64
 var numChannels uint32
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
@@ -71,7 +71,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 }
 
 func (client *pubSubClient) getNextStreamTopicManager() *grpcmanagers.TopicGrpcManager {
-	nextManagerIndex := atomic.AddUint64(&streamTopicManagerCount, 1)
+	nextManagerIndex := streamTopicManagerCount.Add(1)
 	topicManager := client.streamTopicManagers[nextManagerIndex%uint64(len(client.streamTopicManagers))]
 	return topicManager
 }
@@ -87,7 +87,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	cancelContext, cancelFunction := context.WithCancel(requestMetadata)
 
 	var header, trailer metadata.MD
-	atomic.AddInt64(&numGrpcStreams, 1)
+	numGrpcStreams.Add(1)
 	topicManager := client.getNextStreamTopicManager()
 	clientStream, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
@@ -97,7 +97,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	})
 
 	if err != nil {
-		atomic.AddInt64(&numGrpcStreams, -1)
+		numGrpcStreams.Add(-1)
 		cancelFunction()
 		if clientStream != nil {
 			header, _ = clientStream.Header()
@@ -106,8 +106,8 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
-	if numGrpcStreams > 0 && (int64(numChannels*100)-numGrpcStreams < 10) {
-		client.log.Warn("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams, numChannels*100)
+	if numGrpcStreams.Load() > 0 && (int64(numChannels*100)-numGrpcStreams.Load() < 10) {
+		client.log.Warn("WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n", int64(numChannels*100)-numGrpcStreams.Load(), numChannels*100)
 	}
 
 	return topicManager, clientStream, cancelContext, cancelFunction, err
@@ -121,7 +121,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	var header, trailer metadata.MD
 	switch value := request.Value.(type) {
 	case String:
-		atomic.AddInt64(&numGrpcStreams, 1)
+		numGrpcStreams.Add(1)
 		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -131,13 +131,13 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 				},
 			},
 		}, grpc.Header(&header), grpc.Trailer(&trailer))
-		atomic.AddInt64(&numGrpcStreams, -1)
+		numGrpcStreams.Add(-1)
 		if err != nil {
 			return momentoerrors.ConvertSvcErr(err, header, trailer)
 		}
 		return err
 	case Bytes:
-		atomic.AddInt64(&numGrpcStreams, 1)
+		numGrpcStreams.Add(1)
 		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
@@ -147,7 +147,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 				},
 			},
 		}, grpc.Header(&header), grpc.Trailer(&trailer))
-		atomic.AddInt64(&numGrpcStreams, -1)
+		numGrpcStreams.Add(-1)
 		if err != nil {
 			return momentoerrors.ConvertSvcErr(err, header, trailer)
 		}
@@ -161,16 +161,16 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 }
 
 func (client *pubSubClient) close() {
-	atomic.AddInt64(&numGrpcStreams, -numGrpcStreams)
+	numGrpcStreams.Add(-numGrpcStreams.Load())
 	for clientIndex := range client.streamTopicManagers {
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
 }
 
 func checkNumConcurrentStreams(log logger.MomentoLogger) {
-	if numGrpcStreams > 0 && numGrpcStreams >= int64(numChannels*100) {
+	if numGrpcStreams.Load() > 0 && numGrpcStreams.Load() >= int64(numChannels*100) {
 		log.Warn("Number of grpc streams: %d; number of channels: %d; max concurrent streams: %d; Already at maximum number of concurrent grpc streams, cannot make new publish or subscribe requests",
-			numGrpcStreams, numChannels, numChannels*100,
+			numGrpcStreams.Load(), numChannels, numChannels*100,
 		)
 	}
 }
