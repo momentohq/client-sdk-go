@@ -96,7 +96,7 @@ func NewPreviewStorageClient(storageConfiguration config.StorageConfiguration, c
 
 func (c defaultPreviewStorageClient) getNextStorageDataClient() *storageDataClient {
 	nextClientIndex := atomic.AddUint64(&storageDataClientCount, 1)
-	dataClient := c.storageDataClients[nextClientIndex%uint64(len(c.storageDataClients))]
+	dataClient := c.storageDataClients[atomic.LoadUint64(&nextClientIndex)%uint64(len(c.storageDataClients))]
 	return dataClient
 }
 

@@ -313,7 +313,7 @@ func (c defaultScsClient) getCacheNameForRequest(request hasCacheName) string {
 
 func (c defaultScsClient) getNextDataClient() *scsDataClient {
 	nextClientIndex := atomic.AddUint64(&dataClientCount, 1)
-	dataClient := c.dataClients[nextClientIndex%uint64(len(c.dataClients))]
+	dataClient := c.dataClients[atomic.LoadUint64(&nextClientIndex)%uint64(len(c.dataClients))]
 	return dataClient
 }
 
