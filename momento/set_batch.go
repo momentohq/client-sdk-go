@@ -57,10 +57,15 @@ func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) error {
 
 func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
+	var responseMetadata []metadata.MD
 	resp, err := client.grpcClient.SetBatch(requestMetadata, r.grpcRequest)
-	header, _ = resp.Header()
-	trailer = resp.Trailer()
-	responseMetadata := []metadata.MD{header, trailer}
+	// If there is an error, it's possible resp is nil and we should avoid
+	// calling Header() and Trailer() on it to avoid a panic
+	if resp != nil {
+		header, _ = resp.Header()
+		trailer = resp.Trailer()
+		responseMetadata = []metadata.MD{header, trailer}
+	}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
