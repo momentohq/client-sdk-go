@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.2](https://github.com/momentohq/client-sdk-go/compare/v1.31.1...v1.31.2) (2025-01-15)
+
+
+### Bug Fixes
+
+* add nil check before getting header and trailer for GetBatch and SetBatch ([#572](https://github.com/momentohq/client-sdk-go/issues/572)) ([5902394](https://github.com/momentohq/client-sdk-go/commit/5902394357a6045f9ab804f8a43aabddbb034f2f))
+
 ## [1.31.1](https://github.com/momentohq/client-sdk-go/compare/v1.31.0...v1.31.1) (2024-12-11)
 
 
