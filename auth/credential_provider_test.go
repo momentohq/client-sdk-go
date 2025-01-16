@@ -51,32 +51,32 @@ var _ = Describe("auth credential-provider", func() {
 			credentialProvider, err := auth.NewEnvMomentoTokenProvider(envVar)
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
-			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
-			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com:443"))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com:443"))
 		})
 
 		It("returns a credential provider from a string via constructor", func() {
 			credentialProvider, err := auth.NewStringMomentoTokenProvider(os.Getenv(envVar))
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
-			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
-			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com:443"))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com:443"))
 		})
 
 		It("returns a credential provider from an environment variable via method", func() {
 			credentialProvider, err := auth.FromEnvironmentVariable(envVar)
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
-			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
-			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com:443"))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com:443"))
 		})
 
 		It("returns a credential provider from a string via method", func() {
 			credentialProvider, err := auth.FromString(os.Getenv(envVar))
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testV1ApiKey))
-			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com"))
-			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com"))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal("cache.test.momentohq.com:443"))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal("control.test.momentohq.com:443"))
 		})
 
 		It("overrides endpoints", func() {
