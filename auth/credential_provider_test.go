@@ -86,18 +86,22 @@ var _ = Describe("auth credential-provider", func() {
 			cacheEndpoint := credentialProvider.GetCacheEndpoint()
 			Expect(controlEndpoint).ToNot(BeEmpty())
 			Expect(cacheEndpoint).ToNot(BeEmpty())
+			Expect(credentialProvider.IsControlEndpointSecure()).To(BeTrue())
+			Expect(credentialProvider.IsCacheEndpointSecure()).To(BeTrue())
 
 			controlEndpoint = fmt.Sprintf("%s-overridden", controlEndpoint)
 			cacheEndpoint = fmt.Sprintf("%s-overridden", cacheEndpoint)
 			credentialProvider, err = credentialProvider.WithEndpoints(
-				auth.Endpoints{
-					ControlEndpoint: controlEndpoint,
-					CacheEndpoint:   cacheEndpoint,
+				auth.AllEndpoints{
+					ControlEndpoint: auth.Endpoint{Endpoint: controlEndpoint},
+					CacheEndpoint:   auth.Endpoint{Endpoint: cacheEndpoint},
 				},
 			)
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(controlEndpoint))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(cacheEndpoint))
+			Expect(credentialProvider.IsControlEndpointSecure()).To(BeTrue())
+			Expect(credentialProvider.IsCacheEndpointSecure()).To(BeTrue())
 		})
 
 		DescribeTable("errors when v1 token is missing data",
@@ -115,6 +119,39 @@ var _ = Describe("auth credential-provider", func() {
 			Entry("missing endpoint", testV1MissingEndpoint),
 			Entry("missing api key", testV1MissingApiKey),
 		)
+
+		It("correctly sets Momento Local endpoints", func() {
+			// Using default config
+			credentialProvider, err := auth.NewMomentoLocalProvider(nil)
+			defaultEndpoint := "127.0.0.1:8080"
+			Expect(err).To(BeNil())
+			Expect(credentialProvider.GetAuthToken()).To(Equal(""))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(defaultEndpoint))
+			Expect(credentialProvider.IsCacheEndpointSecure()).To(BeFalse())
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal(defaultEndpoint))
+			Expect(credentialProvider.IsControlEndpointSecure()).To(BeFalse())
+			Expect(credentialProvider.GetStorageEndpoint()).To(Equal(defaultEndpoint))
+			Expect(credentialProvider.IsStorageEndpointSecure()).To(BeFalse())
+			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(defaultEndpoint))
+			Expect(credentialProvider.IsTokenEndpointSecure()).To(BeFalse())
+
+			// Using provided config
+			credentialProvider, err = auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{
+				Hostname: "localhost",
+				Port:     9090,
+			})
+			nonDefaultEndpoint := "localhost:9090"
+			Expect(err).To(BeNil())
+			Expect(credentialProvider.GetAuthToken()).To(Equal(""))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(nonDefaultEndpoint))
+			Expect(credentialProvider.IsCacheEndpointSecure()).To(BeFalse())
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal(nonDefaultEndpoint))
+			Expect(credentialProvider.IsControlEndpointSecure()).To(BeFalse())
+			Expect(credentialProvider.GetStorageEndpoint()).To(Equal(nonDefaultEndpoint))
+			Expect(credentialProvider.IsStorageEndpointSecure()).To(BeFalse())
+			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(nonDefaultEndpoint))
+			Expect(credentialProvider.IsTokenEndpointSecure()).To(BeFalse())
+		})
 	})
 
 })

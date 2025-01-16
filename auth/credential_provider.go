@@ -12,37 +12,48 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
 
-type Endpoints struct {
+type Endpoint struct {
+	// Endpoint is the host which the Momento client will connect to
+	Endpoint string
+	// InsecureConnection is a flag to indicate whether the connection to the endpoint should be insecure. The zero value for a bool in Go is false, so we default to a secure connection (InsecureConnection==false) if a value is not provided.
+	InsecureConnection bool
+}
+
+type AllEndpoints struct {
 	// ControlEndpoint is the host which the Momento client will connect to the Momento control plane
-	ControlEndpoint string
+	ControlEndpoint Endpoint
 	// CacheEndpoint is the host which the Momento client will connect to the Momento data plane
-	CacheEndpoint string
+	CacheEndpoint Endpoint
 	// TokenEndpoint is the host which the Momento client will connect to for generating disposable auth tokens
-	TokenEndpoint string
+	TokenEndpoint Endpoint
 	// StorageEndpoint is the host which the Momento client will connect to the Momento storage data plane
-	StorageEndpoint string
+	StorageEndpoint Endpoint
 }
 
 type tokenAndEndpoints struct {
-	Endpoints
+	Endpoints AllEndpoints
 	AuthToken string
 }
 
 type CredentialProvider interface {
 	GetAuthToken() string
 	GetControlEndpoint() string
+	IsControlEndpointSecure() bool
 	GetCacheEndpoint() string
+	IsCacheEndpointSecure() bool
 	GetTokenEndpoint() string
+	IsTokenEndpointSecure() bool
 	GetStorageEndpoint() string
-	WithEndpoints(endpoints Endpoints) (CredentialProvider, error)
+	IsStorageEndpointSecure() bool
+	WithEndpoints(endpoints AllEndpoints) (CredentialProvider, error)
 }
 
 type defaultCredentialProvider struct {
 	authToken       string
-	controlEndpoint string
-	cacheEndpoint   string
-	tokenEndpoint   string
-	storageEndpoint string
+	controlEndpoint Endpoint
+	cacheEndpoint   Endpoint
+	tokenEndpoint   Endpoint
+	storageEndpoint Endpoint
 }
 
 // GetAuthToken returns user's auth token.
@@ -50,24 +61,44 @@ func (credentialProvider defaultCredentialProvider) GetAuthToken() string {
 	return credentialProvider.authToken
 }
 
-// GetControlEndpoint returns Endpoints.ControlEndpoint.
+// GetControlEndpoint returns AllEndpoints.ControlEndpoint.Endpoint.
 func (credentialProvider defaultCredentialProvider) GetControlEndpoint() string {
-	return credentialProvider.controlEndpoint
+	return credentialProvider.controlEndpoint.Endpoint
 }
 
-// GetCacheEndpoint returns Endpoints.CacheEndpoint.
+// IsControlEndpointSecure returns true if the control endpoint is secure.
+func (credentialProvider defaultCredentialProvider) IsControlEndpointSecure() bool {
+	return !credentialProvider.controlEndpoint.InsecureConnection
+}
+
+// GetCacheEndpoint returns AllEndpoints.CacheEndpoint.Endpoint.
 func (credentialProvider defaultCredentialProvider) GetCacheEndpoint() string {
-	return credentialProvider.cacheEndpoint
+	return credentialProvider.cacheEndpoint.Endpoint
 }
 
-// GetTokenEndpoint returns Endpoints.TokenEndpoint.
+// IsCacheEndpointSecure returns true if the cace endpoint is secure.
+func (credentialProvider defaultCredentialProvider) IsCacheEndpointSecure() bool {
+	return !credentialProvider.cacheEndpoint.InsecureConnection
+}
+
+// GetTokenEndpoint returns AllEndpoints.TokenEndpoint.Endpoint.
 func (credentialProvider defaultCredentialProvider) GetTokenEndpoint() string {
-	return credentialProvider.tokenEndpoint
+	return credentialProvider.tokenEndpoint.Endpoint
 }
 
-// GetStorageEndpoint returns Endpoints.StorageEndpoint.
+// IsTokenEndpointSecure returns true if the token endpoint is secure.
+func (credentialProvider defaultCredentialProvider) IsTokenEndpointSecure() bool {
+	return !credentialProvider.tokenEndpoint.InsecureConnection
+}
+
+// GetStorageEndpoint returns AllEndpoints.StorageEndpoint.Endpoint.
 func (credentialProvider defaultCredentialProvider) GetStorageEndpoint() string {
-	return credentialProvider.storageEndpoint
+	return credentialProvider.storageEndpoint.Endpoint
+}
+
+// IsStorageEndpointSecure returns true if the storage endpoint is secure.
+func (credentialProvider defaultCredentialProvider) IsStorageEndpointSecure() bool {
+	return !credentialProvider.storageEndpoint.InsecureConnection
 }
 
 // FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
@@ -91,17 +122,17 @@ func FromString(authToken string) (CredentialProvider, error) {
 // WithEndpoints overrides the cache and control endpoint URIs with those provided by the supplied Endpoints struct
 // and returns a CredentialProvider with the new endpoint values. An endpoint supplied as an empty string is ignored
 // and the existing value for that endpoint is retained.
-func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints Endpoints) (CredentialProvider, error) {
-	if endpoints.CacheEndpoint != "" {
+func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints AllEndpoints) (CredentialProvider, error) {
+	if endpoints.CacheEndpoint.Endpoint != "" {
 		credentialProvider.cacheEndpoint = endpoints.CacheEndpoint
 	}
-	if endpoints.ControlEndpoint != "" {
+	if endpoints.ControlEndpoint.Endpoint != "" {
 		credentialProvider.controlEndpoint = endpoints.ControlEndpoint
 	}
-	if endpoints.TokenEndpoint != "" {
+	if endpoints.TokenEndpoint.Endpoint != "" {
 		credentialProvider.tokenEndpoint = endpoints.TokenEndpoint
 	}
-	if endpoints.StorageEndpoint != "" {
+	if endpoints.StorageEndpoint.Endpoint != "" {
 		credentialProvider.storageEndpoint = endpoints.StorageEndpoint
 	}
 	return credentialProvider, nil
@@ -128,12 +159,21 @@ func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error)
 	if err != nil {
 		return nil, err
 	}
+	port := 443
 	provider := defaultCredentialProvider{
-		authToken:       tokenAndEndpoints.AuthToken,
-		controlEndpoint: tokenAndEndpoints.ControlEndpoint,
-		cacheEndpoint:   tokenAndEndpoints.CacheEndpoint,
-		tokenEndpoint:   tokenAndEndpoints.TokenEndpoint,
-		storageEndpoint: tokenAndEndpoints.StorageEndpoint,
+		authToken: tokenAndEndpoints.AuthToken,
+		controlEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("%s:%d", tokenAndEndpoints.Endpoints.ControlEndpoint.Endpoint, port),
+		},
+		cacheEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("%s:%d", tokenAndEndpoints.Endpoints.CacheEndpoint.Endpoint, port),
+		},
+		tokenEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("%s:%d", tokenAndEndpoints.Endpoints.TokenEndpoint.Endpoint, port),
+		},
+		storageEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("%s:%d", tokenAndEndpoints.Endpoints.StorageEndpoint.Endpoint, port),
+		},
 	}
 	return provider, nil
 }
@@ -165,11 +205,11 @@ func processV1Token(decodedBase64Token []byte) (*tokenAndEndpoints, momentoerror
 	}
 
 	return &tokenAndEndpoints{
-		Endpoints: Endpoints{
-			ControlEndpoint: fmt.Sprintf("control.%s", tokenData["endpoint"]),
-			CacheEndpoint:   fmt.Sprintf("cache.%s", tokenData["endpoint"]),
-			TokenEndpoint:   fmt.Sprintf("token.%s", tokenData["endpoint"]),
-			StorageEndpoint: fmt.Sprintf("storage.%s", tokenData["endpoint"]),
+		Endpoints: AllEndpoints{
+			ControlEndpoint: Endpoint{Endpoint: fmt.Sprintf("control.%s", tokenData["endpoint"])},
+			CacheEndpoint:   Endpoint{Endpoint: fmt.Sprintf("cache.%s", tokenData["endpoint"])},
+			TokenEndpoint:   Endpoint{Endpoint: fmt.Sprintf("token.%s", tokenData["endpoint"])},
+			StorageEndpoint: Endpoint{Endpoint: fmt.Sprintf("storage.%s", tokenData["endpoint"])},
 		},
 		AuthToken: tokenData["api_key"],
 	}, nil
@@ -188,9 +228,9 @@ func processJwtToken(authToken string) (*tokenAndEndpoints, momentoerrors.Moment
 		controlEndpoint := reflect.ValueOf(claims["cp"]).String()
 		cacheEndpoint := reflect.ValueOf(claims["c"]).String()
 		return &tokenAndEndpoints{
-			Endpoints: Endpoints{
-				ControlEndpoint: controlEndpoint,
-				CacheEndpoint:   cacheEndpoint,
+			Endpoints: AllEndpoints{
+				ControlEndpoint: Endpoint{Endpoint: controlEndpoint},
+				CacheEndpoint:   Endpoint{Endpoint: cacheEndpoint},
 			},
 			AuthToken: authToken,
 		}, nil
@@ -200,4 +240,44 @@ func processJwtToken(authToken string) (*tokenAndEndpoints, momentoerrors.Moment
 		"Invalid Auth token.",
 		nil,
 	)
+}
+
+type MomentoLocalConfig struct {
+	Hostname string
+	Port     uint
+}
+
+func NewMomentoLocalProvider(config *MomentoLocalConfig) (CredentialProvider, error) {
+	hostname := "127.0.0.1"
+	port := uint(8080)
+	if config != nil {
+		if config.Hostname != "" {
+			hostname = config.Hostname
+		}
+		if config.Port != 0 {
+			port = config.Port
+		}
+	}
+
+	momentoLocalEndpoint := Endpoint{
+		Endpoint:           fmt.Sprintf("%s:%d", hostname, port),
+		InsecureConnection: true,
+	}
+	tokenAndEndpoints := &tokenAndEndpoints{
+		Endpoints: AllEndpoints{
+			ControlEndpoint: momentoLocalEndpoint,
+			CacheEndpoint:   momentoLocalEndpoint,
+			TokenEndpoint:   momentoLocalEndpoint,
+			StorageEndpoint: momentoLocalEndpoint,
+		},
+	}
+
+	provider := defaultCredentialProvider{
+		authToken:       tokenAndEndpoints.AuthToken,
+		controlEndpoint: tokenAndEndpoints.Endpoints.ControlEndpoint,
+		cacheEndpoint:   tokenAndEndpoints.Endpoints.CacheEndpoint,
+		tokenEndpoint:   tokenAndEndpoints.Endpoints.TokenEndpoint,
+		storageEndpoint: tokenAndEndpoints.Endpoints.StorageEndpoint,
+	}
+	return provider, nil
 }
