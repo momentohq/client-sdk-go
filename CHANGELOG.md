@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.32.1](https://github.com/momentohq/client-sdk-go/compare/v1.32.0...v1.32.1) (2025-01-17)
+
+
+### Miscellaneous
+
+* log pretty print cache config on instantiation ([#577](https://github.com/momentohq/client-sdk-go/issues/577)) ([851b9c2](https://github.com/momentohq/client-sdk-go/commit/851b9c225283e4e48064a990dbbdd4182469a0bf))
+
 ## [1.32.0](https://github.com/momentohq/client-sdk-go/compare/v1.31.2...v1.32.0) (2025-01-17)
 
 
