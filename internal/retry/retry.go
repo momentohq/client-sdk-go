@@ -1,6 +1,7 @@
 package retry
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -26,6 +27,10 @@ type neverRetryStrategy struct{}
 
 func (r neverRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	return nil
+}
+
+func (r neverRetryStrategy) String() string {
+	return "neverRetryStrategy{}"
 }
 
 // NewNeverRetryStrategy is a retry strategy that never retries any request
@@ -87,4 +92,12 @@ func (r fixedCountRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int 
 	)
 	timeTilNextRetry := 0
 	return &timeTilNextRetry
+}
+
+func (r fixedCountRetryStrategy) String() string {
+	return fmt.Sprintf(
+		"fixedCountRetryStrategy{eligibilityStrategy=%v, maxAttempts=%v, log=%v}",
+		r.eligibilityStrategy,
+		r.maxAttempts,
+		r.log)
 }

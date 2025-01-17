@@ -3,6 +3,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -184,6 +185,17 @@ type CacheClientProps struct {
 	EagerConnectTimeout time.Duration
 }
 
+func (c CacheClientProps) String() string {
+	return fmt.Sprintf(
+		"CacheClientProps{CacheName: %s, Configuration: %s, CredentialProvider: %s, DefaultTtl: %s, EagerConnectTimeout: %s}",
+		c.CacheName,
+		c.Configuration,
+		c.CredentialProvider,
+		c.DefaultTtl,
+		c.EagerConnectTimeout,
+	)
+}
+
 func validateEagerConnectionTimeout(timeout time.Duration) momentoerrors.MomentoSvcErr {
 	if timeout < 0*time.Second {
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "eager connection timeout must be greater than 0", nil)
@@ -192,11 +204,14 @@ func validateEagerConnectionTimeout(timeout time.Duration) momentoerrors.Momento
 }
 
 func commonCacheClient(props CacheClientProps) (CacheClient, error) {
+	logger := props.Configuration.GetLoggerFactory().GetLogger("CacheClient")
+	logger.Info("Creating cache client with settings: %s", props)
+
 	if props.Configuration.GetClientSideTimeout() < 1 {
 		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.InvalidArgumentError, "request timeout must be greater than 0", nil)
 	}
 	client := &defaultScsClient{
-		logger:             props.Configuration.GetLoggerFactory().GetLogger("CacheClient"),
+		logger:             logger,
 		credentialProvider: props.CredentialProvider,
 	}
 
@@ -241,7 +256,6 @@ func commonCacheClient(props CacheClientProps) (CacheClient, error) {
 		if props.EagerConnectTimeout > 0 {
 			err := dataClient.Connect()
 			if err != nil {
-				logger := props.Configuration.GetLoggerFactory().GetLogger("CacheClient")
 				logger.Debug("Failed to connect to the server within the given eager connection timeout:", err.Error())
 				return nil, momentoerrors.NewConnectionError(err)
 			}

@@ -53,6 +53,10 @@ func (l *DefaultMomentoLogger) Error(message string, args ...any) {
 	}
 }
 
+func (l *DefaultMomentoLogger) String() string {
+	return fmt.Sprintf("DefaultMomentoLogger{loggerName=%s, level=%v}", l.loggerName, l.level)
+}
+
 func momentoLog(level string, loggerName string, message string, args ...any) {
 	finalMessage := fmt.Sprintf(message, args...)
 	log.Printf("[%s] %s (%s): %s\n", time.Now().UTC().Format(time.RFC3339), level, loggerName, finalMessage)
@@ -71,4 +75,8 @@ func NewDefaultMomentoLoggerFactory(level LogLevel) logger.MomentoLoggerFactory 
 func (lf DefaultMomentoLoggerFactory) GetLogger(loggerName string) logger.MomentoLogger {
 	log.SetFlags(0)
 	return &DefaultMomentoLogger{loggerName: loggerName, level: lf.level}
+}
+
+func (lf DefaultMomentoLoggerFactory) String() string {
+	return fmt.Sprintf("DefaultMomentoLoggerFactory{level=%v}", lf.level)
 }

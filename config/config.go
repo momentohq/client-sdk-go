@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/retry"
@@ -160,4 +161,15 @@ func (s *cacheConfiguration) WithReadConcern(readConcern ReadConcern) Configurat
 		numGrpcChannels:   s.numGrpcChannels,
 		readConcern:       readConcern,
 	}
+}
+
+func (s *cacheConfiguration) String() string {
+	return fmt.Sprintf(
+		"Configuration{loggerFactory=%v, transportStrategy=%v, retryStrategy=%v, numGrpcChannels=%v, readConcern=%v}",
+		s.loggerFactory,
+		s.transportStrategy,
+		s.retryStrategy,
+		s.numGrpcChannels,
+		s.readConcern,
+	)
 }

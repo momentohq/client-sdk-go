@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -150,6 +151,11 @@ func (s *StaticGrpcConfiguration) WithKeepAliveDisabled() GrpcConfiguration {
 	}
 }
 
+func (s *StaticGrpcConfiguration) String() string {
+	return fmt.Sprintf("GrpcConfiguration{deadline=%v, keepAlivePermitWithoutCalls=%v, keepAliveTimeout=%v, keepAliveTime=%v, maxSendMessageLength=%v, maxReceiveMessageLength=%v}",
+		s.deadline, s.keepAlivePermitWithoutCalls, s.keepAliveTimeout, s.keepAliveTime, s.maxSendMessageLength, s.maxReceiveMessageLength)
+}
+
 type StaticTransportStrategy struct {
 	grpcConfig GrpcConfiguration
 	maxIdle    time.Duration
@@ -192,4 +198,8 @@ func (s *StaticTransportStrategy) WithMaxIdle(maxIdle time.Duration) TransportSt
 		grpcConfig: s.grpcConfig,
 		maxIdle:    maxIdle,
 	}
+}
+
+func (s *StaticTransportStrategy) String() string {
+	return fmt.Sprintf("TransportStrategy{grpcConfig=%v, maxIdle=%v}", s.grpcConfig, s.maxIdle)
 }
