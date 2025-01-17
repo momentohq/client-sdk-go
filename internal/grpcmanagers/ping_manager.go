@@ -1,8 +1,6 @@
 package grpcmanagers
 
 import (
-	"fmt"
-
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -14,10 +12,8 @@ type PingGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-const PingPort = ":443"
-
 func NewPingGrpcManager(request *models.PingGrpcManagerRequest) (*PingGrpcManager, momentoerrors.MomentoSvcErr) {
-	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), PingPort)
+	endpoint := request.CredentialProvider.GetCacheEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	headerInterceptors := []grpc.UnaryClientInterceptor{
@@ -28,6 +24,7 @@ func NewPingGrpcManager(request *models.PingGrpcManagerRequest) (*PingGrpcManage
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
+			request.CredentialProvider.IsCacheEndpointSecure(),
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

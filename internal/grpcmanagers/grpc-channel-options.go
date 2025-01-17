@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/momentohq/client-sdk-go/config"
@@ -27,15 +28,18 @@ func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.GrpcConfiguration) []grp
 	}
 }
 
-func TransportCredentialsChannelOption() grpc.DialOption {
+func TransportCredentialsChannelOption(secureEndpoint bool) grpc.DialOption {
+	if !secureEndpoint {
+		return grpc.WithTransportCredentials(insecure.NewCredentials())
+	}
 	config := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 	return grpc.WithTransportCredentials(credentials.NewTLS(config))
 }
 
-func AllDialOptions(grpcConfig config.GrpcConfiguration, options ...grpc.DialOption) []grpc.DialOption {
-	options = append(options, TransportCredentialsChannelOption())
+func AllDialOptions(grpcConfig config.GrpcConfiguration, secureEndpoint bool, options ...grpc.DialOption) []grpc.DialOption {
+	options = append(options, TransportCredentialsChannelOption(secureEndpoint))
 	options = append(options, GrpcChannelOptionsFromGrpcConfig(grpcConfig)...)
 	return options
 }

@@ -3,7 +3,6 @@ package grpcmanagers
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -16,10 +15,8 @@ type DataGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-const CachePort = ":443"
-
 func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcManager, momentoerrors.MomentoSvcErr) {
-	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
+	endpoint := request.CredentialProvider.GetCacheEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	headerInterceptors := []grpc.UnaryClientInterceptor{
@@ -30,25 +27,15 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 
 	var conn *grpc.ClientConn
 	var err error
-	if request.EagerConnect {
-		conn, err = grpc.NewClient(
-			endpoint,
-			AllDialOptions(
-				request.GrpcConfiguration,
-				grpc.WithChainUnaryInterceptor(headerInterceptors...),
-				grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
-			)...,
-		)
-	} else {
-		conn, err = grpc.NewClient(
-			endpoint,
-			AllDialOptions(
-				request.GrpcConfiguration,
-				grpc.WithChainUnaryInterceptor(headerInterceptors...),
-				grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
-			)...,
-		)
-	}
+	conn, err = grpc.NewClient(
+		endpoint,
+		AllDialOptions(
+			request.GrpcConfiguration,
+			request.CredentialProvider.IsCacheEndpointSecure(),
+			grpc.WithChainUnaryInterceptor(headerInterceptors...),
+			grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
+		)...,
+	)
 
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
@@ -61,8 +48,8 @@ func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (gm *DataGrpcManager) Connect(ctx context.Context) error {
-	// Dial would connect in the background, but NewClient remains in IDLE until first RPC
-	// or until we actually call Connect here
+	// grpc.NewClient remains in IDLE until first RPC, but we force
+	// an eager connection when we call Connect here
 	gm.Conn.Connect()
 
 	for {

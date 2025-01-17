@@ -1,8 +1,6 @@
 package grpcmanagers
 
 import (
-	"fmt"
-
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -13,10 +11,8 @@ type StoreGrpcManager struct {
 	Conn *grpc.ClientConn
 }
 
-const StoragePort = ":443"
-
 func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcManager, momentoerrors.MomentoSvcErr) {
-	endpoint := fmt.Sprint(request.CredentialProvider.GetStorageEndpoint(), StoragePort)
+	endpoint := request.CredentialProvider.GetStorageEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	headerInterceptors := []grpc.UnaryClientInterceptor{
@@ -27,6 +23,7 @@ func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcMan
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
+			request.CredentialProvider.IsStorageEndpointSecure(),
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

@@ -1,8 +1,6 @@
 package grpcmanagers
 
 import (
-	"fmt"
-
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -16,7 +14,7 @@ type TopicGrpcManager struct {
 }
 
 func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
-	endpoint := fmt.Sprint(request.CredentialProvider.GetCacheEndpoint(), CachePort)
+	endpoint := request.CredentialProvider.GetCacheEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	headerInterceptors := []grpc.StreamClientInterceptor{
@@ -27,6 +25,7 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 		endpoint,
 		AllDialOptions(
 			request.GrpcConfiguration,
+			request.CredentialProvider.IsCacheEndpointSecure(),
 			grpc.WithChainStreamInterceptor(headerInterceptors...),
 			grpc.WithChainUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
 		)...,

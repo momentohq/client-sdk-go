@@ -21,7 +21,6 @@ type DataGrpcManagerRequest struct {
 	RetryStrategy      retry.Strategy
 	ReadConcern        config.ReadConcern
 	GrpcConfiguration  config.GrpcConfiguration
-	EagerConnect       bool
 }
 
 type TokenGrpcManagerRequest struct {

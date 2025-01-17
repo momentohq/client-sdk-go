@@ -29,7 +29,6 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
 		ReadConcern:        request.Configuration.GetReadConcern(),
 		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
-		EagerConnect:       eagerConnectTimeout > 0,
 	})
 	if err != nil {
 		return nil, err
