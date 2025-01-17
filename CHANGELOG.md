@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.32.0](https://github.com/momentohq/client-sdk-go/compare/v1.31.2...v1.32.0) (2025-01-17)
+
+
+### Features
+
+* add CredentialProvider constructor for momento-local connections ([#576](https://github.com/momentohq/client-sdk-go/issues/576)) ([ebdbe74](https://github.com/momentohq/client-sdk-go/commit/ebdbe741685a2354dec52925f6bdf31647f7da4b))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/momentohq/client-sdk-go in /examples ([#574](https://github.com/momentohq/client-sdk-go/issues/574)) ([c6510e2](https://github.com/momentohq/client-sdk-go/commit/c6510e2a18a05dd6e06316f7866cbc581597f905))
+
 ## [1.31.2](https://github.com/momentohq/client-sdk-go/compare/v1.31.1...v1.31.2) (2025-01-15)
 
 
