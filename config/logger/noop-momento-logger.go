@@ -33,3 +33,7 @@ func NewNoopMomentoLoggerFactory() MomentoLoggerFactory {
 func (*NoopMomentoLoggerFactory) GetLogger(loggerName string) MomentoLogger {
 	return &NoopMomentoLogger{}
 }
+
+func (*NoopMomentoLoggerFactory) String() string {
+	return "NoopMomentoLoggerFactory{}"
+}

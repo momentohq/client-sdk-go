@@ -19,6 +19,13 @@ type Endpoint struct {
 	InsecureConnection bool
 }
 
+func (endpoint Endpoint) String() string {
+	return fmt.Sprintf(
+		"Endpoint{Endpoint=%s, InsecureConnection=%t}",
+		endpoint.Endpoint,
+		endpoint.InsecureConnection)
+}
+
 type AllEndpoints struct {
 	// ControlEndpoint is the host which the Momento client will connect to the Momento control plane
 	ControlEndpoint Endpoint
@@ -99,6 +106,24 @@ func (credentialProvider defaultCredentialProvider) GetStorageEndpoint() string 
 // IsStorageEndpointSecure returns true if the storage endpoint is secure.
 func (credentialProvider defaultCredentialProvider) IsStorageEndpointSecure() bool {
 	return !credentialProvider.storageEndpoint.InsecureConnection
+}
+
+func (credentialProvider defaultCredentialProvider) String() string {
+	authToken := credentialProvider.authToken
+	if len(authToken) > 4 {
+		authToken = fmt.Sprintf("%s***%s", authToken[:2], authToken[len(authToken)-2:])
+	} else {
+		authToken = "***"
+	}
+
+	return fmt.Sprintf(
+		"CredentialProvider{authToken=%s, controlEndpoint=%s, cacheEndpoint=%s, tokenEndpoint=%s, storageEndpoint=%s}",
+		authToken,
+		credentialProvider.controlEndpoint,
+		credentialProvider.cacheEndpoint,
+		credentialProvider.tokenEndpoint,
+		credentialProvider.storageEndpoint,
+	)
 }
 
 // FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
