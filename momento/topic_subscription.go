@@ -97,9 +97,13 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		select {
 		case <-ctx.Done():
 			// Context has been canceled, return an error
+			s.momentoTopicClient.numGrpcStreams.Add(-1)
+			s.log.Debug("[Event] Context done, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
 			return nil, ctx.Err()
 		case <-s.cancelContext.Done():
 			// Context has been canceled, return an error
+			s.momentoTopicClient.numGrpcStreams.Add(-1)
+			s.log.Debug("[Event] Context cancelled, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
 			return nil, s.cancelContext.Err()
 		default:
 			// Proceed as is
@@ -110,18 +114,24 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			select {
 			case <-ctx.Done():
 				{
-					s.log.Info("Subscription context is done; closing subscription.")
+					// s.log.Info("Subscription context is done; closing subscription.")
+					s.momentoTopicClient.numGrpcStreams.Add(-1)
+					s.log.Debug("[Event RecvMsg] Context done, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
 					return nil, ctx.Err()
 				}
 			case <-s.cancelContext.Done():
 				{
-					s.log.Info("Subscription context is cancelled; closing subscription.")
+					// s.log.Info("Subscription context is cancelled; closing subscription.")
+					s.momentoTopicClient.numGrpcStreams.Add(-1)
+					s.log.Debug("[Event RecvMsg] Context cancelled, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
 					return nil, s.cancelContext.Err()
 				}
 			default:
 				{
-					// Attempt to reconnect
-					s.log.Error("stream disconnected YO, attempting to reconnect err:", fmt.Sprint(err))
+					// Disconnected, decrement and explicitly close the stream, then attempt to reconnect
+					s.log.Error("Stream disconnected due to error: %s", err.Error())
+					s.Close()
+					s.log.Debug("[Event RecvMsg] Default, attempting to reconnect, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
 					s.attemptReconnect(ctx)
 				}
 			}
@@ -185,6 +195,6 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 }
 
 func (s *topicSubscription) Close() {
-	numGrpcStreams.Add(-1)
+	s.momentoTopicClient.numGrpcStreams.Add(-1)
 	s.cancelFunction()
 }

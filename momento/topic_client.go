@@ -106,7 +106,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 			rpcError, _ := status.FromError(err)
 			if rpcError != nil {
 				if rpcError.Code() == codes.ResourceExhausted {
-					c.log.Info("Topic subscription limit reached, checking to see if subscription is eligible for retry")
+					c.log.Warn("Topic subscription limit reached, checking to see if subscription is eligible for retry")
 					continue
 				}
 			}
