@@ -37,10 +37,11 @@ type TopicsConfiguration interface {
 
 	// Deprecated: please use the WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels overrides
 	// instead to tune the number of GRPC channels for stream and unary operations, respectively.
-	// Defaults to 4 stream channels and 4 unary channels otherwise.
+	// Using WithMaxSubscriptions now will default to creating 4 unary channels and as many stream
+	// channels as needed to accommodate the maximum number of subscriptions.
 	//
-	// WithMaxSubscriptions is currently implemented to create one GRPC connection for every
-	// 100 subscribers. Can result in edge cases where subscribers and publishers are in contention
+	// WithMaxSubscriptions creates one GRPC connection for every 100 subscribers.
+	// Can result in edge cases where subscribers and publishers are in contention
 	// and may bottleneck a large volume of publish requests.
 	// One GRPC connection can multiplex 100 subscribers/publishers.
 	WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration
@@ -51,9 +52,10 @@ type TopicsConfiguration interface {
 
 	// Deprecated: please use the WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels overrides
 	// instead to tune the number of GRPC channels for stream and unary operations, respectively.
-	// Defaults to 4 stream channels and 4 unary channels otherwise.
+	// Using WithNumGrpcChannels now will default creating 4 unary channels and `numGrpcChannels`
+	// number of stream channels.
 	//
-	// WithNumGrpcChannels is currently implemented to create the specified number of GRPC connections
+	// WithNumGrpcChannels creates the specified number of GRPC connections
 	// (each GRPC connection can multiplex 100 subscribers/publishers). Defaults to 1.
 	WithNumGrpcChannels(numGrpcChannels uint32) TopicsConfiguration
 
@@ -98,6 +100,7 @@ func (s *topicsConfiguration) GetMaxSubscriptions() uint32 {
 }
 
 func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration {
+	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions is deprecated, please use WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels instead")
 	// numGrpcChannels is mutually exclusive with maxSubscriptions, not included in the override
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
@@ -111,6 +114,7 @@ func (s *topicsConfiguration) GetNumGrpcChannels() uint32 {
 }
 
 func (s *topicsConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) TopicsConfiguration {
+	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithNumGrpcChannels is deprecated, please use WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels instead")
 	// maxSubscriptions is mutually exclusive with numGrpcChannels, not included in the override
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,

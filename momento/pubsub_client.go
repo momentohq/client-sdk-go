@@ -32,12 +32,12 @@ type pubSubClient struct {
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
 
-	// Default to using 4 grpc channels for subscriptions
+	// Default to using 4 grpc channels for subscriptions.
 	numStreamChannels := uint32(4)
 	if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
 		numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
 	} else if request.TopicsConfiguration.GetNumGrpcChannels() > 0 {
-		// numGrpcChannels is deprecated, but we'll use it to set both numUnaryChannels and numStreamChannels
+		// numGrpcChannels is deprecated, but we'll use it to set numStreamChannels
 		// in case there are customers still using it.
 		numStreamChannels = request.TopicsConfiguration.GetNumGrpcChannels()
 	} else if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
@@ -57,14 +57,11 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
 
-	// Default to using 4 grpc channels for publishes
+	// Default to using 4 grpc channels for publishes.
+	// Note: 4 unary channels is also the default even if WithMaxSubscriptions and WithNumGrpcChannels is used.
 	numUnaryChannels := uint32(4)
 	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
 		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
-	} else if request.TopicsConfiguration.GetNumGrpcChannels() > 0 {
-		// numGrpcChannels is deprecated, but we'll use it to set both numUnaryChannels and numStreamChannels
-		// in case there are customers still using it.
-		numUnaryChannels = request.TopicsConfiguration.GetNumGrpcChannels()
 	}
 	unaryTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numUnaryChannels; i++ {
