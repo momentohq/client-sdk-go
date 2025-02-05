@@ -130,7 +130,8 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 				{
 					// Disconnected, decrement and explicitly close the stream, then attempt to reconnect
 					s.log.Error("Stream disconnected due to error: %s", err.Error())
-					s.Close()
+					s.cancelFunction()
+					s.momentoTopicClient.numGrpcStreams.Add(-1)
 					s.log.Debug("[Event RecvMsg] Default, attempting to reconnect, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
 					s.attemptReconnect(ctx)
 				}
@@ -194,7 +195,9 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	}
 }
 
+// Note: s.momentoTopicClient.numGrpcStreams is decremented in the `Event` method
+// for each of the cases when a stream is closed. We do not decrement here
+// to avoid double counting.
 func (s *topicSubscription) Close() {
-	s.momentoTopicClient.numGrpcStreams.Add(-1)
 	s.cancelFunction()
 }
