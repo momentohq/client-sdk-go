@@ -14,7 +14,7 @@ type TopicsTransportStrategy interface {
 
 	// GetGrpcConfig Configures the low-level gRPC settings for the Momento client's communication
 	// with the Momento server.
-	GetGrpcConfig() GrpcConfiguration
+	GetGrpcConfig() TopicsGrpcConfiguration
 
 	// WithGrpcConfig Copy constructor for overriding the gRPC configuration. Returns  a new
 	// TransportStrategy with the specified gRPC config.
@@ -256,15 +256,8 @@ func NewTopicsStaticTransportStrategy(props *TopicsTransportStrategyProps) Topic
 	}
 }
 
-// Returns the more generic GrpcConfiguration interface instead of the more specific TopicsGrpcConfiguration.
-// Used by underlying grpc manager to set cross-cutting grpc settings.
-func (s *TopicsStaticTransportStrategy) GetGrpcConfig() GrpcConfiguration {
-	grpcConfig := NewStaticGrpcConfiguration(&GrpcConfigurationProps{
-		deadline:                s.grpcConfig.GetDeadline(),
-		maxSendMessageLength:    s.grpcConfig.GetMaxSendMessageLength(),
-		maxReceiveMessageLength: s.grpcConfig.GetMaxReceiveMessageLength(),
-	})
-	return grpcConfig
+func (s *TopicsStaticTransportStrategy) GetGrpcConfig() TopicsGrpcConfiguration {
+	return s.grpcConfig
 }
 
 func (s *TopicsStaticTransportStrategy) WithGrpcConfig(grpcConfig TopicsGrpcConfiguration) TopicsTransportStrategy {

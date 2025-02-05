@@ -2,6 +2,16 @@ package config
 
 import "time"
 
+// Used by `AllDialOptions()` and `GrpcChannelOptionsFromGrpcConfig()` in
+// grpc managers to translate these configurations into grpc.DialOptions.
+type IGrpcConfiguration interface {
+	GetKeepAlivePermitWithoutCalls() bool
+	GetKeepAliveTimeout() time.Duration
+	GetKeepAliveTime() time.Duration
+	GetMaxSendMessageLength() int
+	GetMaxReceiveMessageLength() int
+}
+
 type GrpcConfigurationProps struct {
 	// number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
 	// with a DeadlineExceeded error.
