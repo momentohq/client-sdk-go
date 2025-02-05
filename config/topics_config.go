@@ -1,6 +1,8 @@
 package config
 
 import (
+	"math"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
@@ -101,11 +103,12 @@ func (s *topicsConfiguration) GetMaxSubscriptions() uint32 {
 
 func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration {
 	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions is deprecated, please use WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels instead")
-	// numGrpcChannels is mutually exclusive with maxSubscriptions, not included in the override
+	// If this deprecated method is used, we'll use the default 4 unary channels and set
+	// the number of stream channels to accommodate the specified number of subscriptions.
+	numStreamChannels := uint32(math.Ceil(float64(maxSubscriptions) / 100.0))
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		maxSubscriptions:  maxSubscriptions,
-		transportStrategy: s.transportStrategy,
+		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamChannels),
 	}
 }
 
@@ -115,11 +118,11 @@ func (s *topicsConfiguration) GetNumGrpcChannels() uint32 {
 
 func (s *topicsConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) TopicsConfiguration {
 	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithNumGrpcChannels is deprecated, please use WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels instead")
-	// maxSubscriptions is mutually exclusive with numGrpcChannels, not included in the override
+	// If this deprecated method is used, we'll use the default 4 unary channels
+	// and set the number of stream channels to the specified number.
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		numGrpcChannels:   numGrpcChannels,
-		transportStrategy: s.transportStrategy,
+		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numGrpcChannels),
 	}
 }
 

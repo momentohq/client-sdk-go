@@ -3,7 +3,6 @@ package momento
 import (
 	"context"
 	"fmt"
-	"math"
 	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -36,14 +35,6 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	numStreamChannels := uint32(4)
 	if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
 		numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
-	} else if request.TopicsConfiguration.GetNumGrpcChannels() > 0 {
-		// numGrpcChannels is deprecated, but we'll use it to set numStreamChannels
-		// in case there are customers still using it.
-		numStreamChannels = request.TopicsConfiguration.GetNumGrpcChannels()
-	} else if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
-		// maxSubscriptions is deprecated, but we'll use it to set numStreamChannels
-		// in case there are customers still using it.
-		numStreamChannels = uint32(math.Ceil(float64(request.TopicsConfiguration.GetMaxSubscriptions()) / 100.0))
 	}
 	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numStreamChannels; i++ {
@@ -58,7 +49,6 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 
 	// Default to using 4 grpc channels for publishes.
-	// Note: 4 unary channels is also the default even if WithMaxSubscriptions and WithNumGrpcChannels is used.
 	numUnaryChannels := uint32(4)
 	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
 		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
