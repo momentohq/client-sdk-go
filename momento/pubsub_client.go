@@ -94,7 +94,7 @@ func (client *pubSubClient) getNextUnaryTopicManager() *grpcmanagers.TopicGrpcMa
 //
 // We must prevent subscription requests from similarly queuing up if there are already numStreamChannels*100
 // concurrent streams as it causes the program to hang indefinitely with no error.
-func (client *pubSubClient) checkNumConcurrentStreams(log logger.MomentoLogger) error {
+func (client *pubSubClient) checkNumConcurrentStreams() error {
 	if client.numGrpcStreams.Load() >= int64(client.numStreamChannels*100) {
 		errorMessage := fmt.Sprintf(
 			"Number of grpc streams: %d; number of channels: %d; max concurrent streams: %d; Already at maximum number of concurrent grpc streams, cannot make new subscribe requests\n",
@@ -107,7 +107,7 @@ func (client *pubSubClient) checkNumConcurrentStreams(log logger.MomentoLogger) 
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, context.Context, context.CancelFunc, error) {
 	// First check if there is enough grpc stream capabity to make a new subscription
-	err := client.checkNumConcurrentStreams(client.log)
+	err := client.checkNumConcurrentStreams()
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
