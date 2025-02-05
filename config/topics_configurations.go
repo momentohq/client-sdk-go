@@ -2,6 +2,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -15,5 +17,10 @@ func TopicsDefault() TopicsConfiguration {
 func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsConfiguration {
 	return NewTopicConfiguration(&TopicsConfigurationProps{
 		LoggerFactory: loggerFactory,
+		TransportStrategy: NewTopicsStaticTransportStrategy(&TopicsTransportStrategyProps{
+			GrpcConfiguration: NewTopicsStaticGrpcConfiguration(&TopicsGrpcConfigurationProps{
+				deadline: 5 * time.Second,
+			}),
+		}),
 	})
 }

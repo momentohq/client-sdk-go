@@ -8,8 +8,7 @@ type topicsConfiguration struct {
 	loggerFactory     logger.MomentoLoggerFactory
 	maxSubscriptions  uint32 // DEPRECATED
 	numGrpcChannels   uint32 // DEPRECATED
-	numStreamChannels uint32
-	numUnaryChannels  uint32
+	transportStrategy TopicsTransportStrategy
 }
 
 type TopicsConfigurationProps struct {
@@ -22,13 +21,9 @@ type TopicsConfigurationProps struct {
 	// Deprecated: use NumStreamGrpcChannels and NumUnaryGrpcChannels instead.
 	NumGrpcChannels uint32
 
-	// NumStreamGrpcChannels represents the number of GRPC channels the topic client
-	// should open and work with for stream operations (i.e. topic subscriptions).
-	NumStreamGrpcChannels uint32
-
-	// NumUnaryGrpcChannels represents the number of GRPC channels the topic client
-	// should open and work with for unary operations (i.e. topic publishes).
-	NumUnaryGrpcChannels uint32
+	// TransportStrategy is responsible for configuring network tunables for the GRPC client,
+	// including the number of stream and unary grpc channels that should be used.
+	TransportStrategy TopicsTransportStrategy
 }
 
 type TopicsConfiguration interface {
@@ -79,6 +74,10 @@ type TopicsConfiguration interface {
 	// for unary operations. Each GRPC connection can multiplex 100 concurrent publish requests.
 	// Defaults to 4.
 	WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint32) TopicsConfiguration
+
+	GetTransportStrategy() TopicsTransportStrategy
+
+	WithTransportStrategy(transportStrategy TopicsTransportStrategy) TopicsConfiguration
 }
 
 func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration {
@@ -86,8 +85,7 @@ func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration 
 		loggerFactory:     props.LoggerFactory,
 		maxSubscriptions:  props.MaxSubscriptions,
 		numGrpcChannels:   props.NumGrpcChannels,
-		numStreamChannels: props.NumStreamGrpcChannels,
-		numUnaryChannels:  props.NumUnaryGrpcChannels,
+		transportStrategy: props.TransportStrategy,
 	}
 }
 
@@ -104,8 +102,7 @@ func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) Topi
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		maxSubscriptions:  maxSubscriptions,
-		numStreamChannels: s.numStreamChannels,
-		numUnaryChannels:  s.numUnaryChannels,
+		transportStrategy: s.transportStrategy,
 	}
 }
 
@@ -118,33 +115,42 @@ func (s *topicsConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) Topics
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		numGrpcChannels:   numGrpcChannels,
-		numStreamChannels: s.numStreamChannels,
-		numUnaryChannels:  s.numUnaryChannels,
+		transportStrategy: s.transportStrategy,
 	}
 }
 
 func (s *topicsConfiguration) GetNumStreamGrpcChannels() uint32 {
-	return s.numStreamChannels
+	return s.transportStrategy.GetNumStreamGrpcChannels()
 }
 
 func (s *topicsConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsConfiguration {
 	// maxSubscriptions and numGrpcChannels are deprecated, not included in the override
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		numStreamChannels: numStreamGrpcChannels,
-		numUnaryChannels:  s.numUnaryChannels,
+		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
 	}
 }
 
 func (s *topicsConfiguration) GetNumUnaryGrpcChannels() uint32 {
-	return s.numUnaryChannels
+	return s.transportStrategy.GetNumUnaryGrpcChannels()
 }
 
 func (s *topicsConfiguration) WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint32) TopicsConfiguration {
 	// maxSubscriptions and numGrpcChannels are deprecated, not included in the override
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		numStreamChannels: s.numStreamChannels,
-		numUnaryChannels:  numUnaryGrpcChannels,
+		transportStrategy: s.transportStrategy.WithNumUnaryGrpcChannels(numUnaryGrpcChannels),
+	}
+}
+
+func (s *topicsConfiguration) GetTransportStrategy() TopicsTransportStrategy {
+	return s.transportStrategy
+}
+
+func (s *topicsConfiguration) WithTransportStrategy(transportStrategy TopicsTransportStrategy) TopicsConfiguration {
+	// maxSubscriptions and numGrpcChannels are deprecated, not included in the override
+	return &topicsConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: transportStrategy,
 	}
 }
