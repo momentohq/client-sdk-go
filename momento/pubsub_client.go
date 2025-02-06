@@ -16,6 +16,9 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+const DEFAULT_NUM_STREAM_GRPC_CHANNELS uint32 = 4
+const DEFAULT_NUM_UNARY_GRPC_CHANNELS uint32 = 4
+
 type pubSubClient struct {
 	numUnaryChannels        uint32
 	unaryTopicManagers      []*grpcmanagers.TopicGrpcManager
@@ -31,8 +34,7 @@ type pubSubClient struct {
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
 
-	// Default to using 4 grpc channels for subscriptions.
-	numStreamChannels := uint32(4)
+	numStreamChannels := uint32(DEFAULT_NUM_STREAM_GRPC_CHANNELS)
 	if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
 		numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
 	}
@@ -48,8 +50,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
 
-	// Default to using 4 grpc channels for publishes.
-	numUnaryChannels := uint32(4)
+	numUnaryChannels := uint32(DEFAULT_NUM_UNARY_GRPC_CHANNELS)
 	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
 		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
 	}
