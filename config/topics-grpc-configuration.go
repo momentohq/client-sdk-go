@@ -2,20 +2,10 @@ package config
 
 import "time"
 
-// Used by `AllDialOptions()` and `GrpcChannelOptionsFromGrpcConfig()` in
-// grpc managers to translate these configurations into grpc.DialOptions.
-type IGrpcConfiguration interface {
-	GetKeepAlivePermitWithoutCalls() bool
-	GetKeepAliveTimeout() time.Duration
-	GetKeepAliveTime() time.Duration
-	GetMaxSendMessageLength() int
-	GetMaxReceiveMessageLength() int
-}
-
-type GrpcConfigurationProps struct {
-	// number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
+type TopicsGrpcConfigurationProps struct {
+	// The number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
 	// with a DeadlineExceeded error.
-	deadline time.Duration
+	client_timeout time.Duration
 
 	// The maximum message length the client can send to the server.  If the client attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
@@ -24,17 +14,25 @@ type GrpcConfigurationProps struct {
 	// The maximum message length the client can receive from the server.  If the server attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
 	maxReceiveMessageLength int
+
+	// NumStreamGrpcChannels represents the number of GRPC channels the topic client
+	// should open and work with for stream operations (i.e. topic subscriptions).
+	numStreamGrpcChannels uint32
+
+	// NumUnaryGrpcChannels represents the number of GRPC channels the topic client
+	// should open and work with for unary operations (i.e. topic publishes).
+	numUnaryGrpcChannels uint32
 }
 
 // GrpcConfiguration Encapsulates gRPC configuration tunables.
-type GrpcConfiguration interface {
-	// GetDeadline Returns number of milliseconds the client is willing to wait for an RPC to complete before
+type TopicsGrpcConfiguration interface {
+	// GetClientTimeout Returns number of milliseconds the client is willing to wait for an RPC to complete before
 	// it is terminated with a DeadlineExceeded error.
-	GetDeadline() time.Duration
+	GetClientTimeout() time.Duration
 
-	// WithDeadline Copy constructor for overriding the client-side deadline. Returns a new GrpcConfiguration
+	// WithClientTimeout Copy constructor for overriding the client-side deadline. Returns a new GrpcConfiguration
 	// with the specified client-side deadline
-	WithDeadline(deadline time.Duration) GrpcConfiguration
+	WithClientTimeout(deadline time.Duration) TopicsGrpcConfiguration
 
 	// GetKeepAlivePermitWithoutCalls returns bool indicating if it is permissible to send keepalive pings from the client without any outstanding calls.
 	GetKeepAlivePermitWithoutCalls() bool
@@ -47,7 +45,7 @@ type GrpcConfiguration interface {
 	// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
-	WithKeepAlivePermitWithoutCalls(keepAlivePermitWithoutCalls bool) GrpcConfiguration
+	WithKeepAlivePermitWithoutCalls(keepAlivePermitWithoutCalls bool) TopicsGrpcConfiguration
 
 	// GetKeepAliveTimeout returns number of milliseconds the client will wait for a response from a keepalive or ping.
 	GetKeepAliveTimeout() time.Duration
@@ -60,7 +58,7 @@ type GrpcConfiguration interface {
 	// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
-	WithKeepAliveTimeout(keepAliveTimeout time.Duration) GrpcConfiguration
+	WithKeepAliveTimeout(keepAliveTimeout time.Duration) TopicsGrpcConfiguration
 
 	// GetKeepAliveTime returns the interval at which to send the keepalive or ping.
 	GetKeepAliveTime() time.Duration
@@ -73,11 +71,11 @@ type GrpcConfiguration interface {
 	// runtime is continuously frozen and unfrozen, because the lambda may be frozen before the "ACK" is received
 	// from the server. This can cause the keep-alive to timeout even though the connection is completely healthy.
 	// Therefore, keep-alives should be disabled in lambda and similar environments.
-	WithKeepAliveTime(keepAliveTime time.Duration) GrpcConfiguration
+	WithKeepAliveTime(keepAliveTime time.Duration) TopicsGrpcConfiguration
 
 	// WithKeepAliveDisabled disables grpc keepalives```
 	// Returns a new GrpcConfiguration with keepalive settings disabled (they're enabled by default)
-	WithKeepAliveDisabled() GrpcConfiguration
+	WithKeepAliveDisabled() TopicsGrpcConfiguration
 
 	// GetMaxSendMessageLength is the maximum message length the client can send to the server.  If the client attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
@@ -86,4 +84,22 @@ type GrpcConfiguration interface {
 	// GetMaxReceiveMessageLength is the maximum message length the client can receive from the server.  If the server attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
 	GetMaxReceiveMessageLength() int
+
+	// GetNumStreamGrpcChannels Returns the configuration option for the number of GRPC channels
+	// the topic client should open and work with for stream operations (i.e. topic subscriptions).
+	GetNumStreamGrpcChannels() uint32
+
+	// WithNumStreamGrpcChannels is currently implemented to create the specified number of GRPC connections
+	// for stream operations. Each GRPC connection can multiplex 100 concurrent subscriptions.
+	// Defaults to 4.
+	WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsGrpcConfiguration
+
+	// GetNumUnaryGrpcChannels Returns the configuration option for the number of GRPC channels
+	// the topic client should open and work with for unary operations (i.e. topic publishes).
+	GetNumUnaryGrpcChannels() uint32
+
+	// WithNumUnaryGrpcChannels is currently implemented to create the specified number of GRPC connections
+	// for unary operations. Each GRPC connection can multiplex 100 concurrent publish requests.
+	// Defaults to 4.
+	WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint32) TopicsGrpcConfiguration
 }

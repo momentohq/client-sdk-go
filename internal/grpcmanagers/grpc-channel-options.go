@@ -11,7 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 )
 
-func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.GrpcConfiguration) []grpc.DialOption {
+func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.IGrpcConfiguration) []grpc.DialOption {
 	// Default to 5mb message sizes and keepalives turned on (defaults are set in NewStaticGrpcConfiguration)
 	return []grpc.DialOption{
 		grpc.WithDefaultCallOptions(
@@ -38,7 +38,7 @@ func TransportCredentialsChannelOption(secureEndpoint bool) grpc.DialOption {
 	return grpc.WithTransportCredentials(credentials.NewTLS(config))
 }
 
-func AllDialOptions(grpcConfig config.GrpcConfiguration, secureEndpoint bool, options ...grpc.DialOption) []grpc.DialOption {
+func AllDialOptions(grpcConfig config.IGrpcConfiguration, secureEndpoint bool, options ...grpc.DialOption) []grpc.DialOption {
 	options = append(options, TransportCredentialsChannelOption(secureEndpoint))
 	options = append(options, GrpcChannelOptionsFromGrpcConfig(grpcConfig)...)
 	return options

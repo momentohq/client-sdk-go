@@ -40,7 +40,7 @@ type DataStreamGrpcManagerRequest struct {
 
 type TopicStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
-	GrpcConfiguration  config.GrpcConfiguration
+	GrpcConfiguration  config.TopicsGrpcConfiguration
 }
 
 type PingGrpcManagerRequest struct {
