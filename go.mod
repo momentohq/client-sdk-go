@@ -1,6 +1,8 @@
 module github.com/momentohq/client-sdk-go
 
-go 1.19
+go 1.21
+
+toolchain go1.23.6
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.3.0
@@ -8,7 +10,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.8.1
 	github.com/onsi/gomega v1.26.0
 	golang.org/x/net v0.29.0
-	google.golang.org/grpc v1.64.0
+	google.golang.org/grpc v1.66.0
 	google.golang.org/protobuf v1.34.2
 )
 
