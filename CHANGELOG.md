@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.33.0](https://github.com/momentohq/client-sdk-go/compare/v1.32.1...v1.33.0) (2025-02-06)
+
+
+### Features
+
+* configure topic client to use separate publish and subscribe grpc channels ([#583](https://github.com/momentohq/client-sdk-go/issues/583)) ([66cc3cd](https://github.com/momentohq/client-sdk-go/commit/66cc3cd810dca26f6aaca75a0719d677f7710ca2))
+
+
+### Miscellaneous
+
+* add unit tests for retry eligibility strategy ([#582](https://github.com/momentohq/client-sdk-go/issues/582)) ([533c48e](https://github.com/momentohq/client-sdk-go/commit/533c48ea842aa26da3eb506bd78c69f4207b5689))
+* **deps:** bump github.com/momentohq/client-sdk-go in /examples ([#580](https://github.com/momentohq/client-sdk-go/issues/580)) ([e8ef81e](https://github.com/momentohq/client-sdk-go/commit/e8ef81ecab4ef6a4092fdf60480bb22a1e7b1f73))
+
 ## [1.32.1](https://github.com/momentohq/client-sdk-go/compare/v1.32.0...v1.32.1) (2025-01-17)
 
 
