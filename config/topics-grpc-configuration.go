@@ -3,9 +3,9 @@ package config
 import "time"
 
 type TopicsGrpcConfigurationProps struct {
-	// number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
+	// The number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
 	// with a DeadlineExceeded error.
-	deadline time.Duration
+	client_timeout time.Duration
 
 	// The maximum message length the client can send to the server.  If the client attempts to send a message
 	// larger than this size, it will result in a RESOURCE_EXHAUSTED error.
@@ -26,13 +26,13 @@ type TopicsGrpcConfigurationProps struct {
 
 // GrpcConfiguration Encapsulates gRPC configuration tunables.
 type TopicsGrpcConfiguration interface {
-	// GetDeadline Returns number of milliseconds the client is willing to wait for an RPC to complete before
+	// GetClientTimeout Returns number of milliseconds the client is willing to wait for an RPC to complete before
 	// it is terminated with a DeadlineExceeded error.
-	GetDeadline() time.Duration
+	GetClientTimeout() time.Duration
 
-	// WithDeadline Copy constructor for overriding the client-side deadline. Returns a new GrpcConfiguration
+	// WithClientTimeout Copy constructor for overriding the client-side deadline. Returns a new GrpcConfiguration
 	// with the specified client-side deadline
-	WithDeadline(deadline time.Duration) TopicsGrpcConfiguration
+	WithClientTimeout(deadline time.Duration) TopicsGrpcConfiguration
 
 	// GetKeepAlivePermitWithoutCalls returns bool indicating if it is permissible to send keepalive pings from the client without any outstanding calls.
 	GetKeepAlivePermitWithoutCalls() bool

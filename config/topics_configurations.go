@@ -19,7 +19,7 @@ func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsCo
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewTopicsStaticTransportStrategy(&TopicsTransportStrategyProps{
 			GrpcConfiguration: NewTopicsStaticGrpcConfiguration(&TopicsGrpcConfigurationProps{
-				deadline: 5 * time.Second,
+				client_timeout: 5 * time.Second,
 			}),
 		}),
 	})

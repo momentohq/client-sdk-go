@@ -47,7 +47,7 @@ type TopicsTransportStrategy interface {
 }
 
 type TopicsStaticGrpcConfiguration struct {
-	deadline                    time.Duration
+	client_timeout              time.Duration
 	keepAlivePermitWithoutCalls bool
 	keepAliveTimeout            time.Duration
 	keepAliveTime               time.Duration
@@ -75,7 +75,7 @@ func NewTopicsStaticGrpcConfiguration(grpcConfiguration *TopicsGrpcConfiguration
 	}
 
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    grpcConfiguration.deadline,
+		client_timeout:              grpcConfiguration.client_timeout,
 		keepAlivePermitWithoutCalls: DEFAULT_KEEPALIVE_WITHOUT_STREAM,
 		keepAliveTimeout:            DEFAULT_KEEPALIVE_TIMEOUT,
 		keepAliveTime:               DEFAULT_KEEPALIVE_TIME,
@@ -86,8 +86,8 @@ func NewTopicsStaticGrpcConfiguration(grpcConfiguration *TopicsGrpcConfiguration
 	}
 }
 
-func (s *TopicsStaticGrpcConfiguration) GetDeadline() time.Duration {
-	return s.deadline
+func (s *TopicsStaticGrpcConfiguration) GetClientTimeout() time.Duration {
+	return s.client_timeout
 }
 
 func (s *TopicsStaticGrpcConfiguration) GetKeepAlivePermitWithoutCalls() bool {
@@ -118,9 +118,9 @@ func (s *TopicsStaticGrpcConfiguration) GetNumUnaryGrpcChannels() uint32 {
 	return s.numUnaryGrpcChannels
 }
 
-func (s *TopicsStaticGrpcConfiguration) WithDeadline(deadline time.Duration) TopicsGrpcConfiguration {
+func (s *TopicsStaticGrpcConfiguration) WithClientTimeout(client_timeout time.Duration) TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    deadline,
+		client_timeout:              client_timeout,
 		keepAlivePermitWithoutCalls: s.keepAlivePermitWithoutCalls,
 		keepAliveTimeout:            s.keepAliveTimeout,
 		keepAliveTime:               s.keepAliveTime,
@@ -133,7 +133,7 @@ func (s *TopicsStaticGrpcConfiguration) WithDeadline(deadline time.Duration) Top
 
 func (s *TopicsStaticGrpcConfiguration) WithKeepAlivePermitWithoutCalls(keepAlivePermitWithoutCalls bool) TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    s.deadline,
+		client_timeout:              s.client_timeout,
 		keepAlivePermitWithoutCalls: keepAlivePermitWithoutCalls,
 		keepAliveTimeout:            s.keepAliveTimeout,
 		keepAliveTime:               s.keepAliveTime,
@@ -146,7 +146,7 @@ func (s *TopicsStaticGrpcConfiguration) WithKeepAlivePermitWithoutCalls(keepAliv
 
 func (s *TopicsStaticGrpcConfiguration) WithKeepAliveTimeout(keepAliveTimeout time.Duration) TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    s.deadline,
+		client_timeout:              s.client_timeout,
 		keepAlivePermitWithoutCalls: s.keepAlivePermitWithoutCalls,
 		keepAliveTimeout:            keepAliveTimeout,
 		keepAliveTime:               s.keepAliveTime,
@@ -159,7 +159,7 @@ func (s *TopicsStaticGrpcConfiguration) WithKeepAliveTimeout(keepAliveTimeout ti
 
 func (s *TopicsStaticGrpcConfiguration) WithKeepAliveTime(keepAliveTime time.Duration) TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    s.deadline,
+		client_timeout:              s.client_timeout,
 		keepAlivePermitWithoutCalls: s.keepAlivePermitWithoutCalls,
 		keepAliveTimeout:            s.keepAliveTimeout,
 		keepAliveTime:               keepAliveTime,
@@ -172,7 +172,7 @@ func (s *TopicsStaticGrpcConfiguration) WithKeepAliveTime(keepAliveTime time.Dur
 
 func (s *TopicsStaticGrpcConfiguration) WithKeepAliveDisabled() TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    s.deadline,
+		client_timeout:              s.client_timeout,
 		keepAlivePermitWithoutCalls: false,
 		keepAliveTimeout:            0,
 		keepAliveTime:               0,
@@ -185,7 +185,7 @@ func (s *TopicsStaticGrpcConfiguration) WithKeepAliveDisabled() TopicsGrpcConfig
 
 func (s *TopicsStaticGrpcConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    s.deadline,
+		client_timeout:              s.client_timeout,
 		keepAlivePermitWithoutCalls: s.keepAlivePermitWithoutCalls,
 		keepAliveTimeout:            s.keepAliveTimeout,
 		keepAliveTime:               s.keepAliveTime,
@@ -198,7 +198,7 @@ func (s *TopicsStaticGrpcConfiguration) WithNumStreamGrpcChannels(numStreamGrpcC
 
 func (s *TopicsStaticGrpcConfiguration) WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint32) TopicsGrpcConfiguration {
 	return &TopicsStaticGrpcConfiguration{
-		deadline:                    s.deadline,
+		client_timeout:              s.client_timeout,
 		keepAlivePermitWithoutCalls: s.keepAlivePermitWithoutCalls,
 		keepAliveTimeout:            s.keepAliveTimeout,
 		keepAliveTime:               s.keepAliveTime,
@@ -211,8 +211,8 @@ func (s *TopicsStaticGrpcConfiguration) WithNumUnaryGrpcChannels(numUnaryGrpcCha
 
 func (s *TopicsStaticGrpcConfiguration) String() string {
 	return fmt.Sprintf(
-		"TopicsGrpcConfiguration{deadline=%v, keepAlivePermitWithoutCalls=%v, keepAliveTimeout=%v, keepAliveTime=%v, maxSendMessageLength=%v, maxReceiveMessageLength=%v, numStreamGrpcChannels=%v, numUnaryGrpcChannels=%v}",
-		s.deadline, s.keepAlivePermitWithoutCalls, s.keepAliveTimeout, s.keepAliveTime, s.maxSendMessageLength, s.maxReceiveMessageLength, s.numStreamGrpcChannels, s.numUnaryGrpcChannels,
+		"TopicsGrpcConfiguration{client_timeout=%v, keepAlivePermitWithoutCalls=%v, keepAliveTimeout=%v, keepAliveTime=%v, maxSendMessageLength=%v, maxReceiveMessageLength=%v, numStreamGrpcChannels=%v, numUnaryGrpcChannels=%v}",
+		s.client_timeout, s.keepAlivePermitWithoutCalls, s.keepAliveTimeout, s.keepAliveTime, s.maxSendMessageLength, s.maxReceiveMessageLength, s.numStreamGrpcChannels, s.numUnaryGrpcChannels,
 	)
 }
 
@@ -221,12 +221,12 @@ type TopicsStaticTransportStrategy struct {
 }
 
 func (s *TopicsStaticTransportStrategy) GetClientSideTimeout() time.Duration {
-	return s.grpcConfig.GetDeadline()
+	return s.grpcConfig.GetClientTimeout()
 }
 
 func (s *TopicsStaticTransportStrategy) WithClientTimeout(clientTimeout time.Duration) TopicsTransportStrategy {
 	return &TopicsStaticTransportStrategy{
-		grpcConfig: s.grpcConfig.WithDeadline(clientTimeout),
+		grpcConfig: s.grpcConfig.WithClientTimeout(clientTimeout),
 	}
 }
 
