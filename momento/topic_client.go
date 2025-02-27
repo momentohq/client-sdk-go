@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -69,13 +68,12 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	}
 
 	var topicManager *grpcmanagers.TopicGrpcManager
-	var clientStream grpc.ClientStream
+	var subscribeClient pb.Pubsub_SubscribeClient
 	var cancelContext context.Context
 	var cancelFunction context.CancelFunc
 	var err error
 
-	firstMsg := new(pb.XSubscriptionItem)
-
+	var firstMsg *pb.XSubscriptionItem
 	failedAttempts := uint32(0)
 	for {
 		if failedAttempts > 0 {
@@ -83,7 +81,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 			time.Sleep(500 * time.Millisecond)
 		}
 
-		topicManager, clientStream, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		topicManager, subscribeClient, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   request.CacheName,
 			TopicName:                   request.TopicName,
 			ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
@@ -100,7 +98,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		}
 
 		// Ping the stream to provide a nice error message if the cache does not exist.
-		err = clientStream.RecvMsg(firstMsg)
+		firstMsg, err = subscribeClient.Recv()
 		if err != nil {
 			failedAttempts += 1
 			rpcError, _ := status.FromError(err)
@@ -116,10 +114,6 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		break
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	switch firstMsg.Kind.(type) {
 	case *pb.XSubscriptionItem_Heartbeat:
 		// The first message to a new subscription will always be a heartbeat.
@@ -133,7 +127,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 
 	return &topicSubscription{
 		topicManager:       topicManager,
-		grpcClient:         clientStream,
+		subscribeClient:    subscribeClient,
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,

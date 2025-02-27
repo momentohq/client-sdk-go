@@ -8,8 +8,6 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-
-	"google.golang.org/grpc"
 )
 
 type TopicSubscription interface {
@@ -61,7 +59,7 @@ type TopicSubscription interface {
 
 type topicSubscription struct {
 	topicManager            *grpcmanagers.TopicGrpcManager
-	grpcClient              grpc.ClientStream
+	subscribeClient         pb.Pubsub_SubscribeClient
 	momentoTopicClient      *pubSubClient
 	cacheName               string
 	topicName               string
@@ -109,8 +107,8 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			// Proceed as is
 		}
 
-		rawMsg := new(pb.XSubscriptionItem)
-		if err := s.grpcClient.RecvMsg(rawMsg); err != nil {
+		rawMsg, err := s.subscribeClient.Recv()
+		if err != nil {
 			select {
 			case <-ctx.Done():
 				{
@@ -175,7 +173,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	for {
 		s.log.Info("Attempting reconnecting to client stream")
 		time.Sleep(reconnectDelay)
-		newTopicManager, newStream, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		topicManager, subscribeClient, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
@@ -186,8 +184,8 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 			s.log.Warn("failed to reconnect to stream, will continue to try in %s milliseconds", fmt.Sprint(reconnectDelay))
 		} else {
 			s.log.Info("successfully reconnected to subscription stream")
-			s.topicManager = newTopicManager
-			s.grpcClient = newStream
+			s.topicManager = topicManager
+			s.subscribeClient = subscribeClient
 			s.cancelContext = cancelContext
 			s.cancelFunction = cancelFunction
 			return
