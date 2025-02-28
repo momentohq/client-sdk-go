@@ -9,33 +9,55 @@ import (
 )
 
 type metricsMiddleware struct {
-	Log         logger.MomentoLogger
+	Middleware
+	logEveryNRequests uint64
 	requestChan chan string
 }
 
-func NewMetricsMiddleware(log logger.MomentoLogger) *metricsMiddleware {
-	mw := &metricsMiddleware{
-		Log:         log,
-		requestChan: make(chan string),
-	}
-	go func() {
-		metricsSink(mw.requestChan, log)
-	}()
-	return mw
+func (mw *metricsMiddleware) GetRequestHandler() RequestHandler {
+	return NewMetricsMiddlewareRequestHandler(HandlerProps{mw.GetLogger(), mw.GetIncludeTypes()}, mw.requestChan)
 }
 
-func metricsSink(requestChan chan string, log logger.MomentoLogger) {
+func NewMetricsMiddleware(props Props, logEveryNRequests uint64) Middleware {
+	mw := NewMiddleware(props)
+	requestChan := make(chan string, 100)
+	go func() {
+		metricsSink(requestChan, props.Logger, logEveryNRequests)
+	}()
+	return &metricsMiddleware{mw, logEveryNRequests, requestChan}
+}
+
+func metricsSink(requestChan chan string, log logger.MomentoLogger, logEveryNRequests uint64) {
+	totalRequests := 0
 	requestCount := make(map[string]uint64)
 	for {
 		requestMsg := <-requestChan
+		totalRequests++
 		requestCount[requestMsg]++
-		jsonStr, _ := json.MarshalIndent(requestCount, "", "  ")
-		log.Info(fmt.Sprintf("Request count: %s", string(jsonStr)))
+		if (totalRequests % int(logEveryNRequests)) == 0 {
+			jsonStr, _ := json.MarshalIndent(requestCount, "", "  ")
+			log.Info(fmt.Sprintf("Request count: %s", string(jsonStr)))
+		}
 	}
 }
 
-func (mw *metricsMiddleware) OnRequest(_ uint64, theRequest interface{}, _ context.Context) {
-	mw.requestChan <- fmt.Sprintf("%T", theRequest)
+type metricsMiddlewareRequestHandler struct {
+	RequestHandler
+	requestChan chan string
 }
 
-func (mw *metricsMiddleware) OnResponse(requestId uint64, _ interface{}) {}
+func (rh *metricsMiddlewareRequestHandler) OnRequest(theRequest interface{}, _ context.Context) error {
+	err := rh.RequestHandler.OnRequest(theRequest, nil)
+	if err != nil {
+		return err
+	}
+	rh.requestChan <- fmt.Sprintf("%T", theRequest)
+	return nil
+}
+
+func (rh *metricsMiddlewareRequestHandler) OnResponse(_ interface{}) {}
+
+func NewMetricsMiddlewareRequestHandler(props HandlerProps, requestChan chan string) RequestHandler {
+	rh := NewRequestHandler(HandlerProps{Logger: props.Logger, IncludeTypes: props.IncludeTypes})
+	return &metricsMiddlewareRequestHandler{rh, requestChan}
+}

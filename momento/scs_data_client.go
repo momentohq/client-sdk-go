@@ -63,8 +63,6 @@ func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
-	requestId := globalRequestId.Add(1)
-
 	if _, err := prepareCacheName(r); err != nil {
 		return err
 	}
@@ -78,8 +76,15 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
 
+	middlewareRequestHandlers := make([]middleware.RequestHandler, 0, len(client.middleware))
 	for _, mw := range client.middleware {
-		mw.OnRequest(requestId, r, requestMetadata)
+		newHandler := mw.GetRequestHandler()
+		err := newHandler.OnRequest(r, requestMetadata)
+		// an error here means the middleware is configured to skip this type of request, so we
+		// don't add it to the list of request handlers to call on response
+		if err == nil {
+			middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
+		}
 	}
 
 	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)
@@ -91,8 +96,8 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		return err
 	}
 
-	for _, mw := range client.middleware {
-		mw.OnResponse(requestId, r.getResponse())
+	for _, rh := range middlewareRequestHandlers {
+		rh.OnResponse(r)
 	}
 
 	return nil

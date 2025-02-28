@@ -8,24 +8,45 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-type LoggingMiddleware struct {
-	Log logger.MomentoLogger
+type loggingMiddleware struct {
+	Middleware
 }
 
-func NewLoggingMiddleware(log logger.MomentoLogger) *LoggingMiddleware {
-	return &LoggingMiddleware{
-		Log: log,
+func (mw *loggingMiddleware) GetRequestHandler() RequestHandler {
+	return NewLoggingMiddlewareRequestHandler(mw.GetLogger())
+}
+
+func NewLoggingMiddleware(props Props) Middleware {
+	mw := NewMiddleware(props)
+	return &loggingMiddleware{mw}
+}
+
+type loggingMiddlewareRequestHandler struct {
+	RequestHandler
+}
+
+func NewLoggingMiddlewareRequestHandler(log logger.MomentoLogger) RequestHandler {
+	rh := NewRequestHandler(HandlerProps{Logger: log})
+	return &loggingMiddlewareRequestHandler{rh}
+}
+
+func (rh *loggingMiddlewareRequestHandler) OnRequest(theRequest interface{}, metadata context.Context) error {
+	err := rh.RequestHandler.OnRequest(theRequest, metadata)
+	if err != nil {
+		return err
 	}
-}
-
-func (mw *LoggingMiddleware) OnRequest(requestId uint64, theRequest interface{}, metadata context.Context) {
-	// Log request
+	// Logger request
 	jsonStr, _ := json.MarshalIndent(theRequest, "", "  ")
-	mw.Log.Info(fmt.Sprintf("\n(%d) Issuing %T:\n%s\nwith metadada: %+v\n", requestId, theRequest, string(jsonStr), metadata))
+	rh.GetLogger().Info(
+		fmt.Sprintf(
+			"\n(%d) Issuing %T:\n%s\nwith metadada: %+v\n", rh.GetId(), rh.GetRequest(), string(jsonStr), metadata,
+		),
+	)
+	return nil;
 }
 
-func (mw *LoggingMiddleware) OnResponse(requestId uint64, theResponse interface{}) {
-	// Log response
+func (rh *loggingMiddlewareRequestHandler) OnResponse(theResponse interface{}) {
+	// Logger response
 	jsonStr, _ := json.MarshalIndent(theResponse, "", "  ")
-	mw.Log.Info(fmt.Sprintf("\n(%d) Got response: %s\n", requestId, string(jsonStr)))
+	rh.GetLogger().Info(fmt.Sprintf("\n(%d) Got response: %s\n", rh.GetRequest(), string(jsonStr)))
 }
