@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal"
@@ -29,6 +30,7 @@ type pubSubClient struct {
 	endpoint                string
 	log                     logger.MomentoLogger
 	numGrpcStreams          atomic.Int64 // TODO: encapsulate in grpc manager
+	requestTimeout          time.Duration
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
@@ -66,6 +68,13 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		unaryTopicManagers = append(unaryTopicManagers, unaryTopicManager)
 	}
 
+	var timeout time.Duration
+	if request.TopicsConfiguration.GetClientSideTimeout() < 1 {
+		timeout = defaultRequestTimeout
+	} else {
+		timeout = request.TopicsConfiguration.GetClientSideTimeout()
+	}
+
 	return &pubSubClient{
 		numUnaryChannels:    numUnaryChannels,
 		unaryTopicManagers:  unaryTopicManagers,
@@ -73,6 +82,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		streamTopicManagers: streamTopicManagers,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 		log:                 request.Log,
+		requestTimeout:      timeout,
 	}, nil
 }
 
@@ -154,6 +164,9 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
+	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
+	defer cancel()
+
 	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
 	topicManager := client.getNextUnaryTopicManager()
 	var header, trailer metadata.MD
