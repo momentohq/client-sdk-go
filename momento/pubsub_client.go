@@ -21,16 +21,15 @@ const DEFAULT_NUM_STREAM_GRPC_CHANNELS uint32 = 4
 const DEFAULT_NUM_UNARY_GRPC_CHANNELS uint32 = 4
 
 type pubSubClient struct {
-	numUnaryChannels         uint32
-	unaryTopicManagers       []*grpcmanagers.TopicGrpcManager
-	unaryTopicManagerCount   atomic.Uint64
-	numStreamChannels        uint32
-	streamTopicManagers      []*grpcmanagers.TopicGrpcManager
-	streamTopicManagerCount  atomic.Uint64
-	endpoint                 string
-	log                      logger.MomentoLogger
-	requestTimeout           time.Duration
-	totalActiveSubscriptions atomic.Int64
+	numUnaryChannels        uint32
+	unaryTopicManagers      []*grpcmanagers.TopicGrpcManager
+	unaryTopicManagerCount  atomic.Uint64
+	numStreamChannels       uint32
+	streamTopicManagers     []*grpcmanagers.TopicGrpcManager
+	streamTopicManagerCount atomic.Uint64
+	endpoint                string
+	log                     logger.MomentoLogger
+	requestTimeout          time.Duration
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
@@ -94,7 +93,6 @@ func (client *pubSubClient) getNextStreamTopicManager() (*grpcmanagers.TopicGrpc
 	// Max number of attempts = 100 * numStreamChannels
 	// This is in order to preserve the round-robin system (incrementing nextManagerIndex) but to not
 	// cut short the number of attempts in case there are many subscriptions starting up at the same time.
-	// TODO: do we want to set a different max number of attempts?
 	for i := 0; i < 100*int(client.numStreamChannels); i++ {
 		nextManagerIndex := client.streamTopicManagerCount.Add(1)
 		topicManager := client.streamTopicManagers[nextManagerIndex%uint64(len(client.streamTopicManagers))]
@@ -122,13 +120,22 @@ func (client *pubSubClient) getNextUnaryTopicManager() *grpcmanagers.TopicGrpcMa
 	return topicManager
 }
 
+func (client *pubSubClient) countNumberOfActiveSubscriptions() int64 {
+	count := int64(0)
+	for _, topicManager := range client.streamTopicManagers {
+		count += topicManager.NumActiveSubscriptions.Load()
+	}
+	return count
+}
+
 // Helper function to help sanity check number of concurrent streams before starting a new subscription
 func (client *pubSubClient) checkNumConcurrentStreams() error {
 	maxNumConcurrentStreams := client.numStreamChannels * 100
-	if client.totalActiveSubscriptions.Load() >= int64(maxNumConcurrentStreams) {
+	numActiveStreams := client.countNumberOfActiveSubscriptions()
+	if numActiveStreams >= int64(maxNumConcurrentStreams) {
 		errorMessage := fmt.Sprintf(
 			"Number of grpc streams: %d; number of channels: %d; max concurrent streams: %d; Already at maximum number of concurrent grpc streams, cannot make new subscribe requests\n",
-			client.totalActiveSubscriptions.Load(), client.numStreamChannels, maxNumConcurrentStreams,
+			numActiveStreams, client.numStreamChannels, maxNumConcurrentStreams,
 		)
 		return momentoerrors.NewMomentoSvcErr(LimitExceededError, errorMessage, nil)
 	}
@@ -173,16 +180,15 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 
 	// If we are approaching the grpc maximum concurrent stream limit, log a warning
 	numStreamsLimit := int64(client.numStreamChannels * 100)
-	remainingStreams := numStreamsLimit - client.totalActiveSubscriptions.Load()
+	numActiveStreams := client.countNumberOfActiveSubscriptions()
+	remainingStreams := numStreamsLimit - numActiveStreams
 	if remainingStreams < 10 {
 		client.log.Warn(
 			"WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n",
 			remainingStreams, numStreamsLimit,
 		)
 	}
-
-	client.totalActiveSubscriptions.Add(1)
-	client.log.Debug("Starting new subscription, total number of streams now: %d", client.totalActiveSubscriptions.Load())
+	client.log.Debug("Starting new subscription, total number of streams now: %d", numActiveStreams)
 	return topicManager, subscribeClient, cancelContext, cancelFunction, err
 }
 
@@ -232,7 +238,6 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 
 func (client *pubSubClient) close() {
 	// Close all stream grpc channels
-	client.totalActiveSubscriptions.Store(0)
 	client.numStreamChannels = 0
 	for clientIndex := range client.streamTopicManagers {
 		defer client.streamTopicManagers[clientIndex].Close()
