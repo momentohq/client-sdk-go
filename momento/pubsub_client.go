@@ -106,7 +106,7 @@ func (client *pubSubClient) checkNumConcurrentStreams() error {
 	return nil
 }
 
-func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, grpc.ClientStream, context.Context, context.CancelFunc, error) {
+func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
 	// First check if there is enough grpc stream capabity to make a new subscription
 	err := client.checkNumConcurrentStreams()
 	if err != nil {
@@ -122,7 +122,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	var header, trailer metadata.MD
 	client.numGrpcStreams.Add(1)
 	topicManager := client.getNextStreamTopicManager()
-	clientStream, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
+	subscribeClient, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
@@ -132,9 +132,9 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	if err != nil {
 		client.numGrpcStreams.Add(-1)
 		cancelFunction()
-		if clientStream != nil {
-			header, _ = clientStream.Header()
-			trailer = clientStream.Trailer()
+		if subscribeClient != nil {
+			header, _ = subscribeClient.Header()
+			trailer = subscribeClient.Trailer()
 		}
 		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
@@ -150,7 +150,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	}
 
 	client.log.Debug("Started new subscription, number of concurrent streams: %d", client.numGrpcStreams.Load())
-	return topicManager, clientStream, cancelContext, cancelFunction, err
+	return topicManager, subscribeClient, cancelContext, cancelFunction, err
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
