@@ -9,7 +9,6 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
-	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
@@ -60,10 +59,11 @@ func main() {
 		panic(err)
 	}
 
-	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
+	//loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
 	myConfig := config.LaptopLatest().WithMiddleware(
 		[]middleware.Middleware{
-			NewTimingMiddleware(loggerFactory.GetLogger("timing-middleware")),
+			//NewTimingMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("timing")}),
+			NewTimingMiddleware(middleware.Props{Logger: nil}),
 		},
 	)
 

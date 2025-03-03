@@ -37,7 +37,12 @@ func (mw *middleware) GetIncludeTypes() map[string]bool {
 	return mw.includeTypes
 }
 
+// NewMiddleware creates a new middleware with a logger and optional list of request types it should handle.
+// If the IncludeTypes are omitted or empty, all request types will be processed. For example, to limit processing
+// to only requests of type *momento.SetRequest and *momento.GetRequest, pass the following slice as the IncludeTypes:
+//   []interface{}{&momento.SetRequest{}, &momento.GetRequest{}}
 func NewMiddleware(props Props) Middleware {
+	// convert the slice of types to a map of type names for quick lookup in the data client
 	var includeTypeMap map[string]bool
 	if props.IncludeTypes != nil {
 		includeTypeMap = make(map[string]bool)
@@ -46,6 +51,9 @@ func NewMiddleware(props Props) Middleware {
 		}
 	} else {
 		includeTypeMap = nil
+	}
+	if props.Logger == nil {
+		props.Logger = logger.NewNoopMomentoLoggerFactory().GetLogger("noop")
 	}
 	return &middleware{logger: props.Logger, includeTypes: includeTypeMap}
 }
@@ -88,6 +96,11 @@ func (rh *requestHandler) GetIncludeTypes() map[string]bool {
 	return rh.includeTypes
 }
 
+// OnRequest checks if the request type is one that the middleware is configured to handle.
+// If it is, it sets the request and metadata fields on the request handler. Otherwise, it
+// returns an error. Middleware request handlers may call this method in their OnRequest
+// implementations to ensure they are only handling requests they are configured to handle.
+// If the request handlers return the error, they will be omitted from request and response handling.
 func (rh *requestHandler) OnRequest(theRequest interface{}, metadata context.Context) error {
 	allowedTypes := rh.GetIncludeTypes()
 	if allowedTypes != nil  {

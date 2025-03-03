@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type loggingMiddleware struct {
@@ -13,7 +11,7 @@ type loggingMiddleware struct {
 }
 
 func (mw *loggingMiddleware) GetRequestHandler() RequestHandler {
-	return NewLoggingMiddlewareRequestHandler(mw.GetLogger())
+	return NewLoggingMiddlewareRequestHandler(HandlerProps{Logger: mw.GetLogger(), IncludeTypes: mw.GetIncludeTypes()})
 }
 
 func NewLoggingMiddleware(props Props) Middleware {
@@ -25,8 +23,8 @@ type loggingMiddlewareRequestHandler struct {
 	RequestHandler
 }
 
-func NewLoggingMiddlewareRequestHandler(log logger.MomentoLogger) RequestHandler {
-	rh := NewRequestHandler(HandlerProps{Logger: log})
+func NewLoggingMiddlewareRequestHandler(props HandlerProps) RequestHandler {
+	rh := NewRequestHandler(props)
 	return &loggingMiddlewareRequestHandler{rh}
 }
 
@@ -35,7 +33,6 @@ func (rh *loggingMiddlewareRequestHandler) OnRequest(theRequest interface{}, met
 	if err != nil {
 		return err
 	}
-	// Logger request
 	jsonStr, _ := json.MarshalIndent(theRequest, "", "  ")
 	rh.GetLogger().Info(
 		fmt.Sprintf(
@@ -46,7 +43,6 @@ func (rh *loggingMiddlewareRequestHandler) OnRequest(theRequest interface{}, met
 }
 
 func (rh *loggingMiddlewareRequestHandler) OnResponse(theResponse interface{}) {
-	// Logger response
 	jsonStr, _ := json.MarshalIndent(theResponse, "", "  ")
 	rh.GetLogger().Info(fmt.Sprintf("\n(%d) Got response: %s\n", rh.GetRequest(), string(jsonStr)))
 }

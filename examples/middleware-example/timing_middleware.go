@@ -2,67 +2,46 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"github.com/momentohq/client-sdk-go/momento"
-	"os"
-	"strconv"
-	"strings"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
 
 	"github.com/loov/hrtime"
-	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type timingMiddleware struct {
-	Log       logger.MomentoLogger
-	timerChan chan string
+	middleware.Middleware
 }
 
-func timer(timerChan chan string, log logger.MomentoLogger) {
-	startTimes := make(map[uint64]int64)
-	for {
-		select {
-		case timingMsg := <-timerChan:
-			res := strings.Split(timingMsg, ":")
-			operation := res[0]
-			requestId, _ := strconv.ParseUint(res[1], 10, 64)
-			timePoint, _ := strconv.ParseInt(res[2], 10, 64)
-			if operation == "start" {
-				startTimes[requestId] = timePoint
-				continue
-			}
-			// we got an "end" message
-			elapsed := timePoint - startTimes[requestId]
-			log.Info(
-				fmt.Sprintf(
-					"Request %d took %dms", requestId, time.Duration(elapsed).Milliseconds(),
-				),
-			)
-		}
+func (mw *timingMiddleware) GetRequestHandler() middleware.RequestHandler {
+	return NewTimingMiddlewareRequestHandler(middleware.HandlerProps{Logger: mw.GetLogger(), IncludeTypes: mw.GetIncludeTypes()})
+}
+
+func NewTimingMiddleware(props middleware.Props) middleware.Middleware {
+	mw := middleware.NewMiddleware(props)
+	return &timingMiddleware{mw}
+}
+
+type timingMiddlewareRequestHandler struct {
+	middleware.RequestHandler
+	startTime time.Duration
+}
+
+func NewTimingMiddlewareRequestHandler(props middleware.HandlerProps) middleware.RequestHandler {
+	rh := middleware.NewRequestHandler(props)
+	return &timingMiddlewareRequestHandler{rh, 0}
+}
+
+func (rh *timingMiddlewareRequestHandler) OnRequest(theRequest interface{}, metadata context.Context)  error {
+	err := rh.RequestHandler.OnRequest(theRequest, metadata)
+	if err != nil {
+		return err
 	}
+	rh.startTime = hrtime.Now()
+	return nil
 }
 
-func (mw *timingMiddleware) OnRequest(requestId uint64, theRequest interface{}, metadata context.Context) {
-	// only process scalar get and set requests
-	switch theRequest.(type) {
-	case *momento.GetRequest, *momento.SetRequest:
-		mw.timerChan <- fmt.Sprintf("start:%d:%d", requestId, hrtime.Now())
-	}
+func (rh *timingMiddlewareRequestHandler) OnResponse(theResponse interface{}) {
+	elapsed := hrtime.Since(rh.startTime)
+	rh.GetLogger().Info("%T took %s", rh.GetRequest(), elapsed)
 }
 
-func (mw *timingMiddleware) OnResponse(requestId uint64, theResponse interface{}) {
-	fmt.Printf("%T", theResponse)
-	os.Exit(1)
-	//mw.timerChan <- fmt.Sprintf("end:%d:%d", requestId, hrtime.Now())
-}
-
-func NewTimingMiddleware(log logger.MomentoLogger) *timingMiddleware {
-	mw := &timingMiddleware{
-		Log:       log,
-		timerChan: make(chan string),
-	}
-	go func() {
-		timer(mw.timerChan, mw.Log)
-	}()
-	return mw
-}
