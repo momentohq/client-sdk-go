@@ -25,6 +25,7 @@ func GrpcChannelOptionsFromGrpcConfig(grpcConfig config.IGrpcConfiguration) []gr
 				Timeout:             grpcConfig.GetKeepAliveTimeout(),
 			},
 		),
+		grpc.WithDisableServiceConfig(),
 	}
 }
 
