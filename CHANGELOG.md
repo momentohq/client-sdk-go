@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.33.1](https://github.com/momentohq/client-sdk-go/compare/v1.33.0...v1.33.1) (2025-03-03)
+
+
+### Bug Fixes
+
+* disable dynamic DNS service config ([#589](https://github.com/momentohq/client-sdk-go/issues/589)) ([a61ec16](https://github.com/momentohq/client-sdk-go/commit/a61ec160866d87f959e5bb5c6bba58ed4152539e))
+
+
+### Miscellaneous
+
+* **deps:** bump github.com/momentohq/client-sdk-go in /examples ([#585](https://github.com/momentohq/client-sdk-go/issues/585)) ([65d54d3](https://github.com/momentohq/client-sdk-go/commit/65d54d3cd85cba839b99c2aa4cc3a08a01f437da))
+
 ## [1.33.0](https://github.com/momentohq/client-sdk-go/compare/v1.32.1...v1.33.0) (2025-02-06)
 
 
