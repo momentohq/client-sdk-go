@@ -2,6 +2,7 @@ package config
 
 import (
 	"math"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -82,6 +83,9 @@ type TopicsConfiguration interface {
 	GetTransportStrategy() TopicsTransportStrategy
 
 	WithTransportStrategy(transportStrategy TopicsTransportStrategy) TopicsConfiguration
+
+	// GetClientSideTimeout Returns the current configuration options for client side timeout with the Momento service
+	GetClientSideTimeout() time.Duration
 }
 
 func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration {
@@ -160,4 +164,8 @@ func (s *topicsConfiguration) WithTransportStrategy(transportStrategy TopicsTran
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: transportStrategy,
 	}
+}
+
+func (s *topicsConfiguration) GetClientSideTimeout() time.Duration {
+	return s.transportStrategy.GetClientSideTimeout()
 }
