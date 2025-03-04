@@ -1,6 +1,8 @@
 package grpcmanagers
 
 import (
+	"sync/atomic"
+
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -9,8 +11,9 @@ import (
 )
 
 type TopicGrpcManager struct {
-	Conn         *grpc.ClientConn
-	StreamClient pb.PubsubClient
+	Conn                   *grpc.ClientConn
+	StreamClient           pb.PubsubClient
+	NumActiveSubscriptions atomic.Int64
 }
 
 func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
@@ -41,5 +44,6 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 }
 
 func (topicManager *TopicGrpcManager) Close() momentoerrors.MomentoSvcErr {
+	topicManager.NumActiveSubscriptions.Store(0)
 	return momentoerrors.ConvertSvcErr(topicManager.Conn.Close())
 }

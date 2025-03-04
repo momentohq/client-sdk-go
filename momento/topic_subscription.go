@@ -95,13 +95,19 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		select {
 		case <-ctx.Done():
 			// Context has been canceled, return an error
-			s.momentoTopicClient.numGrpcStreams.Add(-1)
-			s.log.Debug("[Event] Context done, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
+			s.decrementSubscriptionCount()
+			s.log.Debug(
+				"[Event] Context done, number of active streams: %d",
+				s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+			)
 			return nil, ctx.Err()
 		case <-s.cancelContext.Done():
 			// Context has been canceled, return an error
-			s.momentoTopicClient.numGrpcStreams.Add(-1)
-			s.log.Debug("[Event] Context cancelled, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
+			s.decrementSubscriptionCount()
+			s.log.Debug(
+				"[Event] Context cancelled, number of active streams: %d",
+				s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+			)
 			return nil, s.cancelContext.Err()
 		default:
 			// Proceed as is
@@ -112,16 +118,20 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			select {
 			case <-ctx.Done():
 				{
-					// s.log.Info("Subscription context is done; closing subscription.")
-					s.momentoTopicClient.numGrpcStreams.Add(-1)
-					s.log.Debug("[Event RecvMsg] Context done, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
+					s.decrementSubscriptionCount()
+					s.log.Debug(
+						"[Event RecvMsg] Context done, number of active streams: %d",
+						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+					)
 					return nil, ctx.Err()
 				}
 			case <-s.cancelContext.Done():
 				{
-					// s.log.Info("Subscription context is cancelled; closing subscription.")
-					s.momentoTopicClient.numGrpcStreams.Add(-1)
-					s.log.Debug("[Event RecvMsg] Context cancelled, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
+					s.decrementSubscriptionCount()
+					s.log.Debug(
+						"[Event RecvMsg] Context cancelled, number of active streams: %d",
+						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+					)
 					return nil, s.cancelContext.Err()
 				}
 			default:
@@ -129,8 +139,11 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					// Disconnected, decrement and explicitly close the stream, then attempt to reconnect
 					s.log.Error("Stream disconnected due to error: %s", err.Error())
 					s.cancelFunction()
-					s.momentoTopicClient.numGrpcStreams.Add(-1)
-					s.log.Debug("[Event RecvMsg] Default, attempting to reconnect, numGrpcStreams: %d", s.momentoTopicClient.numGrpcStreams.Load())
+					s.decrementSubscriptionCount()
+					s.log.Debug(
+						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
+						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+					)
 					s.attemptReconnect(ctx)
 				}
 			}
@@ -142,13 +155,20 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
 			s.log.Debug("received discontinuity item: %+v", typedMsg.Discontinuity)
-			return NewTopicDiscontinuity(typedMsg.Discontinuity.LastTopicSequence, typedMsg.Discontinuity.NewTopicSequence, typedMsg.Discontinuity.NewSequencePage), nil
+			return NewTopicDiscontinuity(
+				typedMsg.Discontinuity.LastTopicSequence,
+				typedMsg.Discontinuity.NewTopicSequence,
+				typedMsg.Discontinuity.NewSequencePage,
+			), nil
 		case *pb.XSubscriptionItem_Item:
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			s.lastKnownSequencePage = typedMsg.Item.GetSequencePage()
 			publisherId := typedMsg.Item.GetPublisherId()
 
-			s.log.Trace("received item with sequence number %d, sequence page %d, and publisher Id %s", s.lastKnownSequenceNumber, s.lastKnownSequencePage, publisherId)
+			s.log.Trace(
+				"received item with sequence number %d, sequence page %d, and publisher Id %s",
+				s.lastKnownSequenceNumber, s.lastKnownSequencePage, publisherId,
+			)
 
 			switch subscriptionItem := typedMsg.Item.Value.Kind.(type) {
 			case *pb.XTopicValue_Text:
@@ -165,6 +185,10 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			continue
 		}
 	}
+}
+
+func (s *topicSubscription) decrementSubscriptionCount() {
+	s.topicManager.NumActiveSubscriptions.Add(-1)
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context) {
@@ -193,7 +217,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 	}
 }
 
-// Note: s.momentoTopicClient.numGrpcStreams is decremented in the `Event` method
+// Note: number of active subscriptions is decremented in the `Event` method
 // for each of the cases when a stream is closed. We do not decrement here
 // to avoid double counting.
 func (s *topicSubscription) Close() {

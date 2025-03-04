@@ -4,7 +4,6 @@ package momento
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"google.golang.org/grpc/codes"
@@ -74,44 +73,37 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	var err error
 
 	var firstMsg *pb.XSubscriptionItem
-	failedAttempts := uint32(0)
-	for {
-		if failedAttempts > 0 {
-			c.log.Info("Retrying topic subscription in 500ms due to subscription limit; retry attempt %d", failedAttempts)
-			time.Sleep(500 * time.Millisecond)
-		}
+	topicManager, subscribeClient, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		CacheName:                   request.CacheName,
+		TopicName:                   request.TopicName,
+		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
+		SequencePage:                request.SequencePage,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-		topicManager, subscribeClient, cancelContext, cancelFunction, err = c.pubSubClient.topicSubscribe(ctx, &TopicSubscribeRequest{
-			CacheName:                   request.CacheName,
-			TopicName:                   request.TopicName,
-			ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
-			SequencePage:                request.SequencePage,
-		})
-		if err != nil {
-			return nil, err
-		}
+	if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
+		c.log.Debug("Starting new subscription with new sequence number and sequence page.")
+	} else {
+		c.log.Debug("Resuming subscription from sequence number %d and sequence page %d.", request.ResumeAtTopicSequenceNumber, request.SequencePage)
+	}
 
-		if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
-			c.log.Debug("Starting new subscription from latest messages.")
-		} else {
-			c.log.Debug("Resuming subscription from sequence number %d and sequence page %d.", request.ResumeAtTopicSequenceNumber, request.SequencePage)
-		}
+	// Ping the stream to provide a nice error message if the cache does not exist.
+	firstMsg, err = subscribeClient.Recv()
+	if err != nil {
+		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
 
-		// Ping the stream to provide a nice error message if the cache does not exist.
-		firstMsg, err = subscribeClient.Recv()
-		if err != nil {
-			failedAttempts += 1
-			rpcError, _ := status.FromError(err)
-			if rpcError != nil {
-				if rpcError.Code() == codes.ResourceExhausted {
-					c.log.Warn("Topic subscription limit reached, checking to see if subscription is eligible for retry")
-					continue
-				}
+		// We now count number of active subscriptions per grpc channel, so if we did not return
+		// an error earlier when calling c.pubSubClient.topicSubscribe, we know that the error
+		// here is due to a service-side subscription limit.
+		rpcError, _ := status.FromError(err)
+		if rpcError != nil {
+			if rpcError.Code() == codes.ResourceExhausted {
+				c.log.Warn("Topic subscription limit reached for this account; please contact us at support@momentohq.com")
 			}
-			// For all other errors, we return the error and exit the loop.
-			return nil, momentoerrors.ConvertSvcErr(err)
 		}
-		break
+		return nil, momentoerrors.ConvertSvcErr(err)
 	}
 
 	switch firstMsg.Kind.(type) {
@@ -161,7 +153,7 @@ func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRe
 	})
 
 	if err != nil {
-		c.log.Debug("failed to topic publish...")
+		c.log.Debug("failed to topic publish: %s", err.Error())
 		return nil, err
 	}
 
