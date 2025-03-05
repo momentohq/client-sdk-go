@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.33.2](https://github.com/momentohq/client-sdk-go/compare/v1.33.1...v1.33.2) (2025-03-05)
+
+
+### Bug Fixes
+
+* set grpc deadline on publish requests and keep count of active subscriptions in stream topic grpc managers ([#588](https://github.com/momentohq/client-sdk-go/issues/588)) ([0d9d005](https://github.com/momentohq/client-sdk-go/commit/0d9d005bde3daebe272f2bf4ee0c6736a280f982))
+
 ## [1.33.1](https://github.com/momentohq/client-sdk-go/compare/v1.33.0...v1.33.1) (2025-03-03)
 
 
