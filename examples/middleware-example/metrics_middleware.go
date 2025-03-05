@@ -1,25 +1,25 @@
-package middleware
+package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type metricsMiddleware struct {
-	Middleware
+	middleware.Middleware
 	logEveryNRequests uint64
 	requestChan chan string
 }
 
-func (mw *metricsMiddleware) GetRequestHandler() RequestHandler {
-	return NewMetricsMiddlewareRequestHandler(HandlerProps{mw.GetLogger(), mw.GetIncludeTypes()}, mw.requestChan)
+func (mw *metricsMiddleware) GetRequestHandler(baseHandler middleware.RequestHandler) (middleware.RequestHandler, error) {
+	return NewMetricsMiddlewareRequestHandler(baseHandler, mw.requestChan), nil
 }
 
-func NewMetricsMiddleware(props Props, logEveryNRequests uint64) Middleware {
-	mw := NewMiddleware(props)
+func NewMetricsMiddleware(props middleware.Props, logEveryNRequests uint64) middleware.Middleware {
+	mw := middleware.NewMiddleware(props)
 	requestChan := make(chan string, 100)
 	go func() {
 		metricsSink(requestChan, props.Logger, logEveryNRequests)
@@ -42,22 +42,16 @@ func metricsSink(requestChan chan string, log logger.MomentoLogger, logEveryNReq
 }
 
 type metricsMiddlewareRequestHandler struct {
-	RequestHandler
+	middleware.RequestHandler
 	requestChan chan string
 }
 
-func (rh *metricsMiddlewareRequestHandler) OnRequest(theRequest interface{}, _ context.Context) error {
-	err := rh.RequestHandler.OnRequest(theRequest, nil)
-	if err != nil {
-		return err
-	}
-	rh.requestChan <- fmt.Sprintf("%T", theRequest)
-	return nil
+func (rh *metricsMiddlewareRequestHandler) OnRequest() {
+	rh.requestChan <- fmt.Sprintf("%T", rh.GetRequest())
 }
 
 func (rh *metricsMiddlewareRequestHandler) OnResponse(_ interface{}) {}
 
-func NewMetricsMiddlewareRequestHandler(props HandlerProps, requestChan chan string) RequestHandler {
-	rh := NewRequestHandler(HandlerProps{Logger: props.Logger, IncludeTypes: props.IncludeTypes})
+func NewMetricsMiddlewareRequestHandler(rh middleware.RequestHandler, requestChan chan string) middleware.RequestHandler {
 	return &metricsMiddlewareRequestHandler{rh, requestChan}
 }

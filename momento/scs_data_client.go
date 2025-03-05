@@ -78,13 +78,25 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 	middlewareRequestHandlers := make([]middleware.RequestHandler, 0, len(client.middleware))
 	for _, mw := range client.middleware {
-		newHandler := mw.GetRequestHandler()
-		err := newHandler.OnRequest(r, requestMetadata)
-		// an error here means the middleware is configured to skip this type of request, so we
-		// don't add it to the list of request handlers to call on response
-		if err == nil {
-			middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
+		// An error here means the middleware is configured to skip this type of request, so we
+		// don't add it to the list of request handlers to call on response.
+		newBaseHandler, err := mw.GetBaseRequestHandler(r, requestMetadata)
+		if err != nil {
+			continue
 		}
+
+		// If the middleware is allowed to handle this request type, we use the base handler
+		// to compose a more specific handler off of. An error here means something actually went wrong,
+		// so we return it.
+		newHandler, err := mw.GetRequestHandler(newBaseHandler)
+		if err != nil {
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
+
+		// Call the request handler OnRequest method and then add the handler to list of handlers to
+		// call OnResponse on when the response comes back.
+		newHandler.OnRequest()
+		middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
 	}
 
 	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)

@@ -16,7 +16,8 @@ type middleware struct {
 
 type Middleware interface {
 	GetLogger() logger.MomentoLogger
-	GetRequestHandler() RequestHandler
+	GetBaseRequestHandler(theRequest interface{}, metadata context.Context) (RequestHandler, error)
+	GetRequestHandler(baseRequestHandler RequestHandler) (RequestHandler, error)
 	GetIncludeTypes() map[string]bool
 }
 
@@ -25,12 +26,32 @@ type Props struct {
 	IncludeTypes []interface{}
 }
 
+func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata context.Context) (RequestHandler, error) {
+	allowedTypes := mw.GetIncludeTypes()
+	if allowedTypes != nil {
+		requestType := reflect.TypeOf(theRequest)
+		if _, ok := allowedTypes[requestType.String()]; !ok {
+			return nil, fmt.Errorf("request type %T not in includeTypes", theRequest)
+		}
+	}
+
+	// Return the "base" request handler. User request handlers will be composed on top of this.
+	return NewRequestHandler(
+		HandlerProps {
+			Metadata: metadata,
+			Request: theRequest,
+			Logger: mw.GetLogger(),
+			IncludeTypes: mw.GetIncludeTypes(),
+		},
+	), nil
+}
+
 func (mw *middleware) GetLogger() logger.MomentoLogger {
 	return mw.logger
 }
 
-func (mw *middleware) GetRequestHandler() RequestHandler {
-	return mw.requestHandler
+func (mw *middleware) GetRequestHandler(_ RequestHandler) (RequestHandler, error) {
+	return nil, fmt.Errorf("GetRequestHandler not implemented in middleware")
 }
 
 func (mw *middleware) GetIncludeTypes() map[string]bool {
@@ -62,20 +83,23 @@ type requestHandler struct {
 	id           uuid.UUID
 	logger       logger.MomentoLogger
 	request      interface{}
+	metadata    context.Context
 	includeTypes map[string]bool
-	metadata     context.Context
 }
 
 type RequestHandler interface {
 	GetId() uuid.UUID
 	GetRequest() interface{}
+	GetMetadata() context.Context
 	GetLogger() logger.MomentoLogger
 	GetIncludeTypes() map[string]bool
-	OnRequest(theRequest interface{}, metadata context.Context) error
+	OnRequest()
 	OnResponse(theResponse interface{})
 }
 
 type HandlerProps struct {
+	Request		 interface{}
+	Metadata     context.Context
 	Logger       logger.MomentoLogger
 	IncludeTypes map[string]bool
 }
@@ -88,6 +112,10 @@ func (rh *requestHandler) GetRequest() interface{} {
 	return rh.request
 }
 
+func (rh *requestHandler) GetMetadata() context.Context {
+	return rh.metadata
+}
+
 func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
 }
@@ -96,23 +124,7 @@ func (rh *requestHandler) GetIncludeTypes() map[string]bool {
 	return rh.includeTypes
 }
 
-// OnRequest checks if the request type is one that the middleware is configured to handle.
-// If it is, it sets the request and metadata fields on the request handler. Otherwise, it
-// returns an error. Middleware request handlers may call this method in their OnRequest
-// implementations to ensure they are only handling requests they are configured to handle.
-// If the request handlers return the error, they will be omitted from request and response handling.
-func (rh *requestHandler) OnRequest(theRequest interface{}, metadata context.Context) error {
-	allowedTypes := rh.GetIncludeTypes()
-	if allowedTypes != nil  {
-		requestType := reflect.TypeOf(theRequest)
-		if _, ok := allowedTypes[requestType.String()]; !ok {
-			return fmt.Errorf("request type %T not in includeTypes", theRequest)
-		}
-	}
-	rh.request = theRequest
-	rh.metadata = metadata
-	return nil
-}
+func (rh *requestHandler) OnRequest() {}
 
 func (rh *requestHandler) OnResponse(_ interface{}) {}
 
@@ -121,5 +133,11 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 	if err != nil {
 		panic(err)
 	}
-	return &requestHandler{id: id, logger: props.Logger, includeTypes: props.IncludeTypes}
+	return &requestHandler{
+		id: id,
+		logger: props.Logger,
+		includeTypes: props.IncludeTypes,
+		request: props.Request,
+		metadata: props.Metadata,
+	}
 }

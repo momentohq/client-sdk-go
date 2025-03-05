@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
 
@@ -12,8 +11,10 @@ type timingMiddleware struct {
 	middleware.Middleware
 }
 
-func (mw *timingMiddleware) GetRequestHandler() middleware.RequestHandler {
-	return NewTimingMiddlewareRequestHandler(middleware.HandlerProps{Logger: mw.GetLogger(), IncludeTypes: mw.GetIncludeTypes()})
+func (mw *timingMiddleware) GetRequestHandler(
+	baseHandler middleware.RequestHandler,
+) (middleware.RequestHandler, error) {
+	return NewTimingMiddlewareRequestHandler(baseHandler), nil
 }
 
 func NewTimingMiddleware(props middleware.Props) middleware.Middleware {
@@ -26,21 +27,15 @@ type timingMiddlewareRequestHandler struct {
 	startTime time.Duration
 }
 
-func NewTimingMiddlewareRequestHandler(props middleware.HandlerProps) middleware.RequestHandler {
-	rh := middleware.NewRequestHandler(props)
+func NewTimingMiddlewareRequestHandler(rh middleware.RequestHandler) middleware.RequestHandler {
 	return &timingMiddlewareRequestHandler{rh, 0}
 }
 
-func (rh *timingMiddlewareRequestHandler) OnRequest(theRequest interface{}, metadata context.Context)  error {
-	err := rh.RequestHandler.OnRequest(theRequest, metadata)
-	if err != nil {
-		return err
-	}
+func (rh *timingMiddlewareRequestHandler) OnRequest() {
 	rh.startTime = hrtime.Now()
-	return nil
 }
 
-func (rh *timingMiddlewareRequestHandler) OnResponse(theResponse interface{}) {
+func (rh *timingMiddlewareRequestHandler) OnResponse(_ interface{}) {
 	elapsed := hrtime.Since(rh.startTime)
 	rh.GetLogger().Info("%T took %s", rh.GetRequest(), elapsed)
 }
