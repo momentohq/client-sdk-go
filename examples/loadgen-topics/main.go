@@ -437,15 +437,15 @@ func main() {
 	opts := topicsLoadGeneratorOptions{
 		cacheName:         cacheName,
 		logLevel:          momento_default_logger.DEBUG,
-		showStatsInterval: time.Second * 15,
+		showStatsInterval: time.Second * 5,
 		// must be at least 13 to accommodate an epoch timestamp value to calculate latency
 		messageBytes:        13,
-		numberOfSubscribers: 20,
+		numberOfSubscribers: 10,
 		numberOfPublishers:  10,
-		numberOfTopics:      5,
+		numberOfTopics:      1,
 		// maxPublishTps is per-user
 		maxPublishTps: 1,
-		howLongToRun:  time.Minute * 1,
+		howLongToRun:  time.Second * 60,
 	}
 
 	lgCfg := config.TopicsDefaultWithLogger(
