@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -16,8 +15,6 @@ import (
 
 const defaultRequestTimeout = 5 * time.Second
 const defaultEagerConnectTimeout = 30 * time.Second
-
-var globalRequestId atomic.Uint64
 
 type scsDataClient struct {
 	grpcManager         *grpcmanagers.DataGrpcManager

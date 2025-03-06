@@ -29,6 +29,7 @@ type ConfigurationProps struct {
 	NumGrpcChannels uint32
 	// ReadConcern is the read concern for the cache client.
 	ReadConcern ReadConcern
+	// Middleware is a list of middleware to be used by the cache client.
 	Middleware  []middleware.Middleware
 }
 
@@ -51,6 +52,7 @@ type Configuration interface {
 
 	GetReadConcern() ReadConcern
 
+	// GetMiddleware Returns the list of middleware to be used by the cache client.
 	GetMiddleware() []middleware.Middleware
 
 	// WithRetryStrategy Copy constructor for overriding TransportStrategy returns a new Configuration object
@@ -73,6 +75,16 @@ type Configuration interface {
 	// with the specified ReadConcern
 	WithReadConcern(readConcern ReadConcern) Configuration
 
+	// WithMiddleware Copy constructor for overriding Middleware returns a new Configuration object. For example,
+	// the below configuration will cause each GetRequest and SetRequest to be processed by the
+	// MyMiddleware middleware request handler:
+	//   loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
+	//   myConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+	//     NewMyMiddleware(middleware.Props{
+	//       Logger: loggerFactory.GetLogger("MyMiddleware"),
+	//       IncludeTypes: []interface{}{&momento.GetRequest{}, &momento.SetRequest{}},
+	//     }),
+	//   })
 	WithMiddleware(middleware []middleware.Middleware) Configuration
 }
 
