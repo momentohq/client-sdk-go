@@ -10,7 +10,6 @@ import (
 
 type middleware struct {
 	logger         logger.MomentoLogger
-	requestHandler RequestHandler
 	includeTypes   map[string]bool
 }
 
@@ -94,7 +93,6 @@ type requestHandler struct {
 	logger       logger.MomentoLogger
 	request      interface{}
 	metadata    context.Context
-	includeTypes map[string]bool
 }
 
 // RequestHandler is an interface that represents the capabilities of a middleware request handler.
