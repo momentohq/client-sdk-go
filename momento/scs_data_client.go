@@ -110,7 +110,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	for _, rh := range middlewareRequestHandlers {
-		rh.OnResponse(r)
+		rh.OnResponse(r.getResponse())
 	}
 
 	return nil

@@ -130,8 +130,18 @@ func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
 }
 
+// OnRequest is called before the request is made to the backend.
 func (rh *requestHandler) OnRequest() {}
 
+// OnResponse is called after the response is received from the backend. It is passed the response object, which can
+// be cast to the appropriate response type for further inspection:
+//   func (rh *myRequestHandler) OnResponse(theResponse interface{}) {
+//     switch r := theResponse.(type) {
+//     case *responses.ListPushFrontSuccess:
+//       fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
+//     case *responses.ListPushBackSuccess:
+//       fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
+//   }
 func (rh *requestHandler) OnResponse(_ interface{}) {}
 
 func NewRequestHandler(props HandlerProps) RequestHandler {
