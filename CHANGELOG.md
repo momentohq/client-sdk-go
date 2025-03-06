@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.33.3](https://github.com/momentohq/client-sdk-go/compare/v1.33.2...v1.33.3) (2025-03-06)
+
+
+### Miscellaneous
+
+* update topics loadgen example ([#593](https://github.com/momentohq/client-sdk-go/issues/593)) ([b6fdb79](https://github.com/momentohq/client-sdk-go/commit/b6fdb794fdd8a58f510c7deefbaaf237e0b8f90a))
+
 ## [1.33.2](https://github.com/momentohq/client-sdk-go/compare/v1.33.1...v1.33.2) (2025-03-05)
 
 
