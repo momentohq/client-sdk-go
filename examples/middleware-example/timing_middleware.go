@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/loov/hrtime"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
-
-	"github.com/loov/hrtime"
 )
 
 type timingMiddleware struct {
@@ -39,4 +38,3 @@ func (rh *timingMiddlewareRequestHandler) OnResponse(_ interface{}) {
 	elapsed := hrtime.Since(rh.startTime)
 	rh.GetLogger().Info("%T took %s", rh.GetRequest(), elapsed)
 }
-

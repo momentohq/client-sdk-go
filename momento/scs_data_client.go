@@ -96,6 +96,10 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		// Call the request handler OnRequest method and then add the handler to list of handlers to
 		// call OnResponse on when the response comes back.
 		newHandler.OnRequest()
+
+		// Give the middleware a chance to modify the request metadata. If a middleware doesn't implement
+		// GetMetadata, the base response handler will return the original metadata.
+		requestMetadata = newHandler.GetMetadata()
 		middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
 	}
 

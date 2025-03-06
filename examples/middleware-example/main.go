@@ -64,11 +64,6 @@ func main() {
 	myConfig := config.LaptopLatest().WithMiddleware(
 		[]middleware.Middleware{
 			NewTimingMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("timing")}),
-			//middleware.NewInFlightRequestCountMiddleware(middleware.Props{
-			//	Logger: loggerFactory.GetLogger("in-flight-request-count"),
-			//}),
-			//NewMetricsMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("metrics")}, 10),
-			//NewLoggingMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("logging")}),
 		},
 	)
 
@@ -93,7 +88,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		// avoid reuse of the same i value in each closure
 		i := i
