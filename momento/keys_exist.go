@@ -57,3 +57,7 @@ func (r *KeysExistRequest) interpretGrpcResponse() error {
 	r.response = responses.NewKeysExistSuccess(resp.Exists)
 	return nil
 }
+
+func (r *KeysExistRequest) getResponse() interface{} {
+	return r.response
+}

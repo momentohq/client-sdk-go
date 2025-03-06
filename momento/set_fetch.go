@@ -57,3 +57,5 @@ func (r *SetFetchRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *SetFetchRequest) getResponse() interface{} { return r.response }

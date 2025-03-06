@@ -118,3 +118,7 @@ func sortedSetByScoreGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement)
 	}
 	return returnList
 }
+
+func (r *SortedSetFetchByScoreRequest) getResponse() interface{} {
+	return r.response
+}

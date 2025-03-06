@@ -76,3 +76,7 @@ func (r *SetAddElementsRequest) interpretGrpcResponse() error {
 	r.response = &responses.SetAddElementsSuccess{}
 	return nil
 }
+
+func (r *SetAddElementsRequest) getResponse() interface{} {
+	return r.response
+}
