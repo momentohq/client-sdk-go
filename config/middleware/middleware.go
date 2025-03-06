@@ -3,14 +3,15 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/logger"
-	"reflect"
 )
 
 type middleware struct {
-	logger         logger.MomentoLogger
-	includeTypes   map[string]bool
+	logger       logger.MomentoLogger
+	includeTypes map[string]bool
 }
 
 type Middleware interface {
@@ -36,10 +37,10 @@ func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata con
 
 	// Return the "base" request handler. User request handlers will be composed on top of this.
 	return NewRequestHandler(
-		HandlerProps {
+		HandlerProps{
 			Metadata: metadata,
-			Request: theRequest,
-			Logger: mw.GetLogger(),
+			Request:  theRequest,
+			Logger:   mw.GetLogger(),
 		},
 	), nil
 }
@@ -51,9 +52,10 @@ func (mw *middleware) GetLogger() logger.MomentoLogger {
 // GetRequestHandler returns a new RequestHandler that wraps the provided baseRequestHandler.
 // Custom middlewares should implement this method to accept a base request handler and use
 // it to compose a custom RequestHandler:
-//   func (mw *myMiddleware) GetRequestHandler(baseHandler RequestHandler) (RequestHandler, error) {
-//     return NewMyMiddlewareRequestHandler(baseHandler, mw.myField), nil
-//   }
+//
+//	func (mw *myMiddleware) GetRequestHandler(baseHandler RequestHandler) (RequestHandler, error) {
+//	  return NewMyMiddlewareRequestHandler(baseHandler, mw.myField), nil
+//	}
 func (mw *middleware) GetRequestHandler(_ RequestHandler) (RequestHandler, error) {
 	return nil, fmt.Errorf("GetRequestHandler not implemented in middleware")
 }
@@ -65,12 +67,15 @@ func (mw *middleware) GetIncludeTypes() map[string]bool {
 // NewMiddleware creates a new middleware with a logger and optional list of request types it should handle.
 // If the IncludeTypes are omitted or empty, all request types will be processed. For example, to limit processing
 // to only requests of type *momento.SetRequest and *momento.GetRequest, pass the following slice as the IncludeTypes:
-//   []interface{}{&momento.SetRequest{}, &momento.GetRequest{}}
+//
+//	[]interface{}{&momento.SetRequest{}, &momento.GetRequest{}}
+//
 // Custom middleware implementations can use this constructor to create and store the base middleware:
-//   type myMiddleware struct {
-//     middleware.Middleware
-//     requestCount atomic.Int64
-//   }
+//
+//	type myMiddleware struct {
+//	  middleware.Middleware
+//	  requestCount atomic.Int64
+//	}
 func NewMiddleware(props Props) Middleware {
 	// convert the slice of types to a map of type names for quick lookup in the data client
 	var includeTypeMap map[string]bool
@@ -89,10 +94,10 @@ func NewMiddleware(props Props) Middleware {
 }
 
 type requestHandler struct {
-	id           uuid.UUID
-	logger       logger.MomentoLogger
-	request      interface{}
-	metadata    context.Context
+	id       uuid.UUID
+	logger   logger.MomentoLogger
+	request  interface{}
+	metadata context.Context
 }
 
 // RequestHandler is an interface that represents the capabilities of a middleware request handler.
@@ -107,9 +112,9 @@ type RequestHandler interface {
 }
 
 type HandlerProps struct {
-	Request		 interface{}
-	Metadata     context.Context
-	Logger       logger.MomentoLogger
+	Request  interface{}
+	Metadata context.Context
+	Logger   logger.MomentoLogger
 }
 
 func (rh *requestHandler) GetId() uuid.UUID {
@@ -133,13 +138,14 @@ func (rh *requestHandler) OnRequest() {}
 
 // OnResponse is called after the response is received from the backend. It is passed the response object, which can
 // be cast to the appropriate response type for further inspection:
-//   func (rh *myRequestHandler) OnResponse(theResponse interface{}) {
-//     switch r := theResponse.(type) {
-//     case *responses.ListPushFrontSuccess:
-//       fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
-//     case *responses.ListPushBackSuccess:
-//       fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
-//   }
+//
+//	func (rh *myRequestHandler) OnResponse(theResponse interface{}) {
+//	  switch r := theResponse.(type) {
+//	  case *responses.ListPushFrontSuccess:
+//	    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
+//	  case *responses.ListPushBackSuccess:
+//	    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
+//	}
 func (rh *requestHandler) OnResponse(_ interface{}) {}
 
 func NewRequestHandler(props HandlerProps) RequestHandler {
@@ -148,9 +154,9 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 		panic(err)
 	}
 	return &requestHandler{
-		id: id,
-		logger: props.Logger,
-		request: props.Request,
+		id:       id,
+		logger:   props.Logger,
+		request:  props.Request,
 		metadata: props.Metadata,
 	}
 }

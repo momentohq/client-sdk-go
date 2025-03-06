@@ -36,7 +36,7 @@ func (mw *inFlightRequestCountMiddleware) remove() int64 {
 type inFlightRequestCountMiddlewareRequestHandler struct {
 	RequestHandler
 	requestsAtStart int64
-	remover func() int64
+	remover         func() int64
 }
 
 func NewInFlightRequestCountMiddlewareRequestHandler(

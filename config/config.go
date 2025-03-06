@@ -30,7 +30,7 @@ type ConfigurationProps struct {
 	// ReadConcern is the read concern for the cache client.
 	ReadConcern ReadConcern
 	// Middleware is a list of middleware to be used by the cache client.
-	Middleware  []middleware.Middleware
+	Middleware []middleware.Middleware
 }
 
 type Configuration interface {
