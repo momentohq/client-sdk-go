@@ -25,14 +25,15 @@ const (
 )
 
 type topicsLoadGeneratorOptions struct {
-	cacheName         string
-	logLevel          momento_default_logger.LogLevel
-	showStatsInterval time.Duration
-	messageBytes      int
-	numberOfUsers     int
-	numberOfTopics    int
-	maxPublishTps     int
-	howLongToRun      time.Duration
+	cacheName           string
+	logLevel            momento_default_logger.LogLevel
+	showStatsInterval   time.Duration
+	messageBytes        int
+	numberOfSubscribers int
+	numberOfPublishers  int
+	numberOfTopics      int
+	maxPublishTps       int
+	howLongToRun        time.Duration
 }
 
 type loadGenerator struct {
@@ -107,18 +108,14 @@ func (ec *ErrorCounter) updateErrors(err string) {
 	}
 }
 
-func user(
+func subscriber(
 	ctx context.Context,
 	id int,
 	subscribeChan chan int64,
-	publishChan chan int64,
 	subscribeErrChan chan string,
-	publishErrChan chan string,
 	client momento.TopicClient,
 	cacheName string,
 	topicName string,
-	messageValue string,
-	publishTps int,
 ) {
 	subscription, err := client.Subscribe(ctx, &momento.TopicSubscribeRequest{
 		CacheName: cacheName,
@@ -128,42 +125,62 @@ func user(
 		panic(err)
 	}
 	go func() { pollForMessages(ctx, id, subscription, subscribeChan, subscribeErrChan) }()
-	go func() {
-		publishMessages(ctx, id, publishChan, publishErrChan, client, cacheName, topicName, messageValue, publishTps)
-	}()
 }
 
-func publishMessages(
+// Kicks off new wave of publishes according to publishTps
+func publisher(
 	ctx context.Context,
-	id int,
+	publishChan chan int64,
+	publishErrChan chan string,
+	numberOfPublishers int,
+	client momento.TopicClient,
+	cacheName string,
+	messageValue string,
+	publishTps int,
+	randGenerator *rand.Rand,
+	numberOfTopics int,
+) {
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("publisher loop exiting")
+			return
+		default:
+			for i := 0; i < numberOfPublishers; i++ {
+				topicName := fmt.Sprintf("topic-%d", randGenerator.Intn(numberOfTopics))
+				go publishMessage(ctx, publishChan, publishErrChan, client, cacheName, topicName, messageValue)
+			}
+			sleepMillis := 1000 / publishTps
+			time.Sleep(time.Millisecond * time.Duration(sleepMillis))
+		}
+	}
+}
+
+func publishMessage(
+	ctx context.Context,
 	publishChan chan int64,
 	publishErrChan chan string,
 	client momento.TopicClient,
 	cacheName string,
 	topicName string,
 	messageValue string,
-	publishTps int,
 ) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			publishStart := hrtime.Now()
-			_, err := client.Publish(ctx, &momento.TopicPublishRequest{
-				CacheName: cacheName,
-				TopicName: topicName,
-				Value: momento.String(
-					fmt.Sprintf("%s%s", strconv.FormatInt(time.Now().UnixMilli(), 10), messageValue),
-				),
-			})
-			if err != nil {
-				processError(err, publishErrChan)
-			} else {
-				publishChan <- hrtime.Since(publishStart).Milliseconds()
-			}
-			sleepMillis := 1000 / publishTps
-			time.Sleep(time.Millisecond * time.Duration(sleepMillis))
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		publishStart := hrtime.Now()
+		_, err := client.Publish(ctx, &momento.TopicPublishRequest{
+			CacheName: cacheName,
+			TopicName: topicName,
+			Value: momento.String(
+				fmt.Sprintf("%s%s", strconv.FormatInt(time.Now().UnixMilli(), 10), messageValue),
+			),
+		})
+		if err != nil {
+			processError(err, publishErrChan)
+		} else {
+			publishChan <- hrtime.Since(publishStart).Milliseconds()
 		}
 	}
 }
@@ -178,11 +195,17 @@ func pollForMessages(
 			return
 		default:
 			item, err := sub.Item(ctx)
-			timestamp, err := strconv.ParseInt(fmt.Sprintf("%v", item)[0:timestampLength], 10, 64)
-			elapsed := time.Now().UnixMilli() - timestamp
 			if err != nil {
+				fmt.Printf("subscriber %d exiting, encountered error receiving message: %s\n", id, err.Error())
+				processError(err, subscribeErrChan)
+				return
+			}
+			timestamp, err := strconv.ParseInt(fmt.Sprintf("%v", item)[0:timestampLength], 10, 64)
+			if err != nil {
+				fmt.Printf("subscriber %d unable to parse timestamp %d: %s\n", id, timestamp, err.Error())
 				processError(err, subscribeErrChan)
 			} else {
+				elapsed := time.Now().UnixMilli() - timestamp
 				subscribeChan <- elapsed
 			}
 		}
@@ -197,10 +220,10 @@ func processError(err error, errChan chan string) {
 			mErr.Code() == momento.LimitExceededError {
 			errChan <- mErr.Code()
 		} else {
-			panic(fmt.Sprintf("unrecognized result: %T", mErr))
+			fmt.Printf("unrecognized momento error: %T\n", mErr)
 		}
 	default:
-		panic(fmt.Sprintf("unknown error type %T", err))
+		fmt.Printf("unknown error type %T\n", err)
 	}
 }
 
@@ -238,30 +261,30 @@ func printStats(
 	publishSuccessPct := readablePercentage(successfulPublishRequests, totalPublishRequests)
 
 	fmt.Println("==============================\ncumulative stats:")
-	fmt.Println(fmt.Sprintf(
+	fmt.Printf(
 		"%20s: %d (%d tps)",
 		"total subscription requests",
 		totalSubscriptionRequests,
 		totalSubscriptionTps,
-	))
+	)
 
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%) (%d tps)", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%)", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests)))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%)", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests)))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%)\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests)))
+	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "subscribe success", successfulSubscriptionRequests, subscribeSuccessPct, subscribeSuccessTps)
+	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", subscribeErrorCounter.unavailable, readablePercentage(subscribeErrorCounter.unavailable, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", subscribeErrorCounter.timeout, readablePercentage(subscribeErrorCounter.timeout, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", subscribeErrorCounter.limitExceeded, readablePercentage(subscribeErrorCounter.limitExceeded, totalSubscriptionRequests))
 
-	fmt.Println(fmt.Sprintf(
-		"%20s: %d (%d tps)",
+	fmt.Printf(
+		"%20s: %d (%d tps)\n",
 		"total publish requests",
 		totalPublishRequests,
 		totalPublishTps,
-	))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%) (%d tps)", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%)", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests)))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%)", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests)))
-	fmt.Println(fmt.Sprintf("%20s: %d (%d%%)\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests)))
-	fmt.Println(fmt.Sprintf(
-		"cumulative subscription latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n",
+	)
+	fmt.Printf("%20s: %d (%d%%) (%d tps)\n", "publish success", successfulPublishRequests, publishSuccessPct, publishSuccessTps)
+	fmt.Printf("%20s: %d (%d%%)\n", "unavailable", publishErrorCounter.unavailable, readablePercentage(publishErrorCounter.unavailable, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n", "timeout exceeded", publishErrorCounter.timeout, readablePercentage(publishErrorCounter.timeout, totalSubscriptionRequests))
+	fmt.Printf("%20s: %d (%d%%)\n\n", "limit exceeded", publishErrorCounter.limitExceeded, readablePercentage(publishErrorCounter.limitExceeded, totalPublishRequests))
+	fmt.Printf(
+		"cumulative subscription latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
 		subscribes.TotalCount(),
 		"p50",
@@ -274,9 +297,9 @@ func printStats(
 		subscribes.ValueAtQuantile(99.9),
 		"max",
 		subscribes.Max(),
-	))
-	fmt.Println(fmt.Sprintf(
-		"cumulative publish latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n",
+	)
+	fmt.Printf(
+		"cumulative publish latencies:\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n%20s: %d\n\n",
 		"total requests",
 		publishes.TotalCount(),
 		"p50",
@@ -289,7 +312,7 @@ func printStats(
 		publishes.ValueAtQuantile(99.9),
 		"max",
 		publishes.Max(),
-	))
+	)
 }
 
 func readablePercentage(numerator int64, denominator int64) int {
@@ -304,8 +327,8 @@ func timer(
 	publishErrChan chan string,
 	statsInterval time.Duration,
 ) {
-	subscribeHistogram := hdrhistogram.New(1, 5000, 1)
-	publishHistogram := hdrhistogram.New(1, 5000, 1)
+	subscribeHistogram := hdrhistogram.New(1, 500000, 1)
+	publishHistogram := hdrhistogram.New(1, 500000, 1)
 	subscribeErrorCounter := ErrorCounter{}
 	publishErrorCounter := ErrorCounter{}
 
@@ -346,10 +369,10 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 	defer cancelFunction()
 
 	var wg sync.WaitGroup
-	subscribeChan := make(chan int64, r.options.numberOfUsers)
-	publishChan := make(chan int64, r.options.numberOfUsers)
-	subscribeErrChan := make(chan string, r.options.numberOfUsers)
-	publishErrChan := make(chan string, r.options.numberOfUsers)
+	subscribeChan := make(chan int64, r.options.numberOfSubscribers)
+	publishChan := make(chan int64, r.options.numberOfPublishers)
+	subscribeErrChan := make(chan string, r.options.numberOfSubscribers)
+	publishErrChan := make(chan string, r.options.numberOfPublishers)
 
 	wg.Add(1)
 	go func() {
@@ -362,7 +385,8 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 	randSeed := rand.NewSource(time.Now().UnixNano())
 	randGenerator := rand.New(randSeed)
 
-	for i := 1; i <= r.options.numberOfUsers; i++ {
+	// start all subscribers
+	for i := 1; i <= r.options.numberOfSubscribers; i++ {
 		wg.Add(1)
 
 		// avoid reuse of the same i value in each closure
@@ -373,21 +397,34 @@ func (r *loadGenerator) run(ctx context.Context, client momento.TopicClient) {
 
 		go func() {
 			defer wg.Done()
-			user(
+			subscriber(
 				cancelContext,
 				i,
 				subscribeChan,
-				publishChan,
 				subscribeErrChan,
-				publishErrChan,
 				client,
 				r.options.cacheName,
 				topicName,
-				r.messageValue,
-				r.options.maxPublishTps,
 			)
 		}()
 	}
+
+	// start publisher thread
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		publisher(
+			cancelContext,
+			publishChan,
+			publishErrChan,
+			r.options.numberOfPublishers,
+			client,
+			r.options.cacheName,
+			r.messageValue,
+			r.options.maxPublishTps,
+			randGenerator,
+			r.options.numberOfTopics)
+	}()
 
 	wg.Wait()
 }
@@ -402,9 +439,10 @@ func main() {
 		logLevel:          momento_default_logger.DEBUG,
 		showStatsInterval: time.Second * 5,
 		// must be at least 13 to accommodate an epoch timestamp value to calculate latency
-		messageBytes:   1,
-		numberOfUsers:  10,
-		numberOfTopics: 5,
+		messageBytes:        13,
+		numberOfSubscribers: 10,
+		numberOfPublishers:  10,
+		numberOfTopics:      1,
 		// maxPublishTps is per-user
 		maxPublishTps: 1,
 		howLongToRun:  time.Second * 60,
@@ -412,7 +450,7 @@ func main() {
 
 	lgCfg := config.TopicsDefaultWithLogger(
 		logger.NewNoopMomentoLoggerFactory(),
-	).WithMaxSubscriptions(uint32(opts.numberOfUsers))
+	).WithNumUnaryGrpcChannels(uint32(opts.numberOfPublishers)).WithNumStreamGrpcChannels(uint32(opts.numberOfSubscribers))
 
 	loadGenerator := newLoadGenerator(lgCfg, opts)
 	client, cacheClient := loadGenerator.init(ctx)
@@ -421,6 +459,6 @@ func main() {
 	runStart := time.Now()
 	loadGenerator.run(ctx, client)
 	runTotal := time.Since(runStart)
-	fmt.Println(fmt.Sprintf("completed in %f seconds\n", runTotal.Seconds()))
+	fmt.Printf("completed in %f seconds\n", runTotal.Seconds())
 	client.Close()
 }
