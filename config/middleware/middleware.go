@@ -41,7 +41,6 @@ func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata con
 			Metadata: metadata,
 			Request: theRequest,
 			Logger: mw.GetLogger(),
-			IncludeTypes: mw.GetIncludeTypes(),
 		},
 	), nil
 }
@@ -50,6 +49,12 @@ func (mw *middleware) GetLogger() logger.MomentoLogger {
 	return mw.logger
 }
 
+// GetRequestHandler returns a new RequestHandler that wraps the provided baseRequestHandler.
+// Custom middlewares should implement this method to accept a base request handler and use
+// it to compose a custom RequestHandler:
+//   func (mw *myMiddleware) GetRequestHandler(baseHandler RequestHandler) (RequestHandler, error) {
+//     return NewMyMiddlewareRequestHandler(baseHandler, mw.myField), nil
+//   }
 func (mw *middleware) GetRequestHandler(_ RequestHandler) (RequestHandler, error) {
 	return nil, fmt.Errorf("GetRequestHandler not implemented in middleware")
 }
@@ -62,6 +67,11 @@ func (mw *middleware) GetIncludeTypes() map[string]bool {
 // If the IncludeTypes are omitted or empty, all request types will be processed. For example, to limit processing
 // to only requests of type *momento.SetRequest and *momento.GetRequest, pass the following slice as the IncludeTypes:
 //   []interface{}{&momento.SetRequest{}, &momento.GetRequest{}}
+// Custom middleware implementations can use this constructor to create and store the base middleware:
+//   type myMiddleware struct {
+//     middleware.Middleware
+//     requestCount atomic.Int64
+//   }
 func NewMiddleware(props Props) Middleware {
 	// convert the slice of types to a map of type names for quick lookup in the data client
 	var includeTypeMap map[string]bool
@@ -87,12 +97,13 @@ type requestHandler struct {
 	includeTypes map[string]bool
 }
 
+// RequestHandler is an interface that represents the capabilities of a middleware request handler.
+// Custom request handlers will generally only need to implement the OnRequest and OnResponse methods.
 type RequestHandler interface {
 	GetId() uuid.UUID
 	GetRequest() interface{}
 	GetMetadata() context.Context
 	GetLogger() logger.MomentoLogger
-	GetIncludeTypes() map[string]bool
 	OnRequest()
 	OnResponse(theResponse interface{})
 }
@@ -101,7 +112,6 @@ type HandlerProps struct {
 	Request		 interface{}
 	Metadata     context.Context
 	Logger       logger.MomentoLogger
-	IncludeTypes map[string]bool
 }
 
 func (rh *requestHandler) GetId() uuid.UUID {
@@ -120,10 +130,6 @@ func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
 }
 
-func (rh *requestHandler) GetIncludeTypes() map[string]bool {
-	return rh.includeTypes
-}
-
 func (rh *requestHandler) OnRequest() {}
 
 func (rh *requestHandler) OnResponse(_ interface{}) {}
@@ -136,7 +142,6 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 	return &requestHandler{
 		id: id,
 		logger: props.Logger,
-		includeTypes: props.IncludeTypes,
 		request: props.Request,
 		metadata: props.Metadata,
 	}
