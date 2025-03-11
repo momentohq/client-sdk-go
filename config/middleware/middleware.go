@@ -3,6 +3,9 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/internal"
+	"github.com/momentohq/client-sdk-go/internal/retry"
+	"google.golang.org/grpc"
 	"reflect"
 
 	"github.com/google/uuid"
@@ -16,9 +19,14 @@ type middleware struct {
 
 type Middleware interface {
 	GetLogger() logger.MomentoLogger
-	GetBaseRequestHandler(theRequest interface{}, metadata context.Context) (RequestHandler, error)
+	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceType internal.ClientType, resourceName string, metadata map[string]string) (RequestHandler, error)
 	GetRequestHandler(baseRequestHandler RequestHandler) (RequestHandler, error)
 	GetIncludeTypes() map[string]bool
+}
+
+type RetryMiddleware interface {
+	Middleware
+	AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error
 }
 
 type Props struct {
@@ -26,7 +34,9 @@ type Props struct {
 	IncludeTypes []interface{}
 }
 
-func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata context.Context) (RequestHandler, error) {
+func (mw *middleware) GetBaseRequestHandler(
+	theRequest interface{}, requestName string, resourceType internal.ClientType, resourceName string, metadata map[string]string,
+) (RequestHandler, error) {
 	allowedTypes := mw.GetIncludeTypes()
 	if allowedTypes != nil {
 		requestType := reflect.TypeOf(theRequest)
@@ -40,6 +50,9 @@ func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata con
 		HandlerProps{
 			Metadata: metadata,
 			Request:  theRequest,
+			RequestName: requestName,
+			ResourceType: resourceType,
+			ResourceName: resourceName,
 			Logger:   mw.GetLogger(),
 		},
 	), nil
@@ -97,7 +110,10 @@ type requestHandler struct {
 	id       uuid.UUID
 	logger   logger.MomentoLogger
 	request  interface{}
-	metadata context.Context
+	requestName string
+	resourceType internal.ClientType
+	resourceName string
+	metadata map[string]string
 }
 
 // RequestHandler is an interface that represents the capabilities of a middleware request handler.
@@ -105,15 +121,21 @@ type requestHandler struct {
 type RequestHandler interface {
 	GetId() uuid.UUID
 	GetRequest() interface{}
-	GetMetadata() context.Context
+	GetRequestName() string
+	GetResourceType() internal.ClientType
+	GetResourceName() string
+	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
 	OnRequest()
-	OnResponse(theResponse interface{})
+	OnResponse(theResponse interface{}, err error) error
 }
 
 type HandlerProps struct {
 	Request  interface{}
-	Metadata context.Context
+	RequestName string
+	ResourceType internal.ClientType
+	ResourceName string
+	Metadata map[string]string
 	Logger   logger.MomentoLogger
 }
 
@@ -125,12 +147,24 @@ func (rh *requestHandler) GetRequest() interface{} {
 	return rh.request
 }
 
-func (rh *requestHandler) GetMetadata() context.Context {
+func (rh *requestHandler) GetRequestName() string {
+	return rh.requestName
+}
+
+func (rh *requestHandler) GetMetadata() map[string]string {
 	return rh.metadata
 }
 
 func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
+}
+
+func (rh *requestHandler) GetResourceType() internal.ClientType {
+	return rh.resourceType
+}
+
+func (rh *requestHandler) GetResourceName() string {
+	return rh.resourceName
 }
 
 // OnRequest is called before the request is made to the backend.
@@ -146,7 +180,9 @@ func (rh *requestHandler) OnRequest() {}
 //	  case *responses.ListPushBackSuccess:
 //	    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
 //	}
-func (rh *requestHandler) OnResponse(_ interface{}) {}
+func (rh *requestHandler) OnResponse(_ interface{}, err error) error {
+	return err
+}
 
 func NewRequestHandler(props HandlerProps) RequestHandler {
 	id, err := uuid.NewUUID()
@@ -157,6 +193,9 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 		id:       id,
 		logger:   props.Logger,
 		request:  props.Request,
+		requestName: props.RequestName,
+		resourceType: props.ResourceType,
+		resourceName: props.ResourceName,
 		metadata: props.Metadata,
 	}
 }

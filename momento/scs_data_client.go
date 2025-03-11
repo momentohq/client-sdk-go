@@ -33,6 +33,7 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
 		ReadConcern:        request.Configuration.GetReadConcern(),
 		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
+		Middleware:		    request.Configuration.GetMiddleware(),
 	})
 	if err != nil {
 		return nil, err
@@ -71,13 +72,15 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
+	// Variable to gather request metadata into. This will be passed to middleware request handlers
+	// for potential modification. The final metadata will be passed to the grpc request as headers.
+	requestMetadata := make(map[string]string)
 
 	middlewareRequestHandlers := make([]middleware.RequestHandler, 0, len(client.middleware))
 	for _, mw := range client.middleware {
 		// An error here means the middleware is configured to skip this type of request, so we
 		// don't add it to the list of request handlers to call on response.
-		newBaseHandler, err := mw.GetBaseRequestHandler(r, requestMetadata)
+		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), internal.Cache, r.cacheName(), requestMetadata)
 		if err != nil {
 			continue
 		}
@@ -100,17 +103,31 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
 	}
 
-	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)
-	if err != nil {
-		return momentoerrors.ConvertSvcErr(err, responseMetadata...)
+	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
+	_, responseMetadata, requestError := r.makeGrpcRequest(requestContext, client)
+
+	// Iterate over the middleware request handlers in reverse order, giving them a chance to
+	// inspect the response and error results. Any error returned from the middleware OnResponse()
+	// method will be immediately returned as the actual error, skipping any outstanding response handlers.
+	// If none of the response handlers return an error, the original error (if any) will be returned after
+	// it is converted to a Momento service error.
+	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
+		rh := middlewareRequestHandlers[i]
+		requestHandlerError := rh.OnResponse(r.getResponse(), requestError)
+		if requestHandlerError != nil {
+			requestError = requestHandlerError
+			// TODO: think about not doing this. Later middlewares should also have a chance
+			//  to handle or ignore the latest error.
+			break
+		}
+	}
+
+	if requestError != nil {
+		return momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
 	}
 
 	if err := r.interpretGrpcResponse(); err != nil {
 		return err
-	}
-
-	for _, rh := range middlewareRequestHandlers {
-		rh.OnResponse(r.getResponse())
 	}
 
 	return nil

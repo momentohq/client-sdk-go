@@ -46,13 +46,15 @@ func NewInFlightRequestCountMiddlewareRequestHandler(
 	return &inFlightRequestCountMiddlewareRequestHandler{rh, countAfterAdd, remover}
 }
 
-func (rh *inFlightRequestCountMiddlewareRequestHandler) OnResponse(_ interface{}) {
+func (rh *inFlightRequestCountMiddlewareRequestHandler) OnResponse(_ interface{}, _ error) error {
 	countAfterRemove := rh.remover()
 	rh.GetLogger().Info(
 		fmt.Sprintf(
-			"Request completed; in-flight requests at start: %d, in-flight requests at completion: %d",
+			"Request %s completed; in-flight requests at start: %d, in-flight requests at completion: %d",
+			rh.GetRequestName(),
 			rh.requestsAtStart,
 			countAfterRemove,
 		),
 	)
+	return nil
 }
