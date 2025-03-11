@@ -2,8 +2,6 @@ package momento_test
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -45,7 +43,6 @@ func NewRetryMetricsCollector() RetryMetricsCollector {
 }
 
 func (r *retryMetrics) addTimestamp(cacheName string, requestName string, timestamp int64) {
-	fmt.Printf("adding timestamp for cache: %s, request: %s, timestamp: %d\n", cacheName, requestName, timestamp)
 	if _, ok := r.data[cacheName]; !ok {
 		r.data[cacheName] = make(map[string][]int64)
 	}
@@ -53,9 +50,12 @@ func (r *retryMetrics) addTimestamp(cacheName string, requestName string, timest
 }
 
 func (r *retryMetrics) getTotalRetryCount(cacheName string, requestName string) int {
-	return len(r.data[cacheName][requestName])
+	// The first timestamp is the original request, so we subtract 1
+	return len(r.data[cacheName][requestName]) - 1
 }
 
+// TODO: what resolution are we looking for here? I'm using Unix epoch time, so am currently
+//  limited to seconds, but I can obviously change that.
 func (r *retryMetrics) getAverageTimeBetweenRetries(cacheName string, requestName string) int64 {
 	if timestamps, ok := r.data[cacheName][requestName]; !ok {
 		return 0
@@ -67,7 +67,7 @@ func (r *retryMetrics) getAverageTimeBetweenRetries(cacheName string, requestNam
 		for i := 1; i < len(timestamps); i++ {
 			sum += timestamps[i] - timestamps[i-1]
 		}
-		return sum / int64(len(timestamps)) - 1
+		return sum / int64(len(timestamps) - 1)
 	}
 }
 
@@ -163,10 +163,6 @@ func NewRetryMetricsMiddlewareRequestHandler(
 	return &retryMetricsMiddlewareRequestHandler{RequestHandler: rh, cacheName: "", props: props}
 }
 
-func (rh *retryMetricsMiddlewareRequestHandler) OnRequest() {
-	fmt.Printf("retry metrics middleware request handler on request with %s %s\n", rh.GetResourceType(), rh.GetResourceName())
-}
-
 func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(_ interface{}, err error) error {
 	if err != nil {
 		switch e := err.(type) {
@@ -186,7 +182,6 @@ func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(_ interface{}, err er
 
 func (rh *retryMetricsMiddlewareRequestHandler) GetMetadata() map[string]string {
 	requestMetadata := rh.RequestHandler.GetMetadata()
-	fmt.Printf("======> retry metrics middleware request handler get metadata %+v\n", requestMetadata)
 	requestMetadata["request-id"] = rh.GetId().String()
 	if rh.props.returnError != nil {
 		requestMetadata["return-error"] = *rh.props.returnError
@@ -200,7 +195,20 @@ func (rh *retryMetricsMiddlewareRequestHandler) GetMetadata() map[string]string 
 	return requestMetadata
 }
 
-var _ = Describe("cache-client retry eligibility-strategy", func() {
+func setupCacheClientTest(config config.Configuration) momento.CacheClient {
+	credentialProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{})
+	Expect(err).To(BeNil())
+	cacheClient, err := momento.NewCacheClient(config, credentialProvider, 30*time.Second)
+	Expect(err).To(BeNil())
+	createResponse, err := cacheClient.CreateCache(context.Background(), &momento.CreateCacheRequest{
+		CacheName: "cache",
+	})
+	Expect(err).To(BeNil())
+	Expect(createResponse).To(Not(BeNil()))
+	return cacheClient
+}
+
+var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_LABEL), func() {
 	DescribeTable(
 		"DefaultEligibilityStrategy -- determine retry eligibility given grpc status code and request method",
 		func(grpcStatus codes.Code, requestMethod string, expected bool) {
@@ -235,18 +243,43 @@ var _ = Describe("cache-client retry eligibility-strategy", func() {
 		Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/DictionaryIncrement", false),
 	)
 
-	Describe("DefaultEligibilityStrategy -- test retires with fixed count strategy", func() {
-		It("should not retry if the status code is not retryable", func() {
+	Describe("cache-client retry NeverRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
+		It("shouldn't retry", func() {
 			metricsCollector := NewRetryMetricsCollector()
-			cancelledStatus := "unavailable"
+			status := "unavailable"
+			strategy := retry.NewNeverRetryStrategy()
 			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				middleware.NewInFlightRequestCountMiddleware(middleware.Props{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(
-						momento_default_logger.INFO).GetLogger("in-flight-request-count"),
-				}),
 				NewRetryMetricsMiddleware(retryMetricsMiddlewareProps{
 					metricsCollector: metricsCollector,
-					returnError:      &cancelledStatus,
+					returnError:      &status,
+					errorRpcList:     &[]string{"set"},
+					errorCount:       nil,
+					delayRpcList:     nil,
+					delayMillis:      nil,
+					delayCount:       nil,
+				}),
+			}).WithRetryStrategy(strategy)
+			cacheClient := setupCacheClientTest(clientConfig)
+			setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
+				CacheName: "cache",
+				Key:       momento.String("key"),
+				Value:     momento.String("value"),
+			})
+			Expect(setResponse).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
+			Expect(metricsCollector.getTotalRetryCount("cache", "Set")).To(Equal(0))
+		})
+	})
+
+	Describe("cache-client retry DefaultEligibilityStrategy", Label(CACHE_SERVICE_LABEL), func() {
+		It("should retry 3 times if the status code is retryable", func() {
+			metricsCollector := NewRetryMetricsCollector()
+			status := "unavailable"
+			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				NewRetryMetricsMiddleware(retryMetricsMiddlewareProps{
+					metricsCollector: metricsCollector,
+					returnError:      &status,
 					errorRpcList:     &[]string{"get"},
 					errorCount:       nil,
 					delayRpcList:     nil,
@@ -254,15 +287,7 @@ var _ = Describe("cache-client retry eligibility-strategy", func() {
 					delayCount:       nil,
 				}),
 			})
-			credentialProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{})
-			Expect(err).To(BeNil())
-			cacheClient, err := momento.NewCacheClient(clientConfig, credentialProvider, 30*time.Second)
-			Expect(err).To(BeNil())
-			createResponse, err := cacheClient.CreateCache(context.Background(), &momento.CreateCacheRequest{
-				CacheName: "cache",
-			})
-			Expect(err).To(BeNil())
-			Expect(createResponse).To(Not(BeNil()))
+			cacheClient := setupCacheClientTest(clientConfig)
 
 			setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
 				CacheName: "cache",
@@ -280,9 +305,35 @@ var _ = Describe("cache-client retry eligibility-strategy", func() {
 			Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
 			Expect(getResponse).To(BeNil())
 
-			allMetrics, err := json.MarshalIndent(metricsCollector.getAllMetrics(), "", "  ")
-			Expect(err).To(BeNil())
-			fmt.Printf("%s\n", allMetrics)
+			Expect(metricsCollector.getTotalRetryCount("cache", "Get")).To(Equal(3))
+			Expect(metricsCollector.getAverageTimeBetweenRetries("cache", "Get")).To(Equal(0))
+		})
+
+		It("should not retry if the status code is not retryable", func() {
+			metricsCollector := NewRetryMetricsCollector()
+			status := "unknown"
+			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				NewRetryMetricsMiddleware(retryMetricsMiddlewareProps{
+					metricsCollector: metricsCollector,
+					returnError:      &status,
+					errorRpcList:     &[]string{"set"},
+					errorCount:       nil,
+					delayRpcList:     nil,
+					delayMillis:      nil,
+					delayCount:       nil,
+				}),
+			})
+			cacheClient := setupCacheClientTest(clientConfig)
+
+			setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
+				CacheName: "cache",
+				Key:       momento.String("key"),
+				Value:     momento.String("value"),
+			})
+			Expect(setResponse).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			Expect(err).To(HaveMomentoErrorCode(momento.UnknownServiceError))
+			Expect(metricsCollector.getTotalRetryCount("cache", "Set")).To(Equal(0))
 		})
 	})
 })
