@@ -66,73 +66,64 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 	return client, nil
 }
 
-func (c defaultTopicClient) sendSubscribe(firstMessageCtx context.Context, requestCtx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
-	// This loop should exit after the first iteration either due to a timeout or a successful subscription.
-	for {
-		select {
-		case <-firstMessageCtx.Done():
-			return nil, momentoerrors.NewMomentoSvcErr(
-				momentoerrors.TimeoutError,
-				"subscription did not receive first message within the expected time",
-				nil,
-			)
-		default:
-			var firstMsg *pb.XSubscriptionItem
-			topicManager, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
-				CacheName:                   request.CacheName,
-				TopicName:                   request.TopicName,
-				ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
-				SequencePage:                request.SequencePage,
-			})
-			if err != nil {
-				return nil, err
+func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan topicSubscription, errChan chan error) {
+	var firstMsg *pb.XSubscriptionItem
+	topicManager, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
+		CacheName:                   request.CacheName,
+		TopicName:                   request.TopicName,
+		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
+		SequencePage:                request.SequencePage,
+	})
+	if err != nil {
+		cancelFunction()
+		errChan <- err
+	}
+
+	if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
+		c.log.Debug("Starting new subscription with new sequence number and sequence page.")
+	} else {
+		c.log.Debug("Resuming subscription from sequence number %d and sequence page %d.", request.ResumeAtTopicSequenceNumber, request.SequencePage)
+	}
+
+	// Ping the stream to provide a nice error message if the cache does not exist.
+	firstMsg, err = subscribeClient.Recv()
+	if err != nil {
+		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
+
+		// We now count number of active subscriptions per grpc channel, so if we did not return
+		// an error earlier when calling c.pubSubClient.topicSubscribe, we know that the error
+		// here is due to a service-side subscription limit.
+		rpcError, _ := status.FromError(err)
+		if rpcError != nil {
+			if rpcError.Code() == codes.ResourceExhausted {
+				c.log.Warn("Topic subscription limit reached for this account; please contact us at support@momentohq.com")
 			}
-
-			if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
-				c.log.Debug("Starting new subscription with new sequence number and sequence page.")
-			} else {
-				c.log.Debug("Resuming subscription from sequence number %d and sequence page %d.", request.ResumeAtTopicSequenceNumber, request.SequencePage)
-			}
-
-			// Ping the stream to provide a nice error message if the cache does not exist.
-			firstMsg, err = subscribeClient.Recv()
-			if err != nil {
-				c.log.Debug("failed to receive first message from subscription: %s", err.Error())
-
-				// We now count number of active subscriptions per grpc channel, so if we did not return
-				// an error earlier when calling c.pubSubClient.topicSubscribe, we know that the error
-				// here is due to a service-side subscription limit.
-				rpcError, _ := status.FromError(err)
-				if rpcError != nil {
-					if rpcError.Code() == codes.ResourceExhausted {
-						c.log.Warn("Topic subscription limit reached for this account; please contact us at support@momentohq.com")
-					}
-				}
-				return nil, momentoerrors.ConvertSvcErr(err)
-			}
-
-			switch firstMsg.Kind.(type) {
-			case *pb.XSubscriptionItem_Heartbeat:
-				// The first message to a new subscription will always be a heartbeat.
-			default:
-				return nil, momentoerrors.NewMomentoSvcErr(
-					momentoerrors.InternalServerError,
-					fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
-					err,
-				)
-			}
-
-			return &topicSubscription{
-				topicManager:       topicManager,
-				subscribeClient:    subscribeClient,
-				momentoTopicClient: c.pubSubClient,
-				cacheName:          request.CacheName,
-				topicName:          request.TopicName,
-				log:                c.log,
-				cancelContext:      cancelContext,
-				cancelFunction:     cancelFunction,
-			}, nil
 		}
+		cancelFunction()
+		errChan <- momentoerrors.ConvertSvcErr(err)
+	}
+
+	switch firstMsg.Kind.(type) {
+	case *pb.XSubscriptionItem_Heartbeat:
+		// The first message to a new subscription will always be a heartbeat.
+	default:
+		cancelFunction()
+		errChan <- momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InternalServerError,
+			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
+			err,
+		)
+	}
+
+	subChan <- topicSubscription{
+		topicManager:       topicManager,
+		subscribeClient:    subscribeClient,
+		momentoTopicClient: c.pubSubClient,
+		cacheName:          request.CacheName,
+		topicName:          request.TopicName,
+		log:                c.log,
+		cancelContext:      cancelContext,
+		cancelFunction:     cancelFunction,
 	}
 }
 
@@ -147,9 +138,26 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 
 	// Set a timeout by which the first heartbeat message should be received.
 	// If the first message is not received within this time, we will cancel the subscription.
-	firstMessageCtx, cancel := context.WithTimeout(context.Background(), c.requestTimeout)
+	firstMessageCtx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
-	return c.sendSubscribe(firstMessageCtx, ctx, request)
+	subChan := make(chan topicSubscription, 1)
+	errChan := make(chan error, 1)
+
+	// Send the subscribe request in a separate goroutine to avoid blocking the main thread.
+	// Here, we'll block until one of the select cases is triggered.
+	go c.sendSubscribe(ctx, request, subChan, errChan)
+	select {
+	case <-firstMessageCtx.Done():
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.TimeoutError,
+			"subscription did not receive first message within the expected time",
+			nil,
+		)
+	case subscription := <-subChan:
+		return &subscription, nil
+	case err := <-errChan:
+		return nil, err
+	}
 }
 
 func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error) {
