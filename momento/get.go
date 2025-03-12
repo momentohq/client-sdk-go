@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
@@ -44,14 +45,31 @@ func (r *GetRequest) initGrpcRequest(scsDataClient) error {
 
 func (r *GetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
+	fmt.Printf("in makeGrpcRequest for Get\n")
+	trailer = metadata.Pairs()
+	trailer.Set("test", "hello")
+	fmt.Printf("trailer: %v (%T)\n", trailer, trailer)
+
+	// TODO: This will never return a resp when an err is defined.
+	//  This is why I can't use both resp and err as responses. Returning an error from the interceptor
+	//  will always cause the resp to be nil.
+	//  . . .
 	resp, err := client.grpcClient.Get(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+
+	fmt.Printf(">>>>>>>>>> resp: %T, err: %T\n", resp, err)
+	if resp != nil {
+		fmt.Printf(">>>>>>>>>> raw resp: %T\n", resp)
+		fmt.Printf("resp.GetResult(): %v\n", resp.GetResult())
+		fmt.Printf(">>>>>>>>>> grpc resp: %T, result: %s, err: %T\n", r.grpcResponse, r.grpcResponse.Result, err)
+	} else {
+		fmt.Println(">>>>>>>>>> resp is nil")
+	}
+
 	responseMetadata := []metadata.MD{header, trailer}
+	fmt.Printf("???? %v\n", responseMetadata)
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 

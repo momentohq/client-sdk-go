@@ -67,7 +67,6 @@ func CreateCacheRequestContextFromMetadataMap(ctx context.Context, cacheName str
 	return CreateMetadata(ctx, Cache, cacheMetadata...)
 }
 
-
 func CreateStoreMetadata(ctx context.Context, storeName string) context.Context {
 	return CreateMetadata(ctx, Store, "store", storeName)
 }

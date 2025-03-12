@@ -2,6 +2,8 @@ package momento
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -104,17 +106,25 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
-	_, responseMetadata, requestError := r.makeGrpcRequest(requestContext, client)
+	resp, responseMetadata, requestError := r.makeGrpcRequest(requestContext, client)
 
+	fmt.Printf("before middlewares got response %v (%T)\n" , resp, resp)
+	fmt.Printf("before middlewares got error %s (%T)\n" , requestError, requestError)
 	// Iterate over the middleware request handlers in reverse order, giving them a chance to
 	// inspect the response and error results. Any error returned from the middleware OnResponse()
 	// method will be immediately returned as the actual error, skipping any outstanding response handlers.
 	// If none of the response handlers return an error, the original error (if any) will be returned after
 	// it is converted to a Momento service error.
 	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
+		var requestHandlerError error
+		var newResp interface{}
 		rh := middlewareRequestHandlers[i]
-		requestHandlerError := rh.OnResponse(r.getResponse(), requestError)
-		if requestHandlerError != nil {
+		fmt.Printf("calling OnResponse for %T: %v\n", rh, resp)
+		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
+		fmt.Printf("==> %T requestHandlerError: %v\n", rh, requestHandlerError)
+		fmt.Printf("====> %T newResp: %v\n", rh, newResp)
+		if !errors.Is(requestHandlerError, requestError) {
+			fmt.Printf("setting requestError to requestHandlerError %T\n", requestHandlerError)
 			requestError = requestHandlerError
 			// TODO: think about not doing this. Later middlewares should also have a chance
 			//  to handle or ignore the latest error.
@@ -126,6 +136,8 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		return momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
 	}
 
+	fmt.Printf("interpreting grpc response for %s\n", r.requestName())
+	fmt.Printf("Looks like the response is %T\n", r.getResponse())
 	if err := r.interpretGrpcResponse(); err != nil {
 		return err
 	}

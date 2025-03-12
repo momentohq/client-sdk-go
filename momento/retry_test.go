@@ -2,10 +2,13 @@ package momento_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"strings"
@@ -20,11 +23,17 @@ import (
 
 type ErrorWithRetryTimestamps struct {
 	Err error
+	Reply interface{}
 	Timestamps  []int64
 }
 
 func (e ErrorWithRetryTimestamps) Error() string {
 	return e.Err.Error()
+}
+
+type ReplyWithRetryTimestamps struct {
+	Reply interface{}
+	Timestamps []int64
 }
 
 type retryMetrics struct {
@@ -121,16 +130,25 @@ func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func
 		attempt := 1
 		timestamps := make([]int64, 0)
 		for {
+			fmt.Printf("=====\nretry interceptor attempt %d for %s\n", attempt, method)
 			// Execute api call
-			requestTimestamp := time.Now().Unix()
+			timestamps = append(timestamps, time.Now().Unix())
 			lastErr := invoker(ctx, method, req, reply, cc, opts...)
+			fmt.Printf("----> lastErr: %v\n", lastErr)
 			if lastErr == nil {
 				// Success no error returned stop interceptor
 				// TODO: if we have retries, we need to return them in an error response
 				//  that has a nil error and a metadata field with the retry timestamps
+				fmt.Printf("----> timestamps: %v\n", timestamps)
+				if len(timestamps) > 1 {
+					fmt.Printf("retry interceptor got success after %d retries; creating ReplyWithRetryTimestamps\n", len(timestamps) - 1)
+					return ErrorWithRetryTimestamps{
+						Reply:      reply,
+						Timestamps: timestamps,
+					}
+				}
 				return nil
 			}
-			timestamps = append(timestamps, requestTimestamp)
 
 			// Check retry eligibility based off last error received
 			retryBackoffTime := s.DetermineWhenToRetry(retry.StrategyProps{
@@ -163,21 +181,27 @@ func NewRetryMetricsMiddlewareRequestHandler(
 	return &retryMetricsMiddlewareRequestHandler{RequestHandler: rh, cacheName: "", props: props}
 }
 
-func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(_ interface{}, err error) error {
+func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(theResponse interface{}, err error) (interface{}, error) {
 	if err != nil {
-		switch e := err.(type) {
-		case ErrorWithRetryTimestamps:
+		fmt.Printf("retryMetricsMiddlewareRequestHandler.OnResponse got error: %T\n", err)
+		var e ErrorWithRetryTimestamps
+		switch {
+		case errors.As(err, &e):
+			fmt.Printf("Reply -> %T - %v\n", e.Reply, e.Reply)
+			fmt.Printf("Timestamps -> %v\n", e.Timestamps)
 			for _, ts := range e.Timestamps {
 				rh.props.metricsCollector.addTimestamp(rh.GetResourceName(), rh.GetRequestName(), ts)
 			}
 			if e.Err != nil {
-				return e.Err
+				return nil, e.Err
+			} else {
+				return e.Reply, nil
 			}
 		default:
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return theResponse, nil
 }
 
 func (rh *retryMetricsMiddlewareRequestHandler) GetMetadata() map[string]string {
@@ -188,6 +212,9 @@ func (rh *retryMetricsMiddlewareRequestHandler) GetMetadata() map[string]string 
 	}
 	if rh.props.errorRpcList != nil {
 		requestMetadata["error-rpcs"] = strings.Join(*rh.props.errorRpcList, " ")
+	}
+	if rh.props.errorCount != nil {
+		requestMetadata["error-count"] = fmt.Sprintf("%d", *rh.props.errorCount)
 	}
 
 	// add other stuff here :-)/
@@ -306,7 +333,7 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(getResponse).To(BeNil())
 
 			Expect(metricsCollector.getTotalRetryCount("cache", "Get")).To(Equal(3))
-			Expect(metricsCollector.getAverageTimeBetweenRetries("cache", "Get")).To(Equal(0))
+			Expect(metricsCollector.getAverageTimeBetweenRetries("cache", "Get")).To(Equal(int64(0)))
 		})
 
 		It("should not retry if the status code is not retryable", func() {
@@ -335,5 +362,41 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(err).To(HaveMomentoErrorCode(momento.UnknownServiceError))
 			Expect(metricsCollector.getTotalRetryCount("cache", "Set")).To(Equal(0))
 		})
+
+		It("should return a value on success after a retry", func() {
+			metricsCollector := NewRetryMetricsCollector()
+			status := "unavailable"
+			errCount := 1
+			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				NewRetryMetricsMiddleware(retryMetricsMiddlewareProps{
+					metricsCollector: metricsCollector,
+					returnError:      &status,
+					errorRpcList:     &[]string{"get"},
+					errorCount:       &errCount,
+					delayRpcList:     nil,
+					delayMillis:      nil,
+					delayCount:       nil,
+				}),
+			})
+			cacheClient := setupCacheClientTest(clientConfig)
+			setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
+				CacheName: "cache",
+				Key:       momento.String("key"),
+				Value:     momento.String("value"),
+			})
+			Expect(err).To(BeNil())
+			Expect(setResponse).To(Not(BeNil()))
+
+			getResponse, err := cacheClient.Get(context.Background(), &momento.GetRequest{
+				CacheName: "cache",
+				Key:       momento.String("key"),
+			})
+			fmt.Printf("%v", metricsCollector.getAllMetrics())
+			Expect(err).To(BeNil())
+			Expect(getResponse).To(Not(BeNil()))
+			Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
+			Expect(metricsCollector.getTotalRetryCount("cache", "Get")).To(Equal(1))
+		})
+
 	})
 })

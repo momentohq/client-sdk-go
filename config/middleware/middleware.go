@@ -127,7 +127,7 @@ type RequestHandler interface {
 	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
 	OnRequest()
-	OnResponse(theResponse interface{}, err error) error
+	OnResponse(theResponse interface{}, err error) (interface{}, error)
 }
 
 type HandlerProps struct {
@@ -180,8 +180,8 @@ func (rh *requestHandler) OnRequest() {}
 //	  case *responses.ListPushBackSuccess:
 //	    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
 //	}
-func (rh *requestHandler) OnResponse(_ interface{}, err error) error {
-	return err
+func (rh *requestHandler) OnResponse(theResponse interface{}, err error) (interface{}, error) {
+	return theResponse, err
 }
 
 func NewRequestHandler(props HandlerProps) RequestHandler {
