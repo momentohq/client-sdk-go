@@ -90,7 +90,7 @@ func (r *SetIfAbsentOrEqualRequest) makeGrpcRequest(requestMetadata context.Cont
 	return resp, nil, nil
 }
 
-func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse() error {
+func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 	var resp responses.SetIfAbsentOrEqualResponse
 

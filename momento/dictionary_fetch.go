@@ -46,7 +46,7 @@ func (r *DictionaryFetchRequest) makeGrpcRequest(requestMetadata context.Context
 	return resp, nil, nil
 }
 
-func (r *DictionaryFetchRequest) interpretGrpcResponse() error {
+func (r *DictionaryFetchRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryFetchResponse_Found:
 		elements := make(map[string][]byte)

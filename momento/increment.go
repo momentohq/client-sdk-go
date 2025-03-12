@@ -66,7 +66,7 @@ func (r *IncrementRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	return resp, nil, nil
 }
 
-func (r *IncrementRequest) interpretGrpcResponse() error {
+func (r *IncrementRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = responses.NewIncrementSuccess(r.grpcResponse.Value)
 	return nil
 }

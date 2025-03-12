@@ -57,7 +57,7 @@ func (r *DictionaryGetFieldsRequest) makeGrpcRequest(requestMetadata context.Con
 	return resp, nil, nil
 }
 
-func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
+func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryGetResponse_Missing:
 		r.response = &responses.DictionaryGetFieldsMiss{}

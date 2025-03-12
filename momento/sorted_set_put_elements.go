@@ -70,7 +70,7 @@ func (r *SortedSetPutElementsRequest) makeGrpcRequest(requestMetadata context.Co
 	return resp, nil, nil
 }
 
-func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
+func (r *SortedSetPutElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SortedSetPutElementsSuccess{}
 	return nil
 }

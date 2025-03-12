@@ -46,7 +46,7 @@ func (r *SortedSetLengthRequest) makeGrpcRequest(requestMetadata context.Context
 	return resp, nil, nil
 }
 
-func (r *SortedSetLengthRequest) interpretGrpcResponse() error {
+func (r *SortedSetLengthRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	switch rtype := resp.SortedSet.(type) {
 	case *pb.XSortedSetLengthResponse_Found:

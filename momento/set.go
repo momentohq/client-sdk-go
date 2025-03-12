@@ -71,11 +71,11 @@ func (r *SetRequest) makeGrpcRequest(requestMetadata context.Context, client scs
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
+	//r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetRequest) interpretGrpcResponse() error {
+func (r *SetRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetSuccess{}
 	return nil
 }

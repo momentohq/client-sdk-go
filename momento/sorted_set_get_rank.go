@@ -63,7 +63,7 @@ func (r *SortedSetGetRankRequest) makeGrpcRequest(requestMetadata context.Contex
 	return resp, nil, nil
 }
 
-func (r *SortedSetGetRankRequest) interpretGrpcResponse() error {
+func (r *SortedSetGetRankRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 
 	var resp responses.SortedSetGetRankResponse

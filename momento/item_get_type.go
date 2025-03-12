@@ -50,7 +50,7 @@ func (r *ItemGetTypeRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	return resp, nil, nil
 }
 
-func (r *ItemGetTypeRequest) interpretGrpcResponse() error {
+func (r *ItemGetTypeRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 
 	switch grpcResp.Result.(type) {

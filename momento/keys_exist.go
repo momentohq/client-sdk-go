@@ -52,7 +52,7 @@ func (r *KeysExistRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	return resp, nil, nil
 }
 
-func (r *KeysExistRequest) interpretGrpcResponse() error {
+func (r *KeysExistRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	r.response = responses.NewKeysExistSuccess(resp.Exists)
 	return nil

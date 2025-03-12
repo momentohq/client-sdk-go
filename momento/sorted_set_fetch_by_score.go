@@ -96,7 +96,7 @@ func (r *SortedSetFetchByScoreRequest) makeGrpcRequest(requestMetadata context.C
 	return resp, nil, nil
 }
 
-func (r *SortedSetFetchByScoreRequest) interpretGrpcResponse() error {
+func (r *SortedSetFetchByScoreRequest) interpretGrpcResponse(_ interface{}) error {
 	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetFetchResponse_Found:
 		r.response = responses.NewSortedSetFetchHit(sortedSetByScoreGrpcElementToModel(grpcResp.Found.GetValuesWithScores().Elements))

@@ -46,7 +46,7 @@ func (r *DictionaryLengthRequest) makeGrpcRequest(requestMetadata context.Contex
 	return resp, nil, nil
 }
 
-func (r *DictionaryLengthRequest) interpretGrpcResponse() error {
+func (r *DictionaryLengthRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	switch rtype := resp.Dictionary.(type) {
 	case *pb.XDictionaryLengthResponse_Found:

@@ -83,7 +83,7 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(requestMetadata context.Con
 	return resp, nil, nil
 }
 
-func (r *DictionarySetFieldsRequest) interpretGrpcResponse() error {
+func (r *DictionarySetFieldsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DictionarySetFieldsSuccess{}
 	return nil
 }

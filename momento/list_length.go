@@ -46,7 +46,7 @@ func (r *ListLengthRequest) makeGrpcRequest(requestMetadata context.Context, cli
 	return resp, nil, nil
 }
 
-func (r *ListLengthRequest) interpretGrpcResponse() error {
+func (r *ListLengthRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	switch rtype := resp.List.(type) {
 	case *pb.XListLengthResponse_Found:

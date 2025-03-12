@@ -55,7 +55,7 @@ func (r *SetPopRequest) makeGrpcRequest(requestMetadata context.Context, client 
 	return resp, nil, nil
 }
 
-func (r *SetPopRequest) interpretGrpcResponse() error {
+func (r *SetPopRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.Set.(type) {
 	case *pb.XSetPopResponse_Found:
 		r.response = responses.NewSetPopHit(rtype.Found.Elements)

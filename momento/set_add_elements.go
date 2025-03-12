@@ -72,7 +72,7 @@ func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context,
 	return resp, nil, nil
 }
 
-func (r *SetAddElementsRequest) interpretGrpcResponse() error {
+func (r *SetAddElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetAddElementsSuccess{}
 	return nil
 }

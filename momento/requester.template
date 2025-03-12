@@ -78,7 +78,7 @@ func (r *TemplateRequest) makeGrpcRequest(metadata context.Context, client scsDa
 
 // Translate the GRPC response in r.grpcResponse into a Momento response.
 // Store the result in r.repsonse. This response will be returned from CacheClient.
-func (r *TemplateRequest) interpretGrpcResponse() error {
+func (r *TemplateRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = TemplateSuccess{}
 	return nil
 }

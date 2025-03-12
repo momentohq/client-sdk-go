@@ -74,7 +74,7 @@ func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, clien
 	return nil, nil, nil
 }
 
-func (r *SetBatchRequest) interpretGrpcResponse() error {
+func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 	var setResponses []responses.SetResponse
 	for {
 		resp, err := r.grpcStream.Recv()

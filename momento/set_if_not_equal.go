@@ -90,7 +90,7 @@ func (r *SetIfNotEqualRequest) makeGrpcRequest(requestMetadata context.Context, 
 	return resp, nil, nil
 }
 
-func (r *SetIfNotEqualRequest) interpretGrpcResponse() error {
+func (r *SetIfNotEqualRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 	var resp responses.SetIfNotEqualResponse
 

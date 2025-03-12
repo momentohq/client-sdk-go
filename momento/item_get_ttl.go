@@ -49,7 +49,7 @@ func (r *ItemGetTtlRequest) makeGrpcRequest(requestMetadata context.Context, cli
 	return resp, nil, nil
 }
 
-func (r *ItemGetTtlRequest) interpretGrpcResponse() error {
+func (r *ItemGetTtlRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 
 	switch grpcResp.Result.(type) {

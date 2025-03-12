@@ -55,7 +55,7 @@ func (r *SetContainsElementsRequest) makeGrpcRequest(requestMetadata context.Con
 	return resp, nil, nil
 }
 
-func (r *SetContainsElementsRequest) interpretGrpcResponse() error {
+func (r *SetContainsElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.Set.(type) {
 	case *pb.XSetContainsResponse_Missing:
 		r.response = &responses.SetContainsElementsMiss{}

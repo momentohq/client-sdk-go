@@ -67,7 +67,7 @@ func (r *ListFetchRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	return resp, nil, nil
 }
 
-func (r *ListFetchRequest) interpretGrpcResponse() error {
+func (r *ListFetchRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListFetchResponse_Found:
 		r.response = responses.NewListFetchHit(rtype.Found.Values)

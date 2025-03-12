@@ -59,7 +59,7 @@ func (r *SortedSetGetScoresRequest) makeGrpcRequest(requestMetadata context.Cont
 	return resp, nil, nil
 }
 
-func (r *SortedSetGetScoresRequest) interpretGrpcResponse() error {
+func (r *SortedSetGetScoresRequest) interpretGrpcResponse(_ interface{}) error {
 	switch grpcResp := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
 		r.response = responses.NewSortedSetGetScoresHit(

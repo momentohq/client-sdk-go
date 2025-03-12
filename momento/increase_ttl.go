@@ -61,7 +61,7 @@ func (r *IncreaseTtlRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	return resp, nil, nil
 }
 
-func (r *IncreaseTtlRequest) interpretGrpcResponse() error {
+func (r *IncreaseTtlRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 
 	var resp responses.IncreaseTtlResponse

@@ -44,7 +44,7 @@ func (r *ListPopFrontRequest) makeGrpcRequest(requestMetadata context.Context, c
 	return resp, nil, nil
 }
 
-func (r *ListPopFrontRequest) interpretGrpcResponse() error {
+func (r *ListPopFrontRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListPopFrontResponse_Found:
 		r.response = responses.NewListPopFrontHit(rtype.Found.Front)

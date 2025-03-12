@@ -79,7 +79,7 @@ func (r *SetIfNotExistsRequest) makeGrpcRequest(requestMetadata context.Context,
 	return resp, nil, nil
 }
 
-func (r *SetIfNotExistsRequest) interpretGrpcResponse() error {
+func (r *SetIfNotExistsRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 	var resp responses.SetIfNotExistsResponse
 

@@ -44,7 +44,7 @@ func (r *ListPopBackRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	return resp, nil, nil
 }
 
-func (r *ListPopBackRequest) interpretGrpcResponse() error {
+func (r *ListPopBackRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.List.(type) {
 	case *pb.XListPopBackResponse_Found:
 		r.response = responses.NewListPopBackHit(rtype.Found.Back)

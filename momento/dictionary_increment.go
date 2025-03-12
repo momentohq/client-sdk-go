@@ -84,7 +84,7 @@ func (r *DictionaryIncrementRequest) makeGrpcRequest(requestMetadata context.Con
 	return resp, nil, nil
 }
 
-func (r *DictionaryIncrementRequest) interpretGrpcResponse() error {
+func (r *DictionaryIncrementRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = responses.NewDictionaryIncrementSuccess(r.grpcResponse.Value)
 	return nil
 }

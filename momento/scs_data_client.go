@@ -115,30 +115,34 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	// method will be immediately returned as the actual error, skipping any outstanding response handlers.
 	// If none of the response handlers return an error, the original error (if any) will be returned after
 	// it is converted to a Momento service error.
+	var newResp interface{}
 	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
 		var requestHandlerError error
-		var newResp interface{}
 		rh := middlewareRequestHandlers[i]
 		fmt.Printf("calling OnResponse for %T: %v\n", rh, resp)
 		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
 		fmt.Printf("==> %T requestHandlerError: %v\n", rh, requestHandlerError)
-		fmt.Printf("====> %T newResp: %v\n", rh, newResp)
+		if newResp != nil {
+			fmt.Printf("setting resp to newResp %T - %v\n", newResp, newResp)
+			resp = newResp.(grpcResponse)
+		}
 		if !errors.Is(requestHandlerError, requestError) {
 			fmt.Printf("setting requestError to requestHandlerError %T\n", requestHandlerError)
 			requestError = requestHandlerError
 			// TODO: think about not doing this. Later middlewares should also have a chance
 			//  to handle or ignore the latest error.
-			break
+			//break
 		}
 	}
+	fmt.Printf("====> final resp: %v\n", resp)
+	//resp = newResp.(grpcResponse)
 
 	if requestError != nil {
 		return momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
 	}
 
 	fmt.Printf("interpreting grpc response for %s\n", r.requestName())
-	fmt.Printf("Looks like the response is %T\n", r.getResponse())
-	if err := r.interpretGrpcResponse(); err != nil {
+	if err := r.interpretGrpcResponse(resp); err != nil {
 		return err
 	}
 

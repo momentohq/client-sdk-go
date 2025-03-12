@@ -74,7 +74,7 @@ func (r *ListPushBackRequest) makeGrpcRequest(requestMetadata context.Context, c
 	return resp, nil, nil
 }
 
-func (r *ListPushBackRequest) interpretGrpcResponse() error {
+func (r *ListPushBackRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	r.response = responses.NewListPushBackSuccess(resp.ListLength)
 	return nil

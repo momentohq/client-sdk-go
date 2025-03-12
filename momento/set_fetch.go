@@ -46,7 +46,7 @@ func (r *SetFetchRequest) makeGrpcRequest(requestMetadata context.Context, clien
 	return resp, nil, nil
 }
 
-func (r *SetFetchRequest) interpretGrpcResponse() error {
+func (r *SetFetchRequest) interpretGrpcResponse(_ interface{}) error {
 	switch rtype := r.grpcResponse.Set.(type) {
 	case *pb.XSetFetchResponse_Found:
 		r.response = responses.NewSetFetchHit(rtype.Found.Elements)

@@ -69,7 +69,7 @@ func (r *GetBatchRequest) makeGrpcRequest(requestMetadata context.Context, clien
 	return nil, nil, nil
 }
 
-func (r *GetBatchRequest) interpretGrpcResponse() error {
+func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 	var getResponses []responses.GetResponse
 	for {
 		resp, err := r.grpcStream.Recv()

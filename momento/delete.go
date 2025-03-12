@@ -53,7 +53,7 @@ func (r *DeleteRequest) makeGrpcRequest(requestMetadata context.Context, client 
 	return resp, nil, nil
 }
 
-func (r *DeleteRequest) interpretGrpcResponse() error {
+func (r *DeleteRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DeleteSuccess{}
 	return nil
 }

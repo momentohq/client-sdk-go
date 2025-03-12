@@ -56,7 +56,7 @@ func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(requestMetadata context.
 	return resp, nil, nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse() error {
+func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DictionaryRemoveFieldsSuccess{}
 	return nil
 }

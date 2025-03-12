@@ -32,7 +32,7 @@ type requester interface {
 	hasCacheName
 	initGrpcRequest(client scsDataClient) error
 	makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)
-	interpretGrpcResponse() error
+	interpretGrpcResponse(theResponse interface{}) error
 	requestName() string
 	getResponse() interface{}
 }

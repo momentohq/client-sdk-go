@@ -73,7 +73,7 @@ func (r *ListConcatenateFrontRequest) makeGrpcRequest(requestMetadata context.Co
 	return resp, nil, nil
 }
 
-func (r *ListConcatenateFrontRequest) interpretGrpcResponse() error {
+func (r *ListConcatenateFrontRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	r.response = responses.NewListConcatenateFrontSuccess(resp.ListLength)
 	return nil

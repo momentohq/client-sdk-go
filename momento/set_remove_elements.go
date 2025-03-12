@@ -63,7 +63,7 @@ func (r *SetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Conte
 	return resp, nil, nil
 }
 
-func (r *SetRemoveElementsRequest) interpretGrpcResponse() error {
+func (r *SetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetRemoveElementsSuccess{}
 	return nil
 }

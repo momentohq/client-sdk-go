@@ -84,7 +84,7 @@ func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(requestMetadata context
 	return resp, nil, nil
 }
 
-func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
+func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = responses.SortedSetIncrementScoreSuccess(r.grpcResponse.Score)
 
 	return nil

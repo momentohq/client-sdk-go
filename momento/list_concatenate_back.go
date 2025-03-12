@@ -74,7 +74,7 @@ func (r *ListConcatenateBackRequest) makeGrpcRequest(requestMetadata context.Con
 	return resp, nil, nil
 }
 
-func (r *ListConcatenateBackRequest) interpretGrpcResponse() error {
+func (r *ListConcatenateBackRequest) interpretGrpcResponse(_ interface{}) error {
 	resp := r.grpcResponse
 	r.response = responses.NewListConcatenateBackSuccess(resp.ListLength)
 	return nil

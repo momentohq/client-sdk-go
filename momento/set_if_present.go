@@ -76,7 +76,7 @@ func (r *SetIfPresentRequest) makeGrpcRequest(requestMetadata context.Context, c
 	return resp, nil, nil
 }
 
-func (r *SetIfPresentRequest) interpretGrpcResponse() error {
+func (r *SetIfPresentRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 	var resp responses.SetIfPresentResponse
 

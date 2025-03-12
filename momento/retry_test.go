@@ -21,13 +21,13 @@ import (
 	"time"
 )
 
-type ErrorWithRetryTimestamps struct {
+type ResponseWithRetryTimestamps struct {
 	Err error
 	Reply interface{}
 	Timestamps  []int64
 }
 
-func (e ErrorWithRetryTimestamps) Error() string {
+func (e ResponseWithRetryTimestamps) Error() string {
 	return e.Err.Error()
 }
 
@@ -142,7 +142,7 @@ func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func
 				fmt.Printf("----> timestamps: %v\n", timestamps)
 				if len(timestamps) > 1 {
 					fmt.Printf("retry interceptor got success after %d retries; creating ReplyWithRetryTimestamps\n", len(timestamps) - 1)
-					return ErrorWithRetryTimestamps{
+					return ResponseWithRetryTimestamps{
 						Reply:      reply,
 						Timestamps: timestamps,
 					}
@@ -159,7 +159,7 @@ func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func
 
 			if retryBackoffTime == nil {
 				// Stop retrying and return the error with the timestamps
-				return ErrorWithRetryTimestamps{
+				return ResponseWithRetryTimestamps{
 					Err: lastErr,
 					Timestamps: timestamps,
 				}
@@ -184,7 +184,7 @@ func NewRetryMetricsMiddlewareRequestHandler(
 func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(theResponse interface{}, err error) (interface{}, error) {
 	if err != nil {
 		fmt.Printf("retryMetricsMiddlewareRequestHandler.OnResponse got error: %T\n", err)
-		var e ErrorWithRetryTimestamps
+		var e ResponseWithRetryTimestamps
 		switch {
 		case errors.As(err, &e):
 			fmt.Printf("Reply -> %T - %v\n", e.Reply, e.Reply)

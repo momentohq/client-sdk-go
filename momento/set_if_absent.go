@@ -81,7 +81,7 @@ func (r *SetIfAbsentRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	return resp, nil, nil
 }
 
-func (r *SetIfAbsentRequest) interpretGrpcResponse() error {
+func (r *SetIfAbsentRequest) interpretGrpcResponse(_ interface{}) error {
 	grpcResp := r.grpcResponse
 	var resp responses.SetIfAbsentResponse
 
