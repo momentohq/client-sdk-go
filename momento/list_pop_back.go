@@ -15,7 +15,7 @@ type ListPopBackRequest struct {
 	ListName  string
 
 	grpcRequest  *pb.XListPopBackRequest
-	grpcResponse *pb.XListPopBackResponse
+
 	response     responses.ListPopBackResponse
 }
 
@@ -40,18 +40,18 @@ func (r *ListPopBackRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListPopBackRequest) interpretGrpcResponse(_ interface{}) error {
-	switch rtype := r.grpcResponse.List.(type) {
+func (r *ListPopBackRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XListPopBackResponse)
+	switch rtype := myResp.List.(type) {
 	case *pb.XListPopBackResponse_Found:
 		r.response = responses.NewListPopBackHit(rtype.Found.Back)
 	case *pb.XListPopBackResponse_Missing:
 		r.response = &responses.ListPopBackMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

@@ -19,7 +19,7 @@ type SetAddElementsRequest struct {
 	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSetUnionRequest
-	grpcResponse *pb.XSetUnionResponse
+
 	response     responses.SetAddElementsResponse
 }
 
@@ -68,7 +68,6 @@ func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context,
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 

@@ -16,7 +16,7 @@ type SetRemoveElementsRequest struct {
 	Elements  []Value
 
 	grpcRequest  *pb.XSetDifferenceRequest
-	grpcResponse *pb.XSetDifferenceResponse
+
 	response     responses.SetRemoveElementsResponse
 }
 
@@ -59,7 +59,6 @@ func (r *SetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Conte
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 

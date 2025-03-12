@@ -23,7 +23,7 @@ type SetIfPresentRequest struct {
 	Ttl time.Duration
 
 	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
+
 	response     responses.SetIfPresentResponse
 }
 
@@ -72,24 +72,20 @@ func (r *SetIfPresentRequest) makeGrpcRequest(requestMetadata context.Context, c
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfPresentRequest) interpretGrpcResponse(_ interface{}) error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfPresentResponse
+func (r *SetIfPresentRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetIfResponse)
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfPresentStored{}
+		r.response = &responses.SetIfPresentStored{}
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfPresentNotStored{}
+		r.response = &responses.SetIfPresentNotStored{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
-
-	r.response = resp
 	return nil
 }
 

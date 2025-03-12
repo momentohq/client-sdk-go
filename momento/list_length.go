@@ -15,7 +15,7 @@ type ListLengthRequest struct {
 	ListName  string
 
 	grpcRequest  *pb.XListLengthRequest
-	grpcResponse *pb.XListLengthResponse
+
 	response     responses.ListLengthResponse
 }
 
@@ -42,19 +42,18 @@ func (r *ListLengthRequest) makeGrpcRequest(requestMetadata context.Context, cli
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListLengthRequest) interpretGrpcResponse(_ interface{}) error {
-	resp := r.grpcResponse
-	switch rtype := resp.List.(type) {
+func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XListLengthResponse)
+	switch rtype := myResp.List.(type) {
 	case *pb.XListLengthResponse_Found:
 		r.response = responses.NewListLengthHit(rtype.Found.Length)
 	case *pb.XListLengthResponse_Missing:
 		r.response = &responses.ListLengthMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

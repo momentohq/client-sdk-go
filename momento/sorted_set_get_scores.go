@@ -53,14 +53,13 @@ func (r *SortedSetGetScoresRequest) makeGrpcRequest(requestMetadata context.Cont
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
 	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *SortedSetGetScoresRequest) interpretGrpcResponse(_ interface{}) error {
-	switch grpcResp := r.grpcResponse.SortedSet.(type) {
+func (r *SortedSetGetScoresRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSortedSetGetScoreResponse)
+	switch grpcResp := myResp.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
 		r.response = responses.NewSortedSetGetScoresHit(
 			convertSortedSetScoreElement(grpcResp.Found.GetElements()),
@@ -69,7 +68,7 @@ func (r *SortedSetGetScoresRequest) interpretGrpcResponse(_ interface{}) error {
 	case *pb.XSortedSetGetScoreResponse_Missing:
 		r.response = &responses.SortedSetGetScoresMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
 	return nil

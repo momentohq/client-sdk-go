@@ -25,7 +25,7 @@ type SetIfPresentAndNotEqualRequest struct {
 	Ttl time.Duration
 
 	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
+
 	response     responses.SetIfPresentAndNotEqualResponse
 }
 
@@ -86,24 +86,23 @@ func (r *SetIfPresentAndNotEqualRequest) makeGrpcRequest(requestMetadata context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse(_ interface{}) error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfPresentAndNotEqualResponse
+func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetIfResponse)
+	var theResponse responses.SetIfPresentAndNotEqualResponse
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfPresentAndNotEqualStored{}
+		theResponse = &responses.SetIfPresentAndNotEqualStored{}
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfPresentAndNotEqualNotStored{}
+		theResponse = &responses.SetIfPresentAndNotEqualNotStored{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
-	r.response = resp
+	r.response = theResponse
 	return nil
 }
 

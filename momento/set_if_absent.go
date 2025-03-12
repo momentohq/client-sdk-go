@@ -25,7 +25,7 @@ type SetIfAbsentRequest struct {
 	// We issue a SetIfNotExists request to the server instead of a SetIf request because
 	// the backend implementation of SetIfNotExists is more efficient than SetIf.
 	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
+
 	response     responses.SetIfAbsentResponse
 }
 
@@ -77,24 +77,23 @@ func (r *SetIfAbsentRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfAbsentRequest) interpretGrpcResponse(_ interface{}) error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfAbsentResponse
+func (r *SetIfAbsentRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetIfResponse)
+	var theResponse responses.SetIfAbsentResponse
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfAbsentStored{}
+		theResponse = &responses.SetIfAbsentStored{}
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfAbsentNotStored{}
+		theResponse = &responses.SetIfAbsentNotStored{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
-	r.response = resp
+	r.response = theResponse
 	return nil
 }
 

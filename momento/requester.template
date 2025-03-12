@@ -41,7 +41,7 @@ type TemplateRequest struct {
 	// Add your request keys here.
 
 	grpcRequest  *pb.XTemplateRequest
-	grpcResponse *pb.XTemplateResponse
+
 	response     TemplateResponse
 }
 

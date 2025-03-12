@@ -23,7 +23,7 @@ type SortedSetIncrementScoreRequest struct {
 	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetIncrementRequest
-	grpcResponse *pb.XSortedSetIncrementResponse
+
 	response     responses.SortedSetIncrementScoreResponse
 }
 
@@ -80,12 +80,12 @@ func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(requestMetadata context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = responses.SortedSetIncrementScoreSuccess(r.grpcResponse.Score)
+func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSortedSetIncrementResponse)
+	r.response = responses.SortedSetIncrementScoreSuccess(myResp.Score)
 
 	return nil
 }

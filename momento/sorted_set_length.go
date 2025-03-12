@@ -15,7 +15,7 @@ type SortedSetLengthRequest struct {
 	SetName   string
 
 	grpcRequest  *pb.XSortedSetLengthRequest
-	grpcResponse *pb.XSortedSetLengthResponse
+
 	response     responses.SortedSetLengthResponse
 }
 
@@ -42,19 +42,18 @@ func (r *SortedSetLengthRequest) makeGrpcRequest(requestMetadata context.Context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetLengthRequest) interpretGrpcResponse(_ interface{}) error {
-	resp := r.grpcResponse
-	switch rtype := resp.SortedSet.(type) {
+func (r *SortedSetLengthRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSortedSetLengthResponse)
+	switch rtype := myResp.SortedSet.(type) {
 	case *pb.XSortedSetLengthResponse_Found:
 		r.response = responses.NewSortedSetLengthHit(rtype.Found.Length)
 	case *pb.XSortedSetLengthResponse_Missing:
 		r.response = &responses.SortedSetLengthMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

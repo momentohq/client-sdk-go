@@ -20,7 +20,7 @@ type SortedSetPutElementsRequest struct {
 	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XSortedSetPutRequest
-	grpcResponse *pb.XSortedSetPutResponse
+
 	response     responses.SortedSetPutElementsResponse
 }
 
@@ -66,7 +66,6 @@ func (r *SortedSetPutElementsRequest) makeGrpcRequest(requestMetadata context.Co
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 

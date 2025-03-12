@@ -15,7 +15,7 @@ type SetLengthRequest struct {
 	SetName   string
 
 	grpcRequest  *pb.XSetLengthRequest
-	grpcResponse *pb.XSetLengthResponse
+
 	response     responses.SetLengthResponse
 }
 
@@ -42,19 +42,18 @@ func (r *SetLengthRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetLengthRequest) interpretGrpcResponse(_ interface{}) error {
-	resp := r.grpcResponse
-	switch rtype := resp.Set.(type) {
+func (r *SetLengthRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetLengthResponse)
+	switch rtype := myResp.Set.(type) {
 	case *pb.XSetLengthResponse_Found:
 		r.response = responses.NewSetLengthHit(rtype.Found.Length)
 	case *pb.XSetLengthResponse_Missing:
 		r.response = &responses.SetLengthMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

@@ -23,7 +23,7 @@ type SetRequest struct {
 	Ttl time.Duration
 
 	grpcRequest  *pb.XSetRequest
-	grpcResponse *pb.XSetResponse
+
 	response     responses.SetResponse
 }
 

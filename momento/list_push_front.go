@@ -20,7 +20,7 @@ type ListPushFrontRequest struct {
 	Ttl                *utils.CollectionTtl
 
 	grpcRequest  *pb.XListPushFrontRequest
-	grpcResponse *pb.XListPushFrontResponse
+
 	response     responses.ListPushFrontResponse
 }
 
@@ -70,13 +70,12 @@ func (r *ListPushFrontRequest) makeGrpcRequest(requestMetadata context.Context, 
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListPushFrontRequest) interpretGrpcResponse(_ interface{}) error {
-	resp := r.grpcResponse
-	r.response = responses.NewListPushFrontSuccess(resp.ListLength)
+func (r *ListPushFrontRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XListPushFrontResponse)
+	r.response = responses.NewListPushFrontSuccess(myResp.ListLength)
 	return nil
 }
 

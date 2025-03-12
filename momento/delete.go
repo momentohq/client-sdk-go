@@ -17,7 +17,7 @@ type DeleteRequest struct {
 	Key Key
 
 	grpcRequest  *pb.XDeleteRequest
-	grpcResponse *pb.XDeleteResponse
+
 	response     responses.DeleteResponse
 }
 
@@ -47,8 +47,6 @@ func (r *DeleteRequest) makeGrpcRequest(requestMetadata context.Context, client 
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
 
 	return resp, nil, nil
 }

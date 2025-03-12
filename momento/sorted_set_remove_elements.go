@@ -16,7 +16,7 @@ type SortedSetRemoveElementsRequest struct {
 	Values    []Value
 
 	grpcRequest  *pb.XSortedSetRemoveRequest
-	grpcResponse *pb.XSortedSetRemoveResponse
+
 	response     responses.SortedSetRemoveElementsResponse
 }
 
@@ -58,9 +58,6 @@ func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(requestMetadata context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 

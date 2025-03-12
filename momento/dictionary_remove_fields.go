@@ -16,7 +16,7 @@ type DictionaryRemoveFieldsRequest struct {
 	Fields         []Value
 
 	grpcRequest  *pb.XDictionaryDeleteRequest
-	grpcResponse *pb.XDictionaryDeleteResponse
+
 	response     responses.DictionaryRemoveFieldsResponse
 }
 
@@ -52,7 +52,6 @@ func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(requestMetadata context.
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 

@@ -15,7 +15,7 @@ type SetFetchRequest struct {
 	SetName   string
 
 	grpcRequest  *pb.XSetFetchRequest
-	grpcResponse *pb.XSetFetchResponse
+
 	response     responses.SetFetchResponse
 }
 
@@ -42,18 +42,18 @@ func (r *SetFetchRequest) makeGrpcRequest(requestMetadata context.Context, clien
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetFetchRequest) interpretGrpcResponse(_ interface{}) error {
-	switch rtype := r.grpcResponse.Set.(type) {
+func (r *SetFetchRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetFetchResponse)
+	switch rtype := myResp.Set.(type) {
 	case *pb.XSetFetchResponse_Found:
 		r.response = responses.NewSetFetchHit(rtype.Found.Elements)
 	case *pb.XSetFetchResponse_Missing:
 		r.response = &responses.SetFetchMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

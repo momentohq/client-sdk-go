@@ -20,7 +20,7 @@ type ListPushBackRequest struct {
 	Ttl                 *utils.CollectionTtl
 
 	grpcRequest  *pb.XListPushBackRequest
-	grpcResponse *pb.XListPushBackResponse
+
 	response     responses.ListPushBackResponse
 }
 
@@ -70,13 +70,12 @@ func (r *ListPushBackRequest) makeGrpcRequest(requestMetadata context.Context, c
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListPushBackRequest) interpretGrpcResponse(_ interface{}) error {
-	resp := r.grpcResponse
-	r.response = responses.NewListPushBackSuccess(resp.ListLength)
+func (r *ListPushBackRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XListPushBackResponse)
+	r.response = responses.NewListPushBackSuccess(myResp.ListLength)
 	return nil
 }
 

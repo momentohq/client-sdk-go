@@ -22,7 +22,7 @@ type DictionaryIncrementRequest struct {
 	Ttl            *utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionaryIncrementRequest
-	grpcResponse *pb.XDictionaryIncrementResponse
+
 	response     responses.DictionaryIncrementResponse
 }
 
@@ -80,12 +80,12 @@ func (r *DictionaryIncrementRequest) makeGrpcRequest(requestMetadata context.Con
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryIncrementRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = responses.NewDictionaryIncrementSuccess(r.grpcResponse.Value)
+func (r *DictionaryIncrementRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XDictionaryIncrementResponse)
+	r.response = responses.NewDictionaryIncrementSuccess(myResp.Value)
 	return nil
 }
 

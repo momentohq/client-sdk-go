@@ -19,7 +19,7 @@ type IncrementRequest struct {
 	Ttl       *utils.CollectionTtl
 
 	grpcRequest  *pb.XIncrementRequest
-	grpcResponse *pb.XIncrementResponse
+
 	response     responses.IncrementResponse
 }
 
@@ -62,12 +62,12 @@ func (r *IncrementRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *IncrementRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = responses.NewIncrementSuccess(r.grpcResponse.Value)
+func (r *IncrementRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XIncrementResponse)
+	r.response = responses.NewIncrementSuccess(myResp.Value)
 	return nil
 }
 

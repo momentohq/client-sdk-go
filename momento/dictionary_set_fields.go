@@ -22,7 +22,7 @@ type DictionarySetFieldsRequest struct {
 	Ttl            *utils.CollectionTtl
 
 	grpcRequest  *pb.XDictionarySetRequest
-	grpcResponse *pb.XDictionarySetResponse
+
 	response     responses.DictionarySetFieldsResponse
 }
 
@@ -79,7 +79,6 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(requestMetadata context.Con
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 

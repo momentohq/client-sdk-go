@@ -16,7 +16,7 @@ type SetPopRequest struct {
 	Count     *uint32
 
 	grpcRequest  *pb.XSetPopRequest
-	grpcResponse *pb.XSetPopResponse
+
 	response     responses.SetPopResponse
 }
 
@@ -51,18 +51,18 @@ func (r *SetPopRequest) makeGrpcRequest(requestMetadata context.Context, client 
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetPopRequest) interpretGrpcResponse(_ interface{}) error {
-	switch rtype := r.grpcResponse.Set.(type) {
+func (r *SetPopRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetPopResponse)
+	switch rtype := myResp.Set.(type) {
 	case *pb.XSetPopResponse_Found:
 		r.response = responses.NewSetPopHit(rtype.Found.Elements)
 	case *pb.XSetPopResponse_Missing:
 		r.response = &responses.SetPopMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

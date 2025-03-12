@@ -15,7 +15,7 @@ type DictionaryFetchRequest struct {
 	DictionaryName string
 
 	grpcRequest  *pb.XDictionaryFetchRequest
-	grpcResponse *pb.XDictionaryFetchResponse
+
 	response     responses.DictionaryFetchResponse
 }
 
@@ -42,12 +42,12 @@ func (r *DictionaryFetchRequest) makeGrpcRequest(requestMetadata context.Context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryFetchRequest) interpretGrpcResponse(_ interface{}) error {
-	switch rtype := r.grpcResponse.Dictionary.(type) {
+func (r *DictionaryFetchRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XDictionaryFetchResponse)
+	switch rtype := myResp.Dictionary.(type) {
 	case *pb.XDictionaryFetchResponse_Found:
 		elements := make(map[string][]byte)
 		for _, i := range rtype.Found.Items {
@@ -57,7 +57,7 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse(_ interface{}) error {
 	case *pb.XDictionaryFetchResponse_Missing:
 		r.response = &responses.DictionaryFetchMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

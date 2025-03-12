@@ -19,7 +19,7 @@ type IncreaseTtlRequest struct {
 	Ttl time.Duration
 
 	grpcRequest  *pb.XUpdateTtlRequest
-	grpcResponse *pb.XUpdateTtlResponse
+
 	response     responses.IncreaseTtlResponse
 }
 
@@ -55,28 +55,25 @@ func (r *IncreaseTtlRequest) makeGrpcRequest(requestMetadata context.Context, cl
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *IncreaseTtlRequest) interpretGrpcResponse(_ interface{}) error {
-	grpcResp := r.grpcResponse
+func (r *IncreaseTtlRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XUpdateTtlResponse)
 
-	var resp responses.IncreaseTtlResponse
-	switch grpcResp.Result.(type) {
+	var theResponse responses.IncreaseTtlResponse
+	switch myResp.Result.(type) {
 	case *pb.XUpdateTtlResponse_NotSet:
-		resp = &responses.IncreaseTtlNotSet{}
+		theResponse = &responses.IncreaseTtlNotSet{}
 	case *pb.XUpdateTtlResponse_Missing:
-		resp = &responses.IncreaseTtlMiss{}
+		theResponse = &responses.IncreaseTtlMiss{}
 	case *pb.XUpdateTtlResponse_Set:
-		resp = &responses.IncreaseTtlSet{}
+		theResponse = &responses.IncreaseTtlSet{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
-	r.response = resp
+	r.response = theResponse
 
 	return nil
 }

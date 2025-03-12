@@ -17,7 +17,7 @@ type SortedSetLengthByScoreRequest struct {
 	MaxScore  *float64
 
 	grpcRequest  *pb.XSortedSetLengthByScoreRequest
-	grpcResponse *pb.XSortedSetLengthByScoreResponse
+
 	response     responses.SortedSetLengthByScoreResponse
 }
 
@@ -68,19 +68,18 @@ func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(requestMetadata context.
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(_ interface{}) error {
-	resp := r.grpcResponse
-	switch rtype := resp.SortedSet.(type) {
+func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSortedSetLengthByScoreResponse)
+	switch rtype := myResp.SortedSet.(type) {
 	case *pb.XSortedSetLengthByScoreResponse_Found:
 		r.response = responses.NewSortedSetLengthByScoreHit(rtype.Found.Length)
 	case *pb.XSortedSetLengthByScoreResponse_Missing:
 		r.response = &responses.SortedSetLengthByScoreMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
 }

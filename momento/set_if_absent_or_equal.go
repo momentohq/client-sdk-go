@@ -25,7 +25,7 @@ type SetIfAbsentOrEqualRequest struct {
 	Ttl time.Duration
 
 	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
+
 	response     responses.SetIfAbsentOrEqualResponse
 }
 
@@ -86,24 +86,23 @@ func (r *SetIfAbsentOrEqualRequest) makeGrpcRequest(requestMetadata context.Cont
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse(_ interface{}) error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfAbsentOrEqualResponse
+func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetIfResponse)
+	var theResponse responses.SetIfAbsentOrEqualResponse
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfAbsentOrEqualStored{}
+		theResponse = &responses.SetIfAbsentOrEqualStored{}
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfAbsentOrEqualNotStored{}
+		theResponse = &responses.SetIfAbsentOrEqualNotStored{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
-	r.response = resp
+	r.response = theResponse
 	return nil
 }
 

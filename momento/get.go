@@ -18,7 +18,7 @@ type GetRequest struct {
 	Key Key
 
 	grpcRequest  *pb.XGetRequest
-	grpcResponse *pb.XGetResponse
+
 	response     responses.GetResponse
 }
 
@@ -64,7 +64,7 @@ func (r *GetRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.GetMiss{}
 		return nil
 	} else {
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 }
 

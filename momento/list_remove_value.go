@@ -16,7 +16,7 @@ type ListRemoveValueRequest struct {
 	Value     Value
 
 	grpcRequest  *pb.XListRemoveRequest
-	grpcResponse *pb.XListRemoveResponse
+
 	response     responses.ListRemoveValueResponse
 }
 
@@ -53,7 +53,6 @@ func (r *ListRemoveValueRequest) makeGrpcRequest(requestMetadata context.Context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
