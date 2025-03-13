@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/retry"
 	"google.golang.org/grpc"
 
@@ -20,7 +19,7 @@ type middleware struct {
 
 type Middleware interface {
 	GetLogger() logger.MomentoLogger
-	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceType internal.ClientType, resourceName string, metadata map[string]string) (RequestHandler, error)
+	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceName string, metadata map[string]string) (RequestHandler, error)
 	GetRequestHandler(baseRequestHandler RequestHandler) (RequestHandler, error)
 	GetIncludeTypes() map[string]bool
 }
@@ -36,7 +35,7 @@ type Props struct {
 }
 
 func (mw *middleware) GetBaseRequestHandler(
-	theRequest interface{}, requestName string, resourceType internal.ClientType, resourceName string, metadata map[string]string,
+	theRequest interface{}, requestName string, resourceName string, metadata map[string]string,
 ) (RequestHandler, error) {
 	allowedTypes := mw.GetIncludeTypes()
 	if allowedTypes != nil {
@@ -52,7 +51,6 @@ func (mw *middleware) GetBaseRequestHandler(
 			Metadata:     metadata,
 			Request:      theRequest,
 			RequestName:  requestName,
-			ResourceType: resourceType,
 			ResourceName: resourceName,
 			Logger:       mw.GetLogger(),
 		},
@@ -112,7 +110,6 @@ type requestHandler struct {
 	logger       logger.MomentoLogger
 	request      interface{}
 	requestName  string
-	resourceType internal.ClientType
 	resourceName string
 	metadata     map[string]string
 }
@@ -124,7 +121,6 @@ type RequestHandler interface {
 	GetRequest() interface{}
 	SetRequest(interface{}) error
 	GetRequestName() string
-	GetResourceType() internal.ClientType
 	GetResourceName() string
 	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
@@ -135,7 +131,6 @@ type RequestHandler interface {
 type HandlerProps struct {
 	Request      interface{}
 	RequestName  string
-	ResourceType internal.ClientType
 	ResourceName string
 	Metadata     map[string]string
 	Logger       logger.MomentoLogger
@@ -171,10 +166,6 @@ func (rh *requestHandler) GetMetadata() map[string]string {
 
 func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
-}
-
-func (rh *requestHandler) GetResourceType() internal.ClientType {
-	return rh.resourceType
 }
 
 func (rh *requestHandler) GetResourceName() string {
@@ -220,7 +211,6 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 		logger:       props.Logger,
 		request:      props.Request,
 		requestName:  props.RequestName,
-		resourceType: props.ResourceType,
 		resourceName: props.ResourceName,
 		metadata:     props.Metadata,
 	}

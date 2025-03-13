@@ -81,7 +81,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	for _, mw := range client.middleware {
 		// An error here means the middleware is configured to skip this type of request, so we
 		// don't add it to the list of request handlers to call on response.
-		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), internal.Cache, r.cacheName(), requestMetadata)
+		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), r.cacheName(), requestMetadata)
 		if err != nil {
 			continue
 		}
