@@ -15,9 +15,9 @@ type SetContainsElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest  *pb.XSetContainsRequest
-	grpcResponse *pb.XSetContainsResponse
-	response     responses.SetContainsElementsResponse
+	grpcRequest *pb.XSetContainsRequest
+
+	response responses.SetContainsElementsResponse
 }
 
 func (r *SetContainsElementsRequest) cacheName() string { return r.CacheName }
@@ -51,22 +51,18 @@ func (r *SetContainsElementsRequest) makeGrpcRequest(requestMetadata context.Con
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetContainsElementsRequest) interpretGrpcResponse() error {
-	switch rtype := r.grpcResponse.Set.(type) {
+func (r *SetContainsElementsRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetContainsResponse)
+	switch rtype := myResp.Set.(type) {
 	case *pb.XSetContainsResponse_Missing:
 		r.response = &responses.SetContainsElementsMiss{}
 	case *pb.XSetContainsResponse_Found:
 		r.response = responses.NewSetContainsElementsHit(rtype.Found.Contains)
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
-}
-
-func (r *SetContainsElementsRequest) getResponse() interface{} {
-	return r.response
 }

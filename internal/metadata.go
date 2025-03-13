@@ -39,16 +39,33 @@ func CreateMetadata(ctx context.Context, clientType ClientType, extraPairs ...st
 
 	if !ok || !ftHeadersSent.(bool) {
 		FirstTimeHeadersSent.Store(clientType, true)
-		headers = append(headers, "runtime-version", "golang:"+runtime.Version())
-		headers = append(headers, "agent", "golang:"+string(clientType)+":"+Version)
+		headers = append(
+			headers,
+			"runtime-version", "golang:"+runtime.Version(),
+			"agent", "golang:"+string(clientType)+":"+Version,
+		)
 	}
+
 	return metadata.AppendToOutgoingContext(
 		ctx, headers...,
 	)
 }
 
-func CreateCacheMetadata(ctx context.Context, cacheName string) context.Context {
-	return CreateMetadata(ctx, Cache, "cache", cacheName)
+func metadataPairsToStrings(metadataPairs map[string]string) []string {
+	pairs := make([]string, 0, len(metadataPairs)*2)
+	for k, v := range metadataPairs {
+		pairs = append(pairs, k, v)
+	}
+	return pairs
+}
+
+func CreateCacheRequestContextFromMetadataMap(ctx context.Context, cacheName string, metadataPairs map[string]string) context.Context {
+	_, ok := metadataPairs["cache"]
+	if !ok {
+		metadataPairs["cache"] = cacheName
+	}
+	cacheMetadata := metadataPairsToStrings(metadataPairs)
+	return CreateMetadata(ctx, Cache, cacheMetadata...)
 }
 
 func CreateStoreMetadata(ctx context.Context, storeName string) context.Context {

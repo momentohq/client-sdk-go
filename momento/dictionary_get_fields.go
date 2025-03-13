@@ -57,8 +57,9 @@ func (r *DictionaryGetFieldsRequest) makeGrpcRequest(requestMetadata context.Con
 	return resp, nil, nil
 }
 
-func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
-	switch rtype := r.grpcResponse.Dictionary.(type) {
+func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XDictionaryGetResponse)
+	switch rtype := myResp.Dictionary.(type) {
 	case *pb.XDictionaryGetResponse_Missing:
 		r.response = &responses.DictionaryGetFieldsMiss{}
 	case *pb.XDictionaryGetResponse_Found:
@@ -77,11 +78,7 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 		}
 		r.response = responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn)
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
-}
-
-func (r *DictionaryGetFieldsRequest) getResponse() interface{} {
-	return r.response
 }

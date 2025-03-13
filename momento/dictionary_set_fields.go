@@ -21,9 +21,9 @@ type DictionarySetFieldsRequest struct {
 	Elements       []DictionaryElement
 	Ttl            *utils.CollectionTtl
 
-	grpcRequest  *pb.XDictionarySetRequest
-	grpcResponse *pb.XDictionarySetResponse
-	response     responses.DictionarySetFieldsResponse
+	grpcRequest *pb.XDictionarySetRequest
+
+	response responses.DictionarySetFieldsResponse
 }
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
@@ -79,15 +79,10 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(requestMetadata context.Con
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionarySetFieldsRequest) interpretGrpcResponse() error {
+func (r *DictionarySetFieldsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DictionarySetFieldsSuccess{}
 	return nil
-}
-
-func (r *DictionarySetFieldsRequest) getResponse() interface{} {
-	return r.response
 }

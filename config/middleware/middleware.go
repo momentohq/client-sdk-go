@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/momentohq/client-sdk-go/internal/retry"
+	"google.golang.org/grpc"
+
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -16,9 +19,14 @@ type middleware struct {
 
 type Middleware interface {
 	GetLogger() logger.MomentoLogger
-	GetBaseRequestHandler(theRequest interface{}, metadata context.Context) (RequestHandler, error)
+	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceName string, metadata map[string]string) (RequestHandler, error)
 	GetRequestHandler(baseRequestHandler RequestHandler) (RequestHandler, error)
 	GetIncludeTypes() map[string]bool
+}
+
+type RetryMiddleware interface {
+	Middleware
+	AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error
 }
 
 type Props struct {
@@ -26,7 +34,9 @@ type Props struct {
 	IncludeTypes []interface{}
 }
 
-func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata context.Context) (RequestHandler, error) {
+func (mw *middleware) GetBaseRequestHandler(
+	theRequest interface{}, requestName string, resourceName string, metadata map[string]string,
+) (RequestHandler, error) {
 	allowedTypes := mw.GetIncludeTypes()
 	if allowedTypes != nil {
 		requestType := reflect.TypeOf(theRequest)
@@ -38,9 +48,11 @@ func (mw *middleware) GetBaseRequestHandler(theRequest interface{}, metadata con
 	// Return the "base" request handler. User request handlers will be composed on top of this.
 	return NewRequestHandler(
 		HandlerProps{
-			Metadata: metadata,
-			Request:  theRequest,
-			Logger:   mw.GetLogger(),
+			Metadata:     metadata,
+			Request:      theRequest,
+			RequestName:  requestName,
+			ResourceName: resourceName,
+			Logger:       mw.GetLogger(),
 		},
 	), nil
 }
@@ -94,10 +106,12 @@ func NewMiddleware(props Props) Middleware {
 }
 
 type requestHandler struct {
-	id       uuid.UUID
-	logger   logger.MomentoLogger
-	request  interface{}
-	metadata context.Context
+	id           uuid.UUID
+	logger       logger.MomentoLogger
+	request      interface{}
+	requestName  string
+	resourceName string
+	metadata     map[string]string
 }
 
 // RequestHandler is an interface that represents the capabilities of a middleware request handler.
@@ -105,16 +119,21 @@ type requestHandler struct {
 type RequestHandler interface {
 	GetId() uuid.UUID
 	GetRequest() interface{}
-	GetMetadata() context.Context
+	SetRequest(interface{}) error
+	GetRequestName() string
+	GetResourceName() string
+	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
-	OnRequest()
-	OnResponse(theResponse interface{})
+	OnRequest() error
+	OnResponse(theResponse interface{}, err error) (interface{}, error)
 }
 
 type HandlerProps struct {
-	Request  interface{}
-	Metadata context.Context
-	Logger   logger.MomentoLogger
+	Request      interface{}
+	RequestName  string
+	ResourceName string
+	Metadata     map[string]string
+	Logger       logger.MomentoLogger
 }
 
 func (rh *requestHandler) GetId() uuid.UUID {
@@ -125,7 +144,23 @@ func (rh *requestHandler) GetRequest() interface{} {
 	return rh.request
 }
 
-func (rh *requestHandler) GetMetadata() context.Context {
+// SetRequest sets the request object on the handler. This method can be used by middleware to modify the request object.
+// If the middleware returns an error, the request will be cancelled. The new request object must be the same type as the
+// original request object, and an error is returned if this is not the case.
+func (rh *requestHandler) SetRequest(newRequest interface{}) error {
+	// make sure the old and new requests are the same type
+	if reflect.TypeOf(rh.request) != reflect.TypeOf(newRequest) {
+		return fmt.Errorf("request type mismatch: %T != %T", rh.request, newRequest)
+	}
+	rh.request = newRequest
+	return nil
+}
+
+func (rh *requestHandler) GetRequestName() string {
+	return rh.requestName
+}
+
+func (rh *requestHandler) GetMetadata() map[string]string {
 	return rh.metadata
 }
 
@@ -133,20 +168,38 @@ func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
 }
 
-// OnRequest is called before the request is made to the backend.
-func (rh *requestHandler) OnRequest() {}
+func (rh *requestHandler) GetResourceName() string {
+	return rh.resourceName
+}
+
+// OnRequest is called before the request is made to the backend. It can be used to modify the request object or
+// return an error to halt the request. If the method is used to modify the request, the request must be set on the
+// handler using SetRequest
+func (rh *requestHandler) OnRequest() error {
+	return nil
+}
 
 // OnResponse is called after the response is received from the backend. It is passed the response object, which can
-// be cast to the appropriate response type for further inspection:
+// be cast to the appropriate response type for further inspection. Returning nil from this method leaves the response
+// unchanged. Returning an error will replace the current error, if any, with the new error, but response processing
+// will continue so later middlewares can inspect and handle the error as appropriate. A response handler may return
+// nil for the error to indicate that the current error should be nulled. If there is an error after
+// all the middlewares have run, the error will be converted to a Momento service error and returned to the caller.
+// Returning a new response object will replace the current response object. The new response must be the same
+// type as the original response object, and an error is returned if this is not the case.
 //
-//	func (rh *myRequestHandler) OnResponse(theResponse interface{}) {
-//	  switch r := theResponse.(type) {
-//	  case *responses.ListPushFrontSuccess:
-//	    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
-//	  case *responses.ListPushBackSuccess:
-//	    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
-//	}
-func (rh *requestHandler) OnResponse(_ interface{}) {}
+//		func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
+//		  switch r := theResponse.(type) {
+//		  case *responses.ListPushFrontSuccess:
+//		    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
+//		  case *responses.ListPushBackSuccess:
+//		    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
+//		  }
+//	   return nil, err
+//		}
+func (rh *requestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
+	return nil, err
+}
 
 func NewRequestHandler(props HandlerProps) RequestHandler {
 	id, err := uuid.NewUUID()
@@ -154,9 +207,11 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 		panic(err)
 	}
 	return &requestHandler{
-		id:       id,
-		logger:   props.Logger,
-		request:  props.Request,
-		metadata: props.Metadata,
+		id:           id,
+		logger:       props.Logger,
+		request:      props.Request,
+		requestName:  props.RequestName,
+		resourceName: props.ResourceName,
+		metadata:     props.Metadata,
 	}
 }

@@ -22,9 +22,9 @@ type SetRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XSetRequest
-	grpcResponse *pb.XSetResponse
-	response     responses.SetResponse
+	grpcRequest *pb.XSetRequest
+
+	response responses.SetResponse
 }
 
 func (r *SetRequest) cacheName() string { return r.CacheName }
@@ -71,15 +71,11 @@ func (r *SetRequest) makeGrpcRequest(requestMetadata context.Context, client scs
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
+	//r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetRequest) interpretGrpcResponse() error {
+func (r *SetRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetSuccess{}
 	return nil
-}
-
-func (r *SetRequest) getResponse() interface{} {
-	return r.response
 }

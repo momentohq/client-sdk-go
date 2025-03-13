@@ -18,9 +18,9 @@ type DecreaseTtlRequest struct {
 	// Time to live that you want to decrease to.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XUpdateTtlRequest
-	grpcResponse *pb.XUpdateTtlResponse
-	response     responses.DecreaseTtlResponse
+	grpcRequest *pb.XUpdateTtlRequest
+
+	response responses.DecreaseTtlResponse
 }
 
 func (r *DecreaseTtlRequest) cacheName() string { return r.CacheName }
@@ -56,16 +56,14 @@ func (r *DecreaseTtlRequest) makeGrpcRequest(requestMetadata context.Context, cl
 		return nil, responseMetadata, err
 	}
 
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *DecreaseTtlRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
+func (r *DecreaseTtlRequest) interpretGrpcResponse(theResponse interface{}) error {
+	myResp := theResponse.(*pb.XUpdateTtlResponse)
 
 	var resp responses.DecreaseTtlResponse
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XUpdateTtlResponse_NotSet:
 		resp = &responses.DecreaseTtlNotSet{}
 	case *pb.XUpdateTtlResponse_Missing:
@@ -73,14 +71,10 @@ func (r *DecreaseTtlRequest) interpretGrpcResponse() error {
 	case *pb.XUpdateTtlResponse_Set:
 		resp = &responses.DecreaseTtlSet{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
 	r.response = resp
 
 	return nil
-}
-
-func (r *DecreaseTtlRequest) getResponse() interface{} {
-	return r.response
 }

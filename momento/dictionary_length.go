@@ -14,9 +14,9 @@ type DictionaryLengthRequest struct {
 	CacheName      string
 	DictionaryName string
 
-	grpcRequest  *pb.XDictionaryLengthRequest
-	grpcResponse *pb.XDictionaryLengthResponse
-	response     responses.DictionaryLengthResponse
+	grpcRequest *pb.XDictionaryLengthRequest
+
+	response responses.DictionaryLengthResponse
 }
 
 func (r *DictionaryLengthRequest) cacheName() string { return r.CacheName }
@@ -42,23 +42,18 @@ func (r *DictionaryLengthRequest) makeGrpcRequest(requestMetadata context.Contex
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryLengthRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-	switch rtype := resp.Dictionary.(type) {
+func (r *DictionaryLengthRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XDictionaryLengthResponse)
+	switch rtype := myResp.Dictionary.(type) {
 	case *pb.XDictionaryLengthResponse_Found:
 		r.response = responses.NewDictionaryLengthHit(rtype.Found.Length)
 	case *pb.XDictionaryLengthResponse_Missing:
 		r.response = &responses.DictionaryLengthMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 	return nil
-}
-
-func (r *DictionaryLengthRequest) getResponse() interface{} {
-	return r.response
 }

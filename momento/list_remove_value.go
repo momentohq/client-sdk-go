@@ -15,9 +15,9 @@ type ListRemoveValueRequest struct {
 	ListName  string
 	Value     Value
 
-	grpcRequest  *pb.XListRemoveRequest
-	grpcResponse *pb.XListRemoveResponse
-	response     responses.ListRemoveValueResponse
+	grpcRequest *pb.XListRemoveRequest
+
+	response responses.ListRemoveValueResponse
 }
 
 func (r *ListRemoveValueRequest) cacheName() string { return r.CacheName }
@@ -53,15 +53,10 @@ func (r *ListRemoveValueRequest) makeGrpcRequest(requestMetadata context.Context
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListRemoveValueRequest) interpretGrpcResponse() error {
+func (r *ListRemoveValueRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.ListRemoveValueSuccess{}
 	return nil
-}
-
-func (r *ListRemoveValueRequest) getResponse() interface{} {
-	return r.response
 }

@@ -19,9 +19,9 @@ type SortedSetPutElementsRequest struct {
 	Elements  []SortedSetElement
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XSortedSetPutRequest
-	grpcResponse *pb.XSortedSetPutResponse
-	response     responses.SortedSetPutElementsResponse
+	grpcRequest *pb.XSortedSetPutRequest
+
+	response responses.SortedSetPutElementsResponse
 }
 
 func (r *SortedSetPutElementsRequest) cacheName() string { return r.CacheName }
@@ -66,11 +66,10 @@ func (r *SortedSetPutElementsRequest) makeGrpcRequest(requestMetadata context.Co
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
+func (r *SortedSetPutElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SortedSetPutElementsSuccess{}
 	return nil
 }
@@ -94,8 +93,4 @@ func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) ([]*pb.
 		})
 	}
 	return returnList, nil
-}
-
-func (r *SortedSetPutElementsRequest) getResponse() interface{} {
-	return r.response
 }

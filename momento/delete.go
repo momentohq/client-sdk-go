@@ -16,9 +16,9 @@ type DeleteRequest struct {
 	// string or byte key to be used to delete the item.
 	Key Key
 
-	grpcRequest  *pb.XDeleteRequest
-	grpcResponse *pb.XDeleteResponse
-	response     responses.DeleteResponse
+	grpcRequest *pb.XDeleteRequest
+
+	response responses.DeleteResponse
 }
 
 func (r *DeleteRequest) cacheName() string { return r.CacheName }
@@ -48,16 +48,10 @@ func (r *DeleteRequest) makeGrpcRequest(requestMetadata context.Context, client 
 		return nil, responseMetadata, err
 	}
 
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *DeleteRequest) interpretGrpcResponse() error {
+func (r *DeleteRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DeleteSuccess{}
 	return nil
-}
-
-func (r *DeleteRequest) getResponse() interface{} {
-	return r.response
 }

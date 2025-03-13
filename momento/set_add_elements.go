@@ -18,9 +18,9 @@ type SetAddElementsRequest struct {
 	Elements  []Value
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XSetUnionRequest
-	grpcResponse *pb.XSetUnionResponse
-	response     responses.SetAddElementsResponse
+	grpcRequest *pb.XSetUnionRequest
+
+	response responses.SetAddElementsResponse
 }
 
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }
@@ -68,15 +68,10 @@ func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context,
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetAddElementsRequest) interpretGrpcResponse() error {
+func (r *SetAddElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetAddElementsSuccess{}
 	return nil
-}
-
-func (r *SetAddElementsRequest) getResponse() interface{} {
-	return r.response
 }

@@ -15,9 +15,9 @@ type DictionaryRemoveFieldsRequest struct {
 	DictionaryName string
 	Fields         []Value
 
-	grpcRequest  *pb.XDictionaryDeleteRequest
-	grpcResponse *pb.XDictionaryDeleteResponse
-	response     responses.DictionaryRemoveFieldsResponse
+	grpcRequest *pb.XDictionaryDeleteRequest
+
+	response responses.DictionaryRemoveFieldsResponse
 }
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }
@@ -52,15 +52,10 @@ func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(requestMetadata context.
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse() error {
+func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DictionaryRemoveFieldsSuccess{}
 	return nil
-}
-
-func (r *DictionaryRemoveFieldsRequest) getResponse() interface{} {
-	return r.response
 }

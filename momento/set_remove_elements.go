@@ -15,9 +15,9 @@ type SetRemoveElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest  *pb.XSetDifferenceRequest
-	grpcResponse *pb.XSetDifferenceResponse
-	response     responses.SetRemoveElementsResponse
+	grpcRequest *pb.XSetDifferenceRequest
+
+	response responses.SetRemoveElementsResponse
 }
 
 func (r *SetRemoveElementsRequest) cacheName() string { return r.CacheName }
@@ -59,15 +59,10 @@ func (r *SetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Conte
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetRemoveElementsRequest) interpretGrpcResponse() error {
+func (r *SetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetRemoveElementsSuccess{}
 	return nil
-}
-
-func (r *SetRemoveElementsRequest) getResponse() interface{} {
-	return r.response
 }

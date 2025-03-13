@@ -14,9 +14,9 @@ type KeysExistRequest struct {
 	CacheName string
 	Keys      []Key
 
-	grpcRequest  *pb.XKeysExistRequest
-	grpcResponse *pb.XKeysExistResponse
-	response     responses.KeysExistResponse
+	grpcRequest *pb.XKeysExistRequest
+
+	response responses.KeysExistResponse
 }
 
 func (r *KeysExistRequest) cacheName() string { return r.CacheName }
@@ -46,18 +46,11 @@ func (r *KeysExistRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *KeysExistRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-	r.response = responses.NewKeysExistSuccess(resp.Exists)
+func (r *KeysExistRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XKeysExistResponse)
+	r.response = responses.NewKeysExistSuccess(myResp.Exists)
 	return nil
-}
-
-func (r *KeysExistRequest) getResponse() interface{} {
-	return r.response
 }

@@ -18,9 +18,9 @@ type UpdateTtlRequest struct {
 	// Time to live that you want to update in cache in seconds.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XUpdateTtlRequest
-	grpcResponse *pb.XUpdateTtlResponse
-	response     responses.UpdateTtlResponse
+	grpcRequest *pb.XUpdateTtlRequest
+
+	response responses.UpdateTtlResponse
 }
 
 func (r *UpdateTtlRequest) cacheName() string { return r.CacheName }
@@ -55,28 +55,19 @@ func (r *UpdateTtlRequest) makeGrpcRequest(requestMetadata context.Context, clie
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *UpdateTtlRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
+func (r *UpdateTtlRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XUpdateTtlResponse)
 
-	var resp responses.UpdateTtlResponse
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XUpdateTtlResponse_Missing:
-		resp = &responses.UpdateTtlMiss{}
+		r.response = &responses.UpdateTtlMiss{}
 	case *pb.XUpdateTtlResponse_Set:
-		resp = &responses.UpdateTtlSet{}
+		r.response = &responses.UpdateTtlSet{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
-
-	r.response = resp
-
 	return nil
 }
-
-func (r *UpdateTtlRequest) getResponse() interface{} { return r.response }
