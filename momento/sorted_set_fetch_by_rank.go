@@ -17,9 +17,9 @@ type SortedSetFetchByRankRequest struct {
 	StartRank *int32
 	EndRank   *int32
 
-	grpcRequest  *pb.XSortedSetFetchRequest
+	grpcRequest *pb.XSortedSetFetchRequest
 
-	response     responses.SortedSetFetchResponse
+	response responses.SortedSetFetchResponse
 }
 
 func (r *SortedSetFetchByRankRequest) cacheName() string { return r.CacheName }

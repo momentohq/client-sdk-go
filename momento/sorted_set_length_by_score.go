@@ -16,9 +16,9 @@ type SortedSetLengthByScoreRequest struct {
 	MinScore  *float64
 	MaxScore  *float64
 
-	grpcRequest  *pb.XSortedSetLengthByScoreRequest
+	grpcRequest *pb.XSortedSetLengthByScoreRequest
 
-	response     responses.SortedSetLengthByScoreResponse
+	response responses.SortedSetLengthByScoreResponse
 }
 
 func (r *SortedSetLengthByScoreRequest) cacheName() string { return r.CacheName }

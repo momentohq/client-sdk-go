@@ -14,9 +14,9 @@ type ListPopFrontRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest  *pb.XListPopFrontRequest
+	grpcRequest *pb.XListPopFrontRequest
 
-	response     responses.ListPopFrontResponse
+	response responses.ListPopFrontResponse
 }
 
 func (r *ListPopFrontRequest) cacheName() string { return r.CacheName }

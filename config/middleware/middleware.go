@@ -3,10 +3,11 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/retry"
 	"google.golang.org/grpc"
-	"reflect"
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -48,12 +49,12 @@ func (mw *middleware) GetBaseRequestHandler(
 	// Return the "base" request handler. User request handlers will be composed on top of this.
 	return NewRequestHandler(
 		HandlerProps{
-			Metadata: metadata,
-			Request:  theRequest,
-			RequestName: requestName,
+			Metadata:     metadata,
+			Request:      theRequest,
+			RequestName:  requestName,
 			ResourceType: resourceType,
 			ResourceName: resourceName,
-			Logger:   mw.GetLogger(),
+			Logger:       mw.GetLogger(),
 		},
 	), nil
 }
@@ -107,13 +108,13 @@ func NewMiddleware(props Props) Middleware {
 }
 
 type requestHandler struct {
-	id       uuid.UUID
-	logger   logger.MomentoLogger
-	request  interface{}
-	requestName string
+	id           uuid.UUID
+	logger       logger.MomentoLogger
+	request      interface{}
+	requestName  string
 	resourceType internal.ClientType
 	resourceName string
-	metadata map[string]string
+	metadata     map[string]string
 }
 
 // RequestHandler is an interface that represents the capabilities of a middleware request handler.
@@ -132,12 +133,12 @@ type RequestHandler interface {
 }
 
 type HandlerProps struct {
-	Request  interface{}
-	RequestName string
+	Request      interface{}
+	RequestName  string
 	ResourceType internal.ClientType
 	ResourceName string
-	Metadata map[string]string
-	Logger   logger.MomentoLogger
+	Metadata     map[string]string
+	Logger       logger.MomentoLogger
 }
 
 func (rh *requestHandler) GetId() uuid.UUID {
@@ -196,15 +197,15 @@ func (rh *requestHandler) OnRequest() error {
 // Returning a new response object will replace the current response object. The new response must be the same
 // type as the original response object, and an error is returned if this is not the case.
 //
-//	func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
-//	  switch r := theResponse.(type) {
-//	  case *responses.ListPushFrontSuccess:
-//	    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
-//	  case *responses.ListPushBackSuccess:
-//	    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
-//	  }
-//    return nil, err
-//	}
+//		func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
+//		  switch r := theResponse.(type) {
+//		  case *responses.ListPushFrontSuccess:
+//		    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
+//		  case *responses.ListPushBackSuccess:
+//		    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
+//		  }
+//	   return nil, err
+//		}
 func (rh *requestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
 	return nil, err
 }
@@ -215,12 +216,12 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 		panic(err)
 	}
 	return &requestHandler{
-		id:       id,
-		logger:   props.Logger,
-		request:  props.Request,
-		requestName: props.RequestName,
+		id:           id,
+		logger:       props.Logger,
+		request:      props.Request,
+		requestName:  props.RequestName,
 		resourceType: props.ResourceType,
 		resourceName: props.ResourceName,
-		metadata: props.Metadata,
+		metadata:     props.Metadata,
 	}
 }

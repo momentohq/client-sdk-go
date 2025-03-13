@@ -18,9 +18,9 @@ type DecreaseTtlRequest struct {
 	// Time to live that you want to decrease to.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XUpdateTtlRequest
+	grpcRequest *pb.XUpdateTtlRequest
 
-	response     responses.DecreaseTtlResponse
+	response responses.DecreaseTtlResponse
 }
 
 func (r *DecreaseTtlRequest) cacheName() string { return r.CacheName }

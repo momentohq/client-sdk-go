@@ -15,9 +15,9 @@ type SortedSetRemoveElementsRequest struct {
 	SetName   string
 	Values    []Value
 
-	grpcRequest  *pb.XSortedSetRemoveRequest
+	grpcRequest *pb.XSortedSetRemoveRequest
 
-	response     responses.SortedSetRemoveElementsResponse
+	response responses.SortedSetRemoveElementsResponse
 }
 
 func (r *SortedSetRemoveElementsRequest) cacheName() string { return r.CacheName }

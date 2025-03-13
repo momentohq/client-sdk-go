@@ -24,9 +24,9 @@ type SetIfAbsentRequest struct {
 
 	// We issue a SetIfNotExists request to the server instead of a SetIf request because
 	// the backend implementation of SetIfNotExists is more efficient than SetIf.
-	grpcRequest  *pb.XSetIfRequest
+	grpcRequest *pb.XSetIfRequest
 
-	response     responses.SetIfAbsentResponse
+	response responses.SetIfAbsentResponse
 }
 
 func (r *SetIfAbsentRequest) cacheName() string { return r.CacheName }

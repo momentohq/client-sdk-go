@@ -14,9 +14,9 @@ type DictionaryFetchRequest struct {
 	CacheName      string
 	DictionaryName string
 
-	grpcRequest  *pb.XDictionaryFetchRequest
+	grpcRequest *pb.XDictionaryFetchRequest
 
-	response     responses.DictionaryFetchResponse
+	response responses.DictionaryFetchResponse
 }
 
 func (r *DictionaryFetchRequest) cacheName() string { return r.CacheName }

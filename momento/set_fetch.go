@@ -14,9 +14,9 @@ type SetFetchRequest struct {
 	CacheName string
 	SetName   string
 
-	grpcRequest  *pb.XSetFetchRequest
+	grpcRequest *pb.XSetFetchRequest
 
-	response     responses.SetFetchResponse
+	response responses.SetFetchResponse
 }
 
 func (r *SetFetchRequest) cacheName() string { return r.CacheName }

@@ -16,9 +16,9 @@ type DeleteRequest struct {
 	// string or byte key to be used to delete the item.
 	Key Key
 
-	grpcRequest  *pb.XDeleteRequest
+	grpcRequest *pb.XDeleteRequest
 
-	response     responses.DeleteResponse
+	response responses.DeleteResponse
 }
 
 func (r *DeleteRequest) cacheName() string { return r.CacheName }

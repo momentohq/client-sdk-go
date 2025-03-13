@@ -24,9 +24,9 @@ type SetIfEqualRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XSetIfRequest
+	grpcRequest *pb.XSetIfRequest
 
-	response     responses.SetIfEqualResponse
+	response responses.SetIfEqualResponse
 }
 
 func (r *SetIfEqualRequest) cacheName() string { return r.CacheName }

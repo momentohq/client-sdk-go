@@ -15,9 +15,9 @@ type SetRemoveElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest  *pb.XSetDifferenceRequest
+	grpcRequest *pb.XSetDifferenceRequest
 
-	response     responses.SetRemoveElementsResponse
+	response responses.SetRemoveElementsResponse
 }
 
 func (r *SetRemoveElementsRequest) cacheName() string { return r.CacheName }

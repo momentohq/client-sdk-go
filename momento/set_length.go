@@ -14,9 +14,9 @@ type SetLengthRequest struct {
 	CacheName string
 	SetName   string
 
-	grpcRequest  *pb.XSetLengthRequest
+	grpcRequest *pb.XSetLengthRequest
 
-	response     responses.SetLengthResponse
+	response responses.SetLengthResponse
 }
 
 func (r *SetLengthRequest) cacheName() string { return r.CacheName }

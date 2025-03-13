@@ -18,9 +18,9 @@ type IncreaseTtlRequest struct {
 	// Time to live that you want to increase to.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XUpdateTtlRequest
+	grpcRequest *pb.XUpdateTtlRequest
 
-	response     responses.IncreaseTtlResponse
+	response responses.IncreaseTtlResponse
 }
 
 func (r *IncreaseTtlRequest) cacheName() string { return r.CacheName }

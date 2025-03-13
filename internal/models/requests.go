@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/momentohq/client-sdk-go/config/middleware"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/middleware"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/retry"
@@ -22,7 +23,7 @@ type DataGrpcManagerRequest struct {
 	RetryStrategy      retry.Strategy
 	ReadConcern        config.ReadConcern
 	GrpcConfiguration  config.GrpcConfiguration
-	Middleware 		   []middleware.Middleware
+	Middleware         []middleware.Middleware
 }
 
 type TokenGrpcManagerRequest struct {

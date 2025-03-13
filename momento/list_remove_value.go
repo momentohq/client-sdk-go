@@ -15,9 +15,9 @@ type ListRemoveValueRequest struct {
 	ListName  string
 	Value     Value
 
-	grpcRequest  *pb.XListRemoveRequest
+	grpcRequest *pb.XListRemoveRequest
 
-	response     responses.ListRemoveValueResponse
+	response responses.ListRemoveValueResponse
 }
 
 func (r *ListRemoveValueRequest) cacheName() string { return r.CacheName }

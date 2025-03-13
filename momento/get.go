@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+
 	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -15,9 +16,9 @@ type GetRequest struct {
 	// string or byte key to be used to store item
 	Key Key
 
-	grpcRequest  *pb.XGetRequest
+	grpcRequest *pb.XGetRequest
 
-	response     responses.GetResponse
+	response responses.GetResponse
 }
 
 func (r *GetRequest) cacheName() string { return r.CacheName }

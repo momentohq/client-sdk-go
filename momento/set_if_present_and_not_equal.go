@@ -24,9 +24,9 @@ type SetIfPresentAndNotEqualRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XSetIfRequest
+	grpcRequest *pb.XSetIfRequest
 
-	response     responses.SetIfPresentAndNotEqualResponse
+	response responses.SetIfPresentAndNotEqualResponse
 }
 
 func (r *SetIfPresentAndNotEqualRequest) cacheName() string { return r.CacheName }

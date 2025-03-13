@@ -18,9 +18,9 @@ type IncrementRequest struct {
 	Amount    int64
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XIncrementRequest
+	grpcRequest *pb.XIncrementRequest
 
-	response     responses.IncrementResponse
+	response responses.IncrementResponse
 }
 
 func (r *IncrementRequest) cacheName() string { return r.CacheName }

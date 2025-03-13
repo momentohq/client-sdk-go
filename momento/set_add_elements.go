@@ -18,9 +18,9 @@ type SetAddElementsRequest struct {
 	Elements  []Value
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XSetUnionRequest
+	grpcRequest *pb.XSetUnionRequest
 
-	response     responses.SetAddElementsResponse
+	response responses.SetAddElementsResponse
 }
 
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }

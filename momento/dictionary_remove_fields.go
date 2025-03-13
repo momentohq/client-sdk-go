@@ -15,9 +15,9 @@ type DictionaryRemoveFieldsRequest struct {
 	DictionaryName string
 	Fields         []Value
 
-	grpcRequest  *pb.XDictionaryDeleteRequest
+	grpcRequest *pb.XDictionaryDeleteRequest
 
-	response     responses.DictionaryRemoveFieldsResponse
+	response responses.DictionaryRemoveFieldsResponse
 }
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }

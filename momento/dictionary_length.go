@@ -14,9 +14,9 @@ type DictionaryLengthRequest struct {
 	CacheName      string
 	DictionaryName string
 
-	grpcRequest  *pb.XDictionaryLengthRequest
+	grpcRequest *pb.XDictionaryLengthRequest
 
-	response     responses.DictionaryLengthResponse
+	response responses.DictionaryLengthResponse
 }
 
 func (r *DictionaryLengthRequest) cacheName() string { return r.CacheName }

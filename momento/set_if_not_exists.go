@@ -22,9 +22,9 @@ type SetIfNotExistsRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XSetIfRequest
+	grpcRequest *pb.XSetIfRequest
 
-	response     responses.SetIfNotExistsResponse
+	response responses.SetIfNotExistsResponse
 }
 
 func (r *SetIfNotExistsRequest) cacheName() string { return r.CacheName }

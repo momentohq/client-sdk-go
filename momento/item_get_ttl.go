@@ -13,9 +13,9 @@ type ItemGetTtlRequest struct {
 	CacheName string
 	Key       Key
 
-	grpcRequest  *pb.XItemGetTtlRequest
+	grpcRequest *pb.XItemGetTtlRequest
 
-	response     responses.ItemGetTtlResponse
+	response responses.ItemGetTtlResponse
 }
 
 func (r *ItemGetTtlRequest) cacheName() string { return r.CacheName }

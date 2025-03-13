@@ -15,9 +15,9 @@ type SetContainsElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest  *pb.XSetContainsRequest
+	grpcRequest *pb.XSetContainsRequest
 
-	response     responses.SetContainsElementsResponse
+	response responses.SetContainsElementsResponse
 }
 
 func (r *SetContainsElementsRequest) cacheName() string { return r.CacheName }

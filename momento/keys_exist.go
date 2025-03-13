@@ -14,9 +14,9 @@ type KeysExistRequest struct {
 	CacheName string
 	Keys      []Key
 
-	grpcRequest  *pb.XKeysExistRequest
+	grpcRequest *pb.XKeysExistRequest
 
-	response     responses.KeysExistResponse
+	response responses.KeysExistResponse
 }
 
 func (r *KeysExistRequest) cacheName() string { return r.CacheName }

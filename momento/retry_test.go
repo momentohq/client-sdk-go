@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -12,20 +14,20 @@ import (
 	"github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
-	"strings"
+
+	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/retry"
 	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc/codes"
-	"time"
 )
 
 type ResponseWithRetryTimestamps struct {
-	Err error
-	Reply interface{}
-	Timestamps  []int64
+	Err        error
+	Reply      interface{}
+	Timestamps []int64
 }
 
 func (e ResponseWithRetryTimestamps) Error() string {
@@ -33,7 +35,7 @@ func (e ResponseWithRetryTimestamps) Error() string {
 }
 
 type ReplyWithRetryTimestamps struct {
-	Reply interface{}
+	Reply      interface{}
 	Timestamps []int64
 }
 
@@ -65,7 +67,8 @@ func (r *retryMetrics) getTotalRetryCount(cacheName string, requestName string) 
 }
 
 // TODO: what resolution are we looking for here? I'm using Unix epoch time, so am currently
-//  limited to seconds, but I can obviously change that.
+//
+//	limited to seconds, but I can obviously change that.
 func (r *retryMetrics) getAverageTimeBetweenRetries(cacheName string, requestName string) int64 {
 	if timestamps, ok := r.data[cacheName][requestName]; !ok {
 		return 0
@@ -77,7 +80,7 @@ func (r *retryMetrics) getAverageTimeBetweenRetries(cacheName string, requestNam
 		for i := 1; i < len(timestamps); i++ {
 			sum += timestamps[i] - timestamps[i-1]
 		}
-		return sum / int64(len(timestamps) - 1)
+		return sum / int64(len(timestamps)-1)
 	}
 }
 
@@ -87,17 +90,17 @@ func (r *retryMetrics) getAllMetrics() map[string]map[string][]int64 {
 
 type retryMetricsMiddlewareProps struct {
 	metricsCollector RetryMetricsCollector
-	returnError *string
-	errorRpcList *[]string
-	errorCount *int
-	delayRpcList *[]string
-	delayMillis *int
-	delayCount *int
+	returnError      *string
+	errorRpcList     *[]string
+	errorCount       *int
+	delayRpcList     *[]string
+	delayMillis      *int
+	delayCount       *int
 }
 
 type retryMetricsMiddleware struct {
 	middleware.Middleware
-	props    retryMetricsMiddlewareProps
+	props retryMetricsMiddlewareProps
 }
 
 func NewRetryMetricsMiddleware(props retryMetricsMiddlewareProps) middleware.Middleware {
@@ -111,7 +114,7 @@ func NewRetryMetricsMiddleware(props retryMetricsMiddlewareProps) middleware.Mid
 type retryMetricsMiddlewareRequestHandler struct {
 	middleware.RequestHandler
 	cacheName string
-	props   retryMetricsMiddlewareProps
+	props     retryMetricsMiddlewareProps
 }
 
 func (r *retryMetricsMiddleware) GetRequestHandler(
@@ -162,7 +165,7 @@ func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func
 			if retryBackoffTime == nil {
 				// Stop retrying and return the error with the timestamps.
 				return ResponseWithRetryTimestamps{
-					Err: lastErr,
+					Err:        lastErr,
 					Timestamps: timestamps,
 				}
 			}
@@ -380,7 +383,7 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 
 			incrementResponse, err := cacheClient.Increment(context.Background(), &momento.IncrementRequest{
 				CacheName: "cache",
-				Field:       momento.String("key"),
+				Field:     momento.String("key"),
 			})
 			Expect(incrementResponse).To(BeNil())
 			Expect(err).To(Not(BeNil()))
@@ -392,16 +395,16 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 				DictionaryName: "myDict",
 				Field:          momento.String("key"),
 				Value:          momento.String("value"),
-				Ttl:            &utils.CollectionTtl{Ttl: 600*time.Second},
+				Ttl:            &utils.CollectionTtl{Ttl: 600 * time.Second},
 			})
 			Expect(dictCreateResponse).To(Not(BeNil()))
 			Expect(err).To(BeNil())
 
 			dictIncrementResponse, err := cacheClient.DictionaryIncrement(context.Background(), &momento.DictionaryIncrementRequest{
-				CacheName: "cache",
+				CacheName:      "cache",
 				DictionaryName: "myDict",
-				Field:     momento.String("field"),
-				Amount: int64(1),
+				Field:          momento.String("field"),
+				Amount:         int64(1),
 			})
 			Expect(dictIncrementResponse).To(BeNil())
 			Expect(err).To(Not(BeNil()))

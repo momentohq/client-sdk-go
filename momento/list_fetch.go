@@ -16,9 +16,9 @@ type ListFetchRequest struct {
 	StartIndex *int32
 	EndIndex   *int32
 
-	grpcRequest  *pb.XListFetchRequest
+	grpcRequest *pb.XListFetchRequest
 
-	response     responses.ListFetchResponse
+	response responses.ListFetchResponse
 }
 
 func (r *ListFetchRequest) cacheName() string { return r.CacheName }

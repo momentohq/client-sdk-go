@@ -60,7 +60,8 @@ func metadataPairsToStrings(metadataPairs map[string]string) []string {
 }
 
 func CreateCacheRequestContextFromMetadataMap(ctx context.Context, cacheName string, metadataPairs map[string]string) context.Context {
-	_, ok := metadataPairs["cache"]; if !ok{
+	_, ok := metadataPairs["cache"]
+	if !ok {
 		metadataPairs["cache"] = cacheName
 	}
 	cacheMetadata := metadataPairsToStrings(metadataPairs)

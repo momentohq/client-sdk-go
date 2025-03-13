@@ -16,9 +16,9 @@ type SortedSetGetRankRequest struct {
 	Value     Value
 	Order     SortedSetOrder
 
-	grpcRequest  *pb.XSortedSetGetRankRequest
+	grpcRequest *pb.XSortedSetGetRankRequest
 
-	response     responses.SortedSetGetRankResponse
+	response responses.SortedSetGetRankResponse
 }
 
 func (r *SortedSetGetRankRequest) cacheName() string { return r.CacheName }

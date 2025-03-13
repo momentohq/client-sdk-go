@@ -21,9 +21,9 @@ type DictionarySetFieldsRequest struct {
 	Elements       []DictionaryElement
 	Ttl            *utils.CollectionTtl
 
-	grpcRequest  *pb.XDictionarySetRequest
+	grpcRequest *pb.XDictionarySetRequest
 
-	response     responses.DictionarySetFieldsResponse
+	response responses.DictionarySetFieldsResponse
 }
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }

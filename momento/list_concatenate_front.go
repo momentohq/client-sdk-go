@@ -18,9 +18,9 @@ type ListConcatenateFrontRequest struct {
 	TruncateBackToSize uint32
 	Ttl                *utils.CollectionTtl
 
-	grpcRequest  *pb.XListConcatenateFrontRequest
+	grpcRequest *pb.XListConcatenateFrontRequest
 
-	response     responses.ListConcatenateFrontResponse
+	response responses.ListConcatenateFrontResponse
 }
 
 func (r *ListConcatenateFrontRequest) cacheName() string { return r.CacheName }

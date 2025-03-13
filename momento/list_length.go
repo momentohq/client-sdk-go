@@ -14,9 +14,9 @@ type ListLengthRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest  *pb.XListLengthRequest
+	grpcRequest *pb.XListLengthRequest
 
-	response     responses.ListLengthResponse
+	response responses.ListLengthResponse
 }
 
 func (r *ListLengthRequest) cacheName() string { return r.CacheName }

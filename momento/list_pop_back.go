@@ -14,9 +14,9 @@ type ListPopBackRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest  *pb.XListPopBackRequest
+	grpcRequest *pb.XListPopBackRequest
 
-	response     responses.ListPopBackResponse
+	response responses.ListPopBackResponse
 }
 
 func (r *ListPopBackRequest) cacheName() string { return r.CacheName }

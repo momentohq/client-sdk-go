@@ -19,9 +19,9 @@ type SortedSetFetchByScoreRequest struct {
 	Offset    *uint32
 	Count     *uint32
 
-	grpcRequest  *pb.XSortedSetFetchRequest
+	grpcRequest *pb.XSortedSetFetchRequest
 
-	response     responses.SortedSetFetchResponse
+	response responses.SortedSetFetchResponse
 }
 
 func (r *SortedSetFetchByScoreRequest) cacheName() string { return r.CacheName }

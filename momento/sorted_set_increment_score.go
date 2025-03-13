@@ -22,9 +22,9 @@ type SortedSetIncrementScoreRequest struct {
 	Amount    float64
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XSortedSetIncrementRequest
+	grpcRequest *pb.XSortedSetIncrementRequest
 
-	response     responses.SortedSetIncrementScoreResponse
+	response responses.SortedSetIncrementScoreResponse
 }
 
 func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }

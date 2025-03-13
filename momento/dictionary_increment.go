@@ -21,9 +21,9 @@ type DictionaryIncrementRequest struct {
 	Amount         int64
 	Ttl            *utils.CollectionTtl
 
-	grpcRequest  *pb.XDictionaryIncrementRequest
+	grpcRequest *pb.XDictionaryIncrementRequest
 
-	response     responses.DictionaryIncrementResponse
+	response responses.DictionaryIncrementResponse
 }
 
 func (r *DictionaryIncrementRequest) cacheName() string { return r.CacheName }

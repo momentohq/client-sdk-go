@@ -19,9 +19,9 @@ type ListPushBackRequest struct {
 	TruncateFrontToSize uint32
 	Ttl                 *utils.CollectionTtl
 
-	grpcRequest  *pb.XListPushBackRequest
+	grpcRequest *pb.XListPushBackRequest
 
-	response     responses.ListPushBackResponse
+	response responses.ListPushBackResponse
 }
 
 func (r *ListPushBackRequest) cacheName() string { return r.CacheName }

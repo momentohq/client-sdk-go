@@ -14,9 +14,9 @@ type SortedSetLengthRequest struct {
 	CacheName string
 	SetName   string
 
-	grpcRequest  *pb.XSortedSetLengthRequest
+	grpcRequest *pb.XSortedSetLengthRequest
 
-	response     responses.SortedSetLengthResponse
+	response responses.SortedSetLengthResponse
 }
 
 func (r *SortedSetLengthRequest) cacheName() string { return r.CacheName }

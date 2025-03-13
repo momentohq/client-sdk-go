@@ -18,9 +18,9 @@ type UpdateTtlRequest struct {
 	// Time to live that you want to update in cache in seconds.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XUpdateTtlRequest
+	grpcRequest *pb.XUpdateTtlRequest
 
-	response     responses.UpdateTtlResponse
+	response responses.UpdateTtlResponse
 }
 
 func (r *UpdateTtlRequest) cacheName() string { return r.CacheName }

@@ -15,9 +15,9 @@ type SetPopRequest struct {
 	SetName   string
 	Count     *uint32
 
-	grpcRequest  *pb.XSetPopRequest
+	grpcRequest *pb.XSetPopRequest
 
-	response     responses.SetPopResponse
+	response responses.SetPopResponse
 }
 
 func (r *SetPopRequest) cacheName() string { return r.CacheName }

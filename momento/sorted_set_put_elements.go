@@ -19,9 +19,9 @@ type SortedSetPutElementsRequest struct {
 	Elements  []SortedSetElement
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XSortedSetPutRequest
+	grpcRequest *pb.XSortedSetPutRequest
 
-	response     responses.SortedSetPutElementsResponse
+	response responses.SortedSetPutElementsResponse
 }
 
 func (r *SortedSetPutElementsRequest) cacheName() string { return r.CacheName }
