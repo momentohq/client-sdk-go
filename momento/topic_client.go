@@ -66,6 +66,45 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 	return client, nil
 }
 
+func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
+	if err := isCacheNameValid(request.CacheName); err != nil {
+		return nil, err
+	}
+
+	if _, err := prepareName(request.TopicName, "Topic name"); err != nil {
+		return nil, err
+	}
+
+	// Set a timeout by which the first heartbeat message should be received.
+	// If the first message is not received within this time, we will cancel the subscription.
+	firstMessageCtx, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+	subChan := make(chan topicSubscription, 1)
+	errChan := make(chan error, 1)
+
+	// Send the subscribe request in a separate goroutine to avoid blocking the main thread.
+	// Here, we'll block until one of the select cases is triggered.
+	go c.sendSubscribe(ctx, request, subChan, errChan)
+	select {
+	case <-ctx.Done():
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.CanceledError,
+			"subscribe request context was canceled",
+			nil,
+		)
+	case <-firstMessageCtx.Done():
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.TimeoutError,
+			"subscription did not receive first message within the expected time",
+			nil,
+		)
+	case subscription := <-subChan:
+		return &subscription, nil
+	case err := <-errChan:
+		return nil, err
+	}
+}
+
 func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan topicSubscription, errChan chan error) {
 	var firstMsg *pb.XSubscriptionItem
 	topicManager, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
@@ -127,45 +166,6 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		log:                c.log,
 		cancelContext:      cancelContext,
 		cancelFunction:     cancelFunction,
-	}
-}
-
-func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error) {
-	if err := isCacheNameValid(request.CacheName); err != nil {
-		return nil, err
-	}
-
-	if _, err := prepareName(request.TopicName, "Topic name"); err != nil {
-		return nil, err
-	}
-
-	// Set a timeout by which the first heartbeat message should be received.
-	// If the first message is not received within this time, we will cancel the subscription.
-	firstMessageCtx, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-	subChan := make(chan topicSubscription, 1)
-	errChan := make(chan error, 1)
-
-	// Send the subscribe request in a separate goroutine to avoid blocking the main thread.
-	// Here, we'll block until one of the select cases is triggered.
-	go c.sendSubscribe(ctx, request, subChan, errChan)
-	select {
-	case <-ctx.Done():
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.TimeoutError,
-			"subscription did not receive first message within the expected time",
-			nil,
-		)
-	case <-firstMessageCtx.Done():
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.TimeoutError,
-			"subscription did not receive first message within the expected time",
-			nil,
-		)
-	case subscription := <-subChan:
-		return &subscription, nil
-	case err := <-errChan:
-		return nil, err
 	}
 }
 
