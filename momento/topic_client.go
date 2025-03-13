@@ -77,6 +77,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 	if err != nil {
 		cancelFunction()
 		errChan <- err
+		return
 	}
 
 	if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
@@ -101,6 +102,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		}
 		cancelFunction()
 		errChan <- momentoerrors.ConvertSvcErr(err)
+		return
 	}
 
 	switch firstMsg.Kind.(type) {
@@ -113,6 +115,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
 			err,
 		)
+		return
 	}
 
 	subChan <- topicSubscription{
@@ -147,6 +150,12 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	// Here, we'll block until one of the select cases is triggered.
 	go c.sendSubscribe(ctx, request, subChan, errChan)
 	select {
+	case <-ctx.Done():
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.TimeoutError,
+			"subscription did not receive first message within the expected time",
+			nil,
+		)
 	case <-firstMessageCtx.Done():
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.TimeoutError,
