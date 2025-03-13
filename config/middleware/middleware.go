@@ -121,12 +121,13 @@ type requestHandler struct {
 type RequestHandler interface {
 	GetId() uuid.UUID
 	GetRequest() interface{}
+	SetRequest(interface{}) error
 	GetRequestName() string
 	GetResourceType() internal.ClientType
 	GetResourceName() string
 	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
-	OnRequest()
+	OnRequest() error
 	OnResponse(theResponse interface{}, err error) (interface{}, error)
 }
 
@@ -145,6 +146,18 @@ func (rh *requestHandler) GetId() uuid.UUID {
 
 func (rh *requestHandler) GetRequest() interface{} {
 	return rh.request
+}
+
+// SetRequest sets the request object on the handler. This method can be used by middleware to modify the request object.
+// If the middleware returns an error, the request will be cancelled. The new request object must be the same type as the
+// original request object, and an error is returned if this is not the case.
+func (rh *requestHandler) SetRequest(newRequest interface{}) error {
+	// make sure the old and new requests are the same type
+	if reflect.TypeOf(rh.request) != reflect.TypeOf(newRequest) {
+		return fmt.Errorf("request type mismatch: %T != %T", rh.request, newRequest)
+	}
+	rh.request = newRequest
+	return nil
 }
 
 func (rh *requestHandler) GetRequestName() string {
@@ -167,21 +180,33 @@ func (rh *requestHandler) GetResourceName() string {
 	return rh.resourceName
 }
 
-// OnRequest is called before the request is made to the backend.
-func (rh *requestHandler) OnRequest() {}
+// OnRequest is called before the request is made to the backend. It can be used to modify the request object or
+// return an error to halt the request. If the method is used to modify the request, the request must be set on the
+// handler using SetRequest
+func (rh *requestHandler) OnRequest() error {
+	return nil
+}
 
 // OnResponse is called after the response is received from the backend. It is passed the response object, which can
-// be cast to the appropriate response type for further inspection:
+// be cast to the appropriate response type for further inspection. Returning nil from this method leaves the response
+// unchanged. Returning an error will replace the current error, if any, with the new error, but response processing
+// will continue so later middlewares can inspect and handle the error as appropriate. A response handler may return
+// nil for the error to indicate that the current error should be nulled. If there is an error after
+// all the middlewares have run, the error will be converted to a Momento service error and returned to the caller.
+// Returning a new response object will replace the current response object. The new response must be the same
+// type as the original response object, and an error is returned if this is not the case.
 //
-//	func (rh *myRequestHandler) OnResponse(theResponse interface{}) {
+//	func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
 //	  switch r := theResponse.(type) {
 //	  case *responses.ListPushFrontSuccess:
 //	    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
 //	  case *responses.ListPushBackSuccess:
 //	    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
+//	  }
+//    return nil, err
 //	}
-func (rh *requestHandler) OnResponse(theResponse interface{}, err error) (interface{}, error) {
-	return theResponse, err
+func (rh *requestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
+	return nil, err
 }
 
 func NewRequestHandler(props HandlerProps) RequestHandler {

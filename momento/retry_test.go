@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"strings"
@@ -122,6 +123,11 @@ func (r *retryMetricsMiddleware) GetRequestHandler(
 	), nil
 }
 
+// AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy. It is
+// essentially identical to the SDK retry interceptor, but it also collects metrics on the retry attempts and returns
+// them in a custom error type. If modifications are made to the retry interceptor in the SDK, they should be mirrored
+// here. Injecting the retry interceptor is a bit of a hack, but it keeps the retry metrics gathering out of the production
+// code.
 func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func(
 	ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption,
@@ -130,18 +136,14 @@ func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func
 		attempt := 1
 		timestamps := make([]int64, 0)
 		for {
-			fmt.Printf("=====\nretry interceptor attempt %d for %s\n", attempt, method)
 			// Execute api call
 			timestamps = append(timestamps, time.Now().Unix())
 			lastErr := invoker(ctx, method, req, reply, cc, opts...)
-			fmt.Printf("----> lastErr: %v\n", lastErr)
 			if lastErr == nil {
-				// Success no error returned stop interceptor
-				// TODO: if we have retries, we need to return them in an error response
-				//  that has a nil error and a metadata field with the retry timestamps
-				fmt.Printf("----> timestamps: %v\n", timestamps)
+				// Success. No error was returned so we can return from the interceptor.
+				// If we have retries, we need to return them in an error response
+				// that has a nil error and a metadata field with the retry timestamps.
 				if len(timestamps) > 1 {
-					fmt.Printf("retry interceptor got success after %d retries; creating ReplyWithRetryTimestamps\n", len(timestamps) - 1)
 					return ResponseWithRetryTimestamps{
 						Reply:      reply,
 						Timestamps: timestamps,
@@ -158,7 +160,7 @@ func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func
 			})
 
 			if retryBackoffTime == nil {
-				// Stop retrying and return the error with the timestamps
+				// Stop retrying and return the error with the timestamps.
 				return ResponseWithRetryTimestamps{
 					Err: lastErr,
 					Timestamps: timestamps,
@@ -183,12 +185,9 @@ func NewRetryMetricsMiddlewareRequestHandler(
 
 func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(theResponse interface{}, err error) (interface{}, error) {
 	if err != nil {
-		fmt.Printf("retryMetricsMiddlewareRequestHandler.OnResponse got error: %T\n", err)
 		var e ResponseWithRetryTimestamps
 		switch {
 		case errors.As(err, &e):
-			fmt.Printf("Reply -> %T - %v\n", e.Reply, e.Reply)
-			fmt.Printf("Timestamps -> %v\n", e.Timestamps)
 			for _, ts := range e.Timestamps {
 				rh.props.metricsCollector.addTimestamp(rh.GetResourceName(), rh.GetRequestName(), ts)
 			}
@@ -363,6 +362,53 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(metricsCollector.getTotalRetryCount("cache", "Set")).To(Equal(0))
 		})
 
+		It("should not retry if the api is not retryable", func() {
+			metricsCollector := NewRetryMetricsCollector()
+			status := "unavailable"
+			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				NewRetryMetricsMiddleware(retryMetricsMiddlewareProps{
+					metricsCollector: metricsCollector,
+					returnError:      &status,
+					errorRpcList:     &[]string{"increment", "dictionary-increment"},
+					errorCount:       nil,
+					delayRpcList:     nil,
+					delayMillis:      nil,
+					delayCount:       nil,
+				}),
+			})
+			cacheClient := setupCacheClientTest(clientConfig)
+
+			incrementResponse, err := cacheClient.Increment(context.Background(), &momento.IncrementRequest{
+				CacheName: "cache",
+				Field:       momento.String("key"),
+			})
+			Expect(incrementResponse).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			fmt.Printf("%v", err)
+			Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
+
+			dictCreateResponse, err := cacheClient.DictionarySetField(context.Background(), &momento.DictionarySetFieldRequest{
+				CacheName:      "cache",
+				DictionaryName: "myDict",
+				Field:          momento.String("key"),
+				Value:          momento.String("value"),
+				Ttl:            &utils.CollectionTtl{Ttl: 600*time.Second},
+			})
+			Expect(dictCreateResponse).To(Not(BeNil()))
+			Expect(err).To(BeNil())
+
+			dictIncrementResponse, err := cacheClient.DictionaryIncrement(context.Background(), &momento.DictionaryIncrementRequest{
+				CacheName: "cache",
+				DictionaryName: "myDict",
+				Field:     momento.String("field"),
+				Amount: int64(1),
+			})
+			Expect(dictIncrementResponse).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
+			Expect(metricsCollector.getTotalRetryCount("cache", "Increment")).To(Equal(0))
+		})
+
 		It("should return a value on success after a retry", func() {
 			metricsCollector := NewRetryMetricsCollector()
 			status := "unavailable"
@@ -397,6 +443,5 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
 			Expect(metricsCollector.getTotalRetryCount("cache", "Get")).To(Equal(1))
 		})
-
 	})
 })

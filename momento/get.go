@@ -2,8 +2,6 @@ package momento
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -50,13 +48,11 @@ func (r *GetRequest) makeGrpcRequest(requestMetadata context.Context, client scs
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	//r.grpcResponse = resp
 	return resp, nil, nil
 }
 
 func (r *GetRequest) interpretGrpcResponse(resp interface{}) error {
 	myResp := resp.(*pb.XGetResponse)
-	fmt.Printf("interpreting grpc response %s for %s\n", myResp, r.requestName())
 	if myResp.Result == pb.ECacheResult_Hit {
 		r.response = responses.NewGetHit(myResp.CacheBody)
 		return nil

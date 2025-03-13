@@ -3,7 +3,6 @@ package momento
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -97,7 +96,10 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 		// Call the request handler OnRequest method and then add the handler to list of handlers to
 		// call OnResponse on when the response comes back.
-		newHandler.OnRequest()
+		err = newHandler.OnRequest()
+		if err != nil {
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
 
 		// Give the middleware a chance to modify the request metadata. If a middleware doesn't implement
 		// GetMetadata, the base response handler will return the original metadata.
@@ -108,8 +110,6 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
 	resp, responseMetadata, requestError := r.makeGrpcRequest(requestContext, client)
 
-	fmt.Printf("before middlewares got response %v (%T)\n" , resp, resp)
-	fmt.Printf("before middlewares got error %s (%T)\n" , requestError, requestError)
 	// Iterate over the middleware request handlers in reverse order, giving them a chance to
 	// inspect the response and error results. Any error returned from the middleware OnResponse()
 	// method will be immediately returned as the actual error, skipping any outstanding response handlers.
@@ -119,28 +119,23 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
 		var requestHandlerError error
 		rh := middlewareRequestHandlers[i]
-		fmt.Printf("calling OnResponse for %T: %v\n", rh, resp)
 		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
-		fmt.Printf("==> %T requestHandlerError: %v\n", rh, requestHandlerError)
 		if newResp != nil {
-			fmt.Printf("setting resp to newResp %T - %v\n", newResp, newResp)
-			resp = newResp.(grpcResponse)
+			var ok bool
+			resp, ok = newResp.(grpcResponse)
+			if !ok {
+				return NewMomentoError(ClientSdkError, "middleware OnResponse returned an invalid response", nil)
+			}
 		}
 		if !errors.Is(requestHandlerError, requestError) {
-			fmt.Printf("setting requestError to requestHandlerError %T\n", requestHandlerError)
 			requestError = requestHandlerError
-			// TODO: think about not doing this. Later middlewares should also have a chance
-			//  to handle or ignore the latest error.
-			//break
 		}
 	}
-	fmt.Printf("====> final resp: %v\n", resp)
 
 	if requestError != nil {
 		return momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
 	}
 
-	fmt.Printf("interpreting grpc response for %s\n", r.requestName())
 	if err := r.interpretGrpcResponse(resp); err != nil {
 		return err
 	}
