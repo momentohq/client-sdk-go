@@ -104,7 +104,6 @@ func NewRetryMetricsMiddleware(props RetryMetricsMiddlewareProps) middleware.Mid
 
 type retryMetricsMiddlewareRequestHandler struct {
 	middleware.RequestHandler
-	cacheName string
 	props     RetryMetricsMiddlewareProps
 }
 
@@ -174,7 +173,7 @@ func NewRetryMetricsMiddlewareRequestHandler(
 	rh middleware.RequestHandler,
 	props RetryMetricsMiddlewareProps,
 ) middleware.RequestHandler {
-	return &retryMetricsMiddlewareRequestHandler{RequestHandler: rh, cacheName: "", props: props}
+	return &retryMetricsMiddlewareRequestHandler{RequestHandler: rh, props: props}
 }
 
 func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(theResponse interface{}, err error) (interface{}, error) {
