@@ -66,7 +66,3 @@ func (r *SetContainsElementsRequest) interpretGrpcResponse(resp interface{}) err
 	}
 	return nil
 }
-
-func (r *SetContainsElementsRequest) getResponse() interface{} {
-	return r.response
-}

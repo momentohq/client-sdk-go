@@ -83,7 +83,3 @@ func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) 
 	}
 	return nil
 }
-
-func (r *SortedSetLengthByScoreRequest) getResponse() interface{} {
-	return r.response
-}

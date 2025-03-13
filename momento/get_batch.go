@@ -94,6 +94,3 @@ func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 	return nil
 }
 
-func (r *GetBatchRequest) getResponse() interface{} {
-	return r.response
-}

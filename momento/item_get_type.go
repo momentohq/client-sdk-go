@@ -61,7 +61,3 @@ func (r *ItemGetTypeRequest) interpretGrpcResponse(resp interface{}) error {
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
 }
-
-func (r *ItemGetTypeRequest) getResponse() interface{} {
-	return r.response
-}

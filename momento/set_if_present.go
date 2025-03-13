@@ -88,7 +88,3 @@ func (r *SetIfPresentRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *SetIfPresentRequest) getResponse() interface{} {
-	return r.response
-}

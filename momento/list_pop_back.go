@@ -55,7 +55,3 @@ func (r *ListPopBackRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *ListPopBackRequest) getResponse() interface{} {
-	return r.response
-}

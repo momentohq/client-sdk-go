@@ -105,7 +105,3 @@ func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse(resp interface{}) erro
 	r.response = theResponse
 	return nil
 }
-
-func (r *SetIfAbsentOrEqualRequest) getResponse() interface{} {
-	return r.response
-}

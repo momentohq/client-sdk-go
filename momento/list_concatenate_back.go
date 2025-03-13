@@ -78,7 +78,3 @@ func (r *ListConcatenateBackRequest) interpretGrpcResponse(resp interface{}) err
 	r.response = responses.NewListConcatenateBackSuccess(myResp.ListLength)
 	return nil
 }
-
-func (r *ListConcatenateBackRequest) getResponse() interface{} {
-	return r.response
-}

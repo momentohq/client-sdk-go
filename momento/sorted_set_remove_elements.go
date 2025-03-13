@@ -65,7 +65,3 @@ func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) er
 	r.response = &responses.SortedSetRemoveElementsSuccess{}
 	return nil
 }
-
-func (r *SortedSetRemoveElementsRequest) getResponse() interface{} {
-	return r.response
-}

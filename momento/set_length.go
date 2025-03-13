@@ -57,5 +57,3 @@ func (r *SetLengthRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *SetLengthRequest) getResponse() interface{} { return r.response }

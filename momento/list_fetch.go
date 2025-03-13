@@ -76,5 +76,3 @@ func (r *ListFetchRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *ListFetchRequest) getResponse() interface{} { return r.response }

@@ -91,7 +91,3 @@ func (r *SetIfNotExistsRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *SetIfNotExistsRequest) getResponse() interface{} {
-	return r.response
-}

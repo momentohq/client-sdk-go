@@ -103,7 +103,3 @@ func (r *SetIfNotEqualRequest) interpretGrpcResponse(resp interface{}) error {
 
 	return nil
 }
-
-func (r *SetIfNotEqualRequest) getResponse() interface{} {
-	return r.response
-}

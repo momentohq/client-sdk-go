@@ -78,7 +78,3 @@ func (r *ListPushFrontRequest) interpretGrpcResponse(resp interface{}) error {
 	r.response = responses.NewListPushFrontSuccess(myResp.ListLength)
 	return nil
 }
-
-func (r *ListPushFrontRequest) getResponse() interface{} {
-	return r.response
-}

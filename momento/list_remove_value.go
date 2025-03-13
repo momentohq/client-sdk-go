@@ -60,7 +60,3 @@ func (r *ListRemoveValueRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.ListRemoveValueSuccess{}
 	return nil
 }
-
-func (r *ListRemoveValueRequest) getResponse() interface{} {
-	return r.response
-}

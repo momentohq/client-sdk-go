@@ -55,7 +55,3 @@ func (r *DeleteRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DeleteSuccess{}
 	return nil
 }
-
-func (r *DeleteRequest) getResponse() interface{} {
-	return r.response
-}

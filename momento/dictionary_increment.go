@@ -88,7 +88,3 @@ func (r *DictionaryIncrementRequest) interpretGrpcResponse(resp interface{}) err
 	r.response = responses.NewDictionaryIncrementSuccess(myResp.Value)
 	return nil
 }
-
-func (r *DictionaryIncrementRequest) getResponse() interface{} {
-	return r.response
-}

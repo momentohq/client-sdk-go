@@ -59,7 +59,3 @@ func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) err
 	r.response = &responses.DictionaryRemoveFieldsSuccess{}
 	return nil
 }
-
-func (r *DictionaryRemoveFieldsRequest) getResponse() interface{} {
-	return r.response
-}

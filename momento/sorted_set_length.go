@@ -57,7 +57,3 @@ func (r *SortedSetLengthRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *SortedSetLengthRequest) getResponse() interface{} {
-	return r.response
-}

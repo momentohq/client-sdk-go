@@ -89,7 +89,3 @@ func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{})
 
 	return nil
 }
-
-func (r *SortedSetIncrementScoreRequest) getResponse() interface{} {
-	return r.response
-}

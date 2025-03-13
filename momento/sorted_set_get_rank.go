@@ -79,7 +79,3 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse(resp interface{}) error 
 	}
 	return nil
 }
-
-func (r *SortedSetGetRankRequest) getResponse() interface{} {
-	return r.response
-}

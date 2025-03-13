@@ -78,7 +78,3 @@ func (r *ListPushBackRequest) interpretGrpcResponse(resp interface{}) error {
 	r.response = responses.NewListPushBackSuccess(myResp.ListLength)
 	return nil
 }
-
-func (r *ListPushBackRequest) getResponse() interface{} {
-	return r.response
-}

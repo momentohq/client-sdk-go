@@ -105,7 +105,3 @@ func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse(resp interface{})
 	r.response = theResponse
 	return nil
 }
-
-func (r *SetIfPresentAndNotEqualRequest) getResponse() interface{} {
-	return r.response
-}

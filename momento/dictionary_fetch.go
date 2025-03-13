@@ -61,7 +61,3 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
-
-func (r *DictionaryFetchRequest) getResponse() interface{} {
-	return r.response
-}

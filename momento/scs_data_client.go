@@ -135,7 +135,6 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		}
 	}
 	fmt.Printf("====> final resp: %v\n", resp)
-	//resp = newResp.(grpcResponse)
 
 	if requestError != nil {
 		return momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
