@@ -2,8 +2,6 @@ package momento
 
 // The requester interface is implemented by individual
 // method request objects, for example SetRequest.
-// requester.template is a template file to help implement
-// a requester.
 
 import (
 	"context"
