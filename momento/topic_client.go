@@ -114,7 +114,6 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		SequencePage:                request.SequencePage,
 	})
 	if err != nil {
-		cancelFunction()
 		errChan <- err
 		return
 	}
