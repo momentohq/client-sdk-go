@@ -3,9 +3,9 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"reflect"
 
-	"github.com/momentohq/client-sdk-go/internal/retry"
 	"google.golang.org/grpc"
 
 	"github.com/google/uuid"

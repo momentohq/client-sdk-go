@@ -1,15 +1,14 @@
 package models
 
 import (
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
 
-	"github.com/momentohq/client-sdk-go/config/logger"
-	"github.com/momentohq/client-sdk-go/internal/retry"
-
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
 type ControlGrpcManagerRequest struct {

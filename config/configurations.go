@@ -2,11 +2,10 @@
 package config
 
 import (
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
-
-	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )

@@ -2,9 +2,8 @@ package interceptor
 
 import (
 	"context"
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"time"
-
-	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"

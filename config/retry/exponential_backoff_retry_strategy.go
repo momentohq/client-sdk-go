@@ -14,7 +14,7 @@ const (
 
 type ExponentialBackoffRetryStrategy struct {
 	eligibilityStrategy EligibilityStrategy
-	log logger.MomentoLogger
+	log                 logger.MomentoLogger
 	initialDelayMillis float32
 	maxBackoffMillis int
 	growthFactor int

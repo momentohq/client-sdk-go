@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"strings"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
-	"github.com/momentohq/client-sdk-go/internal/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )

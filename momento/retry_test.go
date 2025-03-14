@@ -3,6 +3,7 @@ package momento_test
 import (
 	"context"
 	"fmt"
+	retry2 "github.com/momentohq/client-sdk-go/config/retry"
 
 	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
 
@@ -15,7 +16,6 @@ import (
 
 	"time"
 
-	"github.com/momentohq/client-sdk-go/internal/retry"
 	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -39,11 +39,11 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 	DescribeTable(
 		"DefaultEligibilityStrategy -- determine retry eligibility given grpc status code and request method",
 		func(grpcStatus codes.Code, requestMethod string, expected bool) {
-			strategy := retry.NewFixedCountRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
+			strategy := retry2.NewFixedCountRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
 				momento_default_logger.INFO,
 			))
 			retryResult := strategy.DetermineWhenToRetry(
-				retry.StrategyProps{GrpcStatusCode: grpcStatus, GrpcMethod: requestMethod, AttemptNumber: 1},
+				retry2.StrategyProps{GrpcStatusCode: grpcStatus, GrpcMethod: requestMethod, AttemptNumber: 1},
 			)
 
 			if expected == false {
@@ -74,7 +74,7 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		It("shouldn't retry", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
-			strategy := retry.NewNeverRetryStrategy()
+			strategy := retry2.NewNeverRetryStrategy()
 			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
 					MetricsCollector: metricsCollector,
@@ -103,11 +103,11 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		It("should receive a timeout error after multiple retries", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
-			strategy := retry.NewExponentialBackoffRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
+			strategy := retry2.NewExponentialBackoffRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
 				momento_default_logger.INFO,
 			))
-			strategy = strategy.(retry.ExponentialBackoffRetryStrategy).WithInitialDelayMillis(100)
-			strategy = strategy.(retry.ExponentialBackoffRetryStrategy).WithMaxBackoffMillis(2000)
+			strategy = strategy.(retry2.ExponentialBackoffRetryStrategy).WithInitialDelayMillis(100)
+			strategy = strategy.(retry2.ExponentialBackoffRetryStrategy).WithMaxBackoffMillis(2000)
 
 			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
@@ -130,6 +130,10 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(err).To(Not(BeNil()))
 			Expect(err).To(HaveMomentoErrorCode(momento.TimeoutError))
 			Expect(metricsCollector.GetTotalRetryCount("cache", "Set") > 1).To(BeTrue())
+		})
+
+		It("should succeed after multiple retries", func() {
+
 		})
 	})
 
