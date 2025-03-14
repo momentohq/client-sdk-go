@@ -22,7 +22,7 @@ func (r *ItemGetTtlRequest) cacheName() string { return r.CacheName }
 
 func (r *ItemGetTtlRequest) key() Key { return r.Key }
 
-func (r *ItemGetTtlRequest) requestName() string { return "ItemGetTypeTL" }
+func (r *ItemGetTtlRequest) requestName() string { return "ItemGetTtl" }
 
 func (r *ItemGetTtlRequest) initGrpcRequest(scsDataClient) error {
 	var err error

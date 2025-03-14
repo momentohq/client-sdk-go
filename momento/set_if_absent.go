@@ -37,7 +37,7 @@ func (r *SetIfAbsentRequest) value() Value { return r.Value }
 
 func (r *SetIfAbsentRequest) ttl() time.Duration { return r.Ttl }
 
-func (r *SetIfAbsentRequest) requestName() string { return "SetIfNotExists" }
+func (r *SetIfAbsentRequest) requestName() string { return "SetIfAbsent" }
 
 func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) error {
 	var err error
