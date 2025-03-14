@@ -1,6 +1,7 @@
 package retry
 
 import (
+	"fmt"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"math"
 	"math/rand"
@@ -12,40 +13,108 @@ const (
 	DefaultMaxBackoffMs   = 8
 )
 
-type ExponentialBackoffRetryStrategy struct {
+type exponentialBackoffRetryStrategy struct {
 	eligibilityStrategy EligibilityStrategy
 	log                 logger.MomentoLogger
-	initialDelayMillis float32
+	initialDelayMillis float64
 	maxBackoffMillis int
 	growthFactor int
 }
 
-func NewExponentialBackoffRetryStrategy(logFactory logger.MomentoLoggerFactory) Strategy {
-	return ExponentialBackoffRetryStrategy{
-		eligibilityStrategy: DefaultEligibilityStrategy{},
-		log:                 logFactory.GetLogger("exponential-backoff-retry-strategy"),
-		initialDelayMillis:  DefaultInitialDelayMs,
-		maxBackoffMillis:    DefaultMaxBackoffMs,
-		growthFactor:        DefaultGrowthFactor,
+type ExponentialBackoffRetryStrategy interface {
+	Strategy
+	WithInitialDelayMillis(float32) Strategy
+	WithMaxBackoffMillis(int) Strategy
+	WithEligibilityStrategy(EligibilityStrategy) Strategy
+	WithGrowthFactor(int) Strategy
+}
+
+type ExponentialBackoffRetryStrategyProps struct {
+	LoggerFactory logger.MomentoLoggerFactory
+	EligibilityStrategy EligibilityStrategy
+	InitialDelayMillis float64
+	MaxBackoffMillis int
+	GrowthFactor int
+}
+
+func NewExponentialBackoffRetryStrategy(props ExponentialBackoffRetryStrategyProps) Strategy {
+	eligibilityStrategy := EligibilityStrategy(DefaultEligibilityStrategy{})
+	if props.EligibilityStrategy != nil {
+		eligibilityStrategy = props.EligibilityStrategy
+	}
+	var log logger.MomentoLogger
+	if props.LoggerFactory != nil {
+		log = props.LoggerFactory.GetLogger("fixed-count-retry-strategy")
+	} else {
+		log = logger.NewNoopMomentoLoggerFactory().GetLogger("fixed-count-retry-strategy")
+	}
+	initialDelayMillis := DefaultInitialDelayMs
+	if props.InitialDelayMillis != 0 {
+		initialDelayMillis = props.InitialDelayMillis
+	}
+	maxBackoffMillis := DefaultMaxBackoffMs
+	if props.MaxBackoffMillis != 0 {
+		maxBackoffMillis = props.MaxBackoffMillis
+	}
+	growthFactor := DefaultGrowthFactor
+	if props.GrowthFactor != 0 {
+		growthFactor = props.GrowthFactor
+	}
+
+	fmt.Printf("got logger %v\n", log)
+	log.Info("HI")
+
+	return &exponentialBackoffRetryStrategy{
+		eligibilityStrategy: eligibilityStrategy,
+		log:                 log,
+		initialDelayMillis:  initialDelayMillis,
+		maxBackoffMillis:    maxBackoffMillis,
+		growthFactor:        growthFactor,
 	}
 }
 
-func (r ExponentialBackoffRetryStrategy) WithInitialDelayMillis(delay float32) Strategy {
-	r.initialDelayMillis = delay
-	return r
+func (r *exponentialBackoffRetryStrategy) WithInitialDelayMillis(delay float64) Strategy {
+	return &exponentialBackoffRetryStrategy{
+		eligibilityStrategy: r.eligibilityStrategy,
+		log:                 r.log,
+		initialDelayMillis:  delay,
+		maxBackoffMillis:    r.maxBackoffMillis,
+		growthFactor:        r.growthFactor,
+	}
 }
 
-func (r ExponentialBackoffRetryStrategy) WithMaxBackoffMillis(backoff int) Strategy {
-	r.maxBackoffMillis = backoff
-	return r
+func (r *exponentialBackoffRetryStrategy) WithMaxBackoffMillis(backoff int) Strategy {
+	return &exponentialBackoffRetryStrategy{
+		eligibilityStrategy: r.eligibilityStrategy,
+		log:                 r.log,
+		initialDelayMillis:  r.initialDelayMillis,
+		maxBackoffMillis:    backoff,
+		growthFactor:        r.growthFactor,
+	}
 }
 
-func (r ExponentialBackoffRetryStrategy) WithEligibilityStrategy(s EligibilityStrategy) Strategy {
-	r.eligibilityStrategy = s
-	return r
+func (r *exponentialBackoffRetryStrategy) WithEligibilityStrategy(strategy EligibilityStrategy) Strategy {
+	return &exponentialBackoffRetryStrategy{
+		eligibilityStrategy: strategy,
+		log:                 r.log,
+		initialDelayMillis:  r.initialDelayMillis,
+		maxBackoffMillis:    r.maxBackoffMillis,
+		growthFactor:        r.growthFactor,
+	}
 }
 
-func (r ExponentialBackoffRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
+func (r *exponentialBackoffRetryStrategy) WithGrowthFactor(growthFactor int) Strategy {
+	return &exponentialBackoffRetryStrategy{
+		eligibilityStrategy: r.eligibilityStrategy,
+		log:                 r.log,
+		initialDelayMillis:  r.initialDelayMillis,
+		maxBackoffMillis:    r.maxBackoffMillis,
+		growthFactor:        growthFactor,
+	}
+}
+
+
+func (r *exponentialBackoffRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	// attempt is 0-based, so we subtract 1 to get the correct attempt number
 	attempt := props.AttemptNumber - 1
 	r.log.Debug(
@@ -68,7 +137,12 @@ func (r ExponentialBackoffRetryStrategy) DetermineWhenToRetry(props StrategyProp
 	return &jitteredDelay
 }
 
-func (r ExponentialBackoffRetryStrategy) computeBaseDelay(attemptNumber int) int {
+func (r *exponentialBackoffRetryStrategy) String() string {
+	return fmt.Sprintf("ExponentialBackoffRetryStrategy{eligibilityStrategy: %T, initialDelayMillis: %f, maxBackoffMillis: %d, growthFactor: %d}",
+		r.eligibilityStrategy, r.initialDelayMillis, r.maxBackoffMillis, r.growthFactor)
+}
+
+func (r *exponentialBackoffRetryStrategy) computeBaseDelay(attemptNumber int) int {
 	baseDelay := int(math.Pow(DefaultGrowthFactor, float64(attemptNumber)) * float64(r.initialDelayMillis))
 	if baseDelay > r.maxBackoffMillis {
 		return r.maxBackoffMillis
@@ -76,7 +150,7 @@ func (r ExponentialBackoffRetryStrategy) computeBaseDelay(attemptNumber int) int
 	return baseDelay
 }
 
-func (r ExponentialBackoffRetryStrategy) computePreviousBaseDelay(baseDelay int) int {
+func (r *exponentialBackoffRetryStrategy) computePreviousBaseDelay(baseDelay int) int {
 	return baseDelay / r.growthFactor
 }
 

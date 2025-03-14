@@ -33,7 +33,10 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 				deadline: 5 * time.Second,
 			}),
 		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
+		RetryStrategy:   retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			MaxAttempts:         3,
+		}),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
 	})
@@ -62,7 +65,10 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 				deadline: 1100 * time.Millisecond,
 			}),
 		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
+		RetryStrategy:   retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			MaxAttempts:         3,
+		}),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
 	})
@@ -96,7 +102,10 @@ func LambdaLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 				deadline: 1100 * time.Millisecond,
 			}).WithKeepAliveDisabled(),
 		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
+		RetryStrategy:   retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			MaxAttempts:         3,
+		}),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
 	})

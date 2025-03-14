@@ -3,7 +3,7 @@ package momento_test
 import (
 	"context"
 	"fmt"
-	retry2 "github.com/momentohq/client-sdk-go/config/retry"
+	"github.com/momentohq/client-sdk-go/config/retry"
 
 	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
 
@@ -39,11 +39,12 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 	DescribeTable(
 		"DefaultEligibilityStrategy -- determine retry eligibility given grpc status code and request method",
 		func(grpcStatus codes.Code, requestMethod string, expected bool) {
-			strategy := retry2.NewFixedCountRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
-				momento_default_logger.INFO,
-			))
+			strategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+				LoggerFactory:       momento_default_logger.DefaultMomentoLoggerFactory{},
+				MaxAttempts:         3,
+			})
 			retryResult := strategy.DetermineWhenToRetry(
-				retry2.StrategyProps{GrpcStatusCode: grpcStatus, GrpcMethod: requestMethod, AttemptNumber: 1},
+				retry.StrategyProps{GrpcStatusCode: grpcStatus, GrpcMethod: requestMethod, AttemptNumber: 1},
 			)
 
 			if expected == false {
@@ -70,11 +71,11 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/DictionaryIncrement", false),
 	)
 
-	Describe("cache-client retry NeverRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
+	Describe("cache-client retry neverRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
 		It("shouldn't retry", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
-			strategy := retry2.NewNeverRetryStrategy()
+			strategy := retry.NewNeverRetryStrategy()
 			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
 					MetricsCollector: metricsCollector,
@@ -99,15 +100,15 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		})
 	})
 
-	Describe("cache-client retry ExponentialBackoffRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
+	Describe("cache-client retry exponentialBackoffRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
 		It("should receive a timeout error after multiple retries", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
-			strategy := retry2.NewExponentialBackoffRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
-				momento_default_logger.INFO,
-			))
-			strategy = strategy.(retry2.ExponentialBackoffRetryStrategy).WithInitialDelayMillis(100)
-			strategy = strategy.(retry2.ExponentialBackoffRetryStrategy).WithMaxBackoffMillis(2000)
+			strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
+				LoggerFactory: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
+				InitialDelayMillis:  100,
+				MaxBackoffMillis:    2000,
+			})
 
 			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
@@ -141,6 +142,10 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		It("should retry 3 times if the status code is retryable", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
+			retryStrategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+				LoggerFactory:       momento_default_logger.DefaultMomentoLoggerFactory{},
+				MaxAttempts:         3,
+			})
 			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
 					MetricsCollector: metricsCollector,
@@ -151,7 +156,7 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 					DelayMillis:      nil,
 					DelayCount:       nil,
 				}),
-			})
+			}).WithRetryStrategy(retryStrategy)
 			cacheClient := setupCacheClientTest(clientConfig)
 
 			setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{

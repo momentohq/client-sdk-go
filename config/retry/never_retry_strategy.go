@@ -1,17 +1,16 @@
 package retry
 
-type NeverRetryStrategy struct{}
+type neverRetryStrategy struct{}
 
-func (r NeverRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
+func (r *neverRetryStrategy) DetermineWhenToRetry(_ StrategyProps) *int {
 	return nil
 }
 
-func (r NeverRetryStrategy) String() string {
-	return "NeverRetryStrategy{}"
+func (r *neverRetryStrategy) String() string {
+	return "neverRetryStrategy{}"
 }
 
 // NewNeverRetryStrategy is a retry strategy that never retries any request
 func NewNeverRetryStrategy() Strategy {
-	return NeverRetryStrategy{}
+	return &neverRetryStrategy{}
 }
-
