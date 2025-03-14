@@ -99,6 +99,36 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		})
 	})
 
+	Describe("cache-client retry ExponentialBackoffRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
+		It("who knows", func() {
+			metricsCollector := helpers.NewRetryMetricsCollector()
+			status := "unavailable"
+			strategy := retry.NewExponentialBackoffRetryStrategy(momento_default_logger.NewDefaultMomentoLoggerFactory(
+				momento_default_logger.INFO,
+			))
+			clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					MetricsCollector: metricsCollector,
+					ReturnError:      &status,
+					ErrorRpcList:     &[]string{"set"},
+					ErrorCount:       nil,
+					DelayRpcList:     nil,
+					DelayMillis:      nil,
+					DelayCount:       nil,
+				}),
+			}).WithRetryStrategy(strategy).WithClientTimeout(1*time.Second)
+			cacheClient := setupCacheClientTest(clientConfig)
+			setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
+				CacheName: "cache",
+				Key:       momento.String("key"),
+				Value:     momento.String("value"),
+			})
+			Expect(setResponse).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			Expect(err).To(HaveMomentoErrorCode(momento.TimeoutError))
+		})
+	})
+
 	Describe("cache-client retry DefaultEligibilityStrategy", Label(CACHE_SERVICE_LABEL), func() {
 		It("should retry 3 times if the status code is retryable", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
