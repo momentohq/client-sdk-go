@@ -26,7 +26,7 @@ type SortedSetPutElementsRequest struct {
 
 func (r *SortedSetPutElementsRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetPutElementsRequest) requestName() string { return "Sorted set put elements" }
+func (r *SortedSetPutElementsRequest) requestName() string { return "SortedSetPutElements" }
 
 func (r *SortedSetPutElementsRequest) ttl() time.Duration { return r.Ttl.Ttl }
 

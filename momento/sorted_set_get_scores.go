@@ -22,7 +22,7 @@ type SortedSetGetScoresRequest struct {
 
 func (r *SortedSetGetScoresRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetGetScoresRequest) requestName() string { return "Sorted set get score" }
+func (r *SortedSetGetScoresRequest) requestName() string { return "SortedSetGetScores" }
 
 func (r *SortedSetGetScoresRequest) initGrpcRequest(scsDataClient) error {
 	var err error

@@ -29,7 +29,7 @@ type SortedSetIncrementScoreRequest struct {
 
 func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetIncrementScoreRequest) requestName() string { return "Sorted set increment score" }
+func (r *SortedSetIncrementScoreRequest) requestName() string { return "SortedSetIncrementScore" }
 
 func (r *SortedSetIncrementScoreRequest) value() Value { return r.Value }
 

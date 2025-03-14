@@ -39,7 +39,7 @@ func (r *SetIfNotEqualRequest) notEqual() Value { return r.NotEqual }
 
 func (r *SetIfNotEqualRequest) ttl() time.Duration { return r.Ttl }
 
-func (r *SetIfNotEqualRequest) requestName() string { return "SetIfNotExists" }
+func (r *SetIfNotEqualRequest) requestName() string { return "SetIfNotEqual" }
 
 func (r *SetIfNotEqualRequest) initGrpcRequest(client scsDataClient) error {
 	var err error

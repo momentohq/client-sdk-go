@@ -24,7 +24,7 @@ type SortedSetFetchByRankRequest struct {
 
 func (r *SortedSetFetchByRankRequest) cacheName() string { return r.CacheName }
 
-func (r *SortedSetFetchByRankRequest) requestName() string { return "Sorted set fetch" }
+func (r *SortedSetFetchByRankRequest) requestName() string { return "SortedSetFetchByRank" }
 
 func (r *SortedSetFetchByRankRequest) initGrpcRequest(scsDataClient) error {
 	var err error
