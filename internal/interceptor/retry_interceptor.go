@@ -36,7 +36,7 @@ func AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method
 
 			// Sleep for recommended time interval and increment attempts before trying again
 			if *retryBackoffTime > 0 {
-				time.Sleep(time.Duration(*retryBackoffTime) * time.Second)
+				time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
 			}
 			attempt++
 		}
