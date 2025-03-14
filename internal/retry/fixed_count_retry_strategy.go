@@ -6,31 +6,31 @@ import (
 	"strconv"
 )
 
-type fixedCountRetryStrategy struct {
+type FixedCountRetryStrategy struct {
 	eligibilityStrategy EligibilityStrategy
 	maxAttempts         int
 	log                 logger.MomentoLogger
 }
 
 func NewFixedCountRetryStrategy(logFactory logger.MomentoLoggerFactory) Strategy {
-	return fixedCountRetryStrategy{
+	return FixedCountRetryStrategy{
 		eligibilityStrategy: DefaultEligibilityStrategy{},
 		maxAttempts:         3,
 		log:                 logFactory.GetLogger("fixed-count-retry-strategy"),
 	}
 }
 
-func (r fixedCountRetryStrategy) WithMaxAttempts(attempts int) Strategy {
+func (r FixedCountRetryStrategy) WithMaxAttempts(attempts int) Strategy {
 	r.maxAttempts = attempts
 	return r
 }
 
-func (r fixedCountRetryStrategy) WithEligibilityStrategy(s EligibilityStrategy) Strategy {
+func (r FixedCountRetryStrategy) WithEligibilityStrategy(s EligibilityStrategy) Strategy {
 	r.eligibilityStrategy = s
 	return r
 }
 
-func (r fixedCountRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
+func (r FixedCountRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
 		r.log.Debug(
 			"Request is not retryable",
@@ -62,9 +62,9 @@ func (r fixedCountRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int 
 	return &timeTilNextRetry
 }
 
-func (r fixedCountRetryStrategy) String() string {
+func (r FixedCountRetryStrategy) String() string {
 	return fmt.Sprintf(
-		"fixedCountRetryStrategy{eligibilityStrategy=%v, maxAttempts=%v, log=%v}",
+		"FixedCountRetryStrategy{eligibilityStrategy=%v, maxAttempts=%v, log=%v}",
 		r.eligibilityStrategy,
 		r.maxAttempts,
 		r.log)
