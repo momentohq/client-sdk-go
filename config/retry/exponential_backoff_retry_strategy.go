@@ -44,9 +44,9 @@ func NewExponentialBackoffRetryStrategy(props ExponentialBackoffRetryStrategyPro
 	}
 	var log logger.MomentoLogger
 	if props.LoggerFactory != nil {
-		log = props.LoggerFactory.GetLogger("fixed-count-retry-strategy")
+		log = props.LoggerFactory.GetLogger("exponential-backoff-retry-strategy")
 	} else {
-		log = logger.NewNoopMomentoLoggerFactory().GetLogger("fixed-count-retry-strategy")
+		log = logger.NewNoopMomentoLoggerFactory().GetLogger("exponential-backoff-retry-strategy")
 	}
 	initialDelayMillis := DefaultInitialDelayMs
 	if props.InitialDelayMillis != 0 {
