@@ -26,16 +26,16 @@ func (r *SortedSetRemoveElementsRequest) requestName() string { return "Sorted s
 
 func (r *SortedSetRemoveElementsRequest) values() []Value { return r.Values }
 
-func (r *SortedSetRemoveElementsRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetRemoveElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var valuesToRemove [][]byte
 	if valuesToRemove, err = prepareValues(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpcReq := &pb.XSortedSetRemoveRequest{
@@ -48,7 +48,7 @@ func (r *SortedSetRemoveElementsRequest) initGrpcRequest(scsDataClient) error {
 
 	r.grpcRequest = grpcReq
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -63,5 +63,13 @@ func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(requestMetadata context
 
 func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SortedSetRemoveElementsSuccess{}
+	return nil
+}
+
+func (r *SortedSetRemoveElementsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetRemoveResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

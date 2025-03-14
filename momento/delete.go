@@ -27,17 +27,17 @@ func (r *DeleteRequest) key() Key { return r.Key }
 
 func (r *DeleteRequest) requestName() string { return "Delete" }
 
-func (r *DeleteRequest) initGrpcRequest(scsDataClient) error {
+func (r *DeleteRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XDeleteRequest{CacheKey: key}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *DeleteRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -53,5 +53,13 @@ func (r *DeleteRequest) makeGrpcRequest(requestMetadata context.Context, client 
 
 func (r *DeleteRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DeleteSuccess{}
+	return nil
+}
+
+func (r *DeleteRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XDeleteResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

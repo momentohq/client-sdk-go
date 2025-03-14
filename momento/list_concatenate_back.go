@@ -34,22 +34,22 @@ func (r *ListConcatenateBackRequest) collectionTtl() *utils.CollectionTtl { retu
 
 func (r *ListConcatenateBackRequest) requestName() string { return "ListConcatenateBack" }
 
-func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var values [][]byte
 	if values, err = prepareValues(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XListConcatenateBackRequest{
@@ -60,7 +60,7 @@ func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) error
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ListConcatenateBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -76,5 +76,13 @@ func (r *ListConcatenateBackRequest) makeGrpcRequest(requestMetadata context.Con
 func (r *ListConcatenateBackRequest) interpretGrpcResponse(resp interface{}) error {
 	myResp := resp.(*pb.XListConcatenateBackResponse)
 	r.response = responses.NewListConcatenateBackSuccess(myResp.ListLength)
+	return nil
+}
+
+func (r *ListConcatenateBackRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListConcatenateBackResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

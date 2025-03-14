@@ -26,11 +26,11 @@ func (r *GetBatchRequest) keys() []Value { return r.Keys }
 
 func (r *GetBatchRequest) requestName() string { return "GetBatch" }
 
-func (r *GetBatchRequest) initGrpcRequest(scsDataClient) error {
+func (r *GetBatchRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.CacheName, "Cache name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	// For each key, prepare a GetRequest
@@ -47,7 +47,7 @@ func (r *GetBatchRequest) initGrpcRequest(scsDataClient) error {
 		Items: getRequests,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *GetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -91,5 +91,9 @@ func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 	}
 
 	r.response = *responses.NewGetBatchSuccess(getResponses, r.byteKeys)
+	return nil
+}
+
+func (r *GetBatchRequest) validateResponseType(resp grpcResponse) error {
 	return nil
 }

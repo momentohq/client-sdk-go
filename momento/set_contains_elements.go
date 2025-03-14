@@ -24,11 +24,11 @@ func (r *SetContainsElementsRequest) cacheName() string { return r.CacheName }
 
 func (r *SetContainsElementsRequest) requestName() string { return "SetContainsElements" }
 
-func (r *SetContainsElementsRequest) initGrpcRequest(scsDataClient) error {
+func (r *SetContainsElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var values [][]byte
@@ -41,7 +41,7 @@ func (r *SetContainsElementsRequest) initGrpcRequest(scsDataClient) error {
 		Elements: values,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetContainsElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -63,6 +63,14 @@ func (r *SetContainsElementsRequest) interpretGrpcResponse(resp interface{}) err
 		r.response = responses.NewSetContainsElementsHit(rtype.Found.Contains)
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SetContainsElementsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetContainsResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

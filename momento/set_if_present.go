@@ -37,22 +37,22 @@ func (r *SetIfPresentRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetIfPresentRequest) requestName() string { return "SetIfNotExists" }
 
-func (r *SetIfPresentRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfPresentRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XSetIfRequest{
@@ -62,7 +62,7 @@ func (r *SetIfPresentRequest) initGrpcRequest(client scsDataClient) error {
 		Condition:       &pb.XSetIfRequest_Present{},
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetIfPresentRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -85,6 +85,14 @@ func (r *SetIfPresentRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.SetIfPresentNotStored{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SetIfPresentRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetIfResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

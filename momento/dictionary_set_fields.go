@@ -36,16 +36,16 @@ func (r *DictionarySetFieldsRequest) collectionTtl() *utils.CollectionTtl { retu
 
 func (r *DictionarySetFieldsRequest) requestName() string { return "DictionarySetFields" }
 
-func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var elements []DictionaryElement
 	if elements, err = prepareDictionaryElements(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var pbElements []*pb.XDictionaryFieldValuePair
@@ -59,7 +59,7 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XDictionarySetRequest{
@@ -69,7 +69,7 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) error
 		RefreshTtl:      refreshTtl,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *DictionarySetFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -84,5 +84,13 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(requestMetadata context.Con
 
 func (r *DictionarySetFieldsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.DictionarySetFieldsSuccess{}
+	return nil
+}
+
+func (r *DictionarySetFieldsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XDictionarySetResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

@@ -26,16 +26,16 @@ func (r *ListRemoveValueRequest) value() Value { return r.Value }
 
 func (r *ListRemoveValueRequest) requestName() string { return "ListRemoveValue" }
 
-func (r *ListRemoveValueRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListRemoveValueRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XListRemoveRequest{
@@ -43,7 +43,7 @@ func (r *ListRemoveValueRequest) initGrpcRequest(scsDataClient) error {
 		Remove:   &pb.XListRemoveRequest_AllElementsWithValue{AllElementsWithValue: value},
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ListRemoveValueRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -58,5 +58,13 @@ func (r *ListRemoveValueRequest) makeGrpcRequest(requestMetadata context.Context
 
 func (r *ListRemoveValueRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.ListRemoveValueSuccess{}
+	return nil
+}
+
+func (r *ListRemoveValueRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListRemoveResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

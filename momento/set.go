@@ -37,22 +37,22 @@ func (r *SetRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetRequest) requestName() string { return "Set" }
 
-func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XSetRequest{
@@ -61,7 +61,7 @@ func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
 		TtlMilliseconds: ttl,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -77,5 +77,13 @@ func (r *SetRequest) makeGrpcRequest(requestMetadata context.Context, client scs
 
 func (r *SetRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetSuccess{}
+	return nil
+}
+
+func (r *SetRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

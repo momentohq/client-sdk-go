@@ -23,16 +23,16 @@ func (r *DictionaryLengthRequest) cacheName() string { return r.CacheName }
 
 func (r *DictionaryLengthRequest) requestName() string { return "DictionaryLength" }
 
-func (r *DictionaryLengthRequest) initGrpcRequest(scsDataClient) error {
+func (r *DictionaryLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XDictionaryLengthRequest{
 		DictionaryName: []byte(r.DictionaryName),
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *DictionaryLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -54,6 +54,14 @@ func (r *DictionaryLengthRequest) interpretGrpcResponse(resp interface{}) error 
 		r.response = &responses.DictionaryLengthMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *DictionaryLengthRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XDictionaryLengthResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

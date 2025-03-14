@@ -25,9 +25,9 @@ func (r *SortedSetLengthByScoreRequest) cacheName() string { return r.CacheName 
 
 func (r *SortedSetLengthByScoreRequest) requestName() string { return "SortedSetLengthByScore" }
 
-func (r *SortedSetLengthByScoreRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetLengthByScoreRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpc_request := &pb.XSortedSetLengthByScoreRequest{
@@ -58,7 +58,7 @@ func (r *SortedSetLengthByScoreRequest) initGrpcRequest(scsDataClient) error {
 
 	r.grpcRequest = grpc_request
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -80,6 +80,14 @@ func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) 
 		r.response = &responses.SortedSetLengthByScoreMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SortedSetLengthByScoreRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetLengthByScoreResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

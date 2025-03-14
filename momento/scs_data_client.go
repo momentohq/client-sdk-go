@@ -3,6 +3,8 @@ package momento
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -66,7 +68,8 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		return err
 	}
 
-	if err := r.initGrpcRequest(client); err != nil {
+	req, err := r.initGrpcRequest(client)
+	if err != nil {
 		return err
 	}
 
@@ -96,9 +99,19 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 
 		// Call the request handler OnRequest method and then add the handler to list of handlers to
 		// call OnResponse on when the response comes back.
-		err = newHandler.OnRequest()
+		newReq, err := newHandler.OnRequest(req)
 		if err != nil {
 			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
+		if newReq != nil {
+			if reflect.TypeOf(newReq) != reflect.TypeOf(req) {
+				return NewMomentoError(
+					ClientSdkError,
+					fmt.Sprintf("middleware request handler %T OnRequest returned an invalid request", newHandler),
+					nil,
+				)
+			}
+			req = newReq
 		}
 
 		// Give the middleware a chance to modify the request metadata. If a middleware doesn't implement
@@ -121,11 +134,15 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		rh := middlewareRequestHandlers[i]
 		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
 		if newResp != nil {
-			var ok bool
-			resp, ok = newResp.(grpcResponse)
-			if !ok {
-				return NewMomentoError(ClientSdkError, "middleware OnResponse returned an invalid response", nil)
+			err := r.validateResponseType(newResp.(grpcResponse))
+			if err != nil {
+				return NewMomentoError(
+					ClientSdkError,
+					fmt.Sprintf("middleware request handler %T OnResponse returned an invalid response", rh),
+					nil,
+				)
 			}
+			resp = newResp.(grpcResponse)
 		}
 		if !errors.Is(requestHandlerError, requestError) {
 			requestError = requestHandlerError

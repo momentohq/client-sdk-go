@@ -25,16 +25,16 @@ func (r *ItemGetTypeRequest) key() Key { return r.Key }
 
 func (r *ItemGetTypeRequest) requestName() string { return "ItemGetType" }
 
-func (r *ItemGetTypeRequest) initGrpcRequest(scsDataClient) error {
+func (r *ItemGetTypeRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	var key []byte
 
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 	r.grpcRequest = &pb.XItemGetTypeRequest{CacheKey: key}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ItemGetTypeRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -60,4 +60,12 @@ func (r *ItemGetTypeRequest) interpretGrpcResponse(resp interface{}) error {
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
+}
+
+func (r *ItemGetTypeRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XItemGetTypeResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

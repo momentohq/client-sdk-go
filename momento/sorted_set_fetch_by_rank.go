@@ -26,11 +26,11 @@ func (r *SortedSetFetchByRankRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetFetchByRankRequest) requestName() string { return "Sorted set fetch" }
 
-func (r *SortedSetFetchByRankRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetFetchByRankRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpcReq := &pb.XSortedSetFetchRequest{
@@ -62,7 +62,7 @@ func (r *SortedSetFetchByRankRequest) initGrpcRequest(scsDataClient) error {
 		}
 		endForValidation := *r.EndRank
 		if err := validateSortedSetRanks(startForValidation, endForValidation); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -70,7 +70,7 @@ func (r *SortedSetFetchByRankRequest) initGrpcRequest(scsDataClient) error {
 
 	r.grpcRequest = grpcReq
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SortedSetFetchByRankRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -105,4 +105,12 @@ func sortedSetByRankGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) 
 		})
 	}
 	return returnList
+}
+
+func (r *SortedSetFetchByRankRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetFetchResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

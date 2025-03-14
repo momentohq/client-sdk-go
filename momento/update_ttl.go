@@ -31,21 +31,21 @@ func (r *UpdateTtlRequest) updateTtl() time.Duration { return r.Ttl }
 
 func (r *UpdateTtlRequest) requestName() string { return "UpdateTtl" }
 
-func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) error {
+func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	var ttl uint64
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	if ttl, err = prepareUpdateTtl(r); err != nil {
-		return err
+		return nil, err
 	}
 	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_OverwriteToMilliseconds{OverwriteToMilliseconds: ttl}}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *UpdateTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -68,6 +68,14 @@ func (r *UpdateTtlRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.UpdateTtlSet{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *UpdateTtlRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XUpdateTtlResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

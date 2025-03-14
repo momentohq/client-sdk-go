@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-
 	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -17,7 +16,6 @@ type GetRequest struct {
 	Key Key
 
 	grpcRequest *pb.XGetRequest
-
 	response responses.GetResponse
 }
 
@@ -27,19 +25,19 @@ func (r *GetRequest) key() Key { return r.Key }
 
 func (r *GetRequest) requestName() string { return "Get" }
 
-func (r *GetRequest) initGrpcRequest(scsDataClient) error {
+func (r *GetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XGetRequest{
 		CacheKey: key,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *GetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -63,4 +61,12 @@ func (r *GetRequest) interpretGrpcResponse(resp interface{}) error {
 	} else {
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
+}
+
+func (r *GetRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XGetResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

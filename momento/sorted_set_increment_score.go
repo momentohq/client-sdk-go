@@ -37,26 +37,26 @@ func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.Ttl.Ttl 
 
 func (r *SortedSetIncrementScoreRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
-func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	if r.Amount == 0 {
-		return momentoerrors.NewMomentoSvcErr(
+		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Amount must be given and cannot be 0",
 			errors.New("invalid argument"),
@@ -70,7 +70,7 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) e
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -87,5 +87,13 @@ func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{})
 	myResp := resp.(*pb.XSortedSetIncrementResponse)
 	r.response = responses.SortedSetIncrementScoreSuccess(myResp.Score)
 
+	return nil
+}
+
+func (r *SortedSetIncrementScoreRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetIncrementResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

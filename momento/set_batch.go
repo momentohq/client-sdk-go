@@ -27,15 +27,15 @@ func (r *SetBatchRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetBatchRequest) requestName() string { return "SetBatch" }
 
-func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	if _, err = prepareName(r.CacheName, "Cache name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	// For each item, prepare a SetRequest
@@ -52,7 +52,7 @@ func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) error {
 		Items: setRequests,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -93,5 +93,9 @@ func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 	}
 
 	r.response = *responses.NewSetBatchSuccess(setResponses)
+	return nil
+}
+
+func (r *SetBatchRequest) validateResponseType(resp grpcResponse) error {
 	return nil
 }

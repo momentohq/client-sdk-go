@@ -39,22 +39,22 @@ func (r *SetIfAbsentRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetIfAbsentRequest) requestName() string { return "SetIfNotExists" }
 
-func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	condition := &pb.XSetIfRequest_Absent{
@@ -67,7 +67,7 @@ func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) error {
 		Condition:       condition,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetIfAbsentRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -94,5 +94,12 @@ func (r *SetIfAbsentRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 
 	r.response = theResponse
+	return nil
+}
+func (r *SetIfAbsentRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetIfResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

@@ -24,16 +24,16 @@ func (r *SetRemoveElementsRequest) cacheName() string { return r.CacheName }
 
 func (r *SetRemoveElementsRequest) requestName() string { return "SetRemoveElements" }
 
-func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	elements, err := momentoValuesToPrimitiveByteList(r.Elements)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XSetDifferenceRequest{
@@ -49,7 +49,7 @@ func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) error {
 		},
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -64,5 +64,13 @@ func (r *SetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Conte
 
 func (r *SetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetRemoveElementsSuccess{}
+	return nil
+}
+
+func (r *SetRemoveElementsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetDifferenceResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

@@ -36,26 +36,26 @@ func (r *DictionaryIncrementRequest) collectionTtl() *utils.CollectionTtl { retu
 
 func (r *DictionaryIncrementRequest) requestName() string { return "DictionaryIncrement" }
 
-func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error {
+func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var field []byte
 	if field, err = prepareField(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	if r.Amount == 0 {
-		return momentoerrors.NewMomentoSvcErr(
+		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Amount must be given and cannot be 0",
 			errors.New("invalid argument"),
@@ -70,7 +70,7 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error
 		RefreshTtl:      refreshTtl,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *DictionaryIncrementRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -86,5 +86,13 @@ func (r *DictionaryIncrementRequest) makeGrpcRequest(requestMetadata context.Con
 func (r *DictionaryIncrementRequest) interpretGrpcResponse(resp interface{}) error {
 	myResp := resp.(*pb.XDictionaryIncrementResponse)
 	r.response = responses.NewDictionaryIncrementSuccess(myResp.Value)
+	return nil
+}
+
+func (r *DictionaryIncrementRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XDictionaryIncrementResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

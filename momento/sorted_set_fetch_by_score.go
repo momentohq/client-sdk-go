@@ -28,11 +28,11 @@ func (r *SortedSetFetchByScoreRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetFetchByScoreRequest) requestName() string { return "Sorted set fetch" }
 
-func (r *SortedSetFetchByScoreRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetFetchByScoreRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpcReq := &pb.XSortedSetFetchRequest{
@@ -80,7 +80,7 @@ func (r *SortedSetFetchByScoreRequest) initGrpcRequest(scsDataClient) error {
 
 	r.grpcRequest = grpcReq
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SortedSetFetchByScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -115,4 +115,12 @@ func sortedSetByScoreGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement)
 		})
 	}
 	return returnList
+}
+
+func (r *SortedSetFetchByScoreRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetFetchResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

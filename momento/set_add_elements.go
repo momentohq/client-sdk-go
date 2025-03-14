@@ -33,22 +33,22 @@ func (r *SetAddElementsRequest) collectionTtl() *utils.CollectionTtl { return r.
 
 func (r *SetAddElementsRequest) requestName() string { return "SetAddElements" }
 
-func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	elements, err := momentoValuesToPrimitiveByteList(r.Elements)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XSetUnionRequest{
@@ -58,7 +58,7 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) error {
 		RefreshTtl:      refreshTtl,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -73,5 +73,13 @@ func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context,
 
 func (r *SetAddElementsRequest) interpretGrpcResponse(_ interface{}) error {
 	r.response = &responses.SetAddElementsSuccess{}
+	return nil
+}
+
+func (r *SetAddElementsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetUnionResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

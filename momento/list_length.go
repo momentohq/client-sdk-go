@@ -23,16 +23,16 @@ func (r *ListLengthRequest) cacheName() string { return r.CacheName }
 
 func (r *ListLengthRequest) requestName() string { return "ListLength" }
 
-func (r *ListLengthRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XListLengthRequest{
 		ListName: []byte(r.ListName),
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ListLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -57,3 +57,12 @@ func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
+
+func (r *ListLengthRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListLengthResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
+}
+

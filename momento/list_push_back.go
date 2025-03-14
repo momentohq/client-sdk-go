@@ -34,22 +34,22 @@ func (r *ListPushBackRequest) collectionTtl() *utils.CollectionTtl { return r.Tt
 
 func (r *ListPushBackRequest) requestName() string { return "ListPushBack" }
 
-func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XListPushBackRequest{
@@ -60,7 +60,7 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ListPushBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -76,5 +76,13 @@ func (r *ListPushBackRequest) makeGrpcRequest(requestMetadata context.Context, c
 func (r *ListPushBackRequest) interpretGrpcResponse(resp interface{}) error {
 	myResp := resp.(*pb.XListPushBackResponse)
 	r.response = responses.NewListPushBackSuccess(myResp.ListLength)
+	return nil
+}
+
+func (r *ListPushBackRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListPushBackResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

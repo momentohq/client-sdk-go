@@ -24,16 +24,16 @@ func (r *ItemGetTtlRequest) key() Key { return r.Key }
 
 func (r *ItemGetTtlRequest) requestName() string { return "ItemGetTypeTL" }
 
-func (r *ItemGetTtlRequest) initGrpcRequest(scsDataClient) error {
+func (r *ItemGetTtlRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	var key []byte
 
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 	r.grpcRequest = &pb.XItemGetTtlRequest{CacheKey: key}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ItemGetTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -59,4 +59,12 @@ func (r *ItemGetTtlRequest) interpretGrpcResponse(resp interface{}) error {
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
+}
+
+func (r *ItemGetTtlRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XItemGetTtlResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

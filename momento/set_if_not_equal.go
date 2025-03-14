@@ -41,27 +41,27 @@ func (r *SetIfNotEqualRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetIfNotEqualRequest) requestName() string { return "SetIfNotExists" }
 
-func (r *SetIfNotEqualRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfNotEqualRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var notEqual []byte
 	if notEqual, err = prepareNotEqual(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	condition := &pb.XSetIfRequest_NotEqual{
@@ -76,7 +76,7 @@ func (r *SetIfNotEqualRequest) initGrpcRequest(client scsDataClient) error {
 		Condition:       condition,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetIfNotEqualRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -101,5 +101,13 @@ func (r *SetIfNotEqualRequest) interpretGrpcResponse(resp interface{}) error {
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
+	return nil
+}
+
+func (r *SetIfNotEqualRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetIfResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

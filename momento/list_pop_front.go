@@ -23,14 +23,14 @@ func (r *ListPopFrontRequest) cacheName() string { return r.CacheName }
 
 func (r *ListPopFrontRequest) requestName() string { return "ListPopFront" }
 
-func (r *ListPopFrontRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListPopFrontRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 	r.grpcRequest = &pb.XListPopFrontRequest{
 		ListName: []byte(r.ListName),
 	}
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ListPopFrontRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -52,6 +52,14 @@ func (r *ListPopFrontRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.ListPopFrontMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *ListPopFrontRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListPopFrontResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

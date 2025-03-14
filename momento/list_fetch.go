@@ -25,11 +25,11 @@ func (r *ListFetchRequest) cacheName() string { return r.CacheName }
 
 func (r *ListFetchRequest) requestName() string { return "ListFetch" }
 
-func (r *ListFetchRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListFetchRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpcRequest := &pb.XListFetchRequest{
@@ -51,7 +51,7 @@ func (r *ListFetchRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	r.grpcRequest = grpcRequest
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *ListFetchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -73,6 +73,14 @@ func (r *ListFetchRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.ListFetchMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *ListFetchRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListFetchResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

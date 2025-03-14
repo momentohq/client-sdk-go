@@ -26,16 +26,16 @@ func (r *DictionaryGetFieldsRequest) fields() []Value { return r.Fields }
 
 func (r *DictionaryGetFieldsRequest) requestName() string { return "DictionaryGetFields" }
 
-func (r *DictionaryGetFieldsRequest) initGrpcRequest(scsDataClient) error {
+func (r *DictionaryGetFieldsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var fields [][]byte
 	if fields, err = prepareFields(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XDictionaryGetRequest{
@@ -43,7 +43,7 @@ func (r *DictionaryGetFieldsRequest) initGrpcRequest(scsDataClient) error {
 		Fields:         fields,
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *DictionaryGetFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -79,6 +79,14 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) err
 		r.response = responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn)
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *DictionaryGetFieldsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XDictionaryGetResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

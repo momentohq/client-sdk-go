@@ -23,16 +23,16 @@ func (r *SetLengthRequest) cacheName() string { return r.CacheName }
 
 func (r *SetLengthRequest) requestName() string { return "SetLength" }
 
-func (r *SetLengthRequest) initGrpcRequest(scsDataClient) error {
+func (r *SetLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XSetLengthRequest{
 		SetName: []byte(r.SetName),
 	}
 
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SetLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -54,6 +54,14 @@ func (r *SetLengthRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.SetLengthMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SetLengthRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetLengthResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

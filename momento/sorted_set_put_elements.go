@@ -32,22 +32,22 @@ func (r *SortedSetPutElementsRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
 func (r *SortedSetPutElementsRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
-func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	elements, err := convertSortedSetElementsToGrpc(r.Elements)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.grpcRequest = &pb.XSortedSetPutRequest{
@@ -56,7 +56,7 @@ func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) erro
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
-	return nil
+	return r.grpcRequest, nil
 }
 
 func (r *SortedSetPutElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
@@ -93,4 +93,12 @@ func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) ([]*pb.
 		})
 	}
 	return returnList, nil
+}
+
+func (r *SortedSetPutElementsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetPutResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

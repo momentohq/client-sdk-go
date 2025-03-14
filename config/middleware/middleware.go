@@ -119,12 +119,11 @@ type requestHandler struct {
 type RequestHandler interface {
 	GetId() uuid.UUID
 	GetRequest() interface{}
-	SetRequest(interface{}) error
 	GetRequestName() string
 	GetResourceName() string
 	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
-	OnRequest() error
+	OnRequest(theRequest interface{}) (interface{}, error)
 	OnResponse(theResponse interface{}, err error) (interface{}, error)
 }
 
@@ -142,18 +141,6 @@ func (rh *requestHandler) GetId() uuid.UUID {
 
 func (rh *requestHandler) GetRequest() interface{} {
 	return rh.request
-}
-
-// SetRequest sets the request object on the handler. This method can be used by middleware to modify the request object.
-// If the middleware returns an error, the request will be cancelled. The new request object must be the same type as the
-// original request object, and an error is returned if this is not the case.
-func (rh *requestHandler) SetRequest(newRequest interface{}) error {
-	// make sure the old and new requests are the same type
-	if reflect.TypeOf(rh.request) != reflect.TypeOf(newRequest) {
-		return fmt.Errorf("request type mismatch: %T != %T", rh.request, newRequest)
-	}
-	rh.request = newRequest
-	return nil
 }
 
 func (rh *requestHandler) GetRequestName() string {
@@ -175,8 +162,8 @@ func (rh *requestHandler) GetResourceName() string {
 // OnRequest is called before the request is made to the backend. It can be used to modify the request object or
 // return an error to halt the request. If the method is used to modify the request, the request must be set on the
 // handler using SetRequest
-func (rh *requestHandler) OnRequest() error {
-	return nil
+func (rh *requestHandler) OnRequest(_ interface{}) (interface{}, error) {
+	return nil, nil
 }
 
 // OnResponse is called after the response is received from the backend. It is passed the response object, which can
