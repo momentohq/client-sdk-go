@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.33.3](https://github.com/momentohq/client-sdk-go/compare/v1.33.2...v1.33.3) (2025-03-14)
+
+
+### Bug Fixes
+
+* add topic subscribe timeout ([#596](https://github.com/momentohq/client-sdk-go/issues/596)) ([06337c3](https://github.com/momentohq/client-sdk-go/commit/06337c39bba021244ea52a19a5fe96b99994cd46))
+
+
+### Miscellaneous
+
+* fix request names in several requester objects ([#600](https://github.com/momentohq/client-sdk-go/issues/600)) ([7aeb3d4](https://github.com/momentohq/client-sdk-go/commit/7aeb3d4770abd7ad3a1d5bca6e16c93173a5f152))
+* update topics loadgen example ([#593](https://github.com/momentohq/client-sdk-go/issues/593)) ([b6fdb79](https://github.com/momentohq/client-sdk-go/commit/b6fdb794fdd8a58f510c7deefbaaf237e0b8f90a))
+
 ## [1.33.2](https://github.com/momentohq/client-sdk-go/compare/v1.33.1...v1.33.2) (2025-03-05)
 
 
