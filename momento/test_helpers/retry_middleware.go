@@ -35,8 +35,8 @@ type retryMetrics struct {
 
 type RetryMetricsCollector interface {
 	AddTimestamp(cacheName string, requestName string, timestamp int64)
-	GetTotalRetryCount(cacheName string, requestName string) int
-	GetAverageTimeBetweenRetries(cacheName string, requestName string) int64
+	GetTotalRetryCount(cacheName string, requestName string) (int, error)
+	GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error)
 	GetAllMetrics() map[string]map[string][]int64
 }
 
@@ -51,28 +51,36 @@ func (r *retryMetrics) AddTimestamp(cacheName string, requestName string, timest
 	r.data[cacheName][requestName] = append(r.data[cacheName][requestName], timestamp)
 }
 
-func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) int {
-	// The first timestamp is the original request, so we subtract 1
-	return len(r.data[cacheName][requestName]) - 1
+func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) (int, error) {
+	if _, ok := r.data[cacheName]; !ok {
+		return 0, fmt.Errorf("cache name '%s' is not valid", cacheName)
+	}
+	if timestamps, ok := r.data[cacheName][requestName]; ok {
+		// The first timestamp is the original request, so we subtract 1
+		return len(timestamps) - 1, nil
+	}
+	return 0, fmt.Errorf("request name '%s' is not valid", requestName)
 }
 
 // GetAverageTimeBetweenRetries returns the average time between retries in seconds.
 // TODO: what resolution are we looking for here? I'm using Unix epoch time, so am currently
 //
 //	limited to seconds, but I can obviously change that.
-func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) int64 {
-	if timestamps, ok := r.data[cacheName][requestName]; !ok {
-		return 0
-	} else {
+func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error) {
+	if _, ok := r.data[cacheName]; !ok {
+		return int64(0), fmt.Errorf("cache name '%s' is not valid", cacheName)
+	}
+	if timestamps, ok := r.data[cacheName][requestName]; ok {
 		if len(timestamps) < 2 {
-			return 0
+			return 0, nil
 		}
 		var sum int64
 		for i := 1; i < len(timestamps); i++ {
 			sum += timestamps[i] - timestamps[i-1]
 		}
-		return sum / int64(len(timestamps)-1)
+		return sum / int64(len(timestamps)-1), nil
 	}
+	return 0, fmt.Errorf("request name '%s' is not valid", requestName)
 }
 
 func (r *retryMetrics) GetAllMetrics() map[string]map[string][]int64 {

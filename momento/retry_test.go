@@ -130,7 +130,8 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(setResponse).To(BeNil())
 			Expect(err).To(Not(BeNil()))
 			Expect(err).To(HaveMomentoErrorCode(momento.TimeoutError))
-			Expect(metricsCollector.GetTotalRetryCount("cache", "Set") > 1).To(BeTrue())
+			retries, err := metricsCollector.GetTotalRetryCount("cache", "Set")
+			Expect(retries > 1).To(BeTrue())
 		})
 
 		It("should succeed after multiple retries", func() {
@@ -163,7 +164,8 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 			Expect(setResponse).To(Not(BeNil()))
 			Expect(err).To(BeNil())
 			Expect(setResponse).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
-			Expect(metricsCollector.GetTotalRetryCount("cache", "Set") > 1).To(BeTrue())
+			retries, err := metricsCollector.GetTotalRetryCount("cache", "Set")
+			Expect(retries > 1).To(BeTrue())
 		})
 
 		It("should not try to retry if the status code is not retryable", func() {
