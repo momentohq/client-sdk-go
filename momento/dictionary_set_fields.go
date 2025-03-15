@@ -87,3 +87,7 @@ func (r *DictionarySetFieldsRequest) interpretGrpcResponse() error {
 	r.response = &responses.DictionarySetFieldsSuccess{}
 	return nil
 }
+
+func (r *DictionarySetFieldsRequest) getResponse() interface{} {
+	return r.response
+}

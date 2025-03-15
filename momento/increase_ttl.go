@@ -80,3 +80,7 @@ func (r *IncreaseTtlRequest) interpretGrpcResponse() error {
 
 	return nil
 }
+
+func (r *IncreaseTtlRequest) getResponse() interface{} {
+	return r.response
+}

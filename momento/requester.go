@@ -34,6 +34,7 @@ type requester interface {
 	makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)
 	interpretGrpcResponse() error
 	requestName() string
+	getResponse() interface{}
 }
 
 type grpcResponse interface {

@@ -9,7 +9,6 @@ GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aw
 TEST_DIRS = momento/ auth/ batchutils/
 GINKGO_OPTS = --no-color -v
 
-
 install-goimport:
 	@if ! command -v goimports &> /dev/null; then \
 		echo "goimports not found, installing..."; \

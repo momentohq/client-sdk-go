@@ -79,3 +79,7 @@ func (r *SetRequest) interpretGrpcResponse() error {
 	r.response = &responses.SetSuccess{}
 	return nil
 }
+
+func (r *SetRequest) getResponse() interface{} {
+	return r.response
+}

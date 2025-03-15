@@ -66,3 +66,5 @@ func (r *SetPopRequest) interpretGrpcResponse() error {
 	}
 	return nil
 }
+
+func (r *SetPopRequest) getResponse() interface{} { return r.response }

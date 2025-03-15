@@ -78,3 +78,5 @@ func (r *UpdateTtlRequest) interpretGrpcResponse() error {
 
 	return nil
 }
+
+func (r *UpdateTtlRequest) getResponse() interface{} { return r.response }
