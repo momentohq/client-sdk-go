@@ -9,6 +9,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy.
+// This interceptor is duplicated with slight modifications in the test helpers package for testing purposes.
+//
+// #########################
+//
+// IF YOU MODIFY THIS FUNCTION ALSO MODIFY THE ONE IN test_helpers/retry_middleware.go
+//
+// #########################
 func AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
