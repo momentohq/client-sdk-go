@@ -13,7 +13,7 @@ type ItemGetTtlRequest struct {
 	CacheName string
 	Key       Key
 
-	grpcRequest *pb.XItemGetTtlRequest
+
 
 	response responses.ItemGetTtlResponse
 }
@@ -24,21 +24,21 @@ func (r *ItemGetTtlRequest) key() Key { return r.Key }
 
 func (r *ItemGetTtlRequest) requestName() string { return "ItemGetTypeTL" }
 
-func (r *ItemGetTtlRequest) initGrpcRequest(scsDataClient) error {
+func (r *ItemGetTtlRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	var key []byte
 
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XItemGetTtlRequest{CacheKey: key}
+	grpcRequest := &pb.XItemGetTtlRequest{CacheKey: key}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ItemGetTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ItemGetTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ItemGetTtl(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ItemGetTtl(requestMetadata, grpcRequest.(*pb.XItemGetTtlRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -59,4 +59,12 @@ func (r *ItemGetTtlRequest) interpretGrpcResponse(resp interface{}) error {
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
+}
+
+func (r *ItemGetTtlRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XItemGetTtlResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

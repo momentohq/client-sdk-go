@@ -24,7 +24,7 @@ type SetIfAbsentRequest struct {
 
 	// We issue a SetIfNotExists request to the server instead of a SetIf request because
 	// the backend implementation of SetIfNotExists is more efficient than SetIf.
-	grpcRequest *pb.XSetIfRequest
+
 
 	response responses.SetIfAbsentResponse
 }
@@ -39,40 +39,40 @@ func (r *SetIfAbsentRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetIfAbsentRequest) requestName() string { return "SetIfNotExists" }
 
-func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfAbsentRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	condition := &pb.XSetIfRequest_Absent{
 		Absent: &pb.Absent{},
 	}
-	r.grpcRequest = &pb.XSetIfRequest{
+	grpcRequest := &pb.XSetIfRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       condition,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetIfAbsentRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetIfAbsentRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIf(requestMetadata, grpcRequest.(*pb.XSetIfRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -94,5 +94,12 @@ func (r *SetIfAbsentRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 
 	r.response = theResponse
+	return nil
+}
+func (r *SetIfAbsentRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetIfResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

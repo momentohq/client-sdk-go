@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-
 	"github.com/momentohq/client-sdk-go/responses"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -16,7 +15,6 @@ type GetRequest struct {
 	// string or byte key to be used to store item
 	Key Key
 
-	grpcRequest *pb.XGetRequest
 
 	response responses.GetResponse
 }
@@ -27,24 +25,24 @@ func (r *GetRequest) key() Key { return r.Key }
 
 func (r *GetRequest) requestName() string { return "Get" }
 
-func (r *GetRequest) initGrpcRequest(scsDataClient) error {
+func (r *GetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XGetRequest{
+	grpcRequest := &pb.XGetRequest{
 		CacheKey: key,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *GetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *GetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Get(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Get(requestMetadata, grpcRequest.(*pb.XGetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -63,4 +61,12 @@ func (r *GetRequest) interpretGrpcResponse(resp interface{}) error {
 	} else {
 		return errUnexpectedGrpcResponse(r, myResp)
 	}
+}
+
+func (r *GetRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XGetResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

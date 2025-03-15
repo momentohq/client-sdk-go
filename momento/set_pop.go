@@ -15,7 +15,7 @@ type SetPopRequest struct {
 	SetName   string
 	Count     *uint32
 
-	grpcRequest *pb.XSetPopRequest
+
 
 	response responses.SetPopResponse
 }
@@ -24,11 +24,11 @@ func (r *SetPopRequest) cacheName() string { return r.CacheName }
 
 func (r *SetPopRequest) requestName() string { return "SetPop" }
 
-func (r *SetPopRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetPopRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var count uint32 = 1
@@ -36,17 +36,17 @@ func (r *SetPopRequest) initGrpcRequest(client scsDataClient) error {
 		count = uint32(*r.Count)
 	}
 
-	r.grpcRequest = &pb.XSetPopRequest{
+	grpcRequest := &pb.XSetPopRequest{
 		SetName: []byte(r.SetName),
 		Count:   count,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetPopRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetPopRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetPop(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetPop(requestMetadata, grpcRequest.(*pb.XSetPopRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -63,6 +63,14 @@ func (r *SetPopRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.SetPopMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SetPopRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetPopResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

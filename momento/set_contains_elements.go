@@ -15,7 +15,7 @@ type SetContainsElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest *pb.XSetContainsRequest
+
 
 	response responses.SetContainsElementsResponse
 }
@@ -24,11 +24,11 @@ func (r *SetContainsElementsRequest) cacheName() string { return r.CacheName }
 
 func (r *SetContainsElementsRequest) requestName() string { return "SetContainsElements" }
 
-func (r *SetContainsElementsRequest) initGrpcRequest(scsDataClient) error {
+func (r *SetContainsElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var values [][]byte
@@ -36,17 +36,17 @@ func (r *SetContainsElementsRequest) initGrpcRequest(scsDataClient) error {
 		values = append(values, v.asBytes())
 	}
 
-	r.grpcRequest = &pb.XSetContainsRequest{
+	grpcRequest := &pb.XSetContainsRequest{
 		SetName:  []byte(r.SetName),
 		Elements: values,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetContainsElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetContainsElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetContains(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetContains(requestMetadata, grpcRequest.(*pb.XSetContainsRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -63,6 +63,14 @@ func (r *SetContainsElementsRequest) interpretGrpcResponse(resp interface{}) err
 		r.response = responses.NewSetContainsElementsHit(rtype.Found.Contains)
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SetContainsElementsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetContainsResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

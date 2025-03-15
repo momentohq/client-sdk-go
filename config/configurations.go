@@ -2,11 +2,10 @@
 package config
 
 import (
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
-
-	"github.com/momentohq/client-sdk-go/internal/retry"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -34,7 +33,10 @@ func LaptopLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 				deadline: 5 * time.Second,
 			}),
 		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
+		RetryStrategy:   retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			MaxAttempts:         3,
+		}),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
 	})
@@ -63,7 +65,10 @@ func InRegionLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configu
 				deadline: 1100 * time.Millisecond,
 			}),
 		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
+		RetryStrategy:   retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			MaxAttempts:         3,
+		}),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
 	})
@@ -97,7 +102,10 @@ func LambdaLatestWithLogger(loggerFactory logger.MomentoLoggerFactory) Configura
 				deadline: 1100 * time.Millisecond,
 			}).WithKeepAliveDisabled(),
 		}),
-		RetryStrategy:   retry.NewFixedCountRetryStrategy(loggerFactory),
+		RetryStrategy:   retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			MaxAttempts:         3,
+		}),
 		NumGrpcChannels: 1,
 		ReadConcern:     BALANCED,
 	})

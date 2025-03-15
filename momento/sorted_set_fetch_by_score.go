@@ -19,7 +19,7 @@ type SortedSetFetchByScoreRequest struct {
 	Offset    *uint32
 	Count     *uint32
 
-	grpcRequest *pb.XSortedSetFetchRequest
+
 
 	response responses.SortedSetFetchResponse
 }
@@ -28,11 +28,11 @@ func (r *SortedSetFetchByScoreRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetFetchByScoreRequest) requestName() string { return "Sorted set fetch" }
 
-func (r *SortedSetFetchByScoreRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetFetchByScoreRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpcReq := &pb.XSortedSetFetchRequest{
@@ -77,15 +77,12 @@ func (r *SortedSetFetchByScoreRequest) initGrpcRequest(scsDataClient) error {
 	}
 
 	grpcReq.Range = &by_score
-
-	r.grpcRequest = grpcReq
-
-	return nil
+	return grpcReq, nil
 }
 
-func (r *SortedSetFetchByScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetFetchByScoreRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetFetch(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetFetch(requestMetadata, grpcRequest.(*pb.XSortedSetFetchRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -115,4 +112,12 @@ func sortedSetByScoreGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement)
 		})
 	}
 	return returnList
+}
+
+func (r *SortedSetFetchByScoreRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetFetchResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

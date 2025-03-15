@@ -28,10 +28,11 @@ func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors
 
 type requester interface {
 	hasCacheName
-	initGrpcRequest(client scsDataClient) error
-	makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)
+	initGrpcRequest(client scsDataClient) (interface{}, error)
+	makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)
 	interpretGrpcResponse(theResponse interface{}) error
 	requestName() string
+	validateResponseType(resp grpcResponse) error
 }
 
 type grpcResponse interface {

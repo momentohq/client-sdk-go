@@ -24,31 +24,29 @@ func (r *SortedSetGetScoresRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetGetScoresRequest) requestName() string { return "Sorted set get score" }
 
-func (r *SortedSetGetScoresRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetGetScoresRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	values, err := momentoValuesToPrimitiveByteList(r.Values)
+	r.grpcRequest.Values = values
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp := &pb.XSortedSetGetScoreRequest{
 		SetName: []byte(r.SetName),
 		Values:  values,
 	}
-
-	r.grpcRequest = resp
-
-	return nil
+	return resp, nil
 }
 
-func (r *SortedSetGetScoresRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetGetScoresRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetGetScore(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetGetScore(requestMetadata, grpcRequest.(*pb.XSortedSetGetScoreRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -87,4 +85,12 @@ func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreRespon
 		}
 	}
 	return rList
+}
+
+func (r *SortedSetGetScoresRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetGetScoreResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
 }

@@ -14,7 +14,7 @@ type SetLengthRequest struct {
 	CacheName string
 	SetName   string
 
-	grpcRequest *pb.XSetLengthRequest
+
 
 	response responses.SetLengthResponse
 }
@@ -23,21 +23,21 @@ func (r *SetLengthRequest) cacheName() string { return r.CacheName }
 
 func (r *SetLengthRequest) requestName() string { return "SetLength" }
 
-func (r *SetLengthRequest) initGrpcRequest(scsDataClient) error {
+func (r *SetLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetLengthRequest{
+	grpcRequest := &pb.XSetLengthRequest{
 		SetName: []byte(r.SetName),
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetLengthRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetLength(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetLength(requestMetadata, grpcRequest.(*pb.XSetLengthRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -54,6 +54,14 @@ func (r *SetLengthRequest) interpretGrpcResponse(resp interface{}) error {
 		r.response = &responses.SetLengthMiss{}
 	default:
 		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *SetLengthRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetLengthResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }

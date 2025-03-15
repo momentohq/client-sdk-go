@@ -14,7 +14,7 @@ type ListLengthRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest *pb.XListLengthRequest
+
 
 	response responses.ListLengthResponse
 }
@@ -23,21 +23,21 @@ func (r *ListLengthRequest) cacheName() string { return r.CacheName }
 
 func (r *ListLengthRequest) requestName() string { return "ListLength" }
 
-func (r *ListLengthRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListLengthRequest{
+	grpcRequest := &pb.XListLengthRequest{
 		ListName: []byte(r.ListName),
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ListLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListLengthRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListLength(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListLength(requestMetadata, grpcRequest.(*pb.XListLengthRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -57,3 +57,12 @@ func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) error {
 	}
 	return nil
 }
+
+func (r *ListLengthRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListLengthResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
+	return nil
+}
+
