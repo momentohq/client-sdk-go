@@ -19,7 +19,7 @@ type ListPushBackRequest struct {
 	TruncateFrontToSize uint32
 	Ttl                 *utils.CollectionTtl
 
-	grpcRequest *pb.XListPushBackRequest
+
 
 	response responses.ListPushBackResponse
 }
@@ -52,7 +52,7 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) (interface{}
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListPushBackRequest{
+	grpcRequest := &pb.XListPushBackRequest{
 		ListName:            []byte(r.ListName),
 		Value:               value,
 		TtlMilliseconds:     ttlMilliseconds,
@@ -60,12 +60,12 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) (interface{}
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ListPushBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListPushBackRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListPushBack(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListPushBack(requestMetadata, grpcRequest.(*pb.XListPushBackRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

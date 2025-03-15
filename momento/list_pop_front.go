@@ -14,7 +14,7 @@ type ListPopFrontRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest *pb.XListPopFrontRequest
+
 
 	response responses.ListPopFrontResponse
 }
@@ -27,15 +27,15 @@ func (r *ListPopFrontRequest) initGrpcRequest(client scsDataClient) (interface{}
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XListPopFrontRequest{
+	grpcRequest := &pb.XListPopFrontRequest{
 		ListName: []byte(r.ListName),
 	}
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ListPopFrontRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListPopFrontRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListPopFront(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListPopFront(requestMetadata, grpcRequest.(*pb.XListPopFrontRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

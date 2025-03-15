@@ -14,7 +14,7 @@ type KeysExistRequest struct {
 	CacheName string
 	Keys      []Key
 
-	grpcRequest *pb.XKeysExistRequest
+
 
 	response responses.KeysExistResponse
 }
@@ -32,16 +32,16 @@ func (r *KeysExistRequest) initGrpcRequest(client scsDataClient) (interface{}, e
 	if keys, err = prepareKeys(r); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XKeysExistRequest{
+	grpcRequest := &pb.XKeysExistRequest{
 		CacheKeys: keys,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *KeysExistRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *KeysExistRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.KeysExist(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.KeysExist(requestMetadata, grpcRequest.(*pb.XKeysExistRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

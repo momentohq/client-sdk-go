@@ -22,7 +22,7 @@ type SetIfPresentRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest *pb.XSetIfRequest
+
 
 	response responses.SetIfPresentResponse
 }
@@ -55,19 +55,19 @@ func (r *SetIfPresentRequest) initGrpcRequest(client scsDataClient) (interface{}
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetIfRequest{
+	grpcRequest := &pb.XSetIfRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       &pb.XSetIfRequest_Present{},
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetIfPresentRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetIfPresentRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIf(requestMetadata, grpcRequest.(*pb.XSetIfRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

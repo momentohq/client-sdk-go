@@ -15,7 +15,7 @@ type ListRemoveValueRequest struct {
 	ListName  string
 	Value     Value
 
-	grpcRequest *pb.XListRemoveRequest
+
 
 	response responses.ListRemoveValueResponse
 }
@@ -38,17 +38,17 @@ func (r *ListRemoveValueRequest) initGrpcRequest(client scsDataClient) (interfac
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListRemoveRequest{
+	grpcRequest := &pb.XListRemoveRequest{
 		ListName: []byte(r.ListName),
 		Remove:   &pb.XListRemoveRequest_AllElementsWithValue{AllElementsWithValue: value},
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ListRemoveValueRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListRemoveValueRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListRemove(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListRemove(requestMetadata, grpcRequest.(*pb.XListRemoveRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

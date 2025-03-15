@@ -19,7 +19,7 @@ type ListConcatenateBackRequest struct {
 	TruncateFrontToSize uint32
 	Ttl                 *utils.CollectionTtl
 
-	grpcRequest *pb.XListConcatenateBackRequest
+
 
 	response responses.ListConcatenateBackResponse
 }
@@ -52,7 +52,7 @@ func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) (inte
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListConcatenateBackRequest{
+	grpcRequest := &pb.XListConcatenateBackRequest{
 		ListName:            []byte(r.ListName),
 		Values:              values,
 		TtlMilliseconds:     ttlMilliseconds,
@@ -60,12 +60,12 @@ func (r *ListConcatenateBackRequest) initGrpcRequest(client scsDataClient) (inte
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ListConcatenateBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListConcatenateBackRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListConcatenateBack(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListConcatenateBack(requestMetadata, grpcRequest.(*pb.XListConcatenateBackRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

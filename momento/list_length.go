@@ -14,7 +14,7 @@ type ListLengthRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest *pb.XListLengthRequest
+
 
 	response responses.ListLengthResponse
 }
@@ -28,16 +28,16 @@ func (r *ListLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, 
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListLengthRequest{
+	grpcRequest := &pb.XListLengthRequest{
 		ListName: []byte(r.ListName),
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ListLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListLengthRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListLength(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListLength(requestMetadata, grpcRequest.(*pb.XListLengthRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

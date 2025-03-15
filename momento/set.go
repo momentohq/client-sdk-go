@@ -22,7 +22,7 @@ type SetRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest *pb.XSetRequest
+
 
 	response responses.SetResponse
 }
@@ -55,23 +55,22 @@ func (r *SetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) 
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetRequest{
+	grpcRequest := &pb.XSetRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Set(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Set(requestMetadata, grpcRequest.(*pb.XSetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	//r.grpcResponse = resp
 	return resp, nil, nil
 }
 

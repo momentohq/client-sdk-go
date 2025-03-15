@@ -21,7 +21,7 @@ type DictionaryIncrementRequest struct {
 	Amount         int64
 	Ttl            *utils.CollectionTtl
 
-	grpcRequest *pb.XDictionaryIncrementRequest
+
 
 	response responses.DictionaryIncrementResponse
 }
@@ -62,7 +62,7 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) (inte
 		)
 	}
 
-	r.grpcRequest = &pb.XDictionaryIncrementRequest{
+	grpcRequest := &pb.XDictionaryIncrementRequest{
 		DictionaryName:  []byte(r.DictionaryName),
 		Field:           field,
 		Amount:          r.Amount,
@@ -70,12 +70,12 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) (inte
 		RefreshTtl:      refreshTtl,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryIncrementRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryIncrementRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryIncrement(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryIncrement(requestMetadata, grpcRequest.(*pb.XDictionaryIncrementRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

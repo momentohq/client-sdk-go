@@ -16,7 +16,7 @@ type ListFetchRequest struct {
 	StartIndex *int32
 	EndIndex   *int32
 
-	grpcRequest *pb.XListFetchRequest
+
 
 	response responses.ListFetchResponse
 }
@@ -50,13 +50,13 @@ func (r *ListFetchRequest) initGrpcRequest(client scsDataClient) (interface{}, e
 		}
 	}
 
-	r.grpcRequest = grpcRequest
-	return r.grpcRequest, nil
+	grpcRequest = grpcRequest
+	return grpcRequest, nil
 }
 
-func (r *ListFetchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListFetchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListFetch(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListFetch(requestMetadata, grpcRequest.(*pb.XListFetchRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

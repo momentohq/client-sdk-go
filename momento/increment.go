@@ -18,7 +18,7 @@ type IncrementRequest struct {
 	Amount    int64
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest *pb.XIncrementRequest
+
 
 	response responses.IncrementResponse
 }
@@ -46,18 +46,18 @@ func (r *IncrementRequest) initGrpcRequest(client scsDataClient) (interface{}, e
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XIncrementRequest{
+	grpcRequest := &pb.XIncrementRequest{
 		CacheKey:        field,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMilliseconds,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *IncrementRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *IncrementRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Increment(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Increment(requestMetadata, grpcRequest.(*pb.XIncrementRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

@@ -15,7 +15,7 @@ type SortedSetRemoveElementsRequest struct {
 	SetName   string
 	Values    []Value
 
-	grpcRequest *pb.XSortedSetRemoveRequest
+
 
 	response responses.SortedSetRemoveElementsResponse
 }
@@ -45,15 +45,12 @@ func (r *SortedSetRemoveElementsRequest) initGrpcRequest(client scsDataClient) (
 	grpcReq.RemoveElements = &pb.XSortedSetRemoveRequest_Some{
 		Some: &pb.XSortedSetRemoveRequest_XSome{Values: valuesToRemove},
 	}
-
-	r.grpcRequest = grpcReq
-
-	return r.grpcRequest, nil
+	return grpcReq, nil
 }
 
-func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetRemove(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetRemove(requestMetadata, grpcRequest.(*pb.XSortedSetRemoveRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

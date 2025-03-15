@@ -14,7 +14,7 @@ type ListPopBackRequest struct {
 	CacheName string
 	ListName  string
 
-	grpcRequest *pb.XListPopBackRequest
+
 
 	response responses.ListPopBackResponse
 }
@@ -27,15 +27,15 @@ func (r *ListPopBackRequest) initGrpcRequest(client scsDataClient) (interface{},
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XListPopBackRequest{
+	grpcRequest := &pb.XListPopBackRequest{
 		ListName: []byte(r.ListName),
 	}
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ListPopBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListPopBackRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListPopBack(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListPopBack(requestMetadata, grpcRequest.(*pb.XListPopBackRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

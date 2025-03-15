@@ -15,7 +15,7 @@ type SetContainsElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest *pb.XSetContainsRequest
+
 
 	response responses.SetContainsElementsResponse
 }
@@ -36,17 +36,17 @@ func (r *SetContainsElementsRequest) initGrpcRequest(client scsDataClient) (inte
 		values = append(values, v.asBytes())
 	}
 
-	r.grpcRequest = &pb.XSetContainsRequest{
+	grpcRequest := &pb.XSetContainsRequest{
 		SetName:  []byte(r.SetName),
 		Elements: values,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetContainsElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetContainsElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetContains(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetContains(requestMetadata, grpcRequest.(*pb.XSetContainsRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

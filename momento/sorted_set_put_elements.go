@@ -19,7 +19,7 @@ type SortedSetPutElementsRequest struct {
 	Elements  []SortedSetElement
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest *pb.XSortedSetPutRequest
+
 
 	response responses.SortedSetPutElementsResponse
 }
@@ -50,18 +50,18 @@ func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) (int
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSortedSetPutRequest{
+	grpcRequest := &pb.XSortedSetPutRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SortedSetPutElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetPutElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetPut(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetPut(requestMetadata, grpcRequest.(*pb.XSortedSetPutRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

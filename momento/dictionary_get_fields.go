@@ -38,17 +38,17 @@ func (r *DictionaryGetFieldsRequest) initGrpcRequest(client scsDataClient) (inte
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XDictionaryGetRequest{
+	grpcRequest := &pb.XDictionaryGetRequest{
 		DictionaryName: []byte(r.DictionaryName),
 		Fields:         fields,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryGetFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryGetFieldsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryGet(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryGet(requestMetadata, grpcRequest.(*pb.XDictionaryGetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

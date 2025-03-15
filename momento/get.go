@@ -15,7 +15,7 @@ type GetRequest struct {
 	// string or byte key to be used to store item
 	Key Key
 
-	grpcRequest *pb.XGetRequest
+
 	response responses.GetResponse
 }
 
@@ -33,16 +33,16 @@ func (r *GetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) 
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XGetRequest{
+	grpcRequest := &pb.XGetRequest{
 		CacheKey: key,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *GetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *GetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Get(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Get(requestMetadata, grpcRequest.(*pb.XGetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

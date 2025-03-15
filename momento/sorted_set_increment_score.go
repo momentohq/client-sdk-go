@@ -22,7 +22,7 @@ type SortedSetIncrementScoreRequest struct {
 	Amount    float64
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest *pb.XSortedSetIncrementRequest
+
 
 	response responses.SortedSetIncrementScoreResponse
 }
@@ -63,19 +63,19 @@ func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) (
 		)
 	}
 
-	r.grpcRequest = &pb.XSortedSetIncrementRequest{
+	grpcRequest := &pb.XSortedSetIncrementRequest{
 		SetName:         []byte(r.SetName),
 		Value:           value,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetIncrement(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetIncrement(requestMetadata, grpcRequest.(*pb.XSortedSetIncrementRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

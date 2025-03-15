@@ -21,7 +21,7 @@ type DictionarySetFieldsRequest struct {
 	Elements       []DictionaryElement
 	Ttl            *utils.CollectionTtl
 
-	grpcRequest *pb.XDictionarySetRequest
+
 
 	response responses.DictionarySetFieldsResponse
 }
@@ -62,19 +62,19 @@ func (r *DictionarySetFieldsRequest) initGrpcRequest(client scsDataClient) (inte
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XDictionarySetRequest{
+	grpcRequest := &pb.XDictionarySetRequest{
 		DictionaryName:  []byte(r.DictionaryName),
 		Items:           pbElements,
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *DictionarySetFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionarySetFieldsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionarySet(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionarySet(requestMetadata, grpcRequest.(*pb.XDictionarySetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

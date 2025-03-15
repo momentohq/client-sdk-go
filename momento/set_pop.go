@@ -15,7 +15,7 @@ type SetPopRequest struct {
 	SetName   string
 	Count     *uint32
 
-	grpcRequest *pb.XSetPopRequest
+
 
 	response responses.SetPopResponse
 }
@@ -36,17 +36,17 @@ func (r *SetPopRequest) initGrpcRequest(client scsDataClient) (interface{}, erro
 		count = uint32(*r.Count)
 	}
 
-	r.grpcRequest = &pb.XSetPopRequest{
+	grpcRequest := &pb.XSetPopRequest{
 		SetName: []byte(r.SetName),
 		Count:   count,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetPopRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetPopRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetPop(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetPop(requestMetadata, grpcRequest.(*pb.XSetPopRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

@@ -17,7 +17,7 @@ type SortedSetFetchByRankRequest struct {
 	StartRank *int32
 	EndRank   *int32
 
-	grpcRequest *pb.XSortedSetFetchRequest
+
 
 	response responses.SortedSetFetchResponse
 }
@@ -67,15 +67,12 @@ func (r *SortedSetFetchByRankRequest) initGrpcRequest(client scsDataClient) (int
 	}
 
 	grpcReq.Range = &byIndex
-
-	r.grpcRequest = grpcReq
-
-	return r.grpcRequest, nil
+	return grpcReq, nil
 }
 
-func (r *SortedSetFetchByRankRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetFetchByRankRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetFetch(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetFetch(requestMetadata, grpcRequest.(*pb.XSortedSetFetchRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

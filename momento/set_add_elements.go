@@ -18,7 +18,7 @@ type SetAddElementsRequest struct {
 	Elements  []Value
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest *pb.XSetUnionRequest
+
 
 	response responses.SetAddElementsResponse
 }
@@ -51,19 +51,19 @@ func (r *SetAddElementsRequest) initGrpcRequest(client scsDataClient) (interface
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetUnionRequest{
+	grpcRequest := &pb.XSetUnionRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetAddElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetAddElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetUnion(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetUnion(requestMetadata, grpcRequest.(*pb.XSetUnionRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

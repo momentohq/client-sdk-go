@@ -14,7 +14,7 @@ type DictionaryFetchRequest struct {
 	CacheName      string
 	DictionaryName string
 
-	grpcRequest *pb.XDictionaryFetchRequest
+
 
 	response responses.DictionaryFetchResponse
 }
@@ -30,14 +30,14 @@ func (r *DictionaryFetchRequest) initGrpcRequest(client scsDataClient) (interfac
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XDictionaryFetchRequest{DictionaryName: []byte(r.DictionaryName)}
+	grpcRequest := &pb.XDictionaryFetchRequest{DictionaryName: []byte(r.DictionaryName)}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryFetchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryFetchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryFetch(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryFetch(requestMetadata, grpcRequest.(*pb.XDictionaryFetchRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

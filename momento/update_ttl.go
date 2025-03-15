@@ -18,7 +18,7 @@ type UpdateTtlRequest struct {
 	// Time to live that you want to update in cache in seconds.
 	Ttl time.Duration
 
-	grpcRequest *pb.XUpdateTtlRequest
+
 
 	response responses.UpdateTtlResponse
 }
@@ -43,14 +43,14 @@ func (r *UpdateTtlRequest) initGrpcRequest(client scsDataClient) (interface{}, e
 	if ttl, err = prepareUpdateTtl(r); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_OverwriteToMilliseconds{OverwriteToMilliseconds: ttl}}
+	grpcRequest := &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_OverwriteToMilliseconds{OverwriteToMilliseconds: ttl}}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *UpdateTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *UpdateTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.UpdateTtl(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.UpdateTtl(requestMetadata, grpcRequest.(*pb.XUpdateTtlRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

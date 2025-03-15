@@ -16,7 +16,7 @@ type SetBatchRequest struct {
 	Items     []BatchSetItem
 	Ttl       time.Duration
 
-	grpcRequest *pb.XSetBatchRequest
+
 	grpcStream  pb.Scs_SetBatchClient
 	response    responses.SetBatchResponse
 }
@@ -48,17 +48,17 @@ func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) (interface{}, er
 		})
 	}
 
-	r.grpcRequest = &pb.XSetBatchRequest{
+	grpcRequest := &pb.XSetBatchRequest{
 		Items: setRequests,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetBatchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
 	var responseMetadata []metadata.MD
-	resp, err := client.grpcClient.SetBatch(requestMetadata, r.grpcRequest)
+	resp, err := client.grpcClient.SetBatch(requestMetadata, grpcRequest.(*pb.XSetBatchRequest))
 	// If there is an error, it's possible resp is nil and we should avoid
 	// calling Header() and Trailer() on it to avoid a panic
 	if resp != nil {

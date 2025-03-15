@@ -15,7 +15,7 @@ type SetRemoveElementsRequest struct {
 	SetName   string
 	Elements  []Value
 
-	grpcRequest *pb.XSetDifferenceRequest
+
 
 	response responses.SetRemoveElementsResponse
 }
@@ -36,7 +36,7 @@ func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) (interf
 		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetDifferenceRequest{
+	grpcRequest := &pb.XSetDifferenceRequest{
 		SetName: []byte(r.SetName),
 		Difference: &pb.XSetDifferenceRequest_Subtrahend{
 			Subtrahend: &pb.XSetDifferenceRequest_XSubtrahend{
@@ -49,12 +49,12 @@ func (r *SetRemoveElementsRequest) initGrpcRequest(client scsDataClient) (interf
 		},
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetRemoveElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetRemoveElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetDifference(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetDifference(requestMetadata, grpcRequest.(*pb.XSetDifferenceRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

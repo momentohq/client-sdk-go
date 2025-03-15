@@ -14,7 +14,7 @@ type ItemGetTypeRequest struct {
 	CacheName string
 	Key       Key
 
-	grpcRequest *pb.XItemGetTypeRequest
+
 
 	response responses.ItemGetTypeResponse
 }
@@ -32,14 +32,14 @@ func (r *ItemGetTypeRequest) initGrpcRequest(client scsDataClient) (interface{},
 	if key, err = prepareKey(r); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XItemGetTypeRequest{CacheKey: key}
+	grpcRequest := &pb.XItemGetTypeRequest{CacheKey: key}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *ItemGetTypeRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ItemGetTypeRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ItemGetType(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ItemGetType(requestMetadata, grpcRequest.(*pb.XItemGetTypeRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

@@ -121,7 +121,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
-	resp, responseMetadata, requestError := r.makeGrpcRequest(requestContext, client)
+	resp, responseMetadata, requestError := r.makeGrpcRequest(req, requestContext, client)
 
 	// Iterate over the middleware request handlers in reverse order, giving them a chance to
 	// inspect the response and error results. Any error returned from the middleware OnResponse()

@@ -18,7 +18,7 @@ type IncreaseTtlRequest struct {
 	// Time to live that you want to increase to.
 	Ttl time.Duration
 
-	grpcRequest *pb.XUpdateTtlRequest
+
 
 	response responses.IncreaseTtlResponse
 }
@@ -43,14 +43,14 @@ func (r *IncreaseTtlRequest) initGrpcRequest(client scsDataClient) (interface{},
 	if ttl, err = prepareUpdateTtl(r); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_IncreaseToMilliseconds{IncreaseToMilliseconds: ttl}}
+	grpcRequest := &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_IncreaseToMilliseconds{IncreaseToMilliseconds: ttl}}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *IncreaseTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *IncreaseTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.UpdateTtl(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.UpdateTtl(requestMetadata, grpcRequest.(*pb.XUpdateTtlRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

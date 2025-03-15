@@ -15,7 +15,7 @@ type DictionaryRemoveFieldsRequest struct {
 	DictionaryName string
 	Fields         []Value
 
-	grpcRequest *pb.XDictionaryDeleteRequest
+
 
 	response responses.DictionaryRemoveFieldsResponse
 }
@@ -37,17 +37,17 @@ func (r *DictionaryRemoveFieldsRequest) initGrpcRequest(client scsDataClient) (i
 	if fields, err = prepareFields(r); err != nil {
 		return nil, err
 	}
-	r.grpcRequest = &pb.XDictionaryDeleteRequest{
+	grpcRequest := &pb.XDictionaryDeleteRequest{
 		DictionaryName: []byte(r.DictionaryName),
 		Delete:         &pb.XDictionaryDeleteRequest_Some_{Some: &pb.XDictionaryDeleteRequest_Some{Fields: fields}},
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryDelete(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryDelete(requestMetadata, grpcRequest.(*pb.XDictionaryDeleteRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

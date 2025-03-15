@@ -24,7 +24,7 @@ type SetIfAbsentOrEqualRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest *pb.XSetIfRequest
+
 
 	response responses.SetIfAbsentOrEqualResponse
 }
@@ -69,19 +69,19 @@ func (r *SetIfAbsentOrEqualRequest) initGrpcRequest(client scsDataClient) (inter
 			ValueToCheck: equal,
 		},
 	}
-	r.grpcRequest = &pb.XSetIfRequest{
+	grpcRequest := &pb.XSetIfRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       condition,
 	}
 
-	return r.grpcRequest, nil
+	return grpcRequest, nil
 }
 
-func (r *SetIfAbsentOrEqualRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetIfAbsentOrEqualRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIf(requestMetadata, grpcRequest.(*pb.XSetIfRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err

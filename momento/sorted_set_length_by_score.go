@@ -16,7 +16,7 @@ type SortedSetLengthByScoreRequest struct {
 	MinScore  *float64
 	MaxScore  *float64
 
-	grpcRequest *pb.XSortedSetLengthByScoreRequest
+
 
 	response responses.SortedSetLengthByScoreResponse
 }
@@ -55,15 +55,12 @@ func (r *SortedSetLengthByScoreRequest) initGrpcRequest(client scsDataClient) (i
 			InclusiveMin: *r.MinScore,
 		}
 	}
-
-	r.grpcRequest = grpc_request
-
-	return r.grpcRequest, nil
+	return grpc_request, nil
 }
 
-func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetLengthByScore(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetLengthByScore(requestMetadata, grpcRequest.(*pb.XSortedSetLengthByScoreRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
