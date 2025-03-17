@@ -108,9 +108,19 @@ precommit: lint test
 
 test: install-ginkgo
 	@echo "Running tests..."
+	@ginkgo ${GINKGO_OPTS} --label-filter "!momento-local" ${TEST_DIRS}
+
+test-all: install-ginkgo
+	@echo "Running tests..."
 	@ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
 
+
 prod-test: install-ginkgo
+	@echo "Running tests with consistent reads..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "!momento-local" ${TEST_DIRS}
+
+
+prod-test-all: install-ginkgo
 	@echo "Running tests with consistent reads..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
 
@@ -121,6 +131,11 @@ test-auth-service: install-ginkgo
 
 
 test-cache-service: install-ginkgo
+	@echo "Testing cache service..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "cache-service && !momento-local" ${TEST_DIRS}
+
+
+test-cache-service-all: install-ginkgo
 	@echo "Testing cache service..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
 

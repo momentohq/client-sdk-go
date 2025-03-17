@@ -18,6 +18,7 @@ var CACHE_SERVICE_LABEL = "cache-service"
 var LEADERBOARD_SERVICE_LABEL = "leaderboard-service"
 var STORAGE_SERVICE_LABEL = "storage-service"
 var TOPICS_SERVICE_LABEL = "topics-service"
+var MOMENTO_LOCAL_LABEL = "momento-local"
 
 func TestMomento(t *testing.T) {
 	RegisterFailHandler(Fail)

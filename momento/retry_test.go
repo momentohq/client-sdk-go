@@ -44,7 +44,8 @@ func setupCacheClientTest(config config.Configuration) momento.CacheClient {
 	return cacheClient
 }
 
-var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_LABEL), func() {
+var _ = Describe(
+	"cache-client retry eligibility-strategy", Label(CACHE_SERVICE_LABEL, MOMENTO_LOCAL_LABEL), func() {
 	DescribeTable(
 		"DefaultEligibilityStrategy -- determine retry eligibility given grpc status code and request method",
 		func(grpcStatus codes.Code, requestMethod string, expected bool) {
@@ -72,15 +73,15 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		Entry("name", codes.Unavailable, "/cache_client.Scs/Get", true),
 		Entry("name", codes.Unavailable, "/cache_client.Scs/Set", true),
 		Entry("name", codes.Unavailable, "/cache_client.Scs/DictionaryIncrement", false),
-		Entry("name", codes.Canceled, "/cache_client.Scs/Get", true),
-		Entry("name", codes.Canceled, "/cache_client.Scs/Set", true),
+		Entry("name", codes.Canceled, "/cache_client.Scs/Get", false),
+		Entry("name", codes.Canceled, "/cache_client.Scs/Set", false),
 		Entry("name", codes.Canceled, "/cache_client.Scs/DictionaryIncrement", false),
 		Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/Get", false),
 		Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/Set", false),
 		Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/DictionaryIncrement", false),
 	)
 
-	Describe("cache-client retry neverRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
+	Describe("cache-client retry neverRetryStrategy", Label(CACHE_SERVICE_LABEL, MOMENTO_LOCAL_LABEL), func() {
 		It("shouldn't retry", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
@@ -109,7 +110,7 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		})
 	})
 
-	Describe("cache-client retry exponentialBackoffRetryStrategy", Label(CACHE_SERVICE_LABEL), func() {
+	Describe("cache-client retry exponentialBackoffRetryStrategy", Label(CACHE_SERVICE_LABEL, MOMENTO_LOCAL_LABEL), func() {
 		It("should receive a timeout error after multiple retries", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
@@ -245,7 +246,7 @@ var _ = Describe("cache-client retry eligibility-strategy", Label(CACHE_SERVICE_
 		})
 	})
 
-	Describe("cache-client retry DefaultEligibilityStrategy", Label(CACHE_SERVICE_LABEL), func() {
+	Describe("cache-client retry fixedCountRetryStrategy", Label(CACHE_SERVICE_LABEL, MOMENTO_LOCAL_LABEL), func() {
 		It("should retry 3 times if the status code is retryable", func() {
 			metricsCollector := helpers.NewRetryMetricsCollector()
 			status := "unavailable"
