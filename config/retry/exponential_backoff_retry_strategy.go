@@ -62,9 +62,6 @@ func NewExponentialBackoffRetryStrategy(props ExponentialBackoffRetryStrategyPro
 		growthFactor = props.GrowthFactor
 	}
 
-	fmt.Printf("got logger %v\n", log)
-	log.Info("HI")
-
 	return &exponentialBackoffRetryStrategy{
 		eligibilityStrategy: eligibilityStrategy,
 		log:                 log,
