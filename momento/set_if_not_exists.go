@@ -22,9 +22,7 @@ type SetIfNotExistsRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
-	response     responses.SetIfNotExistsResponse
+	response responses.SetIfNotExistsResponse
 }
 
 func (r *SetIfNotExistsRequest) cacheName() string { return r.CacheName }
@@ -37,61 +35,65 @@ func (r *SetIfNotExistsRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetIfNotExistsRequest) requestName() string { return "SetIfNotExists" }
 
-func (r *SetIfNotExistsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfNotExistsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	condition := &pb.XSetIfRequest_Absent{
 		Absent: &pb.Absent{},
 	}
-	r.grpcRequest = &pb.XSetIfRequest{
+	grpcRequest := &pb.XSetIfRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       condition,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetIfNotExistsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetIfNotExistsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIf(requestMetadata, grpcRequest.(*pb.XSetIfRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfNotExistsRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfNotExistsResponse
+func (r *SetIfNotExistsRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSetIfResponse)
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfNotExistsStored{}
+		r.response = &responses.SetIfNotExistsStored{}
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfNotExistsNotStored{}
+		r.response = &responses.SetIfNotExistsNotStored{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
+	return nil
+}
 
-	r.response = resp
+func (r *SetIfNotExistsRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSetIfResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

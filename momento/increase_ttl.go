@@ -18,9 +18,7 @@ type IncreaseTtlRequest struct {
 	// Time to live that you want to increase to.
 	Ttl time.Duration
 
-	grpcRequest  *pb.XUpdateTtlRequest
-	grpcResponse *pb.XUpdateTtlResponse
-	response     responses.IncreaseTtlResponse
+	response responses.IncreaseTtlResponse
 }
 
 func (r *IncreaseTtlRequest) cacheName() string { return r.CacheName }
@@ -31,52 +29,57 @@ func (r *IncreaseTtlRequest) updateTtl() time.Duration { return r.Ttl }
 
 func (r *IncreaseTtlRequest) requestName() string { return "IncreaseTtl" }
 
-func (r *IncreaseTtlRequest) initGrpcRequest(client scsDataClient) error {
+func (r *IncreaseTtlRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	var ttl uint64
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	if ttl, err = prepareUpdateTtl(r); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_IncreaseToMilliseconds{IncreaseToMilliseconds: ttl}}
+	grpcRequest := &pb.XUpdateTtlRequest{CacheKey: key, UpdateTtl: &pb.XUpdateTtlRequest_IncreaseToMilliseconds{IncreaseToMilliseconds: ttl}}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *IncreaseTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *IncreaseTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.UpdateTtl(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.UpdateTtl(requestMetadata, grpcRequest.(*pb.XUpdateTtlRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *IncreaseTtlRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
+func (r *IncreaseTtlRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XUpdateTtlResponse)
 
-	var resp responses.IncreaseTtlResponse
-	switch grpcResp.Result.(type) {
+	var theResponse responses.IncreaseTtlResponse
+	switch myResp.Result.(type) {
 	case *pb.XUpdateTtlResponse_NotSet:
-		resp = &responses.IncreaseTtlNotSet{}
+		theResponse = &responses.IncreaseTtlNotSet{}
 	case *pb.XUpdateTtlResponse_Missing:
-		resp = &responses.IncreaseTtlMiss{}
+		theResponse = &responses.IncreaseTtlMiss{}
 	case *pb.XUpdateTtlResponse_Set:
-		resp = &responses.IncreaseTtlSet{}
+		theResponse = &responses.IncreaseTtlSet{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
 	}
 
-	r.response = resp
+	r.response = theResponse
 
+	return nil
+}
+
+func (r *IncreaseTtlRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XUpdateTtlResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

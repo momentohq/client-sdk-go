@@ -22,9 +22,7 @@ type SortedSetIncrementScoreRequest struct {
 	Amount    float64
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XSortedSetIncrementRequest
-	grpcResponse *pb.XSortedSetIncrementResponse
-	response     responses.SortedSetIncrementScoreResponse
+	response responses.SortedSetIncrementScoreResponse
 }
 
 func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }
@@ -37,55 +35,63 @@ func (r *SortedSetIncrementScoreRequest) ttl() time.Duration { return r.Ttl.Ttl 
 
 func (r *SortedSetIncrementScoreRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
-func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SortedSetIncrementScoreRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	if r.Amount == 0 {
-		return momentoerrors.NewMomentoSvcErr(
+		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Amount must be given and cannot be 0",
 			errors.New("invalid argument"),
 		)
 	}
 
-	r.grpcRequest = &pb.XSortedSetIncrementRequest{
+	grpcRequest := &pb.XSortedSetIncrementRequest{
 		SetName:         []byte(r.SetName),
 		Value:           value,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetIncrement(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetIncrement(requestMetadata, grpcRequest.(*pb.XSortedSetIncrementRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse() error {
-	r.response = responses.SortedSetIncrementScoreSuccess(r.grpcResponse.Score)
+func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XSortedSetIncrementResponse)
+	r.response = responses.SortedSetIncrementScoreSuccess(myResp.Score)
 
+	return nil
+}
+
+func (r *SortedSetIncrementScoreRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XSortedSetIncrementResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

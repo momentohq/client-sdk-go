@@ -18,9 +18,7 @@ type IncrementRequest struct {
 	Amount    int64
 	Ttl       *utils.CollectionTtl
 
-	grpcRequest  *pb.XIncrementRequest
-	grpcResponse *pb.XIncrementResponse
-	response     responses.IncrementResponse
+	response responses.IncrementResponse
 }
 
 func (r *IncrementRequest) cacheName() string { return r.CacheName }
@@ -33,40 +31,48 @@ func (r *IncrementRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
 func (r *IncrementRequest) requestName() string { return "Increment" }
 
-func (r *IncrementRequest) initGrpcRequest(client scsDataClient) error {
+func (r *IncrementRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var field []byte
 	if field, err = prepareField(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	if ttlMilliseconds, _, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XIncrementRequest{
+	grpcRequest := &pb.XIncrementRequest{
 		CacheKey:        field,
 		Amount:          r.Amount,
 		TtlMilliseconds: ttlMilliseconds,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *IncrementRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *IncrementRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Increment(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Increment(requestMetadata, grpcRequest.(*pb.XIncrementRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *IncrementRequest) interpretGrpcResponse() error {
-	r.response = responses.NewIncrementSuccess(r.grpcResponse.Value)
+func (r *IncrementRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XIncrementResponse)
+	r.response = responses.NewIncrementSuccess(myResp.Value)
+	return nil
+}
+
+func (r *IncrementRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XIncrementResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
+	}
 	return nil
 }

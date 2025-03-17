@@ -16,20 +16,18 @@ type ListFetchRequest struct {
 	StartIndex *int32
 	EndIndex   *int32
 
-	grpcRequest  *pb.XListFetchRequest
-	grpcResponse *pb.XListFetchResponse
-	response     responses.ListFetchResponse
+	response responses.ListFetchResponse
 }
 
 func (r *ListFetchRequest) cacheName() string { return r.CacheName }
 
 func (r *ListFetchRequest) requestName() string { return "ListFetch" }
 
-func (r *ListFetchRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListFetchRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpcRequest := &pb.XListFetchRequest{
@@ -50,31 +48,36 @@ func (r *ListFetchRequest) initGrpcRequest(scsDataClient) error {
 		}
 	}
 
-	r.grpcRequest = grpcRequest
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ListFetchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListFetchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListFetch(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListFetch(requestMetadata, grpcRequest.(*pb.XListFetchRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *ListFetchRequest) interpretGrpcResponse() error {
-	switch rtype := r.grpcResponse.List.(type) {
+func (r *ListFetchRequest) interpretGrpcResponse(resp interface{}) error {
+	myResp := resp.(*pb.XListFetchResponse)
+	switch rtype := myResp.List.(type) {
 	case *pb.XListFetchResponse_Found:
 		r.response = responses.NewListFetchHit(rtype.Found.Values)
 	case *pb.XListFetchResponse_Missing:
 		r.response = &responses.ListFetchMiss{}
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return errUnexpectedGrpcResponse(r, myResp)
+	}
+	return nil
+}
+
+func (r *ListFetchRequest) validateResponseType(resp grpcResponse) error {
+	_, ok := resp.(*pb.XListFetchResponse)
+	if !ok {
+		return errUnexpectedGrpcResponse(nil, resp)
 	}
 	return nil
 }
