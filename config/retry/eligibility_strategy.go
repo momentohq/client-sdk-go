@@ -11,6 +11,7 @@ type EligibilityStrategy interface {
 var retryableStatusCodes = map[codes.Code]bool{
 	codes.Internal:    true,
 	codes.Unavailable: true,
+	codes.Canceled:    true,
 }
 
 var retryableRequestMethods = map[string]bool{
