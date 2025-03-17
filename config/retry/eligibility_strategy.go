@@ -1,6 +1,8 @@
 package retry
 
-import "google.golang.org/grpc/codes"
+import (
+	"google.golang.org/grpc/codes"
+)
 
 type EligibilityStrategy interface {
 	// IsEligibleForRetry Determines whether a grpc call is able to be retried. The determination is based on the result
@@ -11,7 +13,9 @@ type EligibilityStrategy interface {
 var retryableStatusCodes = map[codes.Code]bool{
 	codes.Internal:    true,
 	codes.Unavailable: true,
-	codes.Canceled:    true,
+	// this code is retryable in other SDKs, but because the client can generate this error code
+	// by cancelling the context, we do not retry it here.
+	codes.Canceled:    false,
 }
 
 var retryableRequestMethods = map[string]bool{
