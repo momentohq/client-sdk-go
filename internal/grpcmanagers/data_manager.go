@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -19,8 +20,21 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	endpoint := request.CredentialProvider.GetCacheEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
+	// Check the middleware list for a "RetryMiddleware" and use the AddUnaryRetryInterceptor method from the
+	// first one found. This allows us to use the optimally efficient retry interceptor for production
+	// and a custom retry interceptor that tracks retry timestamps for testing. I don't love having this special
+	// exception for testing in the code here, but at least it's a straightforward dependency injection.
+	middlewareList := request.Middleware
+	addRetryInterceptor := interceptor.AddUnaryRetryInterceptor
+	for _, mw := range middlewareList {
+		if rmw, ok := mw.(middleware.RetryMiddleware); ok {
+			addRetryInterceptor = rmw.AddUnaryRetryInterceptor
+			break
+		}
+	}
+
 	headerInterceptors := []grpc.UnaryClientInterceptor{
-		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy),
+		addRetryInterceptor(request.RetryStrategy),
 		interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern),
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
