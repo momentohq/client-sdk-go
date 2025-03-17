@@ -578,8 +578,9 @@ func (c defaultScsClient) SortedSetGetScore(ctx context.Context, r *SortedSetGet
 		return result.Responses()[0], nil
 	case *responses.SortedSetGetScoresMiss:
 		return &responses.SortedSetGetScoreMiss{}, nil
+	default:
+		return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 	}
-	return nil, errUnexpectedGrpcResponse(newRequest, newRequest.grpcResponse)
 }
 
 func (c defaultScsClient) SortedSetRemoveElement(ctx context.Context, r *SortedSetRemoveElementRequest) (responses.SortedSetRemoveElementResponse, error) {

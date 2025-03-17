@@ -2,8 +2,13 @@ package momento
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"reflect"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -21,6 +26,8 @@ type scsDataClient struct {
 	requestTimeout      time.Duration
 	endpoint            string
 	eagerConnectTimeout time.Duration
+	loggerFactory       logger.MomentoLoggerFactory
+	middleware          []middleware.Middleware
 }
 
 func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout time.Duration) (*scsDataClient, momentoerrors.MomentoSvcErr) {
@@ -29,6 +36,7 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 		RetryStrategy:      request.Configuration.GetRetryStrategy(),
 		ReadConcern:        request.Configuration.GetReadConcern(),
 		GrpcConfiguration:  request.Configuration.GetTransportStrategy().GetGrpcConfig(),
+		Middleware:         request.Configuration.GetMiddleware(),
 	})
 	if err != nil {
 		return nil, err
@@ -46,6 +54,8 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 		requestTimeout:      timeout,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 		eagerConnectTimeout: eagerConnectTimeout,
+		loggerFactory:       request.Configuration.GetLoggerFactory(),
+		middleware:          request.Configuration.GetMiddleware(),
 	}, nil
 }
 
@@ -58,21 +68,92 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 		return err
 	}
 
-	if err := r.initGrpcRequest(client); err != nil {
+	req, err := r.initGrpcRequest(client)
+	if err != nil {
 		return err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateCacheMetadata(ctx, r.cacheName())
+	// Variable to gather request metadata into. This will be passed to middleware request handlers
+	// for potential modification. The final metadata will be passed to the grpc request as headers.
+	requestMetadata := make(map[string]string)
 
-	_, responseMetadata, err := r.makeGrpcRequest(requestMetadata, client)
-	if err != nil {
-		return momentoerrors.ConvertSvcErr(err, responseMetadata...)
+	middlewareRequestHandlers := make([]middleware.RequestHandler, 0, len(client.middleware))
+	for _, mw := range client.middleware {
+		// An error here means the middleware is configured to skip this type of request, so we
+		// don't add it to the list of request handlers to call on response.
+		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), r.cacheName(), requestMetadata)
+		if err != nil {
+			continue
+		}
+
+		// If the middleware is allowed to handle this request type, we use the base handler
+		// to compose a more specific handler off of. An error here means something actually went wrong,
+		// so we return it.
+		newHandler, err := mw.GetRequestHandler(newBaseHandler)
+		if err != nil {
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
+
+		// Call the request handler OnRequest method and then add the handler to list of handlers to
+		// call OnResponse on when the response comes back.
+		newReq, err := newHandler.OnRequest(req)
+		if err != nil {
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
+		if newReq != nil {
+			if reflect.TypeOf(newReq) != reflect.TypeOf(req) {
+				return NewMomentoError(
+					ClientSdkError,
+					fmt.Sprintf("middleware request handler %T OnRequest returned an invalid request", newHandler),
+					nil,
+				)
+			}
+			req = newReq
+		}
+
+		// Give the middleware a chance to modify the request metadata. If a middleware doesn't implement
+		// GetMetadata, the base response handler will return the original metadata.
+		requestMetadata = newHandler.GetMetadata()
+		middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
 	}
 
-	if err := r.interpretGrpcResponse(); err != nil {
+	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
+	resp, responseMetadata, requestError := r.makeGrpcRequest(req, requestContext, client)
+
+	// Iterate over the middleware request handlers in reverse order, giving them a chance to
+	// inspect the response and error results. Any error returned from the middleware OnResponse()
+	// method will be immediately returned as the actual error, skipping any outstanding response handlers.
+	// If none of the response handlers return an error, the original error (if any) will be returned after
+	// it is converted to a Momento service error.
+	var newResp interface{}
+	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
+		var requestHandlerError error
+		rh := middlewareRequestHandlers[i]
+		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
+		if newResp != nil {
+			err := r.validateResponseType(newResp.(grpcResponse))
+			if err != nil {
+				return NewMomentoError(
+					ClientSdkError,
+					fmt.Sprintf("middleware request handler %T OnResponse returned an invalid response", rh),
+					nil,
+				)
+			}
+			resp = newResp.(grpcResponse)
+		}
+		if !errors.Is(requestHandlerError, requestError) {
+			requestError = requestHandlerError
+		}
+	}
+
+	if requestError != nil {
+		return momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
+	}
+
+	if err := r.interpretGrpcResponse(resp); err != nil {
 		return err
 	}
 
