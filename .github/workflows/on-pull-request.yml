@@ -84,5 +84,11 @@ jobs:
       - name: Run docs examples
         run: make run-docs-examples
 
+      - name: Start Momento Local
+        run: |
+          docker run -d -p 8080:8080 gomomento/momento-local
+
       - name: Run test
+        env:
+          MOMENTO_PORT: 8080
         run: make prod-test

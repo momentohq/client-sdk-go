@@ -3,6 +3,8 @@ package momento_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/momentohq/client-sdk-go/config/retry"
 
@@ -24,7 +26,13 @@ import (
 )
 
 func setupCacheClientTest(config config.Configuration) momento.CacheClient {
-	credentialProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{})
+	momentoLocalPort := os.Getenv("MOMENTO_PORT")
+	if momentoLocalPort == "" {
+		momentoLocalPort = "8080"
+	}
+	thePort, err := strconv.ParseUint(momentoLocalPort, 10, 32)
+	Expect(err).To(BeNil())
+	credentialProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{Port: uint(thePort)})
 	Expect(err).To(BeNil())
 	cacheClient, err := momento.NewCacheClient(config, credentialProvider, 30*time.Second)
 	Expect(err).To(BeNil())
