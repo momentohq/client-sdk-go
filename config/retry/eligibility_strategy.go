@@ -15,7 +15,7 @@ var retryableStatusCodes = map[codes.Code]bool{
 	codes.Unavailable: true,
 	// this code is retryable in other SDKs, but because the client can generate this error code
 	// by cancelling the context, we do not retry it here.
-	codes.Canceled:    false,
+	codes.Canceled: false,
 }
 
 var retryableRequestMethods = map[string]bool{
