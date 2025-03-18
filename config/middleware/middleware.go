@@ -112,7 +112,6 @@ type requestHandler struct {
 	request      interface{}
 	requestName  string
 	resourceName string
-	metadata     map[string]string
 }
 
 // RequestHandler is an interface that represents the capabilities of a middleware request handler.
@@ -122,9 +121,9 @@ type RequestHandler interface {
 	GetRequest() interface{}
 	GetRequestName() string
 	GetResourceName() string
-	GetMetadata() map[string]string
 	GetLogger() logger.MomentoLogger
 	OnRequest(theRequest interface{}) (interface{}, error)
+	OnMetadata(map[string]string) map[string]string
 	OnResponse(theResponse interface{}, err error) (interface{}, error)
 }
 
@@ -148,10 +147,6 @@ func (rh *requestHandler) GetRequestName() string {
 	return rh.requestName
 }
 
-func (rh *requestHandler) GetMetadata() map[string]string {
-	return rh.metadata
-}
-
 func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 	return rh.logger
 }
@@ -161,10 +156,18 @@ func (rh *requestHandler) GetResourceName() string {
 }
 
 // OnRequest is called before the request is made to the backend. It can be used to modify the request object or
-// return an error to halt the request. If the method is used to modify the request, the request must be set on the
-// handler using SetRequest
+// return an error to halt the request. If the method is used to modify the request, the new request object returned here
+// must be the same type as the original request object, and an error is returned if this is not the case. Returning nil
+// from this method leaves the request unchanged. Returning an error halts the request and returns a ClientSdkError to
+// the caller.
 func (rh *requestHandler) OnRequest(_ interface{}) (interface{}, error) {
 	return nil, nil
+}
+
+// OnMetadata is called before the request is made to the backend. It receives the current request
+// metadata map, which it may modify and return. Returning nil from this method leaves the metadata unchanged.
+func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
+	return nil
 }
 
 // OnResponse is called after the response is received from the backend. It is passed the response object, which can
@@ -200,6 +203,5 @@ func NewRequestHandler(props HandlerProps) RequestHandler {
 		request:      props.Request,
 		requestName:  props.RequestName,
 		resourceName: props.ResourceName,
-		metadata:     props.Metadata,
 	}
 }
