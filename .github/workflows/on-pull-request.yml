@@ -38,13 +38,9 @@ jobs:
           template_file: CONTRIBUTING.template.md
           output_file: ./CONTRIBUTING.md
           dev_docs_slug: go
-  test:
+
+  build:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      pull-requests: read
-    env:
-      MOMENTO_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
@@ -81,14 +77,52 @@ jobs:
       - name: Build examples
         run: make build-examples
 
+  test:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      MOMENTO_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Install devtools
+        run: make install-devtools
+
       - name: Run docs examples
         run: make run-docs-examples
 
+      - name: Run test
+        run: make prod-test
+
+  test-momento-local:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Install devtools
+        run: make install-devtools
+
       - name: Start Momento Local
         run: |
-          docker run -d -p 8080:8080 gomomento/momento-local
+         docker run --rm -d -p 8080:8080 gomomento/momento-local
 
-      - name: Run test
+      - name: Run momento-local retry tests
         env:
           MOMENTO_PORT: 8080
-        run: make prod-test-all
+        run: make test-retry

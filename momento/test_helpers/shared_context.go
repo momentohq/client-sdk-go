@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -51,13 +52,36 @@ type SharedContext struct {
 	StorageConfiguration            config.StorageConfiguration
 }
 
-func NewSharedContext() SharedContext {
-	shared := SharedContext{}
+type SharedContextProps struct {
+	IsMomentoLocal bool
+}
 
+func NewSharedContext(props SharedContextProps) SharedContext {
+	shared := SharedContext{}
 	shared.Ctx = context.Background()
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
-	if err != nil {
-		panic(err)
+	var credentialProvider auth.CredentialProvider
+	var err error
+	if props.IsMomentoLocal {
+		port := os.Getenv("MOMENTO_LOCAL_PORT")
+		if port == "" {
+			port = "8080"
+		}
+		thePort, err := strconv.ParseUint(port, 10, 32)
+		if err != nil {
+			panic(fmt.Sprintf("invalid port %v", port))
+		}
+		credentialProvider, err = auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{
+			Hostname: "",
+			Port:     uint(thePort),
+		})
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+		if err != nil {
+			panic(err)
+		}
 	}
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
