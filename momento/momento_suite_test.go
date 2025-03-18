@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/momentohq/client-sdk-go/momento"
@@ -19,6 +20,7 @@ var LEADERBOARD_SERVICE_LABEL = "leaderboard-service"
 var STORAGE_SERVICE_LABEL = "storage-service"
 var TOPICS_SERVICE_LABEL = "topics-service"
 var MOMENTO_LOCAL_LABEL = "momento-local"
+var RETRY_LABEL = "retry"
 
 func TestMomento(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -26,7 +28,8 @@ func TestMomento(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	sharedContext = helpers.NewSharedContext()
+	sharedContext = helpers.NewSharedContext(
+		helpers.SharedContextProps{IsMomentoLocal: includesMomentoLocalTests()})
 	sharedContext.CreateDefaultCaches()
 
 	if includesStorageTests() {
@@ -47,6 +50,16 @@ func includesStorageTests() bool {
 	// Case 1: No filter is set: run all tests, including storage tests
 	// Case 2: Filter is set and it matches storage tests
 	return Label("", STORAGE_SERVICE_LABEL).MatchesLabelFilter(GinkgoLabelFilter())
+}
+
+func includesMomentoLocalTests() bool {
+	labelFilter := GinkgoLabelFilter()
+	r := regexp.MustCompile(`(!?)` + MOMENTO_LOCAL_LABEL)
+	matches := r.FindStringSubmatch(labelFilter)
+	if len(matches) == 2 && matches[1] == "!" {
+		return false
+	}
+	return true
 }
 
 func HaveMomentoErrorCode(code string) types.GomegaMatcher {
