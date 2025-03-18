@@ -205,20 +205,32 @@ func (rh *retryMetricsMiddlewareRequestHandler) OnResponse(theResponse interface
 	return theResponse, nil
 }
 
-func (rh *retryMetricsMiddlewareRequestHandler) GetMetadata() map[string]string {
-	requestMetadata := rh.RequestHandler.GetMetadata()
+func (rh *retryMetricsMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
 	requestMetadata["request-id"] = rh.GetId().String()
+
 	if rh.props.ReturnError != nil {
 		requestMetadata["return-error"] = *rh.props.ReturnError
 	}
+
 	if rh.props.ErrorRpcList != nil {
 		requestMetadata["error-rpcs"] = strings.Join(*rh.props.ErrorRpcList, " ")
 	}
+
 	if rh.props.ErrorCount != nil {
 		requestMetadata["error-count"] = fmt.Sprintf("%d", *rh.props.ErrorCount)
 	}
 
-	// add other stuff here :-)/
+	if rh.props.DelayCount != nil {
+		requestMetadata["delay-count"] = fmt.Sprintf("%d", *rh.props.DelayCount)
+	}
+
+	if rh.props.DelayMillis != nil {
+		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *rh.props.DelayMillis)
+	}
+
+	if rh.props.DelayRpcList != nil {
+		requestMetadata["delay-rpcs"] = strings.Join(*rh.props.DelayRpcList, " ")
+	}
 
 	return requestMetadata
 }

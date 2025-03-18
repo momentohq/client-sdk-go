@@ -15,6 +15,6 @@ type Strategy interface {
 	// StrategyProps - Information about the grpc call, its last invocation, and how many times the call
 	// has been made.
 	//
-	// Returns The time in seconds before the next retry should occur or nil if no retry should be attempted.
+	// Returns The time in milliseconds before the next retry should occur or nil if no retry should be attempted.
 	DetermineWhenToRetry(props StrategyProps) *int
 }
