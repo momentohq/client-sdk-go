@@ -2,7 +2,6 @@ package momento_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strconv"
 
@@ -336,7 +335,6 @@ var _ = Describe(
 				})
 				Expect(incrementResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
-				fmt.Printf("%v", err)
 				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
 
 				dictCreateResponse, err := cacheClient.DictionarySetField(context.Background(), &momento.DictionarySetFieldRequest{
@@ -389,7 +387,6 @@ var _ = Describe(
 					CacheName: "cache",
 					Key:       momento.String("key"),
 				})
-				fmt.Printf("%v", metricsCollector.GetAllMetrics())
 				Expect(err).To(BeNil())
 				Expect(getResponse).To(Not(BeNil()))
 				Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
