@@ -3,9 +3,10 @@ package momento
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc/metadata"
 	"reflect"
 	"time"
+
+	"google.golang.org/grpc/metadata"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
@@ -161,7 +162,7 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	middlewareRequestHandlers := make([]middleware.RequestHandler, 0)
+	var middlewareRequestHandlers []middleware.RequestHandler
 	requestMetadata := make(map[string]string)
 	middlewareRequestHandlers, req, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, req, requestMetadata)
 	if err != nil {
