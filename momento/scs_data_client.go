@@ -132,7 +132,9 @@ func (client scsDataClient) applyMiddlewareResponseHandlers(
 		if requestHandlerError != nil {
 			return nil, momentoerrors.ConvertSvcErr(requestHandlerError, responseMetadata...)
 		}
-		requestError = requestHandlerError
+
+		// The request handler returned a nil error, so we nil out the original error.
+		requestError = nil
 
 		if newResp != nil {
 			err := r.validateResponseType(newResp.(grpcResponse))
@@ -146,7 +148,13 @@ func (client scsDataClient) applyMiddlewareResponseHandlers(
 			resp = newResp.(grpcResponse)
 		}
 	}
-	return resp, nil
+
+	// If there were no middleware to process, and we were passed in an error,
+	// we need to convert it to a Momento service error before returning it back.
+	if requestError != nil {
+		requestError = momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
+	}
+	return resp, requestError
 }
 
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
