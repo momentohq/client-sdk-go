@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -64,6 +65,16 @@ func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 	return client.grpcManager.Close()
 }
 
+func deepCopyMap(original map[string]string) map[string]string {
+	// Marshal the map into JSON. This is not terribly performant, but it's easy and
+	// replaceable. We should only ever be dealing with very small maps here.
+	jsonData, _ := json.Marshal(original)
+	// Unmarshal into a new map
+	var newMap map[string]string
+	json.Unmarshal(jsonData, &newMap)
+	return newMap
+}
+
 func (client scsDataClient) applyMiddlewareRequestHandlers(
 	r requester, req interface{}, requestMetadata map[string]string,
 ) ([]middleware.RequestHandler, interface{}, map[string]string, error) {
@@ -101,7 +112,7 @@ func (client scsDataClient) applyMiddlewareRequestHandlers(
 			req = newReq
 		}
 
-		newMd := newHandler.OnMetadata(requestMetadata)
+		newMd := newHandler.OnMetadata(deepCopyMap(requestMetadata))
 		if newMd != nil {
 			requestMetadata = newMd
 		}
