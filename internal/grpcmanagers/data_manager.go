@@ -21,9 +21,8 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	// Check the middleware list for a "RetryMiddleware" and use the AddUnaryRetryInterceptor method from the
-	// first one found. This allows us to use the optimally efficient retry interceptor for production
-	// and a custom retry interceptor that tracks retry timestamps for testing. I don't love having this special
-	// exception for testing in the code here, but at least it's a straightforward dependency injection.
+	// first one found. This allows us to swap out the production retry interceptor for the custom retry interceptor
+	// in RetryMetricsMiddleware that tracks retry timestamps for testing.
 	middlewareList := request.Middleware
 	addRetryInterceptor := interceptor.AddUnaryRetryInterceptor
 	for _, mw := range middlewareList {
@@ -61,10 +60,10 @@ func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 	return momentoerrors.ConvertSvcErr(dataManager.Conn.Close())
 }
 
-func (gm *DataGrpcManager) Connect(ctx context.Context) error {
+func (dataManager *DataGrpcManager) Connect(ctx context.Context) error {
 	// grpc.NewClient remains in IDLE until first RPC, but we force
 	// an eager connection when we call Connect here
-	gm.Conn.Connect()
+	dataManager.Conn.Connect()
 
 	for {
 		select {
@@ -73,14 +72,14 @@ func (gm *DataGrpcManager) Connect(ctx context.Context) error {
 			return ctx.Err()
 		default:
 			// Check current state
-			state := gm.Conn.GetState()
+			state := dataManager.Conn.GetState()
 			switch state {
 			case connectivity.Ready:
 				// Connection is ready, exit the method
 				return nil
 			case connectivity.Idle, connectivity.Connecting:
 				// If Idle or Connecting, wait for a state change
-				if !gm.Conn.WaitForStateChange(ctx, state) {
+				if !dataManager.Conn.WaitForStateChange(ctx, state) {
 					// Context was done while waiting
 					return ctx.Err()
 				}
