@@ -170,13 +170,18 @@ func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
 }
 
 // OnResponse is called after the response is received from the backend. It is passed the response object, which can
-// be cast to the appropriate response type for further inspection. Returning nil from this method leaves the response
-// unchanged. Returning an error will replace the current error, if any, with the new error, but response processing
-// will continue so later middlewares can inspect and handle the error as appropriate. A response handler may return
-// nil for the error to indicate that the current error should be nulled. If there is an error after
-// all the middlewares have run, the error will be converted to a Momento service error and returned to the caller.
-// Returning a new response object will replace the current response object. The new response must be the same
-// type as the original response object, and an error is returned if this is not the case.
+// be cast to the appropriate response type for further inspection. It is also passed the initial error, if any,
+// produced by the gRPC request. This gives the first request handler a chance to inspect the error and response and
+// decide whether to halt processing or continue with the next request handler. This pattern is generally only used for
+// special purpose request handling, and most request handlers should simply return any error they are passed.
+//
+// Returning nil for the response value leaves the response unchanged. Returning a new response object will replace the
+// current response object. The new response must be the same type as the original response object, and an error is
+// returned if this is not the case.
+//
+// Returning an error will immediately halt response processing, skipping any outstanding response handlers. A response
+// handler that is passed an error may inspect it and return nil for the error to indicate that request processing
+// should continue.
 //
 //		func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
 //		  switch r := theResponse.(type) {
