@@ -20,7 +20,7 @@ type middleware struct {
 
 type Middleware interface {
 	GetLogger() logger.MomentoLogger
-	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceName string, metadata map[string]string) (RequestHandler, error)
+	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceName string) (RequestHandler, error)
 	GetRequestHandler(baseRequestHandler RequestHandler) (RequestHandler, error)
 	GetIncludeTypes() map[string]bool
 }
@@ -36,7 +36,7 @@ type Props struct {
 }
 
 func (mw *middleware) GetBaseRequestHandler(
-	theRequest interface{}, requestName string, resourceName string, metadata map[string]string,
+	theRequest interface{}, requestName string, resourceName string,
 ) (RequestHandler, error) {
 	allowedTypes := mw.GetIncludeTypes()
 	if allowedTypes != nil {
@@ -49,7 +49,6 @@ func (mw *middleware) GetBaseRequestHandler(
 	// Return the "base" request handler. User request handlers will be composed on top of this.
 	return NewRequestHandler(
 		HandlerProps{
-			Metadata:     metadata,
 			Request:      theRequest,
 			RequestName:  requestName,
 			ResourceName: resourceName,

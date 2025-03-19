@@ -70,7 +70,7 @@ func (client scsDataClient) applyMiddlewareRequestHandlers(
 	for _, mw := range client.middleware {
 		// An error here means the middleware is configured to skip this type of request, so we
 		// don't add it to the list of request handlers to call on response.
-		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), r.cacheName(), requestMetadata)
+		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), r.cacheName())
 		if err != nil {
 			continue
 		}
@@ -104,8 +104,10 @@ func (client scsDataClient) applyMiddlewareRequestHandlers(
 		if newMd != nil {
 			requestMetadata = newMd
 		}
+
 		middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
 	}
+
 	return middlewareRequestHandlers, req, requestMetadata, nil
 }
 
@@ -159,7 +161,9 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	middlewareRequestHandlers, req, requestMetadata, err := client.applyMiddlewareRequestHandlers(r, req, make(map[string]string))
+	middlewareRequestHandlers := make([]middleware.RequestHandler, 0)
+	requestMetadata := make(map[string]string)
+	middlewareRequestHandlers, req, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, req, requestMetadata)
 	if err != nil {
 		return err
 	}
