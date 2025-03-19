@@ -87,6 +87,9 @@ type Configuration interface {
 	//     }),
 	//   })
 	WithMiddleware(middleware []middleware.Middleware) Configuration
+
+	// AddMiddleware Copy constructor for adding Middleware returns a new Configuration object.
+	AddMiddleware(m middleware.Middleware) Configuration
 }
 
 type cacheConfiguration struct {
@@ -156,6 +159,17 @@ func (s *cacheConfiguration) WithMiddleware(middleware []middleware.Middleware) 
 		numGrpcChannels:   s.numGrpcChannels,
 		readConcern:       s.readConcern,
 		middleware:        middleware,
+	}
+}
+
+func (s *cacheConfiguration) AddMiddleware(m middleware.Middleware) Configuration {
+	return &cacheConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		retryStrategy:     s.retryStrategy,
+		numGrpcChannels:   s.numGrpcChannels,
+		readConcern:       s.readConcern,
+		middleware:        append(s.middleware, m),
 	}
 }
 
