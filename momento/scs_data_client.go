@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -66,12 +65,10 @@ func (client scsDataClient) Close() momentoerrors.MomentoSvcErr {
 }
 
 func deepCopyMap(original map[string]string) map[string]string {
-	// Marshal the map into JSON. This is not terribly performant, but it's easy and
-	// replaceable. We should only ever be dealing with very small maps here.
-	jsonData, _ := json.Marshal(original)
-	// Unmarshal into a new map
-	var newMap map[string]string
-	json.Unmarshal(jsonData, &newMap)
+	newMap := make(map[string]string, len(original))
+	for k, v := range original {
+		newMap[k] = v
+	}
 	return newMap
 }
 
