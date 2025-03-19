@@ -56,7 +56,8 @@ func includesMomentoLocalTests() bool {
 	labelFilter := GinkgoLabelFilter()
 	r := regexp.MustCompile(`(!?)` + MOMENTO_LOCAL_LABEL)
 	matches := r.FindStringSubmatch(labelFilter)
-	if len(matches) == 2 && matches[1] == "!" {
+	if len(matches) == 0 || (len(matches) == 2 && matches[1] == "!") {
+		// the momento local label is not present, or it is present but is negated
 		return false
 	}
 	return true
