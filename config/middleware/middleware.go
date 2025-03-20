@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/momentohq/client-sdk-go/config/retry"
 
@@ -80,7 +81,7 @@ func (mw *middleware) GetIncludeTypes() map[string]bool {
 // If the IncludeTypes are omitted or empty, all request types will be processed. For example, to limit processing
 // to only requests of type *momento.SetRequest and *momento.GetRequest, pass the following slice as the IncludeTypes:
 //
-//	[]interface{}{&momento.SetRequest{}, &momento.GetRequest{}}
+//	[]interface{}{momento.SetRequest{}, momento.GetRequest{}}
 //
 // Custom middleware implementations can use this constructor to create and store the base middleware:
 //
@@ -94,7 +95,12 @@ func NewMiddleware(props Props) Middleware {
 	if props.IncludeTypes != nil {
 		includeTypeMap = make(map[string]bool)
 		for _, t := range props.IncludeTypes {
-			includeTypeMap[reflect.TypeOf(t).String()] = true
+			myType := reflect.TypeOf(t).String()
+			// Let users pass in types or pointers to types. We'll normalize them to pointers.
+			if !strings.HasPrefix("*", myType) {
+				myType = "*" + myType
+			}
+			includeTypeMap[myType] = true
 		}
 	} else {
 		includeTypeMap = nil
