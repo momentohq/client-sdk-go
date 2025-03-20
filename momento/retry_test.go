@@ -86,9 +86,6 @@ var _ = Describe(
 				strategy := retry.NewNeverRetryStrategy()
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(
 					helpers.RetryMetricsMiddlewareProps{
-						Props: middleware.Props{
-							IncludeTypes: []interface{}{momento.SetRequest{}},
-						},
 						RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 							ReturnError:  &status,
 							ErrorRpcList: &[]string{"set"},
@@ -125,9 +122,6 @@ var _ = Describe(
 					MaxBackoffMillis:   2000,
 				})
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.SetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
@@ -164,9 +158,6 @@ var _ = Describe(
 				})
 				errorCount := 5
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.SetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
@@ -202,9 +193,6 @@ var _ = Describe(
 					MaxBackoffMillis:   2000,
 				})
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.SetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
@@ -273,9 +261,6 @@ var _ = Describe(
 					MaxAttempts:   3,
 				})
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.GetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"get"},
@@ -313,9 +298,6 @@ var _ = Describe(
 			It("should not retry if the status code is not retryable", func() {
 				status := "unknown"
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.SetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
@@ -345,10 +327,6 @@ var _ = Describe(
 			It("should not retry if the api is not retryable", func() {
 				status := "unavailable"
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						Logger:       momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("retry-metrics"),
-						IncludeTypes: []interface{}{momento.IncrementRequest{}, momento.DictionaryIncrementRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"increment", "dictionary-increment"},
@@ -398,9 +376,6 @@ var _ = Describe(
 				status := "unavailable"
 				errCount := 1
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.GetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"get"},
@@ -437,9 +412,6 @@ var _ = Describe(
 				status := "unavailable"
 				errCount := 3
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					Props: middleware.Props{
-						IncludeTypes: []interface{}{momento.SetRequest{}},
-					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"get"},
