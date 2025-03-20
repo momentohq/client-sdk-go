@@ -51,10 +51,22 @@ type CacheClient interface {
 	SetIfAbsentOrEqual(ctx context.Context, r *SetIfAbsentOrEqualRequest) (responses.SetIfAbsentOrEqualResponse, error)
 	// SetIfNotEqual sets the value in cache with a given time to live (TTL) if key is present and its value is not equal to the given value
 	SetIfNotEqual(ctx context.Context, r *SetIfNotEqualRequest) (responses.SetIfNotEqualResponse, error)
+	// SetIfPresentAndHashNotEqual sets the value in the cache with a given time to live (TTL) if key is present and the hash of the current value is not equal to the given hash
+	SetIfPresentAndHashNotEqual(ctx context.Context, r *SetIfPresentAndHashNotEqualRequest) (responses.SetIfPresentAndHashNotEqualResponse, error)
+	// SetIfPresentAndHashEqual sets the value in the cache with a given time to live (TTL) if key is present and the hash of the current value is equal to the given hash
+	SetIfPresentAndHashEqual(ctx context.Context, r *SetIfPresentAndHashEqualRequest) (responses.SetIfPresentAndHashEqualResponse, error)
+	// SetIfAbsentOrHashEqual sets the value in the cache with a given time to live (TTL) if key is present and the hash of the current value is equal to the given hash, or creates the item if it does not exist
+	SetIfAbsentOrHashEqual(ctx context.Context, r *SetIfAbsentOrHashEqualRequest) (responses.SetIfAbsentOrHashEqualResponse, error)
+	// SetIfAbsentOrHashNotEqual sets the value in the cache with a given time to live (TTL) if key is present and the hash of the current value is not equal to the given hash, or creates the item if it does not exist
+	SetIfAbsentOrHashNotEqual(ctx context.Context, r *SetIfAbsentOrHashNotEqualRequest) (responses.SetIfAbsentOrHashNotEqualResponse, error)
+	// SetWithHash sets the value in the cache with a given time to live (TTL) unconditionally (may overwrite existing value) and returns the hash of the new value
+	SetWithHash(ctx context.Context, r *SetWithHashRequest) (responses.SetWithHashResponse, error)
 	// SetBatch sets multiple values in cache with a given time to live (TTL)
 	SetBatch(ctx context.Context, r *SetBatchRequest) (responses.SetBatchResponse, error)
 	// Get gets the cache value stored for the given key.
 	Get(ctx context.Context, r *GetRequest) (responses.GetResponse, error)
+	// GetWithHash gets the cache value stored for the given key and the hash of the value.
+	GetWithHash(ctx context.Context, r *GetWithHashRequest) (responses.GetWithHashResponse, error)
 	// GetBatch gets the cache values stored for the given keys.
 	GetBatch(ctx context.Context, r *GetBatchRequest) (responses.GetBatchResponse, error)
 	// Delete removes the key from the cache.
@@ -462,6 +474,46 @@ func (c defaultScsClient) SetIfNotEqual(ctx context.Context, r *SetIfNotEqualReq
 	return resp.(responses.SetIfNotEqualResponse), nil
 }
 
+func (c defaultScsClient) SetIfPresentAndHashNotEqual(ctx context.Context, r *SetIfPresentAndHashNotEqualRequest) (responses.SetIfPresentAndHashNotEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfPresentAndHashEqual(ctx context.Context, r *SetIfPresentAndHashEqualRequest) (responses.SetIfPresentAndHashEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfAbsentOrHashEqual(ctx context.Context, r *SetIfAbsentOrHashEqualRequest) (responses.SetIfAbsentOrHashEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetIfAbsentOrHashNotEqual(ctx context.Context, r *SetIfAbsentOrHashNotEqualRequest) (responses.SetIfAbsentOrHashNotEqualResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
+func (c defaultScsClient) SetWithHash(ctx context.Context, r *SetWithHashRequest) (responses.SetWithHashResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
+}
+
 func (c defaultScsClient) SetBatch(ctx context.Context, r *SetBatchRequest) (responses.SetBatchResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	resp, err := c.getNextDataClient().makeRequest(ctx, r)
@@ -478,6 +530,14 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.Get
 		return nil, err
 	}
 	return resp.(responses.GetResponse), nil
+}
+
+func (c defaultScsClient) GetWithHash(ctx context.Context, r *GetWithHashRequest) (responses.GetWithHashResponse, error) {
+	r.CacheName = c.getCacheNameForRequest(r)
+	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+		return nil, err
+	}
+	return r.response, nil
 }
 
 func (c defaultScsClient) GetBatch(ctx context.Context, r *GetBatchRequest) (responses.GetBatchResponse, error) {
