@@ -6,10 +6,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/momentohq/client-sdk-go/config/retry"
-
-	"google.golang.org/grpc"
-
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -26,9 +22,9 @@ type Middleware interface {
 	GetIncludeTypes() map[string]bool
 }
 
-type RetryMiddleware interface {
+type InterceptorCallbackMiddleware interface {
 	Middleware
-	AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error
+	OnInterceptorRequest(ctx context.Context, method string)
 }
 
 type Props struct {

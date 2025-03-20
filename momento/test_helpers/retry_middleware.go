@@ -8,12 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/config/retry"
-
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/status"
 )
 
 type timestampPayload struct {
@@ -155,53 +151,16 @@ func (r *retryMetricsMiddleware) GetRequestHandler(
 	), nil
 }
 
-// AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy. It is
-// essentially identical to the SDK retry interceptor, but it also collects metrics on the retry attempts and returns
-// them in a custom error type. If modifications are made to the retry interceptor in the SDK, they should be mirrored
-// here. Injecting the retry interceptor is a bit of a hack, but it keeps the retry metrics gathering out of the production
-// code.
-func (r *retryMetricsMiddleware) AddUnaryRetryInterceptor(s retry.Strategy) func(
-	ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
-	invoker grpc.UnaryInvoker, opts ...grpc.CallOption,
-) error {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		attempt := 1
-		for {
-			// Execute api call
-			md, ok := metadata.FromOutgoingContext(ctx); if ok {
-				r.metricsChan <- &timestampPayload{
-					cacheName:   md.Get("cache")[0],
-					requestName: method,
-					timestamp:   time.Now().Unix(),
-				}
-			} else {
-				// Because this middleware is for test use only, we can panic here.
-				panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
-			}
-			lastErr := invoker(ctx, method, req, reply, cc, opts...)
-			if lastErr == nil {
-				// Success. No error was returned so we can return from the interceptor.
-				return nil
-			}
-
-			// Check retry eligibility based off last error received
-			retryBackoffTime := s.DetermineWhenToRetry(retry.StrategyProps{
-				GrpcStatusCode: status.Code(lastErr),
-				GrpcMethod:     method,
-				AttemptNumber:  attempt,
-			})
-
-			if retryBackoffTime == nil {
-				// Request is not retryable. Return the error.
-				return lastErr
-			}
-
-			// Sleep for recommended time interval and increment attempts before trying again
-			if *retryBackoffTime > 0 {
-				time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
-			}
-			attempt++
+func (r *retryMetricsMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
+	md, ok := metadata.FromOutgoingContext(ctx); if ok {
+		r.metricsChan <- &timestampPayload{
+			cacheName:   md.Get("cache")[0],
+			requestName: method,
+			timestamp:   time.Now().Unix(),
 		}
+	} else {
+		// Because this middleware is for test use only, we can panic here.
+		panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
 	}
 }
 

@@ -20,20 +20,21 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	endpoint := request.CredentialProvider.GetCacheEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
-	// Check the middleware list for a "RetryMiddleware" and use the AddUnaryRetryInterceptor method from the
-	// first one found. This allows us to swap out the production retry interceptor for the custom retry interceptor
-	// in RetryMetricsMiddleware that tracks retry timestamps for testing.
+	// Check the middleware list for an "InterceptorCallbackMiddleware" and use the OnInterceptorRequest callback method
+	// if it is found. This is currently used for testing purposes only by the RetryMetricsMiddleware, but it could be
+	// extended to inject lists of callbacks for various purposes. Because it is intended for a single specific use now,
+	// we break after finding the first one.
 	middlewareList := request.Middleware
-	addRetryInterceptor := interceptor.AddUnaryRetryInterceptor
+	var onRequestCallback func(context.Context, string)
 	for _, mw := range middlewareList {
-		if rmw, ok := mw.(middleware.RetryMiddleware); ok {
-			addRetryInterceptor = rmw.AddUnaryRetryInterceptor
+		if rmw, ok := mw.(middleware.InterceptorCallbackMiddleware); ok {
+			onRequestCallback = rmw.OnInterceptorRequest
 			break
 		}
 	}
 
 	headerInterceptors := []grpc.UnaryClientInterceptor{
-		addRetryInterceptor(request.RetryStrategy),
+		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy, onRequestCallback),
 		interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern),
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}

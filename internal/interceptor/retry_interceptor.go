@@ -11,18 +11,14 @@ import (
 )
 
 // AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy.
-// This interceptor is duplicated with slight modifications in the test helpers package for testing purposes.
-//
-// #########################
-//
-// IF YOU MODIFY THIS FUNCTION ALSO MODIFY THE ONE IN test_helpers/retry_middleware.go
-//
-// #########################
-func AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
 		for {
-
+			// This is currently used for testing purposes only by the RetryMetricsMiddleware.
+			if onRequest != nil {
+				onRequest(ctx, method)
+			}
 			// Execute api call
 			lastErr := invoker(ctx, method, req, reply, cc, opts...)
 			if lastErr == nil {
