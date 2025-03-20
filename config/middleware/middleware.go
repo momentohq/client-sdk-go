@@ -125,7 +125,7 @@ type RequestHandler interface {
 	GetLogger() logger.MomentoLogger
 	OnRequest(theRequest interface{}) (interface{}, error)
 	OnMetadata(map[string]string) map[string]string
-	OnResponse(theResponse interface{}, err error) (interface{}, error)
+	OnResponse(theResponse interface{}) (interface{}, error)
 }
 
 type HandlerProps struct {
@@ -171,19 +171,14 @@ func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
 	return nil
 }
 
-// OnResponse is called after the response is received from the backend. It is passed the response object, which can
-// be cast to the appropriate response type for further inspection. It is also passed the initial error, if any,
-// produced by the gRPC request. This gives the first request handler a chance to inspect the error and response and
-// decide whether to halt processing or continue with the next request handler. This pattern is generally only used for
-// special purpose request handling, and most request handlers should simply return any error they are passed.
+// OnResponse is called after the gRPC response is received from the backend. It is passed the response object, which
+// can be cast to the appropriate response type for further inspection.
 //
 // Returning nil for the response value leaves the response unchanged. Returning a new response object will replace the
 // current response object. The new response must be the same type as the original response object, and an error is
 // returned if this is not the case.
 //
-// Returning an error will immediately halt response processing, skipping any outstanding response handlers. A response
-// handler that is passed an error may inspect it and return nil for the error to indicate that request processing
-// should continue.
+// Returning an error will immediately halt response processing, skipping any outstanding response handlers.
 //
 //		func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
 //		  switch r := theResponse.(type) {
@@ -194,8 +189,8 @@ func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
 //		  }
 //	   return nil, err
 //		}
-func (rh *requestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
-	return nil, err
+func (rh *requestHandler) OnResponse(_ interface{}) (interface{}, error) {
+	return nil, nil
 }
 
 func NewRequestHandler(props HandlerProps) RequestHandler {

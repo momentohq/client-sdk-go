@@ -129,20 +129,15 @@ func (client scsDataClient) applyMiddlewareResponseHandlers(
 	r requester,
 	middlewareRequestHandlers []middleware.RequestHandler,
 	resp grpcResponse,
-	requestError error,
 	responseMetadata []metadata.MD,
 ) (grpcResponse, error) {
-	var newResp interface{}
 	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
 		var requestHandlerError error
 		rh := middlewareRequestHandlers[i]
-		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
-		if requestHandlerError != nil {
+		newResp, err := rh.OnResponse(resp)
+		if err != nil {
 			return nil, momentoerrors.ConvertSvcErr(requestHandlerError, responseMetadata...)
 		}
-
-		// The request handler returned a nil error, so we nil out the original error.
-		requestError = nil
 
 		if newResp != nil {
 			err := r.validateResponseType(newResp.(grpcResponse))
@@ -156,13 +151,7 @@ func (client scsDataClient) applyMiddlewareResponseHandlers(
 			resp = newResp.(grpcResponse)
 		}
 	}
-
-	// If there were no middleware to process, and we were passed in an error,
-	// we need to convert it to a Momento service error before returning it back.
-	if requestError != nil {
-		requestError = momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
-	}
-	return resp, requestError
+	return resp, nil
 }
 
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
@@ -186,9 +175,12 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	}
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
-	resp, responseMetadata, requestError := r.makeGrpcRequest(req, requestContext, client)
+	resp, responseMetadata, err := r.makeGrpcRequest(req, requestContext, client)
+	if err != nil {
+		return momentoerrors.ConvertSvcErr(err, responseMetadata...)
+	}
 
-	resp, err = client.applyMiddlewareResponseHandlers(r, middlewareRequestHandlers, resp, requestError, responseMetadata)
+	resp, err = client.applyMiddlewareResponseHandlers(r, middlewareRequestHandlers, resp, responseMetadata)
 	if err != nil {
 		return err
 	}
