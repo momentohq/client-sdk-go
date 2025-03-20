@@ -82,19 +82,26 @@ var _ = Describe(
 
 		Describe("cache-client retry neverRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("shouldn't retry", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
 				strategy := retry.NewNeverRetryStrategy()
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(
+					helpers.RetryMetricsMiddlewareProps{
+						Props: middleware.Props{
+							IncludeTypes: []interface{}{momento.SetRequest{}},
+						},
+						RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+							ReturnError:  &status,
+							ErrorRpcList: &[]string{"set"},
+							ErrorCount:   nil,
+							DelayRpcList: nil,
+							DelayMillis:  nil,
+							DelayCount:   nil,
+						},
+					},
+				)
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"set"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				}).WithRetryStrategy(strategy)
 				cacheClient := setupCacheClientTest(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
@@ -111,24 +118,28 @@ var _ = Describe(
 
 		Describe("cache-client retry exponentialBackoffRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("should receive a timeout error after multiple retries", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.SetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"set"},
+						ErrorCount:   nil,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"set"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				}).WithRetryStrategy(strategy).WithClientTimeout(1 * time.Second)
 				cacheClient := setupCacheClientTest(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
@@ -145,25 +156,29 @@ var _ = Describe(
 			})
 
 			It("should succeed after multiple retries", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-
 				errorCount := 5
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.SetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"set"},
+						ErrorCount:   &errorCount,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"set"},
-						ErrorCount:       &errorCount,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				}).WithRetryStrategy(strategy).WithClientTimeout(10 * time.Second)
 				cacheClient := setupCacheClientTest(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
@@ -180,24 +195,28 @@ var _ = Describe(
 			})
 
 			It("should not try to retry if the status code is not retryable", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unknown"
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.SetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"set"},
+						ErrorCount:   nil,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"set"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				}).WithRetryStrategy(strategy)
 				cacheClient := setupCacheClientTest(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
@@ -212,24 +231,25 @@ var _ = Describe(
 			})
 
 			It("should not try to retry if the rpc is not retryable", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"dictionary-increment"},
+						ErrorCount:   nil,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"dictionary-increment"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				}).WithRetryStrategy(strategy)
 				cacheClient := setupCacheClientTest(clientConfig)
 				incrResponse, err := cacheClient.DictionaryIncrement(context.Background(), &momento.DictionaryIncrementRequest{
@@ -247,25 +267,29 @@ var _ = Describe(
 
 		Describe("cache-client retry fixedCountRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("should retry 3 times if the status code is retryable", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
 				retryStrategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
 					LoggerFactory: momento_default_logger.DefaultMomentoLoggerFactory{},
 					MaxAttempts:   3,
 				})
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.GetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"get"},
+						ErrorCount:   nil,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"get"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				}).WithRetryStrategy(retryStrategy)
 				cacheClient := setupCacheClientTest(clientConfig)
-
 				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
 					CacheName: "cache",
 					Key:       momento.String("key"),
@@ -287,18 +311,23 @@ var _ = Describe(
 			})
 
 			It("should not retry if the status code is not retryable", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unknown"
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.SetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"set"},
+						ErrorCount:   nil,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"set"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				})
 				cacheClient := setupCacheClientTest(clientConfig)
 
@@ -314,18 +343,24 @@ var _ = Describe(
 			})
 
 			It("should not retry if the api is not retryable", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("retry-metrics"),
+						IncludeTypes: []interface{}{momento.IncrementRequest{}, momento.DictionaryIncrementRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"increment", "dictionary-increment"},
+						ErrorCount:   nil,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"increment", "dictionary-increment"},
-						ErrorCount:       nil,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				})
 				cacheClient := setupCacheClientTest(clientConfig)
 
@@ -360,19 +395,24 @@ var _ = Describe(
 			})
 
 			It("should return a value on success after a retry", func() {
-				metricsCollector := helpers.NewRetryMetricsCollector()
 				status := "unavailable"
 				errCount := 1
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.GetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"get"},
+						ErrorCount:   &errCount,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-						MetricsCollector: metricsCollector,
-						ReturnError:      &status,
-						ErrorRpcList:     &[]string{"get"},
-						ErrorCount:       &errCount,
-						DelayRpcList:     nil,
-						DelayMillis:      nil,
-						DelayCount:       nil,
-					}),
+					retryMiddleware,
 				})
 				cacheClient := setupCacheClientTest(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
@@ -392,5 +432,46 @@ var _ = Describe(
 				Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
 				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(1))
 			})
+
+			It("shouldn't gather metrics if the request is not included", func() {
+				status := "unavailable"
+				errCount := 3
+				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
+					Props: middleware.Props{
+						IncludeTypes: []interface{}{momento.SetRequest{}},
+					},
+					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"get"},
+						ErrorCount:   &errCount,
+						DelayRpcList: nil,
+						DelayMillis:  nil,
+						DelayCount:   nil,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+					retryMiddleware,
+				})
+				cacheClient := setupCacheClientTest(clientConfig)
+				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
+					CacheName: "cache",
+					Key:       momento.String("key"),
+					Value:     momento.String("value"),
+				})
+				Expect(err).To(BeNil())
+				Expect(setResponse).To(Not(BeNil()))
+
+				getResponse, err := cacheClient.Get(context.Background(), &momento.GetRequest{
+					CacheName: "cache",
+					Key:       momento.String("key"),
+				})
+				Expect(err).To(BeNil())
+				Expect(getResponse).To(Not(BeNil()))
+				Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
+				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(0))
+			})
+
 		})
-	})
+	},
+)
