@@ -3,10 +3,11 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"github.com/momentohq/client-sdk-go/config/logger"
-	"google.golang.org/grpc/metadata"
 	"strings"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/config/logger"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
@@ -83,8 +84,8 @@ type RetryMetricsMiddlewareProps struct {
 
 type retryMetricsMiddleware struct {
 	middleware.Middleware
-	metricsCollector RetryMetricsCollector
-	metricsChan chan *timestampPayload
+	metricsCollector    RetryMetricsCollector
+	metricsChan         chan *timestampPayload
 	requestHandlerProps RetryMetricsMiddlewareRequestHandlerProps
 }
 
@@ -102,15 +103,15 @@ func NewRetryMetricsMiddleware(props RetryMetricsMiddlewareProps) middleware.Mid
 		myLogger = props.Logger
 	}
 	baseMw := middleware.NewMiddleware(middleware.Props{
-		Logger: myLogger,
+		Logger:       myLogger,
 		IncludeTypes: props.IncludeTypes,
 	})
 	metricsCollector := NewRetryMetricsCollector()
 	metricsChan := make(chan *timestampPayload, 1000)
 	mw := &retryMetricsMiddleware{
-		Middleware: baseMw,
-		metricsCollector: metricsCollector,
-		metricsChan: metricsChan,
+		Middleware:          baseMw,
+		metricsCollector:    metricsCollector,
+		metricsChan:         metricsChan,
 		requestHandlerProps: props.RetryMetricsMiddlewareRequestHandlerProps,
 	}
 	go mw.listenForMetrics(metricsChan)
@@ -123,21 +124,19 @@ func (r *retryMetricsMiddleware) GetMetricsCollector() *RetryMetricsCollector {
 
 func (r *retryMetricsMiddleware) listenForMetrics(metricsChan chan *timestampPayload) {
 	for {
-		select {
-		case msg := <-metricsChan:
-			// this shouldn't happen under normal circumstances, but I thought it would
-			// be good to provide a way to stop the goroutine.
-			if msg == nil {
-				return
-			}
-			// All requests are prefixed with "/cache_client.Scs/", so we cut that off
-			parsedRequest, ok := strings.CutPrefix(msg.requestName, "/cache_client.Scs/")
-			if !ok {
-				// Because this middleware is for test use only, we can panic here.
-				panic(fmt.Sprintf("Could not parse request name %s", msg.requestName))
-			}
-			r.metricsCollector.AddTimestamp(msg.cacheName, parsedRequest, msg.timestamp)
+		msg := <-metricsChan
+		// this shouldn't happen under normal circumstances, but I thought it would
+		// be good to provide a way to stop the goroutine.
+		if msg == nil {
+			return
 		}
+		// All requests are prefixed with "/cache_client.Scs/", so we cut that off
+		parsedRequest, ok := strings.CutPrefix(msg.requestName, "/cache_client.Scs/")
+		if !ok {
+			// Because this middleware is for test use only, we can panic here.
+			panic(fmt.Sprintf("Could not parse request name %s", msg.requestName))
+		}
+		r.metricsCollector.AddTimestamp(msg.cacheName, parsedRequest, msg.timestamp)
 	}
 }
 
@@ -152,7 +151,8 @@ func (r *retryMetricsMiddleware) GetRequestHandler(
 }
 
 func (r *retryMetricsMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
-	md, ok := metadata.FromOutgoingContext(ctx); if ok {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if ok {
 		r.metricsChan <- &timestampPayload{
 			cacheName:   md.Get("cache")[0],
 			requestName: method,
@@ -167,16 +167,16 @@ func (r *retryMetricsMiddleware) OnInterceptorRequest(ctx context.Context, metho
 type retryMetricsMiddlewareRequestHandler struct {
 	middleware.RequestHandler
 	metricsChan chan *timestampPayload
-	props RetryMetricsMiddlewareRequestHandlerProps
+	props       RetryMetricsMiddlewareRequestHandlerProps
 }
 
 type RetryMetricsMiddlewareRequestHandlerProps struct {
-	ReturnError      *string
-	ErrorRpcList     *[]string
-	ErrorCount       *int
-	DelayRpcList     *[]string
-	DelayMillis      *int
-	DelayCount       *int
+	ReturnError  *string
+	ErrorRpcList *[]string
+	ErrorCount   *int
+	DelayRpcList *[]string
+	DelayMillis  *int
+	DelayCount   *int
 }
 
 func NewRetryMetricsMiddlewareRequestHandler(

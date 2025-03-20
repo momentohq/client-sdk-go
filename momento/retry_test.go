@@ -346,7 +346,7 @@ var _ = Describe(
 				status := "unavailable"
 				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
 					Props: middleware.Props{
-						Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("retry-metrics"),
+						Logger:       momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("retry-metrics"),
 						IncludeTypes: []interface{}{momento.IncrementRequest{}, momento.DictionaryIncrementRequest{}},
 					},
 					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
