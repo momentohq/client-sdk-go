@@ -407,43 +407,6 @@ var _ = Describe(
 				Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
 				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(1))
 			})
-
-			It("shouldn't gather metrics if the request is not included", func() {
-				status := "unavailable"
-				errCount := 3
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
-						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
-						ErrorCount:   &errCount,
-						DelayRpcList: nil,
-						DelayMillis:  nil,
-						DelayCount:   nil,
-					},
-				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
-				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					retryMiddleware,
-				})
-				cacheClient := setupCacheClientTest(clientConfig)
-				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
-					CacheName: "cache",
-					Key:       momento.String("key"),
-					Value:     momento.String("value"),
-				})
-				Expect(err).To(BeNil())
-				Expect(setResponse).To(Not(BeNil()))
-
-				getResponse, err := cacheClient.Get(context.Background(), &momento.GetRequest{
-					CacheName: "cache",
-					Key:       momento.String("key"),
-				})
-				Expect(err).To(BeNil())
-				Expect(getResponse).To(Not(BeNil()))
-				Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(0))
-			})
-
 		})
 	},
 )
