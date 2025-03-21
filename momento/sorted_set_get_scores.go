@@ -17,7 +17,6 @@ type SortedSetGetScoresRequest struct {
 
 	grpcResponse *pb.XSortedSetGetScoreResponse
 	grpcRequest  *pb.XSortedSetGetScoreRequest
-	response     responses.SortedSetGetScoresResponse
 }
 
 func (r *SortedSetGetScoresRequest) cacheName() string { return r.CacheName }

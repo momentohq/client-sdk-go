@@ -384,7 +384,7 @@ func (c defaultScsClient) ListCaches(ctx context.Context, request *ListCachesReq
 func (c defaultScsClient) Increment(ctx context.Context, r *IncrementRequest) (responses.IncrementResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	resp, err := c.getNextDataClient().makeRequest(ctx, r)
-    if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return resp.(responses.IncrementResponse), nil
@@ -393,7 +393,7 @@ func (c defaultScsClient) Increment(ctx context.Context, r *IncrementRequest) (r
 func (c defaultScsClient) Set(ctx context.Context, r *SetRequest) (responses.SetResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
 	resp, err := c.getNextDataClient().makeRequest(ctx, r)
-    if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return resp.(responses.SetResponse), nil

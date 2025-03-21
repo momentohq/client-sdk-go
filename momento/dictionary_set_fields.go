@@ -20,7 +20,6 @@ type DictionarySetFieldsRequest struct {
 	DictionaryName string
 	Elements       []DictionaryElement
 	Ttl            *utils.CollectionTtl
-
 }
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }

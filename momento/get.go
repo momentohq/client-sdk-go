@@ -15,7 +15,6 @@ type GetRequest struct {
 	CacheName string
 	// string or byte key to be used to store item
 	Key Key
-
 }
 
 func (r *GetRequest) cacheName() string { return r.CacheName }

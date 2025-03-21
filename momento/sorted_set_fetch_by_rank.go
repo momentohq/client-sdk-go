@@ -16,7 +16,6 @@ type SortedSetFetchByRankRequest struct {
 	Order     SortedSetOrder
 	StartRank *int32
 	EndRank   *int32
-
 }
 
 func (r *SortedSetFetchByRankRequest) cacheName() string { return r.CacheName }

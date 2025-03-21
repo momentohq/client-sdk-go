@@ -13,7 +13,6 @@ import (
 type SortedSetLengthRequest struct {
 	CacheName string
 	SetName   string
-
 }
 
 func (r *SortedSetLengthRequest) cacheName() string { return r.CacheName }

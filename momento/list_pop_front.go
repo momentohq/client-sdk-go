@@ -13,7 +13,6 @@ import (
 type ListPopFrontRequest struct {
 	CacheName string
 	ListName  string
-
 }
 
 func (r *ListPopFrontRequest) cacheName() string { return r.CacheName }

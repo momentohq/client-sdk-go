@@ -14,7 +14,6 @@ type SetRemoveElementsRequest struct {
 	CacheName string
 	SetName   string
 	Elements  []Value
-
 }
 
 func (r *SetRemoveElementsRequest) cacheName() string { return r.CacheName }

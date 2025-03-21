@@ -15,7 +15,6 @@ type ListFetchRequest struct {
 	ListName   string
 	StartIndex *int32
 	EndIndex   *int32
-
 }
 
 func (r *ListFetchRequest) cacheName() string { return r.CacheName }

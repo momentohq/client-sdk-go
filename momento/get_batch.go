@@ -15,7 +15,6 @@ type GetBatchRequest struct {
 	Keys      []Value
 
 	grpcStream pb.Scs_GetBatchClient
-	response   responses.GetBatchResponse
 	byteKeys   [][]byte
 }
 

@@ -23,7 +23,6 @@ type SetIfEqualRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
 }
 
 func (r *SetIfEqualRequest) cacheName() string { return r.CacheName }

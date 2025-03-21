@@ -17,7 +17,6 @@ type SetBatchRequest struct {
 	Ttl       time.Duration
 
 	grpcStream pb.Scs_SetBatchClient
-	response   responses.SetBatchResponse
 }
 
 func (r *SetBatchRequest) cacheName() string { return r.CacheName }

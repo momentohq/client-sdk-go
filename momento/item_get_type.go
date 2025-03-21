@@ -13,7 +13,6 @@ import (
 type ItemGetTypeRequest struct {
 	CacheName string
 	Key       Key
-
 }
 
 func (r *ItemGetTypeRequest) cacheName() string { return r.CacheName }

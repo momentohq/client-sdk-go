@@ -18,7 +18,6 @@ type ListPushBackRequest struct {
 	Value               Value
 	TruncateFrontToSize uint32
 	Ttl                 *utils.CollectionTtl
-
 }
 
 func (r *ListPushBackRequest) cacheName() string { return r.CacheName }

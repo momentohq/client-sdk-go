@@ -17,7 +17,6 @@ type IncreaseTtlRequest struct {
 	Key Key
 	// Time to live that you want to increase to.
 	Ttl time.Duration
-
 }
 
 func (r *IncreaseTtlRequest) cacheName() string { return r.CacheName }

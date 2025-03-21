@@ -14,7 +14,6 @@ type DictionaryRemoveFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
 	Fields         []Value
-
 }
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }

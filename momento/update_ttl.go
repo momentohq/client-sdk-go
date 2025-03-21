@@ -17,7 +17,6 @@ type UpdateTtlRequest struct {
 	Key Key
 	// Time to live that you want to update in cache in seconds.
 	Ttl time.Duration
-
 }
 
 func (r *UpdateTtlRequest) cacheName() string { return r.CacheName }

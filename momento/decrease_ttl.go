@@ -17,7 +17,6 @@ type DecreaseTtlRequest struct {
 	Key Key
 	// Time to live that you want to decrease to.
 	Ttl time.Duration
-
 }
 
 func (r *DecreaseTtlRequest) cacheName() string { return r.CacheName }

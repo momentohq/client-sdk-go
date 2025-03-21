@@ -12,7 +12,6 @@ import (
 type ItemGetTtlRequest struct {
 	CacheName string
 	Key       Key
-
 }
 
 func (r *ItemGetTtlRequest) cacheName() string { return r.CacheName }

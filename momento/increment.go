@@ -17,7 +17,6 @@ type IncrementRequest struct {
 	Field     Field
 	Amount    int64
 	Ttl       *utils.CollectionTtl
-
 }
 
 func (r *IncrementRequest) cacheName() string { return r.CacheName }

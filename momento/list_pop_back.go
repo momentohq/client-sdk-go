@@ -13,7 +13,6 @@ import (
 type ListPopBackRequest struct {
 	CacheName string
 	ListName  string
-
 }
 
 func (r *ListPopBackRequest) cacheName() string { return r.CacheName }

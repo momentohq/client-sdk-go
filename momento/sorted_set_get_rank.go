@@ -15,7 +15,6 @@ type SortedSetGetRankRequest struct {
 	SetName   string
 	Value     Value
 	Order     SortedSetOrder
-
 }
 
 func (r *SortedSetGetRankRequest) cacheName() string { return r.CacheName }

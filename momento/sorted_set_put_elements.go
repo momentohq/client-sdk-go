@@ -18,7 +18,6 @@ type SortedSetPutElementsRequest struct {
 	SetName   string
 	Elements  []SortedSetElement
 	Ttl       *utils.CollectionTtl
-
 }
 
 func (r *SortedSetPutElementsRequest) cacheName() string { return r.CacheName }

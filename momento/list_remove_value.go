@@ -14,7 +14,6 @@ type ListRemoveValueRequest struct {
 	CacheName string
 	ListName  string
 	Value     Value
-
 }
 
 func (r *ListRemoveValueRequest) cacheName() string { return r.CacheName }

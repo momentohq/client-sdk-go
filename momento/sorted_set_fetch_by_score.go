@@ -18,7 +18,6 @@ type SortedSetFetchByScoreRequest struct {
 	MaxScore  *float64
 	Offset    *uint32
 	Count     *uint32
-
 }
 
 func (r *SortedSetFetchByScoreRequest) cacheName() string { return r.CacheName }

@@ -13,7 +13,6 @@ import (
 type ListLengthRequest struct {
 	CacheName string
 	ListName  string
-
 }
 
 func (r *ListLengthRequest) cacheName() string { return r.CacheName }

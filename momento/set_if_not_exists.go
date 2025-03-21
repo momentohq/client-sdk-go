@@ -21,7 +21,6 @@ type SetIfNotExistsRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
 }
 
 func (r *SetIfNotExistsRequest) cacheName() string { return r.CacheName }

@@ -15,7 +15,6 @@ type DeleteRequest struct {
 	CacheName string
 	// string or byte key to be used to delete the item.
 	Key Key
-
 }
 
 func (r *DeleteRequest) cacheName() string { return r.CacheName }

@@ -13,7 +13,6 @@ import (
 type SetLengthRequest struct {
 	CacheName string
 	SetName   string
-
 }
 
 func (r *SetLengthRequest) cacheName() string { return r.CacheName }

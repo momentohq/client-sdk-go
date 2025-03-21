@@ -20,7 +20,6 @@ type DictionaryIncrementRequest struct {
 	Field          Value
 	Amount         int64
 	Ttl            *utils.CollectionTtl
-
 }
 
 func (r *DictionaryIncrementRequest) cacheName() string { return r.CacheName }

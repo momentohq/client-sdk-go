@@ -14,7 +14,6 @@ type SortedSetRemoveElementsRequest struct {
 	CacheName string
 	SetName   string
 	Values    []Value
-
 }
 
 func (r *SortedSetRemoveElementsRequest) cacheName() string { return r.CacheName }

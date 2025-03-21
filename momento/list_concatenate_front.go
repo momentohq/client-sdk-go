@@ -17,7 +17,6 @@ type ListConcatenateFrontRequest struct {
 	Values             []Value
 	TruncateBackToSize uint32
 	Ttl                *utils.CollectionTtl
-
 }
 
 func (r *ListConcatenateFrontRequest) cacheName() string { return r.CacheName }

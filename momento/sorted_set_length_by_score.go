@@ -15,7 +15,6 @@ type SortedSetLengthByScoreRequest struct {
 	SetName   string
 	MinScore  *float64
 	MaxScore  *float64
-
 }
 
 func (r *SortedSetLengthByScoreRequest) cacheName() string { return r.CacheName }

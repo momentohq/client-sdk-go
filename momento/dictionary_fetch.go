@@ -13,7 +13,6 @@ import (
 type DictionaryFetchRequest struct {
 	CacheName      string
 	DictionaryName string
-
 }
 
 func (r *DictionaryFetchRequest) cacheName() string { return r.CacheName }

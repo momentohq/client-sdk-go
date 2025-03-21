@@ -13,7 +13,6 @@ import (
 type KeysExistRequest struct {
 	CacheName string
 	Keys      []Key
-
 }
 
 func (r *KeysExistRequest) cacheName() string { return r.CacheName }

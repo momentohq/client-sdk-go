@@ -14,7 +14,6 @@ type SetContainsElementsRequest struct {
 	CacheName string
 	SetName   string
 	Elements  []Value
-
 }
 
 func (r *SetContainsElementsRequest) cacheName() string { return r.CacheName }

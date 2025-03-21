@@ -21,7 +21,6 @@ type SortedSetIncrementScoreRequest struct {
 	Value     Value
 	Amount    float64
 	Ttl       *utils.CollectionTtl
-
 }
 
 func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }

@@ -17,7 +17,6 @@ type SetAddElementsRequest struct {
 	SetName   string
 	Elements  []Value
 	Ttl       *utils.CollectionTtl
-
 }
 
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }

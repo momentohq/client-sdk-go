@@ -14,7 +14,6 @@ type SetPopRequest struct {
 	CacheName string
 	SetName   string
 	Count     *uint32
-
 }
 
 func (r *SetPopRequest) cacheName() string { return r.CacheName }
