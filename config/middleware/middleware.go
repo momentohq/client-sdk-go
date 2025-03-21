@@ -171,23 +171,22 @@ func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
 	return nil
 }
 
-// OnResponse is called after the gRPC response is received from the backend. It is passed the response object, which
-// can be cast to the appropriate response type for further inspection.
+// OnResponse is called after the gRPC response is received from the backend and converted into a Momento response type
+// (e.g., *responses.GetHit). It is supplied the response object as an interface, which can be type-asserted to the
+// appropriate response type.
 //
 // Returning nil for the response value leaves the response unchanged. Returning a new response object will replace the
-// current response object. The new response must be the same type as the original response object, and an error is
-// returned if this is not the case.
+// current response object. Returning an error will immediately halt response processing, skipping any outstanding
+// response handlers.
 //
-// Returning an error will immediately halt response processing, skipping any outstanding response handlers.
-//
-//		func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
+//		func (rh *myRequestHandler) OnResponse(_ interface{}) (interface{}, error) {
 //		  switch r := theResponse.(type) {
 //		  case *responses.ListPushFrontSuccess:
 //		    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
 //		  case *responses.ListPushBackSuccess:
 //		    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
 //		  }
-//	   return nil, err
+//	      return nil, nil
 //		}
 func (rh *requestHandler) OnResponse(_ interface{}) (interface{}, error) {
 	return nil, nil
