@@ -14,7 +14,6 @@ type ListPopFrontRequest struct {
 	CacheName string
 	ListName  string
 
-	response responses.ListPopFrontResponse
 }
 
 func (r *ListPopFrontRequest) cacheName() string { return r.CacheName }
@@ -41,23 +40,14 @@ func (r *ListPopFrontRequest) makeGrpcRequest(grpcRequest interface{}, requestMe
 	return resp, nil, nil
 }
 
-func (r *ListPopFrontRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ListPopFrontRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListPopFrontResponse)
 	switch rtype := myResp.List.(type) {
 	case *pb.XListPopFrontResponse_Found:
-		r.response = responses.NewListPopFrontHit(rtype.Found.Front)
+		return responses.NewListPopFrontHit(rtype.Found.Front), nil
 	case *pb.XListPopFrontResponse_Missing:
-		r.response = &responses.ListPopFrontMiss{}
+		return &responses.ListPopFrontMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *ListPopFrontRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XListPopFrontResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

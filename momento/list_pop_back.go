@@ -14,7 +14,6 @@ type ListPopBackRequest struct {
 	CacheName string
 	ListName  string
 
-	response responses.ListPopBackResponse
 }
 
 func (r *ListPopBackRequest) cacheName() string { return r.CacheName }
@@ -41,23 +40,14 @@ func (r *ListPopBackRequest) makeGrpcRequest(grpcRequest interface{}, requestMet
 	return resp, nil, nil
 }
 
-func (r *ListPopBackRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ListPopBackRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListPopBackResponse)
 	switch rtype := myResp.List.(type) {
 	case *pb.XListPopBackResponse_Found:
-		r.response = responses.NewListPopBackHit(rtype.Found.Back)
+		return responses.NewListPopBackHit(rtype.Found.Back), nil
 	case *pb.XListPopBackResponse_Missing:
-		r.response = &responses.ListPopBackMiss{}
+		return &responses.ListPopBackMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *ListPopBackRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XListPopBackResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

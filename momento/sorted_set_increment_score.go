@@ -22,7 +22,6 @@ type SortedSetIncrementScoreRequest struct {
 	Amount    float64
 	Ttl       *utils.CollectionTtl
 
-	response responses.SortedSetIncrementScoreResponse
 }
 
 func (r *SortedSetIncrementScoreRequest) cacheName() string { return r.CacheName }
@@ -81,17 +80,7 @@ func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(grpcRequest interface{}
 	return resp, nil, nil
 }
 
-func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSortedSetIncrementResponse)
-	r.response = responses.SortedSetIncrementScoreSuccess(myResp.Score)
-
-	return nil
-}
-
-func (r *SortedSetIncrementScoreRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetIncrementResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+	return responses.SortedSetIncrementScoreSuccess(myResp.Score), nil
 }

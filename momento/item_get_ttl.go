@@ -13,7 +13,6 @@ type ItemGetTtlRequest struct {
 	CacheName string
 	Key       Key
 
-	response responses.ItemGetTtlResponse
 }
 
 func (r *ItemGetTtlRequest) cacheName() string { return r.CacheName }
@@ -44,25 +43,15 @@ func (r *ItemGetTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMeta
 	return resp, nil, nil
 }
 
-func (r *ItemGetTtlRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ItemGetTtlRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XItemGetTtlResponse)
 
 	switch myResp.Result.(type) {
 	case *pb.XItemGetTtlResponse_Found:
-		r.response = responses.NewItemGetTtlHit(myResp.GetFound().GetRemainingTtlMillis())
-		return nil
+		return responses.NewItemGetTtlHit(myResp.GetFound().GetRemainingTtlMillis()), nil
 	case *pb.XItemGetTtlResponse_Missing:
-		r.response = &responses.ItemGetTtlMiss{}
-		return nil
+		return &responses.ItemGetTtlMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-}
-
-func (r *ItemGetTtlRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XItemGetTtlResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

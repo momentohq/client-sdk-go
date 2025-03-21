@@ -24,7 +24,6 @@ type SetIfPresentAndNotEqualRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	response responses.SetIfPresentAndNotEqualResponse
 }
 
 func (r *SetIfPresentAndNotEqualRequest) cacheName() string { return r.CacheName }
@@ -87,23 +86,14 @@ func (r *SetIfPresentAndNotEqualRequest) makeGrpcRequest(grpcRequest interface{}
 	return resp, nil, nil
 }
 
-func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSetIfResponse)
 	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		r.response = &responses.SetIfPresentAndNotEqualStored{}
+		return &responses.SetIfPresentAndNotEqualStored{}, nil
 	case *pb.XSetIfResponse_NotStored:
-		r.response = &responses.SetIfPresentAndNotEqualNotStored{}
+		return &responses.SetIfPresentAndNotEqualNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SetIfPresentAndNotEqualRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetIfResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

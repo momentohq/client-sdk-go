@@ -18,7 +18,6 @@ type SetAddElementsRequest struct {
 	Elements  []Value
 	Ttl       *utils.CollectionTtl
 
-	response responses.SetAddElementsResponse
 }
 
 func (r *SetAddElementsRequest) cacheName() string { return r.CacheName }
@@ -69,15 +68,6 @@ func (r *SetAddElementsRequest) makeGrpcRequest(grpcRequest interface{}, request
 	return resp, nil, nil
 }
 
-func (r *SetAddElementsRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = &responses.SetAddElementsSuccess{}
-	return nil
-}
-
-func (r *SetAddElementsRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetUnionResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+func (r *SetAddElementsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.SetAddElementsSuccess{}, nil
 }

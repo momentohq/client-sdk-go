@@ -15,7 +15,6 @@ type SortedSetRemoveElementsRequest struct {
 	SetName   string
 	Values    []Value
 
-	response responses.SortedSetRemoveElementsResponse
 }
 
 func (r *SortedSetRemoveElementsRequest) cacheName() string { return r.CacheName }
@@ -56,15 +55,6 @@ func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(grpcRequest interface{}
 	return resp, nil, nil
 }
 
-func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = &responses.SortedSetRemoveElementsSuccess{}
-	return nil
-}
-
-func (r *SortedSetRemoveElementsRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetRemoveResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.SortedSetRemoveElementsSuccess{}, nil
 }

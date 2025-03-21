@@ -14,7 +14,6 @@ type ListLengthRequest struct {
 	CacheName string
 	ListName  string
 
-	response responses.ListLengthResponse
 }
 
 func (r *ListLengthRequest) cacheName() string { return r.CacheName }
@@ -43,23 +42,14 @@ func (r *ListLengthRequest) makeGrpcRequest(grpcRequest interface{}, requestMeta
 	return resp, nil, nil
 }
 
-func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListLengthResponse)
 	switch rtype := myResp.List.(type) {
 	case *pb.XListLengthResponse_Found:
-		r.response = responses.NewListLengthHit(rtype.Found.Length)
+		return responses.NewListLengthHit(rtype.Found.Length), nil
 	case *pb.XListLengthResponse_Missing:
-		r.response = &responses.ListLengthMiss{}
+		return &responses.ListLengthMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *ListLengthRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XListLengthResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

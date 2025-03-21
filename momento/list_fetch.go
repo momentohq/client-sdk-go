@@ -16,7 +16,6 @@ type ListFetchRequest struct {
 	StartIndex *int32
 	EndIndex   *int32
 
-	response responses.ListFetchResponse
 }
 
 func (r *ListFetchRequest) cacheName() string { return r.CacheName }
@@ -61,23 +60,14 @@ func (r *ListFetchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetad
 	return resp, nil, nil
 }
 
-func (r *ListFetchRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ListFetchRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListFetchResponse)
 	switch rtype := myResp.List.(type) {
 	case *pb.XListFetchResponse_Found:
-		r.response = responses.NewListFetchHit(rtype.Found.Values)
+		return responses.NewListFetchHit(rtype.Found.Values), nil
 	case *pb.XListFetchResponse_Missing:
-		r.response = &responses.ListFetchMiss{}
+		return &responses.ListFetchMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *ListFetchRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XListFetchResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

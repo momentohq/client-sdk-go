@@ -18,7 +18,6 @@ type IncrementRequest struct {
 	Amount    int64
 	Ttl       *utils.CollectionTtl
 
-	response responses.IncrementResponse
 }
 
 func (r *IncrementRequest) cacheName() string { return r.CacheName }
@@ -63,16 +62,7 @@ func (r *IncrementRequest) makeGrpcRequest(grpcRequest interface{}, requestMetad
 	return resp, nil, nil
 }
 
-func (r *IncrementRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *IncrementRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XIncrementResponse)
-	r.response = responses.NewIncrementSuccess(myResp.Value)
-	return nil
-}
-
-func (r *IncrementRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XIncrementResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+	return responses.NewIncrementSuccess(myResp.Value), nil
 }

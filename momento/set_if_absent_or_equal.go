@@ -24,7 +24,6 @@ type SetIfAbsentOrEqualRequest struct {
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
 
-	response responses.SetIfAbsentOrEqualResponse
 }
 
 func (r *SetIfAbsentOrEqualRequest) cacheName() string { return r.CacheName }
@@ -87,24 +86,15 @@ func (r *SetIfAbsentOrEqualRequest) makeGrpcRequest(grpcRequest interface{}, req
 	return resp, nil, nil
 }
 
-func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SetIfAbsentOrEqualRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSetIfResponse)
 
 	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		r.response = &responses.SetIfAbsentOrEqualStored{}
+		return &responses.SetIfAbsentOrEqualStored{}, nil
 	case *pb.XSetIfResponse_NotStored:
-		r.response = &responses.SetIfAbsentOrEqualNotStored{}
+		return &responses.SetIfAbsentOrEqualNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SetIfAbsentOrEqualRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetIfResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

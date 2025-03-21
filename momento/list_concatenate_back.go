@@ -19,7 +19,6 @@ type ListConcatenateBackRequest struct {
 	TruncateFrontToSize uint32
 	Ttl                 *utils.CollectionTtl
 
-	response responses.ListConcatenateBackResponse
 }
 
 func (r *ListConcatenateBackRequest) cacheName() string { return r.CacheName }
@@ -71,16 +70,7 @@ func (r *ListConcatenateBackRequest) makeGrpcRequest(grpcRequest interface{}, re
 	return resp, nil, nil
 }
 
-func (r *ListConcatenateBackRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ListConcatenateBackRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListConcatenateBackResponse)
-	r.response = responses.NewListConcatenateBackSuccess(myResp.ListLength)
-	return nil
-}
-
-func (r *ListConcatenateBackRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XListConcatenateBackResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+	return responses.NewListConcatenateBackSuccess(myResp.ListLength), nil
 }

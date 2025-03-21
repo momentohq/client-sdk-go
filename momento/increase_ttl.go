@@ -18,7 +18,6 @@ type IncreaseTtlRequest struct {
 	// Time to live that you want to increase to.
 	Ttl time.Duration
 
-	response responses.IncreaseTtlResponse
 }
 
 func (r *IncreaseTtlRequest) cacheName() string { return r.CacheName }
@@ -56,7 +55,7 @@ func (r *IncreaseTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMet
 	return resp, nil, nil
 }
 
-func (r *IncreaseTtlRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *IncreaseTtlRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XUpdateTtlResponse)
 
 	var theResponse responses.IncreaseTtlResponse
@@ -68,18 +67,8 @@ func (r *IncreaseTtlRequest) interpretGrpcResponse(resp interface{}) error {
 	case *pb.XUpdateTtlResponse_Set:
 		theResponse = &responses.IncreaseTtlSet{}
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 
-	r.response = theResponse
-
-	return nil
-}
-
-func (r *IncreaseTtlRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XUpdateTtlResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+	return theResponse, nil
 }

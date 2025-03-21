@@ -16,7 +16,6 @@ type GetRequest struct {
 	// string or byte key to be used to store item
 	Key Key
 
-	response responses.GetResponse
 }
 
 func (r *GetRequest) cacheName() string { return r.CacheName }
@@ -50,23 +49,13 @@ func (r *GetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata co
 	return resp, nil, nil
 }
 
-func (r *GetRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *GetRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XGetResponse)
 	if myResp.Result == pb.ECacheResult_Hit {
-		r.response = responses.NewGetHit(myResp.CacheBody)
-		return nil
+		return responses.NewGetHit(myResp.CacheBody), nil
 	} else if myResp.Result == pb.ECacheResult_Miss {
-		r.response = &responses.GetMiss{}
-		return nil
+		return &responses.GetMiss{}, nil
 	} else {
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-}
-
-func (r *GetRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XGetResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

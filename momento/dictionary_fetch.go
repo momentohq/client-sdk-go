@@ -14,7 +14,6 @@ type DictionaryFetchRequest struct {
 	CacheName      string
 	DictionaryName string
 
-	response responses.DictionaryFetchResponse
 }
 
 func (r *DictionaryFetchRequest) cacheName() string { return r.CacheName }
@@ -43,7 +42,7 @@ func (r *DictionaryFetchRequest) makeGrpcRequest(grpcRequest interface{}, reques
 	return resp, nil, nil
 }
 
-func (r *DictionaryFetchRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *DictionaryFetchRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XDictionaryFetchResponse)
 	switch rtype := myResp.Dictionary.(type) {
 	case *pb.XDictionaryFetchResponse_Found:
@@ -51,19 +50,10 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse(resp interface{}) error {
 		for _, i := range rtype.Found.Items {
 			elements[(string(i.Field))] = i.Value
 		}
-		r.response = responses.NewDictionaryFetchHit(elements)
+		return responses.NewDictionaryFetchHit(elements), nil
 	case *pb.XDictionaryFetchResponse_Missing:
-		r.response = &responses.DictionaryFetchMiss{}
+		return &responses.DictionaryFetchMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *DictionaryFetchRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XDictionaryFetchResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

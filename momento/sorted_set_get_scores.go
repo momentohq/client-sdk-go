@@ -55,21 +55,19 @@ func (r *SortedSetGetScoresRequest) makeGrpcRequest(grpcRequest interface{}, req
 	return resp, nil, nil
 }
 
-func (r *SortedSetGetScoresRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SortedSetGetScoresRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	r.grpcResponse = resp.(*pb.XSortedSetGetScoreResponse)
 	switch t := r.grpcResponse.SortedSet.(type) {
 	case *pb.XSortedSetGetScoreResponse_Found:
-		r.response = responses.NewSortedSetGetScoresHit(
+		return responses.NewSortedSetGetScoresHit(
 			convertSortedSetScoreElement(t.Found.Elements),
 			r.grpcRequest.Values,
-		)
+		), nil
 	case *pb.XSortedSetGetScoreResponse_Missing:
-		r.response = &responses.SortedSetGetScoresMiss{}
+		return &responses.SortedSetGetScoresMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
-
-	return nil
 }
 
 func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreResponse_XSortedSetGetScoreResponsePart) []responses.SortedSetGetScoreResponse {
@@ -85,12 +83,4 @@ func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreRespon
 		}
 	}
 	return rList
-}
-
-func (r *SortedSetGetScoresRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetGetScoreResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

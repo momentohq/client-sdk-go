@@ -21,7 +21,6 @@ type DictionarySetFieldsRequest struct {
 	Elements       []DictionaryElement
 	Ttl            *utils.CollectionTtl
 
-	response responses.DictionarySetFieldsResponse
 }
 
 func (r *DictionarySetFieldsRequest) cacheName() string { return r.CacheName }
@@ -80,15 +79,6 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(grpcRequest interface{}, re
 	return resp, nil, nil
 }
 
-func (r *DictionarySetFieldsRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = &responses.DictionarySetFieldsSuccess{}
-	return nil
-}
-
-func (r *DictionarySetFieldsRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XDictionarySetResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+func (r *DictionarySetFieldsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.DictionarySetFieldsSuccess{}, nil
 }

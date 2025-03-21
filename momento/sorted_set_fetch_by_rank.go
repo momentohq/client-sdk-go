@@ -17,7 +17,6 @@ type SortedSetFetchByRankRequest struct {
 	StartRank *int32
 	EndRank   *int32
 
-	response responses.SortedSetFetchResponse
 }
 
 func (r *SortedSetFetchByRankRequest) cacheName() string { return r.CacheName }
@@ -78,17 +77,16 @@ func (r *SortedSetFetchByRankRequest) makeGrpcRequest(grpcRequest interface{}, r
 	return resp, nil, nil
 }
 
-func (r *SortedSetFetchByRankRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SortedSetFetchByRankRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSortedSetFetchResponse)
 	switch grpcResp := myResp.SortedSet.(type) {
 	case *pb.XSortedSetFetchResponse_Found:
-		r.response = responses.NewSortedSetFetchHit(sortedSetByRankGrpcElementToModel(grpcResp.Found.GetValuesWithScores().Elements))
+		return responses.NewSortedSetFetchHit(sortedSetByRankGrpcElementToModel(grpcResp.Found.GetValuesWithScores().Elements)), nil
 	case *pb.XSortedSetFetchResponse_Missing:
-		r.response = &responses.SortedSetFetchMiss{}
+		return &responses.SortedSetFetchMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
 }
 
 func sortedSetByRankGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) []responses.SortedSetBytesElement {
@@ -100,12 +98,4 @@ func sortedSetByRankGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) 
 		})
 	}
 	return returnList
-}
-
-func (r *SortedSetFetchByRankRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetFetchResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }
