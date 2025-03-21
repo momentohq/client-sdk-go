@@ -53,9 +53,8 @@ func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) 
 }
 
 // GetAverageTimeBetweenRetries returns the average time between retries in seconds.
-// TODO: what resolution are we looking for here? I'm using Unix epoch time, so am currently
-//
-//	limited to seconds, but I can obviously change that.
+//	Limited to second resolution, but I can obviously change that if desired.
+//	This tracks with the JS implementation.
 func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error) {
 	if _, ok := r.data[cacheName]; !ok {
 		return int64(0), fmt.Errorf("cache name '%s' is not valid", cacheName)
@@ -77,24 +76,24 @@ func (r *retryMetrics) GetAllMetrics() map[string]map[string][]int64 {
 	return r.data
 }
 
-type RetryMetricsMiddlewareProps struct {
+type MomentoLocalMiddlewareProps struct {
 	middleware.Props
-	RetryMetricsMiddlewareRequestHandlerProps
+	MomentoLocalMiddlewareRequestHandlerProps
 }
 
-type retryMetricsMiddleware struct {
+type momentoLocalMiddleware struct {
 	middleware.Middleware
 	metricsCollector    RetryMetricsCollector
 	metricsChan         chan *timestampPayload
-	requestHandlerProps RetryMetricsMiddlewareRequestHandlerProps
+	requestHandlerProps MomentoLocalMiddlewareRequestHandlerProps
 }
 
-type RetryMetricsMiddleware interface {
+type MomentoLocalMiddleware interface {
 	middleware.Middleware
 	GetMetricsCollector() *RetryMetricsCollector
 }
 
-func NewRetryMetricsMiddleware(props RetryMetricsMiddlewareProps) middleware.Middleware {
+func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Middleware {
 	var myLogger logger.MomentoLogger
 	if props.Logger == nil {
 		myLogger = momento_default_logger.NewDefaultMomentoLoggerFactory(
@@ -108,21 +107,21 @@ func NewRetryMetricsMiddleware(props RetryMetricsMiddlewareProps) middleware.Mid
 	})
 	metricsCollector := NewRetryMetricsCollector()
 	metricsChan := make(chan *timestampPayload, 1000)
-	mw := &retryMetricsMiddleware{
+	mw := &momentoLocalMiddleware{
 		Middleware:          baseMw,
 		metricsCollector:    metricsCollector,
 		metricsChan:         metricsChan,
-		requestHandlerProps: props.RetryMetricsMiddlewareRequestHandlerProps,
+		requestHandlerProps: props.MomentoLocalMiddlewareRequestHandlerProps,
 	}
 	go mw.listenForMetrics(metricsChan)
 	return mw
 }
 
-func (r *retryMetricsMiddleware) GetMetricsCollector() *RetryMetricsCollector {
+func (r *momentoLocalMiddleware) GetMetricsCollector() *RetryMetricsCollector {
 	return &r.metricsCollector
 }
 
-func (r *retryMetricsMiddleware) listenForMetrics(metricsChan chan *timestampPayload) {
+func (r *momentoLocalMiddleware) listenForMetrics(metricsChan chan *timestampPayload) {
 	for {
 		msg := <-metricsChan
 		// this shouldn't happen under normal circumstances, but I thought it would
@@ -140,7 +139,7 @@ func (r *retryMetricsMiddleware) listenForMetrics(metricsChan chan *timestampPay
 	}
 }
 
-func (r *retryMetricsMiddleware) GetRequestHandler(
+func (r *momentoLocalMiddleware) GetRequestHandler(
 	baseHandler middleware.RequestHandler,
 ) (middleware.RequestHandler, error) {
 	return NewRetryMetricsMiddlewareRequestHandler(
@@ -150,7 +149,7 @@ func (r *retryMetricsMiddleware) GetRequestHandler(
 	), nil
 }
 
-func (r *retryMetricsMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
+func (r *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
 		r.metricsChan <- &timestampPayload{
@@ -164,13 +163,13 @@ func (r *retryMetricsMiddleware) OnInterceptorRequest(ctx context.Context, metho
 	}
 }
 
-type retryMetricsMiddlewareRequestHandler struct {
+type momentoLocalMiddlewareRequestHandler struct {
 	middleware.RequestHandler
 	metricsChan chan *timestampPayload
-	props       RetryMetricsMiddlewareRequestHandlerProps
+	props       MomentoLocalMiddlewareRequestHandlerProps
 }
 
-type RetryMetricsMiddlewareRequestHandlerProps struct {
+type MomentoLocalMiddlewareRequestHandlerProps struct {
 	ReturnError  *string
 	ErrorRpcList *[]string
 	ErrorCount   *int
@@ -182,12 +181,12 @@ type RetryMetricsMiddlewareRequestHandlerProps struct {
 func NewRetryMetricsMiddlewareRequestHandler(
 	rh middleware.RequestHandler,
 	metricsChan chan *timestampPayload,
-	props RetryMetricsMiddlewareRequestHandlerProps,
+	props MomentoLocalMiddlewareRequestHandlerProps,
 ) middleware.RequestHandler {
-	return &retryMetricsMiddlewareRequestHandler{RequestHandler: rh, metricsChan: metricsChan, props: props}
+	return &momentoLocalMiddlewareRequestHandler{RequestHandler: rh, metricsChan: metricsChan, props: props}
 }
 
-func (rh *retryMetricsMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
+func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
 	requestMetadata["request-id"] = rh.GetId().String()
 
 	if rh.props.ReturnError != nil {

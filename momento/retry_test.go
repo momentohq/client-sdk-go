@@ -84,9 +84,9 @@ var _ = Describe(
 			It("shouldn't retry", func() {
 				status := "unavailable"
 				strategy := retry.NewNeverRetryStrategy()
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(
-					helpers.RetryMetricsMiddlewareProps{
-						RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(
+					helpers.MomentoLocalMiddlewareProps{
+						MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 							ReturnError:  &status,
 							ErrorRpcList: &[]string{"set"},
 							ErrorCount:   nil,
@@ -96,7 +96,7 @@ var _ = Describe(
 						},
 					},
 				)
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				}).WithRetryStrategy(strategy)
@@ -121,8 +121,8 @@ var _ = Describe(
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
 						ErrorCount:   nil,
@@ -131,7 +131,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				}).WithRetryStrategy(strategy).WithClientTimeout(1 * time.Second)
@@ -157,8 +157,8 @@ var _ = Describe(
 					MaxBackoffMillis:   2000,
 				})
 				errorCount := 5
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
 						ErrorCount:   &errorCount,
@@ -167,7 +167,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				}).WithRetryStrategy(strategy).WithClientTimeout(10 * time.Second)
@@ -192,8 +192,8 @@ var _ = Describe(
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
 						ErrorCount:   nil,
@@ -202,7 +202,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				}).WithRetryStrategy(strategy)
@@ -225,8 +225,8 @@ var _ = Describe(
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"dictionary-increment"},
 						ErrorCount:   nil,
@@ -235,7 +235,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				}).WithRetryStrategy(strategy)
@@ -260,8 +260,8 @@ var _ = Describe(
 					LoggerFactory: momento_default_logger.DefaultMomentoLoggerFactory{},
 					MaxAttempts:   3,
 				})
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"get"},
 						ErrorCount:   nil,
@@ -270,7 +270,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				}).WithRetryStrategy(retryStrategy)
@@ -297,8 +297,8 @@ var _ = Describe(
 
 			It("should not retry if the status code is not retryable", func() {
 				status := "unknown"
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"set"},
 						ErrorCount:   nil,
@@ -307,7 +307,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				})
@@ -326,8 +326,8 @@ var _ = Describe(
 
 			It("should not retry if the api is not retryable", func() {
 				status := "unavailable"
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"increment", "dictionary-increment"},
 						ErrorCount:   nil,
@@ -336,7 +336,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				})
@@ -375,8 +375,8 @@ var _ = Describe(
 			It("should return a value on success after a retry", func() {
 				status := "unavailable"
 				errCount := 1
-				retryMiddleware := helpers.NewRetryMetricsMiddleware(helpers.RetryMetricsMiddlewareProps{
-					RetryMetricsMiddlewareRequestHandlerProps: helpers.RetryMetricsMiddlewareRequestHandlerProps{
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"get"},
 						ErrorCount:   &errCount,
@@ -385,7 +385,7 @@ var _ = Describe(
 						DelayCount:   nil,
 					},
 				})
-				metricsCollector := *retryMiddleware.(helpers.RetryMetricsMiddleware).GetMetricsCollector()
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
 				})
