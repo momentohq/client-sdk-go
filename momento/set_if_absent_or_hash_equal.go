@@ -65,7 +65,7 @@ func (r *SetIfAbsentOrHashEqualRequest) initGrpcRequest(client scsDataClient) er
 	}
 
 	var condition = &pb.XSetIfHashRequest_AbsentOrHashEqual{
-		AbsentOrEqual: &pb.AbsentOrHashEqual{
+		AbsentOrHashEqual: &pb.AbsentOrHashEqual{
 			HashToCheck: hashEqual,
 		},
 	}
@@ -81,7 +81,7 @@ func (r *SetIfAbsentOrHashEqualRequest) initGrpcRequest(client scsDataClient) er
 
 func (r *SetIfAbsentOrHashEqualRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIfHash(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -91,18 +91,13 @@ func (r *SetIfAbsentOrHashEqualRequest) makeGrpcRequest(requestMetadata context.
 }
 
 func (r *SetIfAbsentOrHashEqualRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfAbsentOrHashEqualResponse
-
-	switch grpcResp.Result.(type) {
-	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfAbsentOrHashEqualStored{}
-	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfAbsentOrHashEqualNotStored{}
+	switch resp := r.grpcResponse.Result.(type) {
+	case *pb.XSetIfHashResponse_Stored:
+		r.response = responses.NewSetIfAbsentOrHashEqualStored(resp.Stored.NewHash)
+	case *pb.XSetIfHashResponse_NotStored:
+		r.response = &responses.SetIfAbsentOrHashEqualNotStored{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
-
-	r.response = resp
 	return nil
 }

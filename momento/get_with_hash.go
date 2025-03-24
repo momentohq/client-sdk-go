@@ -56,15 +56,14 @@ func (r *GetWithHashRequest) makeGrpcRequest(requestMetadata context.Context, cl
 }
 
 func (r *GetWithHashRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-
-	if resp.Result == pb.ECacheResult_Hit {
-		r.response = responses.NewGetWithHashHit(resp.CacheBody)
+	switch resp := r.grpcResponse.Result.(type) {
+	case *pb.XGetWithHashResponse_Found:
+		r.response = responses.NewGetWithHashHit(resp.Found.Value, resp.Found.Hash)
 		return nil
-	} else if resp.Result == pb.ECacheResult_Miss {
+	case *pb.XGetWithHashResponse_Missing:
 		r.response = &responses.GetWithHashMiss{}
 		return nil
-	} else {
+	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 }

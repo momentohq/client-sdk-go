@@ -69,7 +69,7 @@ func (r *SetWithHashRequest) initGrpcRequest(client scsDataClient) error {
 
 func (r *SetWithHashRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIfHash(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
@@ -79,18 +79,13 @@ func (r *SetWithHashRequest) makeGrpcRequest(requestMetadata context.Context, cl
 }
 
 func (r *SetWithHashRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetWithHashResponse
-
-	switch grpcResp.Result.(type) {
-	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetWithHashStored{}
-	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetWithHashNotStored{}
+	switch resp := r.grpcResponse.Result.(type) {
+	case *pb.XSetIfHashResponse_Stored:
+		r.response = responses.NewSetWithHashStored(resp.Stored.NewHash)
+	case *pb.XSetIfHashResponse_NotStored:
+		r.response = &responses.SetWithHashNotStored{}
 	default:
 		return errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
-
-	r.response = resp
 	return nil
 }

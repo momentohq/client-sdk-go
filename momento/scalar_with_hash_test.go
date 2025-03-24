@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	. "github.com/momentohq/client-sdk-go/responses"
@@ -14,7 +13,7 @@ import (
 
 // TODO: what is the expected behavior of testing with empty or blank values?
 
-var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func() {
+var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LABEL), func() {
 	DescribeTable("Set and get with hash",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
@@ -155,7 +154,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				CacheName:    cacheName,
 				Key:          key,
 				Value:        newValue,
-				HashNotEqual: momento.String(firstHash),
+				HashNotEqual: String(firstHash),
 			})
 			Expect(err).To(BeNil())
 			Expect(
@@ -277,7 +276,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				CacheName: cacheName,
 				Key:       key,
 				Value:     newValue,
-				HashEqual: momento.String(firstHash),
+				HashEqual: String(firstHash),
 			})
 			Expect(err).To(BeNil())
 			switch result := setIfResp.(type) {
@@ -363,7 +362,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				CacheName: cacheName,
 				Key:       key,
 				Value:     newValue,
-				HashEqual: momento.String("some-other-hash-value"),
+				HashEqual: String("some-other-hash-value"),
 			})
 			Expect(err).To(BeNil())
 			Expect(
@@ -375,7 +374,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				CacheName: cacheName,
 				Key:       key,
 				Value:     newValue,
-				HashEqual: momento.String(firstHash),
+				HashEqual: String(firstHash),
 			})
 			Expect(err).To(BeNil())
 			switch result := setIfResp.(type) {
@@ -461,7 +460,7 @@ var _ = Describe("cache-client scalar-methods", Label(CACHE_SERVICE_LABEL), func
 				CacheName:    cacheName,
 				Key:          key,
 				Value:        newValue,
-				HashNotEqual: momento.String(firstHash),
+				HashNotEqual: String(firstHash),
 			})
 			Expect(err).To(BeNil())
 			Expect(
