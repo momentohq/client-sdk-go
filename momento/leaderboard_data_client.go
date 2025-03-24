@@ -46,7 +46,6 @@ func (client *leaderboardDataClient) delete(ctx context.Context, request *Leader
 
 	var header, trailer metadata.MD
 	_, err := client.leaderboardClient.DeleteLeaderboard(requestMetadata, &pb.XDeleteLeaderboardRequest{
-		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
@@ -73,7 +72,6 @@ func (client *leaderboardDataClient) fetchByRank(ctx context.Context, request *L
 
 	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetByRank(requestMetadata, &pb.XGetByRankRequest{
-		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		RankRange:   rankRange,
 		Order:       leaderboardOrder,
@@ -121,7 +119,6 @@ func (client *leaderboardDataClient) fetchByScore(ctx context.Context, request *
 
 	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetByScore(requestMetadata, &pb.XGetByScoreRequest{
-		CacheName:     request.CacheName,
 		Leaderboard:   request.LeaderboardName,
 		ScoreRange:    scoreRange,
 		Offset:        offset,
@@ -147,7 +144,6 @@ func (client *leaderboardDataClient) getRank(ctx context.Context, request *Leade
 
 	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetRank(requestMetadata, &pb.XGetRankRequest{
-		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Ids:         request.Ids,
 		Order:       leaderboardOrder,
@@ -166,7 +162,6 @@ func (client *leaderboardDataClient) length(ctx context.Context, request *Leader
 
 	var header, trailer metadata.MD
 	result, err := client.leaderboardClient.GetLeaderboardLength(requestMetadata, &pb.XGetLeaderboardLengthRequest{
-		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 	}, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
@@ -183,7 +178,6 @@ func (client *leaderboardDataClient) removeElements(ctx context.Context, request
 
 	var header, trailer metadata.MD
 	_, err := client.leaderboardClient.RemoveElements(requestMetadata, &pb.XRemoveElementsRequest{
-		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Ids:         request.Ids,
 	}, grpc.Header(&header), grpc.Trailer(&trailer))
@@ -201,7 +195,6 @@ func (client *leaderboardDataClient) upsert(ctx context.Context, request *Leader
 
 	var header, trailer metadata.MD
 	_, err := client.leaderboardClient.UpsertElements(requestMetadata, &pb.XUpsertElementsRequest{
-		CacheName:   request.CacheName,
 		Leaderboard: request.LeaderboardName,
 		Elements:    leaderboardUpsertElementToGrpc(request.Elements),
 	}, grpc.Header(&header), grpc.Trailer(&trailer))
