@@ -27,6 +27,7 @@ const (
 	Leaderboard_GetByRank_FullMethodName            = "/leaderboard.Leaderboard/GetByRank"
 	Leaderboard_GetRank_FullMethodName              = "/leaderboard.Leaderboard/GetRank"
 	Leaderboard_GetByScore_FullMethodName           = "/leaderboard.Leaderboard/GetByScore"
+	Leaderboard_GetCompetitionRank_FullMethodName   = "/leaderboard.Leaderboard/GetCompetitionRank"
 )
 
 // LeaderboardClient is the client API for Leaderboard service.
@@ -69,6 +70,10 @@ type LeaderboardClient interface {
 	// You can request up to 8192 elements at a time. To page through many elements that all
 	// fall into a score range you can repeatedly invoke this api with the offset parameter.
 	GetByScore(ctx context.Context, in *XGetByScoreRequest, opts ...grpc.CallOption) (*XGetByScoreResponse, error)
+	// Get the competition ranks of a list of elements.
+	// Ranks start at 0. The default ordering is descending.
+	// i.e. elements with higher scores have lower ranks.
+	GetCompetitionRank(ctx context.Context, in *XGetCompetitionRankRequest, opts ...grpc.CallOption) (*XGetCompetitionRankResponse, error)
 }
 
 type leaderboardClient struct {
@@ -149,6 +154,16 @@ func (c *leaderboardClient) GetByScore(ctx context.Context, in *XGetByScoreReque
 	return out, nil
 }
 
+func (c *leaderboardClient) GetCompetitionRank(ctx context.Context, in *XGetCompetitionRankRequest, opts ...grpc.CallOption) (*XGetCompetitionRankResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(XGetCompetitionRankResponse)
+	err := c.cc.Invoke(ctx, Leaderboard_GetCompetitionRank_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LeaderboardServer is the server API for Leaderboard service.
 // All implementations must embed UnimplementedLeaderboardServer
 // for forward compatibility
@@ -189,6 +204,10 @@ type LeaderboardServer interface {
 	// You can request up to 8192 elements at a time. To page through many elements that all
 	// fall into a score range you can repeatedly invoke this api with the offset parameter.
 	GetByScore(context.Context, *XGetByScoreRequest) (*XGetByScoreResponse, error)
+	// Get the competition ranks of a list of elements.
+	// Ranks start at 0. The default ordering is descending.
+	// i.e. elements with higher scores have lower ranks.
+	GetCompetitionRank(context.Context, *XGetCompetitionRankRequest) (*XGetCompetitionRankResponse, error)
 	mustEmbedUnimplementedLeaderboardServer()
 }
 
@@ -216,6 +235,9 @@ func (UnimplementedLeaderboardServer) GetRank(context.Context, *XGetRankRequest)
 }
 func (UnimplementedLeaderboardServer) GetByScore(context.Context, *XGetByScoreRequest) (*XGetByScoreResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByScore not implemented")
+}
+func (UnimplementedLeaderboardServer) GetCompetitionRank(context.Context, *XGetCompetitionRankRequest) (*XGetCompetitionRankResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCompetitionRank not implemented")
 }
 func (UnimplementedLeaderboardServer) mustEmbedUnimplementedLeaderboardServer() {}
 
@@ -356,6 +378,24 @@ func _Leaderboard_GetByScore_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Leaderboard_GetCompetitionRank_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XGetCompetitionRankRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LeaderboardServer).GetCompetitionRank(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Leaderboard_GetCompetitionRank_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LeaderboardServer).GetCompetitionRank(ctx, req.(*XGetCompetitionRankRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Leaderboard_ServiceDesc is the grpc.ServiceDesc for Leaderboard service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -390,6 +430,10 @@ var Leaderboard_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetByScore",
 			Handler:    _Leaderboard_GetByScore_Handler,
+		},
+		{
+			MethodName: "GetCompetitionRank",
+			Handler:    _Leaderboard_GetCompetitionRank_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

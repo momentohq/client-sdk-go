@@ -51,6 +51,12 @@ service Leaderboard {
   // You can request up to 8192 elements at a time. To page through many elements that all
   // fall into a score range you can repeatedly invoke this api with the offset parameter.
   rpc GetByScore(_GetByScoreRequest) returns (_GetByScoreResponse);
+
+
+  // Get the competition ranks of a list of elements.
+  // Ranks start at 0. The default ordering is descending.
+  // i.e. elements with higher scores have lower ranks.
+  rpc GetCompetitionRank(_GetCompetitionRankRequest) returns (_GetCompetitionRankResponse);
 }
 
 // Leaderboards are made up of many of these.
@@ -130,13 +136,13 @@ enum _Order {
 }
 
 message _DeleteLeaderboardRequest {
-  string cache_name = 1;
   string leaderboard = 2;
+  reserved 1;
 }
 
 message _GetLeaderboardLengthRequest {
-  string cache_name = 1;
   string leaderboard = 2;
+  reserved 1;
 }
 
 message _GetLeaderboardLengthResponse {
@@ -144,17 +150,17 @@ message _GetLeaderboardLengthResponse {
 }
 
 message _UpsertElementsRequest {
-  string cache_name = 1;
   string leaderboard = 2;
   // You can have up to 8192 elements in this list.
   repeated _Element elements = 3;
+  reserved 1;
 }
 
 message _GetByRankRequest {
-  string cache_name = 1;
   string leaderboard = 2;
   _RankRange rank_range = 3;
   _Order order = 4;
+  reserved 1;
 }
 
 message _GetByRankResponse {
@@ -162,10 +168,10 @@ message _GetByRankResponse {
 }
 
 message _GetRankRequest {
-  string cache_name = 1;
   string leaderboard = 2;
   repeated uint32 ids = 3;
   _Order order = 4;
+  reserved 1;
 }
 
 message _GetRankResponse {
@@ -173,14 +179,13 @@ message _GetRankResponse {
 }
 
 message _RemoveElementsRequest {
-  string cache_name = 1;
   string leaderboard = 2;
   // You can have up to 8192 ids in this list.
   repeated uint32 ids = 3;
+  reserved 1;
 }
 
 message _GetByScoreRequest {
-  string cache_name = 1;
   string leaderboard = 2;
   _ScoreRange score_range = 3;
   // Where should we start returning scores from in the elements within this range?
@@ -188,8 +193,20 @@ message _GetByScoreRequest {
   // How many elements should we limit to returning? (8192 max)
   uint32 limit_elements = 5;
   _Order order = 6;
+  reserved 1;
 }
 
 message _GetByScoreResponse {
+  repeated _RankedElement elements = 1;
+}
+
+message _GetCompetitionRankRequest {
+  string leaderboard = 1;
+  repeated uint32 ids = 2;
+  // If not specified, the order is descending.
+  optional _Order order = 3;
+}
+
+message _GetCompetitionRankResponse {
   repeated _RankedElement elements = 1;
 }

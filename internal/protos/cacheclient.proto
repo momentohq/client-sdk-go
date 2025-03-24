@@ -20,10 +20,15 @@ enum ECacheResult {
 
 service Scs {
   rpc Get (_GetRequest) returns (_GetResponse) {}
+  rpc GetWithHash (_GetWithHashRequest) returns (_GetWithHashResponse) {}
   rpc GetBatch (_GetBatchRequest) returns (stream _GetResponse) {}
   rpc Set (_SetRequest) returns (_SetResponse) {}
   rpc SetBatch (_SetBatchRequest) returns (stream _SetResponse) {}
   rpc SetIf (_SetIfRequest) returns (_SetIfResponse) {}
+  // Conditionally set the item value based on comparing the hashes computed on the item values
+  // instead of comparing the entire values. This is an alternative to SetIf that saves bandwidth
+  // by removing the need to send the entire value to compare against.
+  rpc SetIfHash (_SetIfHashRequest) returns (_SetIfHashResponse) {}
 
   // Deprecated because we have SetIf - Absent to cover this case.
   rpc SetIfNotExists (_SetIfNotExistsRequest) returns (_SetIfNotExistsResponse) {
@@ -94,6 +99,14 @@ service Scs {
   rpc SortedSetLength(_SortedSetLengthRequest) returns (_SortedSetLengthResponse) {}
   // Returns number of elements in the sorted set between a given min and max score
   rpc SortedSetLengthByScore(_SortedSetLengthByScoreRequest) returns (_SortedSetLengthByScoreResponse) {}
+  // Computes the union of all the source sets and stores the result in itself. If the set does not
+  // exist, it is created with the given `ttl`. If it exists, it is overwritten with the result and 
+  // its ttl is set to the given `ttl`. If the set exists but the result of the union is empty, it is deleted.
+  // The union is computed by applying the corresponding weight multiplier to the score of all elements
+  // in each source set, and then using the aggregate function to combine the weighted scores for elements
+  // existing in multiple source sets.
+  // Returns the number of elements in the set after storing the result of the union.
+  rpc SortedSetUnionStore(_SortedSetUnionStoreRequest) returns (_SortedSetUnionStoreResponse) {}
 }
 
 message _GetRequest {
@@ -104,6 +117,22 @@ message _GetResponse {
   ECacheResult result = 1;
   bytes cache_body = 2;
   string message = 3;
+}
+
+message _GetWithHashRequest {
+  bytes cache_key = 1;
+}
+
+message _GetWithHashResponse {
+  oneof result {
+    _Found found = 1;
+    _Missing missing = 2;
+  }
+  message _Found {
+     bytes value = 1;
+     bytes hash = 2;
+  }
+  message _Missing {}
 }
 
 message _GetBatchRequest {
@@ -151,6 +180,40 @@ message _SetIfResponse {
     _NotStored not_stored = 2;
   }
   message _Stored { }
+  message _NotStored { }
+}
+
+message _SetIfHashRequest {
+  bytes cache_key = 1;
+  bytes cache_body = 2;
+  uint64 ttl_milliseconds = 3;
+  oneof condition {
+    // Update the item only if it exists and the hash of its current value
+    // does not match the hash passed in the request
+    common.PresentAndNotHashEqual present_and_not_hash_equal = 4;
+    // Update the item only if it exists and the hash of its current value
+    // matches the hash passed in the request    
+    common.PresentAndHashEqual present_and_hash_equal = 5;
+    // Update the item if it exists and the hash of its current value matches
+    // the hash passed in the request or create it if the item doesn't exist
+    common.AbsentOrHashEqual absent_or_hash_equal = 6;
+    // Update the item if it exists and the hash of its current value doesn't
+    // match the hash passed in the request or create it if the item doesn't exist
+    common.AbsentOrNotHashEqual absent_or_not_hash_equal = 7;
+    // Unconditionally update the item if it exists or create it if it doesn't
+    common.Unconditional unconditional = 8;
+  }
+}
+
+message _SetIfHashResponse {
+  oneof result {
+    _Stored stored = 1;
+    _NotStored not_stored = 2;
+  }
+  message _Stored {
+    // Hash computed on the newly stored value
+    bytes new_hash = 1;
+  }
   message _NotStored { }
 }
 
@@ -1024,4 +1087,41 @@ message _SortedSetLengthByScoreResponse {
     _Found found = 1;
     _Missing missing = 2;
   }
+}
+
+
+message _SortedSetUnionStoreRequest {
+  enum AggregateFunction {
+    // Sum the weighted scores of an element across all the source sets. This is the default.
+    SUM = 0;
+    // Use the minimum of the weight scores of an element across all the source sets.
+    MIN = 1;
+    // Use the maximum of the weight scores of an element across all the source sets.
+    MAX = 2;
+  }
+
+  message _Source {
+    bytes set_name = 1;
+    // A multiplier applied to the score of each element in the set before aggregation. Negative and zero weights are allowed.
+    float weight = 2;
+  }
+
+  // The destination set where the result of the union is stored.
+  bytes set_name = 1;
+
+  // The sets to compute the union for. Note that the destination set is not implicitly included as a source.
+  // It must be explicitly specified in sources if its current contents need to be included in the union.
+  repeated _Source sources = 2;
+
+  // Aggregate function to determine the final score for an element that exists in multiple source sets
+  AggregateFunction aggregate = 3;
+
+  // The TTL for the destination set if the result is non-empty
+  uint64 ttl_milliseconds = 4;
+}
+
+message _SortedSetUnionStoreResponse {
+  // The number of elements in the destination set after the union.
+  // The length is 0 if the result of the union was an empty set.
+  uint32 length = 1;
 }
