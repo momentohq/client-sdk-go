@@ -53,6 +53,7 @@ func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) 
 }
 
 // GetAverageTimeBetweenRetries returns the average time between retries in seconds.
+//
 //	Limited to second resolution, but I can obviously change that if desired.
 //	This tracks with the JS implementation.
 func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error) {
@@ -129,13 +130,14 @@ func (r *momentoLocalMiddleware) listenForMetrics(metricsChan chan *timestampPay
 		if msg == nil {
 			return
 		}
-		// All requests are prefixed with "/cache_client.Scs/", so we cut that off
-		parsedRequest, ok := strings.CutPrefix(msg.requestName, "/cache_client.Scs/")
-		if !ok {
+		// All requests are prefixed with "/cache_client.Scs/", so we cut that off.
+		parts := strings.Split(msg.requestName, "/")
+		if len(parts) < 2 {
 			// Because this middleware is for test use only, we can panic here.
 			panic(fmt.Sprintf("Could not parse request name %s", msg.requestName))
 		}
-		r.metricsCollector.AddTimestamp(msg.cacheName, parsedRequest, msg.timestamp)
+		shortRequestName := parts[2]
+		r.metricsCollector.AddTimestamp(msg.cacheName, shortRequestName, msg.timestamp)
 	}
 }
 
