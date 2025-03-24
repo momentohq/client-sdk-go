@@ -897,11 +897,11 @@ func (c defaultScsClient) DictionaryGetField(ctx context.Context, r *DictionaryG
 		DictionaryName: r.DictionaryName,
 		Fields:         []Value{r.Field},
 	}
-	_, err := c.getNextDataClient().makeRequest(ctx, newRequest)
+	response, err := c.getNextDataClient().makeRequest(ctx, newRequest)
 	if err != nil {
 		return nil, err
 	}
-	switch rtype := newRequest.response.(type) {
+	switch rtype := response.(type) {
 	case *responses.DictionaryGetFieldsMiss:
 		return &responses.DictionaryGetFieldMiss{}, nil
 	case *responses.DictionaryGetFieldsHit:
