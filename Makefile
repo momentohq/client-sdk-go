@@ -82,13 +82,17 @@ install-protoc-from-client-protos: install-protos-devtools
 
 update-protos:
 	@echo "Updating .proto files from the latest release of the client_protos repository..."
-# Note: httpcache.proto is not needed and causes errors, so make sure it's not present
+# Note: httpcache.proto is not needed and causes errors, so make sure it's not present.
+# Note: global_admin.proto and permissionrules.proto are for the console and not needed here, 
+#       will cause errors, so make sure they're not present.
 	@temp_dir=$$(mktemp -d) && \
 		latest_tag=$(shell $(MAKE) fetch-latest-client-protos-version) && \
 		echo "Latest release tag: $$latest_tag" && \
 		git -c advice.detachedHead=false clone --branch "$$latest_tag" https://github.com/momentohq/client_protos.git $$temp_dir && \
 		cp $$temp_dir/proto/*.proto internal/protos/ && \
 		rm -f internal/protos/httpcache.proto && \
+		rm -f internal/protos/global_admin.proto && \
+		rm -f internal/protos/permissionrules.proto && \
 		rm -rf $$temp_dir
 
 build-protos:
