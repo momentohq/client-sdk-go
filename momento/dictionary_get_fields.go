@@ -16,7 +16,6 @@ type DictionaryGetFieldsRequest struct {
 	Fields         []Value
 
 	grpcResponse *pb.XDictionaryGetResponse
-	response     responses.DictionaryGetFieldsResponse
 }
 
 func (r *DictionaryGetFieldsRequest) cacheName() string { return r.CacheName }
