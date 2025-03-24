@@ -21,10 +21,12 @@ const _ = grpc.SupportPackageIsVersion8
 
 const (
 	Scs_Get_FullMethodName                    = "/cache_client.Scs/Get"
+	Scs_GetWithHash_FullMethodName            = "/cache_client.Scs/GetWithHash"
 	Scs_GetBatch_FullMethodName               = "/cache_client.Scs/GetBatch"
 	Scs_Set_FullMethodName                    = "/cache_client.Scs/Set"
 	Scs_SetBatch_FullMethodName               = "/cache_client.Scs/SetBatch"
 	Scs_SetIf_FullMethodName                  = "/cache_client.Scs/SetIf"
+	Scs_SetIfHash_FullMethodName              = "/cache_client.Scs/SetIfHash"
 	Scs_SetIfNotExists_FullMethodName         = "/cache_client.Scs/SetIfNotExists"
 	Scs_Delete_FullMethodName                 = "/cache_client.Scs/Delete"
 	Scs_KeysExist_FullMethodName              = "/cache_client.Scs/KeysExist"
@@ -64,6 +66,7 @@ const (
 	Scs_SortedSetGetRank_FullMethodName       = "/cache_client.Scs/SortedSetGetRank"
 	Scs_SortedSetLength_FullMethodName        = "/cache_client.Scs/SortedSetLength"
 	Scs_SortedSetLengthByScore_FullMethodName = "/cache_client.Scs/SortedSetLengthByScore"
+	Scs_SortedSetUnionStore_FullMethodName    = "/cache_client.Scs/SortedSetUnionStore"
 )
 
 // ScsClient is the client API for Scs service.
@@ -71,10 +74,15 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ScsClient interface {
 	Get(ctx context.Context, in *XGetRequest, opts ...grpc.CallOption) (*XGetResponse, error)
+	GetWithHash(ctx context.Context, in *XGetWithHashRequest, opts ...grpc.CallOption) (*XGetWithHashResponse, error)
 	GetBatch(ctx context.Context, in *XGetBatchRequest, opts ...grpc.CallOption) (Scs_GetBatchClient, error)
 	Set(ctx context.Context, in *XSetRequest, opts ...grpc.CallOption) (*XSetResponse, error)
 	SetBatch(ctx context.Context, in *XSetBatchRequest, opts ...grpc.CallOption) (Scs_SetBatchClient, error)
 	SetIf(ctx context.Context, in *XSetIfRequest, opts ...grpc.CallOption) (*XSetIfResponse, error)
+	// Conditionally set the item value based on comparing the hashes computed on the item values
+	// instead of comparing the entire values. This is an alternative to SetIf that saves bandwidth
+	// by removing the need to send the entire value to compare against.
+	SetIfHash(ctx context.Context, in *XSetIfHashRequest, opts ...grpc.CallOption) (*XSetIfHashResponse, error)
 	// Deprecated: Do not use.
 	// Deprecated because we have SetIf - Absent to cover this case.
 	SetIfNotExists(ctx context.Context, in *XSetIfNotExistsRequest, opts ...grpc.CallOption) (*XSetIfNotExistsResponse, error)
@@ -135,6 +143,14 @@ type ScsClient interface {
 	SortedSetLength(ctx context.Context, in *XSortedSetLengthRequest, opts ...grpc.CallOption) (*XSortedSetLengthResponse, error)
 	// Returns number of elements in the sorted set between a given min and max score
 	SortedSetLengthByScore(ctx context.Context, in *XSortedSetLengthByScoreRequest, opts ...grpc.CallOption) (*XSortedSetLengthByScoreResponse, error)
+	// Computes the union of all the source sets and stores the result in itself. If the set does not
+	// exist, it is created with the given `ttl`. If it exists, it is overwritten with the result and
+	// its ttl is set to the given `ttl`. If the set exists but the result of the union is empty, it is deleted.
+	// The union is computed by applying the corresponding weight multiplier to the score of all elements
+	// in each source set, and then using the aggregate function to combine the weighted scores for elements
+	// existing in multiple source sets.
+	// Returns the number of elements in the set after storing the result of the union.
+	SortedSetUnionStore(ctx context.Context, in *XSortedSetUnionStoreRequest, opts ...grpc.CallOption) (*XSortedSetUnionStoreResponse, error)
 }
 
 type scsClient struct {
@@ -149,6 +165,16 @@ func (c *scsClient) Get(ctx context.Context, in *XGetRequest, opts ...grpc.CallO
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(XGetResponse)
 	err := c.cc.Invoke(ctx, Scs_Get_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) GetWithHash(ctx context.Context, in *XGetWithHashRequest, opts ...grpc.CallOption) (*XGetWithHashResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(XGetWithHashResponse)
+	err := c.cc.Invoke(ctx, Scs_GetWithHash_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -235,6 +261,16 @@ func (c *scsClient) SetIf(ctx context.Context, in *XSetIfRequest, opts ...grpc.C
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(XSetIfResponse)
 	err := c.cc.Invoke(ctx, Scs_SetIf_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *scsClient) SetIfHash(ctx context.Context, in *XSetIfHashRequest, opts ...grpc.CallOption) (*XSetIfHashResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(XSetIfHashResponse)
+	err := c.cc.Invoke(ctx, Scs_SetIfHash_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -632,15 +668,30 @@ func (c *scsClient) SortedSetLengthByScore(ctx context.Context, in *XSortedSetLe
 	return out, nil
 }
 
+func (c *scsClient) SortedSetUnionStore(ctx context.Context, in *XSortedSetUnionStoreRequest, opts ...grpc.CallOption) (*XSortedSetUnionStoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(XSortedSetUnionStoreResponse)
+	err := c.cc.Invoke(ctx, Scs_SortedSetUnionStore_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ScsServer is the server API for Scs service.
 // All implementations must embed UnimplementedScsServer
 // for forward compatibility
 type ScsServer interface {
 	Get(context.Context, *XGetRequest) (*XGetResponse, error)
+	GetWithHash(context.Context, *XGetWithHashRequest) (*XGetWithHashResponse, error)
 	GetBatch(*XGetBatchRequest, Scs_GetBatchServer) error
 	Set(context.Context, *XSetRequest) (*XSetResponse, error)
 	SetBatch(*XSetBatchRequest, Scs_SetBatchServer) error
 	SetIf(context.Context, *XSetIfRequest) (*XSetIfResponse, error)
+	// Conditionally set the item value based on comparing the hashes computed on the item values
+	// instead of comparing the entire values. This is an alternative to SetIf that saves bandwidth
+	// by removing the need to send the entire value to compare against.
+	SetIfHash(context.Context, *XSetIfHashRequest) (*XSetIfHashResponse, error)
 	// Deprecated: Do not use.
 	// Deprecated because we have SetIf - Absent to cover this case.
 	SetIfNotExists(context.Context, *XSetIfNotExistsRequest) (*XSetIfNotExistsResponse, error)
@@ -701,6 +752,14 @@ type ScsServer interface {
 	SortedSetLength(context.Context, *XSortedSetLengthRequest) (*XSortedSetLengthResponse, error)
 	// Returns number of elements in the sorted set between a given min and max score
 	SortedSetLengthByScore(context.Context, *XSortedSetLengthByScoreRequest) (*XSortedSetLengthByScoreResponse, error)
+	// Computes the union of all the source sets and stores the result in itself. If the set does not
+	// exist, it is created with the given `ttl`. If it exists, it is overwritten with the result and
+	// its ttl is set to the given `ttl`. If the set exists but the result of the union is empty, it is deleted.
+	// The union is computed by applying the corresponding weight multiplier to the score of all elements
+	// in each source set, and then using the aggregate function to combine the weighted scores for elements
+	// existing in multiple source sets.
+	// Returns the number of elements in the set after storing the result of the union.
+	SortedSetUnionStore(context.Context, *XSortedSetUnionStoreRequest) (*XSortedSetUnionStoreResponse, error)
 	mustEmbedUnimplementedScsServer()
 }
 
@@ -710,6 +769,9 @@ type UnimplementedScsServer struct {
 
 func (UnimplementedScsServer) Get(context.Context, *XGetRequest) (*XGetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedScsServer) GetWithHash(context.Context, *XGetWithHashRequest) (*XGetWithHashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWithHash not implemented")
 }
 func (UnimplementedScsServer) GetBatch(*XGetBatchRequest, Scs_GetBatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetBatch not implemented")
@@ -722,6 +784,9 @@ func (UnimplementedScsServer) SetBatch(*XSetBatchRequest, Scs_SetBatchServer) er
 }
 func (UnimplementedScsServer) SetIf(context.Context, *XSetIfRequest) (*XSetIfResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetIf not implemented")
+}
+func (UnimplementedScsServer) SetIfHash(context.Context, *XSetIfHashRequest) (*XSetIfHashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetIfHash not implemented")
 }
 func (UnimplementedScsServer) SetIfNotExists(context.Context, *XSetIfNotExistsRequest) (*XSetIfNotExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetIfNotExists not implemented")
@@ -840,6 +905,9 @@ func (UnimplementedScsServer) SortedSetLength(context.Context, *XSortedSetLength
 func (UnimplementedScsServer) SortedSetLengthByScore(context.Context, *XSortedSetLengthByScoreRequest) (*XSortedSetLengthByScoreResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SortedSetLengthByScore not implemented")
 }
+func (UnimplementedScsServer) SortedSetUnionStore(context.Context, *XSortedSetUnionStoreRequest) (*XSortedSetUnionStoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SortedSetUnionStore not implemented")
+}
 func (UnimplementedScsServer) mustEmbedUnimplementedScsServer() {}
 
 // UnsafeScsServer may be embedded to opt out of forward compatibility for this service.
@@ -867,6 +935,24 @@ func _Scs_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ScsServer).Get(ctx, req.(*XGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_GetWithHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XGetWithHashRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).GetWithHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Scs_GetWithHash_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).GetWithHash(ctx, req.(*XGetWithHashRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -945,6 +1031,24 @@ func _Scs_SetIf_Handler(srv interface{}, ctx context.Context, dec func(interface
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ScsServer).SetIf(ctx, req.(*XSetIfRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Scs_SetIfHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSetIfHashRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SetIfHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Scs_SetIfHash_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SetIfHash(ctx, req.(*XSetIfHashRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1651,6 +1755,24 @@ func _Scs_SortedSetLengthByScore_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Scs_SortedSetUnionStore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(XSortedSetUnionStoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ScsServer).SortedSetUnionStore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Scs_SortedSetUnionStore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ScsServer).SortedSetUnionStore(ctx, req.(*XSortedSetUnionStoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Scs_ServiceDesc is the grpc.ServiceDesc for Scs service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1663,12 +1785,20 @@ var Scs_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Scs_Get_Handler,
 		},
 		{
+			MethodName: "GetWithHash",
+			Handler:    _Scs_GetWithHash_Handler,
+		},
+		{
 			MethodName: "Set",
 			Handler:    _Scs_Set_Handler,
 		},
 		{
 			MethodName: "SetIf",
 			Handler:    _Scs_SetIf_Handler,
+		},
+		{
+			MethodName: "SetIfHash",
+			Handler:    _Scs_SetIfHash_Handler,
 		},
 		{
 			MethodName: "SetIfNotExists",
@@ -1825,6 +1955,10 @@ var Scs_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SortedSetLengthByScore",
 			Handler:    _Scs_SortedSetLengthByScore_Handler,
+		},
+		{
+			MethodName: "SortedSetUnionStore",
+			Handler:    _Scs_SortedSetUnionStore_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

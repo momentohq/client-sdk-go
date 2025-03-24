@@ -30,3 +30,21 @@ message NotEqual {
 message _Unbounded { }
 
 message _Empty {}
+
+message PresentAndNotHashEqual {
+  bytes hash_to_check = 1;
+}
+
+message PresentAndHashEqual {
+  bytes hash_to_check = 1;
+}
+
+message AbsentOrHashEqual {
+  bytes hash_to_check = 1;
+}
+
+message AbsentOrNotHashEqual {
+  bytes hash_to_check = 1;
+}
+
+message Unconditional { }
