@@ -109,4 +109,3 @@ If you are interested in contributing to the SDK, please see the [CONTRIBUTING](
 
 ----------------------------------------------------------------------------------------
 For more info, visit our website at [https://gomomento.com](https://gomomento.com)!
-
