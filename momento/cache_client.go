@@ -476,42 +476,47 @@ func (c defaultScsClient) SetIfNotEqual(ctx context.Context, r *SetIfNotEqualReq
 
 func (c defaultScsClient) SetIfPresentAndHashNotEqual(ctx context.Context, r *SetIfPresentAndHashNotEqualRequest) (responses.SetIfPresentAndHashNotEqualResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
-	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+	resp, err := c.getNextDataClient().makeRequest(ctx, r)
+	if err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return resp.(responses.SetIfPresentAndHashNotEqualResponse), nil
 }
 
 func (c defaultScsClient) SetIfPresentAndHashEqual(ctx context.Context, r *SetIfPresentAndHashEqualRequest) (responses.SetIfPresentAndHashEqualResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
-	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+	resp, err := c.getNextDataClient().makeRequest(ctx, r)
+	if err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return resp.(responses.SetIfPresentAndHashEqualResponse), nil
 }
 
 func (c defaultScsClient) SetIfAbsentOrHashEqual(ctx context.Context, r *SetIfAbsentOrHashEqualRequest) (responses.SetIfAbsentOrHashEqualResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
-	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+	resp, err := c.getNextDataClient().makeRequest(ctx, r)
+	if err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return resp.(responses.SetIfAbsentOrHashEqualResponse), nil
 }
 
 func (c defaultScsClient) SetIfAbsentOrHashNotEqual(ctx context.Context, r *SetIfAbsentOrHashNotEqualRequest) (responses.SetIfAbsentOrHashNotEqualResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
-	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+	resp, err := c.getNextDataClient().makeRequest(ctx, r)
+	if err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return resp.(responses.SetIfAbsentOrHashNotEqualResponse), nil
 }
 
 func (c defaultScsClient) SetWithHash(ctx context.Context, r *SetWithHashRequest) (responses.SetWithHashResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
-	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+	resp, err := c.getNextDataClient().makeRequest(ctx, r)
+	if err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return resp.(responses.SetWithHashResponse), nil
 }
 
 func (c defaultScsClient) SetBatch(ctx context.Context, r *SetBatchRequest) (responses.SetBatchResponse, error) {
@@ -534,10 +539,11 @@ func (c defaultScsClient) Get(ctx context.Context, r *GetRequest) (responses.Get
 
 func (c defaultScsClient) GetWithHash(ctx context.Context, r *GetWithHashRequest) (responses.GetWithHashResponse, error) {
 	r.CacheName = c.getCacheNameForRequest(r)
-	if err := c.getNextDataClient().makeRequest(ctx, r); err != nil {
+	resp, err := c.getNextDataClient().makeRequest(ctx, r)
+	if err != nil {
 		return nil, err
 	}
-	return r.response, nil
+	return resp.(responses.GetWithHashResponse), nil
 }
 
 func (c defaultScsClient) GetBatch(ctx context.Context, r *GetBatchRequest) (responses.GetBatchResponse, error) {
