@@ -68,6 +68,15 @@ func CreateCacheRequestContextFromMetadataMap(ctx context.Context, cacheName str
 	return CreateMetadata(ctx, Cache, cacheMetadata...)
 }
 
+func CreateTopicRequestContextFromMetadataMap(ctx context.Context, cacheName string, metadataPairs map[string]string) context.Context {
+	_, ok := metadataPairs["cache"]
+	if !ok {
+		metadataPairs["cache"] = cacheName
+	}
+	cacheMetadata := metadataPairsToStrings(metadataPairs)
+	return CreateMetadata(ctx, Topic, cacheMetadata...)
+}
+
 func CreateStoreMetadata(ctx context.Context, storeName string) context.Context {
 	return CreateMetadata(ctx, Store, "store", storeName)
 }

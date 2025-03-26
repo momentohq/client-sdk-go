@@ -99,6 +99,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 			nil,
 		)
 	case subscription := <-subChan:
+		fmt.Printf("WOOHOO subscription: %v\n", subscription)
 		return &subscription, nil
 	case err := <-errChan:
 		return nil, err
@@ -114,9 +115,11 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		SequencePage:                request.SequencePage,
 	})
 	if err != nil {
+		fmt.Printf("sendSubscribe error: %v\n", err)
 		errChan <- err
 		return
 	}
+	fmt.Println("got here :-)")
 
 	if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
 		c.log.Debug("Starting new subscription with new sequence number and sequence page.")
@@ -126,6 +129,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 
 	// Ping the stream to provide a nice error message if the cache does not exist.
 	firstMsg, err = subscribeClient.Recv()
+	fmt.Printf("firstMsg: %v - err :%v\n", firstMsg, err)
 	if err != nil {
 		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
 
@@ -156,6 +160,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		return
 	}
 
+	// TODO: look through middleware here for any interceptor callbacks and add them to the topicSubscription
 	subChan <- topicSubscription{
 		topicManager:       topicManager,
 		subscribeClient:    subscribeClient,

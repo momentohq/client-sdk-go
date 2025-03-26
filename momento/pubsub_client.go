@@ -6,6 +6,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/retry"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -32,20 +36,28 @@ type pubSubClient struct {
 	log                     logger.MomentoLogger
 	requestTimeout          time.Duration
 	maxConcurrentStreams    int
+	middleware              []middleware.Middleware
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
 
-	numStreamChannels := uint32(DEFAULT_NUM_STREAM_GRPC_CHANNELS)
+	numStreamChannels := DEFAULT_NUM_STREAM_GRPC_CHANNELS
 	if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
 		numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
 	}
 	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numStreamChannels; i++ {
+		fmt.Printf("making stream topic manager %d\n", i)
 		streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
 			CredentialProvider: request.CredentialProvider,
 			GrpcConfiguration:  grpcConfig,
+			Middleware:         request.TopicsConfiguration.GetMiddleware(),
+			RetryStrategy: retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+				LoggerFactory:       momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO),
+				MaxAttempts:         3,
+				EligibilityStrategy: retry.DefaultEligibilityStrategy{},
+			}),
 		})
 		if err != nil {
 			return nil, err
@@ -53,7 +65,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
 
-	numUnaryChannels := uint32(DEFAULT_NUM_UNARY_GRPC_CHANNELS)
+	numUnaryChannels := DEFAULT_NUM_UNARY_GRPC_CHANNELS
 	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
 		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
 	}
@@ -62,6 +74,12 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		unaryTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
 			CredentialProvider: request.CredentialProvider,
 			GrpcConfiguration:  grpcConfig,
+			Middleware:         request.TopicsConfiguration.GetMiddleware(),
+			RetryStrategy: retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+				LoggerFactory:       momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO),
+				MaxAttempts:         3,
+				EligibilityStrategy: retry.DefaultEligibilityStrategy{},
+			}),
 		})
 		if err != nil {
 			return nil, err
@@ -85,6 +103,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		log:                  request.Log,
 		requestTimeout:       timeout,
 		maxConcurrentStreams: int(numStreamChannels) * MAX_CONCURRENT_STREAMS_PER_CHANNEL,
+		middleware:           request.TopicsConfiguration.GetMiddleware(),
 	}, nil
 }
 
@@ -145,7 +164,7 @@ func (client *pubSubClient) checkNumConcurrentStreams() error {
 }
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
-	// First check if there is enough grpc stream capabity to make a new subscription
+	// First check if there is enough grpc stream capacity to make a new subscription
 	err := client.checkNumConcurrentStreams()
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -157,19 +176,40 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		return nil, nil, nil, nil, err
 	}
 
-	// add metadata to context
-	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
-
-	// add withCancel to context
-	cancelContext, cancelFunction := context.WithCancel(requestMetadata)
-
-	var header, trailer metadata.MD
-	subscribeClient, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
+	subscriptionRequest := &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 		SequencePage:                request.SequencePage,
-	})
+	}
+
+	requestMetadata := make(map[string]string)
+	for _, mw := range client.middleware {
+
+		// TODO: topic middleware won't use request handlers. All we need here is the metadata.
+		newBaseHandler, err := mw.GetBaseRequestHandler(subscriptionRequest, "Subscribe", request.CacheName)
+		if err != nil {
+			continue
+		}
+		newHandler, err := mw.GetRequestHandler(newBaseHandler)
+		if err != nil {
+			return nil, nil, nil, nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
+
+		newMd := newHandler.OnMetadata(deepCopyMap(requestMetadata))
+		if newMd != nil {
+			requestMetadata = newMd
+		}
+
+	}
+
+	// add withCancel to context
+	cancelContext, cancelFunction := context.WithCancel(ctx)
+	requestContext := internal.CreateTopicRequestContextFromMetadataMap(cancelContext, request.CacheName, requestMetadata)
+
+	var header, trailer metadata.MD
+	subscribeClient, err := topicManager.StreamClient.Subscribe(requestContext, subscriptionRequest)
+	fmt.Printf("subscribeClient: %#v (err = %v)\n", subscribeClient, err)
 
 	if err != nil {
 		topicManager.NumActiveSubscriptions.Add(-1)
@@ -242,12 +282,14 @@ func (client *pubSubClient) close() {
 	// Close all stream grpc channels
 	client.numStreamChannels = 0
 	for clientIndex := range client.streamTopicManagers {
+		// TODO: could we be leaking connections here?
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
 
 	// Close all unary grpc channels
 	client.numUnaryChannels = 0
 	for clientIndex := range client.unaryTopicManagers {
+		// TODO: could we be leaking connections here?
 		defer client.unaryTopicManagers[clientIndex].Close()
 	}
 }

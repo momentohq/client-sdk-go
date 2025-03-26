@@ -4,6 +4,9 @@ import (
 	"math"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/retry"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
@@ -12,6 +15,8 @@ type topicsConfiguration struct {
 	maxSubscriptions  uint32 // DEPRECATED
 	numGrpcChannels   uint32 // DEPRECATED
 	transportStrategy TopicsTransportStrategy
+	retryStrategy     retry.Strategy
+	middleware        []middleware.Middleware
 }
 
 type TopicsConfigurationProps struct {
@@ -27,6 +32,11 @@ type TopicsConfigurationProps struct {
 	// TransportStrategy is responsible for configuring network tunables for the GRPC client,
 	// including the number of stream and unary grpc channels that should be used.
 	TransportStrategy TopicsTransportStrategy
+
+	RetryStrategy retry.Strategy
+
+	// Middleware is a list of middleware to be used by the topic client.
+	Middleware []middleware.Middleware
 }
 
 type TopicsConfiguration interface {
@@ -86,6 +96,18 @@ type TopicsConfiguration interface {
 
 	// GetClientSideTimeout Returns the current configuration options for client side timeout with the Momento service
 	GetClientSideTimeout() time.Duration
+
+	WithRetryStrategy(retryStrategy retry.Strategy) TopicsConfiguration
+
+	// GetMiddleware Returns the list of middleware to be used by the topic client.
+	GetMiddleware() []middleware.Middleware
+
+	// WithMiddleware Copy constructor for overriding Middleware returns a new Configuration object
+	// with the specified Middleware
+	WithMiddleware(middleware []middleware.Middleware) TopicsConfiguration
+
+	// AddMiddleware Copy constructor for adding Middleware returns a new Configuration object.
+	AddMiddleware(m middleware.Middleware) TopicsConfiguration
 }
 
 func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration {
@@ -94,6 +116,8 @@ func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration 
 		maxSubscriptions:  props.MaxSubscriptions,
 		numGrpcChannels:   props.NumGrpcChannels,
 		transportStrategy: props.TransportStrategy,
+		middleware:        props.Middleware,
+		retryStrategy:     props.RetryStrategy,
 	}
 }
 
@@ -113,6 +137,8 @@ func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) Topi
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamChannels),
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
 	}
 }
 
@@ -127,6 +153,8 @@ func (s *topicsConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) Topics
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numGrpcChannels),
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
 	}
 }
 
@@ -139,6 +167,8 @@ func (s *topicsConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels ui
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
 	}
 }
 
@@ -151,6 +181,8 @@ func (s *topicsConfiguration) WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: s.transportStrategy.WithNumUnaryGrpcChannels(numUnaryGrpcChannels),
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
 	}
 }
 
@@ -163,9 +195,42 @@ func (s *topicsConfiguration) WithTransportStrategy(transportStrategy TopicsTran
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
 		transportStrategy: transportStrategy,
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
 	}
 }
 
 func (s *topicsConfiguration) GetClientSideTimeout() time.Duration {
 	return s.transportStrategy.GetClientSideTimeout()
+}
+
+func (s *topicsConfiguration) GetMiddleware() []middleware.Middleware {
+	return s.middleware
+}
+
+func (s *topicsConfiguration) WithMiddleware(middleware []middleware.Middleware) TopicsConfiguration {
+	return &topicsConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		middleware:        middleware,
+		retryStrategy:     s.retryStrategy,
+	}
+}
+
+func (s *topicsConfiguration) AddMiddleware(m middleware.Middleware) TopicsConfiguration {
+	return &topicsConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		middleware:        append(s.middleware, m),
+		retryStrategy:     s.retryStrategy,
+	}
+}
+
+func (s *topicsConfiguration) WithRetryStrategy(retryStrategy retry.Strategy) TopicsConfiguration {
+	return &topicsConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		middleware:        s.middleware,
+		retryStrategy:     retryStrategy,
+	}
 }

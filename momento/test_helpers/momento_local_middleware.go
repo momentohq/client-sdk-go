@@ -2,9 +2,9 @@ package helpers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"google.golang.org/grpc/metadata"
@@ -154,11 +154,27 @@ func (r *momentoLocalMiddleware) GetRequestHandler(
 func (r *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
-		r.metricsChan <- &timestampPayload{
-			cacheName:   md.Get("cache")[0],
-			requestName: method,
-			timestamp:   time.Now().Unix(),
-		}
+		fmt.Printf("interceptor reqest got metadata: %#v\n", md)
+		//r.metricsChan <- &timestampPayload{
+		//	cacheName:   md.Get("cache")[0],
+		//	requestName: method,
+		//	timestamp:   time.Now().Unix(),
+		//}
+	} else {
+		// Because this middleware is for test use only, we can panic here.
+		panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
+	}
+}
+
+func (r *momentoLocalMiddleware) OnStreamInterceptorRequest(ctx context.Context, method string) {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if ok {
+		fmt.Printf("stream interceptor reqest got metadata: %#v\n", md)
+		//r.metricsChan <- &timestampPayload{
+		//	cacheName:   md.Get("cache")[0],
+		//	requestName: method,
+		//	timestamp:   time.Now().Unix(),
+		//}
 	} else {
 		// Because this middleware is for test use only, we can panic here.
 		panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
@@ -172,12 +188,15 @@ type momentoLocalMiddlewareRequestHandler struct {
 }
 
 type MomentoLocalMiddlewareRequestHandlerProps struct {
-	ReturnError  *string
-	ErrorRpcList *[]string
-	ErrorCount   *int
-	DelayRpcList *[]string
-	DelayMillis  *int
-	DelayCount   *int
+	ReturnError             *string
+	ErrorRpcList            *[]string
+	ErrorCount              *int
+	DelayRpcList            *[]string
+	DelayMillis             *int
+	DelayCount              *int
+	StreamErrorRpcList      *[]string
+	StreamError             *string
+	StreamErrorMessageLimit *int
 }
 
 func NewRetryMetricsMiddlewareRequestHandler(
@@ -215,5 +234,21 @@ func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[s
 		requestMetadata["delay-rpcs"] = strings.Join(*rh.props.DelayRpcList, " ")
 	}
 
+	if rh.props.StreamErrorRpcList != nil {
+		requestMetadata["stream-error-rpcs"] = strings.Join(*rh.props.StreamErrorRpcList, " ")
+	}
+
+	if rh.props.StreamError != nil {
+		requestMetadata["stream-error"] = *rh.props.StreamError
+	}
+
+	if rh.props.StreamErrorMessageLimit != nil {
+		requestMetadata["stream-error-message-limit"] = fmt.Sprintf("%d", *rh.props.StreamErrorMessageLimit)
+	}
+
+	jsonBytes, err := json.MarshalIndent(requestMetadata, " ", "    ")
+	if err == nil {
+		fmt.Printf("returning metadata: %s\n", string(jsonBytes))
+	}
 	return requestMetadata
 }
