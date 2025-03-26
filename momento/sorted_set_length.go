@@ -13,8 +13,6 @@ import (
 type SortedSetLengthRequest struct {
 	CacheName string
 	SetName   string
-
-	response responses.SortedSetLengthResponse
 }
 
 func (r *SortedSetLengthRequest) cacheName() string { return r.CacheName }
@@ -43,23 +41,14 @@ func (r *SortedSetLengthRequest) makeGrpcRequest(grpcRequest interface{}, reques
 	return resp, nil, nil
 }
 
-func (r *SortedSetLengthRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SortedSetLengthRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSortedSetLengthResponse)
 	switch rtype := myResp.SortedSet.(type) {
 	case *pb.XSortedSetLengthResponse_Found:
-		r.response = responses.NewSortedSetLengthHit(rtype.Found.Length)
+		return responses.NewSortedSetLengthHit(rtype.Found.Length), nil
 	case *pb.XSortedSetLengthResponse_Missing:
-		r.response = &responses.SortedSetLengthMiss{}
+		return &responses.SortedSetLengthMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SortedSetLengthRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetLengthResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

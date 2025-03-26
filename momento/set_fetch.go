@@ -13,8 +13,6 @@ import (
 type SetFetchRequest struct {
 	CacheName string
 	SetName   string
-
-	response responses.SetFetchResponse
 }
 
 func (r *SetFetchRequest) cacheName() string { return r.CacheName }
@@ -43,23 +41,14 @@ func (r *SetFetchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetada
 	return resp, nil, nil
 }
 
-func (r *SetFetchRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SetFetchRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSetFetchResponse)
 	switch rtype := myResp.Set.(type) {
 	case *pb.XSetFetchResponse_Found:
-		r.response = responses.NewSetFetchHit(rtype.Found.Elements)
+		return responses.NewSetFetchHit(rtype.Found.Elements), nil
 	case *pb.XSetFetchResponse_Missing:
-		r.response = &responses.SetFetchMiss{}
+		return &responses.SetFetchMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SetFetchRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetFetchResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

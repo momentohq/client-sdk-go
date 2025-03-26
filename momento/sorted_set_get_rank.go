@@ -15,8 +15,6 @@ type SortedSetGetRankRequest struct {
 	SetName   string
 	Value     Value
 	Order     SortedSetOrder
-
-	response responses.SortedSetGetRankResponse
 }
 
 func (r *SortedSetGetRankRequest) cacheName() string { return r.CacheName }
@@ -55,30 +53,21 @@ func (r *SortedSetGetRankRequest) makeGrpcRequest(grpcRequest interface{}, reque
 	return resp, nil, nil
 }
 
-func (r *SortedSetGetRankRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SortedSetGetRankRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSortedSetGetRankResponse)
 	switch rank := myResp.Rank.(type) {
 	case *pb.XSortedSetGetRankResponse_ElementRank:
 		switch rank.ElementRank.Result {
 		case pb.ECacheResult_Hit:
-			r.response = responses.SortedSetGetRankHit(rank.ElementRank.Rank)
+			return responses.SortedSetGetRankHit(rank.ElementRank.Rank), nil
 		case pb.ECacheResult_Miss:
-			r.response = &responses.SortedSetGetRankMiss{}
+			return &responses.SortedSetGetRankMiss{}, nil
 		default:
-			return errUnexpectedGrpcResponse(r, myResp)
+			return nil, errUnexpectedGrpcResponse(r, myResp)
 		}
 	case *pb.XSortedSetGetRankResponse_Missing:
-		r.response = &responses.SortedSetGetRankMiss{}
+		return &responses.SortedSetGetRankMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SortedSetGetRankRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetGetRankResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

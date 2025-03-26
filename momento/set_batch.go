@@ -17,7 +17,6 @@ type SetBatchRequest struct {
 	Ttl       time.Duration
 
 	grpcStream pb.Scs_SetBatchClient
-	response   responses.SetBatchResponse
 }
 
 func (r *SetBatchRequest) cacheName() string { return r.CacheName }
@@ -73,7 +72,7 @@ func (r *SetBatchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetada
 	return nil, nil, nil
 }
 
-func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) error {
+func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	var setResponses []responses.SetResponse
 	for {
 		resp, err := r.grpcStream.Recv()
@@ -84,17 +83,12 @@ func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 			case pb.ECacheResult_Ok:
 				setResponses = append(setResponses, &responses.SetSuccess{})
 			default:
-				return momentoerrors.ConvertSvcErr(err)
+				return nil, momentoerrors.ConvertSvcErr(err)
 			}
 		} else {
-			return momentoerrors.ConvertSvcErr(err)
+			return nil, momentoerrors.ConvertSvcErr(err)
 		}
 	}
 
-	r.response = *responses.NewSetBatchSuccess(setResponses)
-	return nil
-}
-
-func (r *SetBatchRequest) validateResponseType(resp grpcResponse) error {
-	return nil
+	return *responses.NewSetBatchSuccess(setResponses), nil
 }

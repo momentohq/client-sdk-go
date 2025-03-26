@@ -13,8 +13,6 @@ import (
 type DictionaryLengthRequest struct {
 	CacheName      string
 	DictionaryName string
-
-	response responses.DictionaryLengthResponse
 }
 
 func (r *DictionaryLengthRequest) cacheName() string { return r.CacheName }
@@ -43,23 +41,14 @@ func (r *DictionaryLengthRequest) makeGrpcRequest(grpcRequest interface{}, reque
 	return resp, nil, nil
 }
 
-func (r *DictionaryLengthRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *DictionaryLengthRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XDictionaryLengthResponse)
 	switch rtype := myResp.Dictionary.(type) {
 	case *pb.XDictionaryLengthResponse_Found:
-		r.response = responses.NewDictionaryLengthHit(rtype.Found.Length)
+		return responses.NewDictionaryLengthHit(rtype.Found.Length), nil
 	case *pb.XDictionaryLengthResponse_Missing:
-		r.response = &responses.DictionaryLengthMiss{}
+		return &responses.DictionaryLengthMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *DictionaryLengthRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XDictionaryLengthResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

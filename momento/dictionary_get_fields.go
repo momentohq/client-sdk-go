@@ -16,7 +16,6 @@ type DictionaryGetFieldsRequest struct {
 	Fields         []Value
 
 	grpcResponse *pb.XDictionaryGetResponse
-	response     responses.DictionaryGetFieldsResponse
 }
 
 func (r *DictionaryGetFieldsRequest) cacheName() string { return r.CacheName }
@@ -55,11 +54,11 @@ func (r *DictionaryGetFieldsRequest) makeGrpcRequest(grpcRequest interface{}, re
 	return resp, nil, nil
 }
 
-func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	r.grpcResponse = resp.(*pb.XDictionaryGetResponse)
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryGetResponse_Missing:
-		r.response = &responses.DictionaryGetFieldsMiss{}
+		return &responses.DictionaryGetFieldsMiss{}, nil
 	case *pb.XDictionaryGetResponse_Found:
 		var responsesToReturn []responses.DictionaryGetFieldResponse
 		var fields [][]byte
@@ -74,17 +73,8 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) err
 			}
 			fields = append(fields, field)
 		}
-		r.response = responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn)
+		return responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn), nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
-	return nil
-}
-
-func (r *DictionaryGetFieldsRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XDictionaryGetResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

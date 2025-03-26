@@ -13,8 +13,6 @@ import (
 type SetLengthRequest struct {
 	CacheName string
 	SetName   string
-
-	response responses.SetLengthResponse
 }
 
 func (r *SetLengthRequest) cacheName() string { return r.CacheName }
@@ -43,23 +41,14 @@ func (r *SetLengthRequest) makeGrpcRequest(grpcRequest interface{}, requestMetad
 	return resp, nil, nil
 }
 
-func (r *SetLengthRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SetLengthRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSetLengthResponse)
 	switch rtype := myResp.Set.(type) {
 	case *pb.XSetLengthResponse_Found:
-		r.response = responses.NewSetLengthHit(rtype.Found.Length)
+		return responses.NewSetLengthHit(rtype.Found.Length), nil
 	case *pb.XSetLengthResponse_Missing:
-		r.response = &responses.SetLengthMiss{}
+		return &responses.SetLengthMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SetLengthRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetLengthResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

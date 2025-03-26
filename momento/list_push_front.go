@@ -18,8 +18,6 @@ type ListPushFrontRequest struct {
 	Value              Value
 	TruncateBackToSize uint32
 	Ttl                *utils.CollectionTtl
-
-	response responses.ListPushFrontResponse
 }
 
 func (r *ListPushFrontRequest) cacheName() string { return r.CacheName }
@@ -71,16 +69,7 @@ func (r *ListPushFrontRequest) makeGrpcRequest(grpcRequest interface{}, requestM
 	return resp, nil, nil
 }
 
-func (r *ListPushFrontRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *ListPushFrontRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListPushFrontResponse)
-	r.response = responses.NewListPushFrontSuccess(myResp.ListLength)
-	return nil
-}
-
-func (r *ListPushFrontRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XListPushFrontResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+	return responses.NewListPushFrontSuccess(myResp.ListLength), nil
 }

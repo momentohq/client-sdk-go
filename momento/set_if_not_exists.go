@@ -21,8 +21,6 @@ type SetIfNotExistsRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
-	response responses.SetIfNotExistsResponse
 }
 
 func (r *SetIfNotExistsRequest) cacheName() string { return r.CacheName }
@@ -76,24 +74,15 @@ func (r *SetIfNotExistsRequest) makeGrpcRequest(grpcRequest interface{}, request
 	return resp, nil, nil
 }
 
-func (r *SetIfNotExistsRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SetIfNotExistsRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSetIfResponse)
 
 	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		r.response = &responses.SetIfNotExistsStored{}
+		return &responses.SetIfNotExistsStored{}, nil
 	case *pb.XSetIfResponse_NotStored:
-		r.response = &responses.SetIfNotExistsNotStored{}
+		return &responses.SetIfNotExistsNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SetIfNotExistsRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetIfResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

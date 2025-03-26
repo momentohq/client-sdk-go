@@ -13,8 +13,6 @@ import (
 type KeysExistRequest struct {
 	CacheName string
 	Keys      []Key
-
-	response responses.KeysExistResponse
 }
 
 func (r *KeysExistRequest) cacheName() string { return r.CacheName }
@@ -47,16 +45,7 @@ func (r *KeysExistRequest) makeGrpcRequest(grpcRequest interface{}, requestMetad
 	return resp, nil, nil
 }
 
-func (r *KeysExistRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *KeysExistRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XKeysExistResponse)
-	r.response = responses.NewKeysExistSuccess(myResp.Exists)
-	return nil
-}
-
-func (r *KeysExistRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XKeysExistResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+	return responses.NewKeysExistSuccess(myResp.Exists), nil
 }

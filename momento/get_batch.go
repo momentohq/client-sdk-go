@@ -15,7 +15,6 @@ type GetBatchRequest struct {
 	Keys      []Value
 
 	grpcStream pb.Scs_GetBatchClient
-	response   responses.GetBatchResponse
 	byteKeys   [][]byte
 }
 
@@ -68,7 +67,7 @@ func (r *GetBatchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetada
 	return nil, nil, nil
 }
 
-func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) error {
+func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	var getResponses []responses.GetResponse
 	for {
 		resp, err := r.grpcStream.Recv()
@@ -82,17 +81,12 @@ func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) error {
 			case pb.ECacheResult_Miss:
 				getResponses = append(getResponses, &responses.GetMiss{})
 			default:
-				return momentoerrors.ConvertSvcErr(err)
+				return nil, momentoerrors.ConvertSvcErr(err)
 			}
 		} else {
-			return momentoerrors.ConvertSvcErr(err)
+			return nil, momentoerrors.ConvertSvcErr(err)
 		}
 	}
 
-	r.response = *responses.NewGetBatchSuccess(getResponses, r.byteKeys)
-	return nil
-}
-
-func (r *GetBatchRequest) validateResponseType(resp grpcResponse) error {
-	return nil
+	return *responses.NewGetBatchSuccess(getResponses, r.byteKeys), nil
 }

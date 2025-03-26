@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-
-	"github.com/momentohq/client-sdk-go/config/retry"
-
-	"google.golang.org/grpc"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -25,9 +22,9 @@ type Middleware interface {
 	GetIncludeTypes() map[string]bool
 }
 
-type RetryMiddleware interface {
+type InterceptorCallbackMiddleware interface {
 	Middleware
-	AddUnaryRetryInterceptor(s retry.Strategy) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error
+	OnInterceptorRequest(ctx context.Context, method string)
 }
 
 type Props struct {
@@ -80,7 +77,7 @@ func (mw *middleware) GetIncludeTypes() map[string]bool {
 // If the IncludeTypes are omitted or empty, all request types will be processed. For example, to limit processing
 // to only requests of type *momento.SetRequest and *momento.GetRequest, pass the following slice as the IncludeTypes:
 //
-//	[]interface{}{&momento.SetRequest{}, &momento.GetRequest{}}
+//	[]interface{}{momento.SetRequest{}, momento.GetRequest{}}
 //
 // Custom middleware implementations can use this constructor to create and store the base middleware:
 //
@@ -94,7 +91,12 @@ func NewMiddleware(props Props) Middleware {
 	if props.IncludeTypes != nil {
 		includeTypeMap = make(map[string]bool)
 		for _, t := range props.IncludeTypes {
-			includeTypeMap[reflect.TypeOf(t).String()] = true
+			myType := reflect.TypeOf(t).String()
+			// Let users pass in types or pointers to types. We'll normalize them to pointers.
+			if !strings.HasPrefix("*", myType) {
+				myType = "*" + myType
+			}
+			includeTypeMap[myType] = true
 		}
 	} else {
 		includeTypeMap = nil
@@ -123,7 +125,7 @@ type RequestHandler interface {
 	GetLogger() logger.MomentoLogger
 	OnRequest(theRequest interface{}) (interface{}, error)
 	OnMetadata(map[string]string) map[string]string
-	OnResponse(theResponse interface{}, err error) (interface{}, error)
+	OnResponse(theResponse interface{}) (interface{}, error)
 }
 
 type HandlerProps struct {
@@ -169,31 +171,25 @@ func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
 	return nil
 }
 
-// OnResponse is called after the response is received from the backend. It is passed the response object, which can
-// be cast to the appropriate response type for further inspection. It is also passed the initial error, if any,
-// produced by the gRPC request. This gives the first request handler a chance to inspect the error and response and
-// decide whether to halt processing or continue with the next request handler. This pattern is generally only used for
-// special purpose request handling, and most request handlers should simply return any error they are passed.
+// OnResponse is called after the gRPC response is received from the backend and converted into a Momento response type
+// (e.g., *responses.GetHit). It is supplied the response object as an interface, which can be type-asserted to the
+// appropriate response type.
 //
 // Returning nil for the response value leaves the response unchanged. Returning a new response object will replace the
-// current response object. The new response must be the same type as the original response object, and an error is
-// returned if this is not the case.
+// current response object. Returning an error will immediately halt response processing, skipping any outstanding
+// response handlers.
 //
-// Returning an error will immediately halt response processing, skipping any outstanding response handlers. A response
-// handler that is passed an error may inspect it and return nil for the error to indicate that request processing
-// should continue.
-//
-//		func (rh *myRequestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
+//		func (rh *myRequestHandler) OnResponse(_ interface{}) (interface{}, error) {
 //		  switch r := theResponse.(type) {
 //		  case *responses.ListPushFrontSuccess:
 //		    fmt.Printf("pushed to front of list whose length is now %d\n", r.ListLength())
 //		  case *responses.ListPushBackSuccess:
 //		    fmt.Printf("pushed to back of list whose length is now %d\n", r.ListLength())
 //		  }
-//	   return nil, err
+//	      return nil, nil
 //		}
-func (rh *requestHandler) OnResponse(_ interface{}, err error) (interface{}, error) {
-	return nil, err
+func (rh *requestHandler) OnResponse(_ interface{}) (interface{}, error) {
+	return nil, nil
 }
 
 func NewRequestHandler(props HandlerProps) RequestHandler {

@@ -15,8 +15,6 @@ type SortedSetLengthByScoreRequest struct {
 	SetName   string
 	MinScore  *float64
 	MaxScore  *float64
-
-	response responses.SortedSetLengthByScoreResponse
 }
 
 func (r *SortedSetLengthByScoreRequest) cacheName() string { return r.CacheName }
@@ -66,23 +64,14 @@ func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(grpcRequest interface{},
 	return resp, nil, nil
 }
 
-func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSortedSetLengthByScoreResponse)
 	switch rtype := myResp.SortedSet.(type) {
 	case *pb.XSortedSetLengthByScoreResponse_Found:
-		r.response = responses.NewSortedSetLengthByScoreHit(rtype.Found.Length)
+		return responses.NewSortedSetLengthByScoreHit(rtype.Found.Length), nil
 	case *pb.XSortedSetLengthByScoreResponse_Missing:
-		r.response = &responses.SortedSetLengthByScoreMiss{}
+		return &responses.SortedSetLengthByScoreMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SortedSetLengthByScoreRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSortedSetLengthByScoreResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

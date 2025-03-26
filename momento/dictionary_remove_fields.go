@@ -14,8 +14,6 @@ type DictionaryRemoveFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
 	Fields         []Value
-
-	response responses.DictionaryRemoveFieldsResponse
 }
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }
@@ -53,15 +51,6 @@ func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(grpcRequest interface{},
 	return resp, nil, nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) error {
-	r.response = &responses.DictionaryRemoveFieldsSuccess{}
-	return nil
-}
-
-func (r *DictionaryRemoveFieldsRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XDictionaryDeleteResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
+func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.DictionaryRemoveFieldsSuccess{}, nil
 }

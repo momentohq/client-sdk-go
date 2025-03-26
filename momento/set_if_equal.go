@@ -23,8 +23,6 @@ type SetIfEqualRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
-	response responses.SetIfEqualResponse
 }
 
 func (r *SetIfEqualRequest) cacheName() string { return r.CacheName }
@@ -87,23 +85,14 @@ func (r *SetIfEqualRequest) makeGrpcRequest(grpcRequest interface{}, requestMeta
 	return resp, nil, nil
 }
 
-func (r *SetIfEqualRequest) interpretGrpcResponse(resp interface{}) error {
+func (r *SetIfEqualRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSetIfResponse)
 	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		r.response = &responses.SetIfEqualStored{}
+		return &responses.SetIfEqualStored{}, nil
 	case *pb.XSetIfResponse_NotStored:
-		r.response = &responses.SetIfEqualNotStored{}
+		return &responses.SetIfEqualNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, myResp)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
-}
-
-func (r *SetIfEqualRequest) validateResponseType(resp grpcResponse) error {
-	_, ok := resp.(*pb.XSetIfResponse)
-	if !ok {
-		return errUnexpectedGrpcResponse(nil, resp)
-	}
-	return nil
 }

@@ -123,56 +123,33 @@ func (client scsDataClient) applyMiddlewareRequestHandlers(
 // Iterate over the middleware request handlers in reverse order, giving them a chance to
 // inspect the response and error results. Any error returned from the middleware OnResponse()
 // method will be immediately returned as the actual error, skipping any outstanding response handlers.
-// If none of the response handlers return an error, the original error (if any) will be returned after
-// it is converted to a Momento service error.
 func (client scsDataClient) applyMiddlewareResponseHandlers(
-	r requester,
 	middlewareRequestHandlers []middleware.RequestHandler,
-	resp grpcResponse,
-	requestError error,
+	resp interface{},
 	responseMetadata []metadata.MD,
-) (grpcResponse, error) {
-	var newResp interface{}
+) (interface{}, error) {
 	for i := len(middlewareRequestHandlers) - 1; i >= 0; i-- {
 		var requestHandlerError error
 		rh := middlewareRequestHandlers[i]
-		newResp, requestHandlerError = rh.OnResponse(resp, requestError)
-		if requestHandlerError != nil {
+		newResp, err := rh.OnResponse(resp)
+		if err != nil {
 			return nil, momentoerrors.ConvertSvcErr(requestHandlerError, responseMetadata...)
 		}
-
-		// The request handler returned a nil error, so we nil out the original error.
-		requestError = nil
-
 		if newResp != nil {
-			err := r.validateResponseType(newResp.(grpcResponse))
-			if err != nil {
-				return nil, NewMomentoError(
-					ClientSdkError,
-					fmt.Sprintf("middleware request handler %T OnResponse returned an invalid response", rh),
-					nil,
-				)
-			}
-			resp = newResp.(grpcResponse)
+			resp = newResp
 		}
 	}
-
-	// If there were no middleware to process, and we were passed in an error,
-	// we need to convert it to a Momento service error before returning it back.
-	if requestError != nil {
-		requestError = momentoerrors.ConvertSvcErr(requestError, responseMetadata...)
-	}
-	return resp, requestError
+	return resp, nil
 }
 
-func (client scsDataClient) makeRequest(ctx context.Context, r requester) error {
+func (client scsDataClient) makeRequest(ctx context.Context, r requester) (interface{}, error) {
 	if _, err := prepareCacheName(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	req, err := r.initGrpcRequest(client)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
@@ -182,22 +159,26 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) error 
 	requestMetadata := make(map[string]string)
 	middlewareRequestHandlers, req, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, req, requestMetadata)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
-	resp, responseMetadata, requestError := r.makeGrpcRequest(req, requestContext, client)
-
-	resp, err = client.applyMiddlewareResponseHandlers(r, middlewareRequestHandlers, resp, requestError, responseMetadata)
+	resp, responseMetadata, err := r.makeGrpcRequest(req, requestContext, client)
 	if err != nil {
-		return err
+		return nil, momentoerrors.ConvertSvcErr(err, responseMetadata...)
 	}
 
-	if err := r.interpretGrpcResponse(resp); err != nil {
-		return err
+	momentoResp, err := r.interpretGrpcResponse(resp)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	momentoResp, err = client.applyMiddlewareResponseHandlers(middlewareRequestHandlers, momentoResp, responseMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return momentoResp, nil
 }
 
 func (client scsDataClient) Connect() error {
