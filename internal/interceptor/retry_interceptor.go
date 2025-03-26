@@ -50,42 +50,32 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 	}
 }
 
+type wrappedStream struct {
+	grpc.ClientStream
+}
+
+func (w *wrappedStream) RecvMsg(m interface{}) error {
+	fmt.Printf("wrapped stream recv msg for %T, %#v\n", m, m)
+	return w.ClientStream.RecvMsg(m)
+}
+
+func (w *wrappedStream) SendMsg(m interface{}) error {
+	return w.ClientStream.SendMsg(m)
+}
+
+func newWrappedStream(s grpc.ClientStream) grpc.ClientStream {
+	return &wrappedStream{s}
+}
+
 // AddStreamRetryInterceptor returns a stream interceptor that will retry the request based on the retry strategy.
-func AddStreamRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+func AddStreamRetryInterceptor() func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		attempt := 1
-		for {
-			fmt.Printf("attempt %d\n", attempt)
-			// This is currently used for testing purposes only by the RetryMetricsMiddleware.
-			if onRequest != nil {
-				onRequest(ctx, method)
-			}
-			// Execute api call
-			stream, lastErr := streamer(ctx, desc, cc, method, opts...)
-			fmt.Printf("lastErr: %v\n", lastErr)
-			if lastErr == nil {
-				//fmt.Printf("no subscribe error, returning %v", stream)
-				// Success no error returned stop interceptor
-				return stream, nil
-			}
-
-			// Check retry eligibility based off last error received
-			retryBackoffTime := s.DetermineWhenToRetry(retry.StrategyProps{
-				GrpcStatusCode: status.Code(lastErr),
-				GrpcMethod:     method,
-				AttemptNumber:  attempt,
-			})
-
-			if retryBackoffTime == nil {
-				// If nil backoff time don't retry just return last error received
-				return nil, lastErr
-			}
-
-			// Sleep for recommended time interval and increment attempts before trying again
-			if *retryBackoffTime > 0 {
-				time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
-			}
-			attempt++
+		// TODO: Seems like retries should go here, but I'll need to confirm with Momento local.
+		//  It could be that I need to trigger retries in RecvMsg instead.
+		s, err := streamer(ctx, desc, cc, method, opts...)
+		if err != nil {
+			return nil, err
 		}
+		return newWrappedStream(s), nil
 	}
 }

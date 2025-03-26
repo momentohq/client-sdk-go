@@ -2,9 +2,10 @@ package helpers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"google.golang.org/grpc/metadata"
@@ -35,6 +36,7 @@ func NewRetryMetricsCollector() RetryMetricsCollector {
 }
 
 func (r *retryMetrics) AddTimestamp(cacheName string, requestName string, timestamp int64) {
+	fmt.Printf("adding timestamp for %s: %d\n", timestamp, cacheName)
 	if _, ok := r.data[cacheName]; !ok {
 		r.data[cacheName] = make(map[string][]int64)
 	}
@@ -84,6 +86,7 @@ type MomentoLocalMiddlewareProps struct {
 
 type momentoLocalMiddleware struct {
 	middleware.Middleware
+	id uuid.UUID
 	metricsCollector    RetryMetricsCollector
 	metricsChan         chan *timestampPayload
 	requestHandlerProps MomentoLocalMiddlewareRequestHandlerProps
@@ -110,11 +113,12 @@ func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Mid
 	metricsChan := make(chan *timestampPayload, 1000)
 	mw := &momentoLocalMiddleware{
 		Middleware:          baseMw,
+		id:                  uuid.New(),
 		metricsCollector:    metricsCollector,
 		metricsChan:         metricsChan,
 		requestHandlerProps: props.MomentoLocalMiddlewareRequestHandlerProps,
 	}
-	go mw.listenForMetrics(metricsChan)
+	//go mw.listenForMetrics(metricsChan)
 	return mw
 }
 
@@ -146,6 +150,7 @@ func (r *momentoLocalMiddleware) GetRequestHandler(
 ) (middleware.RequestHandler, error) {
 	return NewRetryMetricsMiddlewareRequestHandler(
 		baseHandler,
+		r.id,
 		r.metricsChan,
 		r.requestHandlerProps,
 	), nil
@@ -155,11 +160,11 @@ func (r *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, metho
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
 		fmt.Printf("interceptor reqest got metadata: %#v\n", md)
-		//r.metricsChan <- &timestampPayload{
-		//	cacheName:   md.Get("cache")[0],
-		//	requestName: method,
-		//	timestamp:   time.Now().Unix(),
-		//}
+		r.metricsChan <- &timestampPayload{
+			cacheName:   md.Get("cache")[0],
+			requestName: method,
+			timestamp:   time.Now().Unix(),
+		}
 	} else {
 		// Because this middleware is for test use only, we can panic here.
 		panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
@@ -183,6 +188,7 @@ func (r *momentoLocalMiddleware) OnStreamInterceptorRequest(ctx context.Context,
 
 type momentoLocalMiddlewareRequestHandler struct {
 	middleware.RequestHandler
+	middlewareId uuid.UUID
 	metricsChan chan *timestampPayload
 	props       MomentoLocalMiddlewareRequestHandlerProps
 }
@@ -201,14 +207,17 @@ type MomentoLocalMiddlewareRequestHandlerProps struct {
 
 func NewRetryMetricsMiddlewareRequestHandler(
 	rh middleware.RequestHandler,
+	id uuid.UUID,
 	metricsChan chan *timestampPayload,
 	props MomentoLocalMiddlewareRequestHandlerProps,
 ) middleware.RequestHandler {
-	return &momentoLocalMiddlewareRequestHandler{RequestHandler: rh, metricsChan: metricsChan, props: props}
+	return &momentoLocalMiddlewareRequestHandler{
+		RequestHandler: rh, middlewareId: id, metricsChan: metricsChan, props: props}
 }
 
 func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
-	requestMetadata["request-id"] = rh.GetId().String()
+	// request-id is a little misleading-- this is actually more of a session id
+	requestMetadata["request-id"] = rh.middlewareId.String()
 
 	if rh.props.ReturnError != nil {
 		requestMetadata["return-error"] = *rh.props.ReturnError
@@ -246,9 +255,9 @@ func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[s
 		requestMetadata["stream-error-message-limit"] = fmt.Sprintf("%d", *rh.props.StreamErrorMessageLimit)
 	}
 
-	jsonBytes, err := json.MarshalIndent(requestMetadata, " ", "    ")
-	if err == nil {
-		fmt.Printf("returning metadata: %s\n", string(jsonBytes))
-	}
+	//jsonBytes, err := json.MarshalIndent(requestMetadata, " ", "    ")
+	//if err == nil {
+	//	fmt.Printf("returning metadata: %s\n", string(jsonBytes))
+	//}
 	return requestMetadata
 }

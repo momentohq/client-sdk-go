@@ -3,6 +3,8 @@ package momento
 import (
 	"context"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/config/retry"
+	"google.golang.org/grpc/status"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -76,6 +78,7 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("##### item")
 
 		switch item := item.(type) {
 		case TopicItem:
@@ -114,6 +117,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		}
 
 		rawMsg, err := s.subscribeClient.Recv()
+
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -144,13 +148,18 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
 						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
 					)
-					s.attemptReconnect(ctx)
+					err := s.attemptReconnect(ctx, err)
+					if err != nil {
+						return nil, err
+					}
+					fmt.Println("Reconnected . . . continuing")
 				}
 			}
 
-			// retry getting the latest item
 			continue
 		}
+
+		// TODO: OnResponse callbacks
 
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
@@ -191,12 +200,30 @@ func (s *topicSubscription) decrementSubscriptionCount() {
 	s.topicManager.NumActiveSubscriptions.Add(-1)
 }
 
-func (s *topicSubscription) attemptReconnect(ctx context.Context) {
-	// This will attempt to reconnect indefinetly
-	reconnectDelay := 500 * time.Millisecond
+func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
+	attempt := 1
+	retryStrategy := s.topicManager.RetryStrategy
+
+	fmt.Printf("retryStrategy: %T\n", retryStrategy)
+
 	for {
+		retryBackoffTime := retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
+			GrpcStatusCode: status.Code(err),
+			GrpcMethod: "/cache_client.pubsub.Pubsub/Subscribe",
+			AttemptNumber: attempt,
+		})
+
+		if retryBackoffTime == nil {
+			s.log.Warn("Retry strategy determined that we should not retry, returning error")
+			return err
+		}
+
+		if *retryBackoffTime > 0 {
+			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(retryBackoffTime))
+			time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
+		}
+
 		s.log.Info("Attempting reconnecting to client stream")
-		time.Sleep(reconnectDelay)
 		topicManager, subscribeClient, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
@@ -205,14 +232,14 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 		})
 
 		if err != nil {
-			s.log.Warn("failed to reconnect to stream, will continue to try in %s milliseconds", fmt.Sprint(reconnectDelay))
+			s.log.Warn("Failed to reconnect to stream")
 		} else {
-			s.log.Info("successfully reconnected to subscription stream")
+			s.log.Info("Successfully reconnected to subscription stream")
 			s.topicManager = topicManager
 			s.subscribeClient = subscribeClient
 			s.cancelContext = cancelContext
 			s.cancelFunction = cancelFunction
-			return
+			return nil
 		}
 	}
 }

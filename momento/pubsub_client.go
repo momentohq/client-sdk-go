@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -164,6 +165,7 @@ func (client *pubSubClient) checkNumConcurrentStreams() error {
 }
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
+	fmt.Println("IN topicSubscribe")
 	// First check if there is enough grpc stream capacity to make a new subscription
 	err := client.checkNumConcurrentStreams()
 	if err != nil {
@@ -203,6 +205,9 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 
 	}
 
+	myJson, _ := json.MarshalIndent(requestMetadata, "", "    ")
+	fmt.Printf("connecting or reconnecting with md: %s\n", myJson)
+
 	// add withCancel to context
 	cancelContext, cancelFunction := context.WithCancel(ctx)
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(cancelContext, request.CacheName, requestMetadata)
@@ -238,12 +243,35 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
+	//requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
+	requestMetadata := make(map[string]string)
+	for _, mw := range client.middleware {
+		newBaseHandler, err := mw.GetBaseRequestHandler(&pb.XPublishRequest{}, "Publish", request.CacheName)
+		if err != nil {
+			continue
+		}
+		newHandler, err := mw.GetRequestHandler(newBaseHandler)
+		if err != nil {
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+		}
+
+		// TODO: add OnRequest call
+
+		newMd := newHandler.OnMetadata(deepCopyMap(requestMetadata))
+		if newMd != nil {
+			requestMetadata = newMd
+		}
+
+	}
+
+	requestContext := internal.CreateTopicRequestContextFromMetadataMap(ctx, request.CacheName, requestMetadata)
+
+
 	topicManager := client.getNextUnaryTopicManager()
 	var header, trailer metadata.MD
 	switch value := request.Value.(type) {
 	case String:
-		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(requestContext, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
@@ -257,7 +285,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 		}
 		return err
 	case Bytes:
-		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(requestContext, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{

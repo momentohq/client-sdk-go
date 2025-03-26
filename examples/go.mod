@@ -25,3 +25,5 @@ require (
 	google.golang.org/grpc v1.63.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
+
+replace github.com/momentohq/client-sdk-go => ../../client-sdk-go

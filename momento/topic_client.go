@@ -119,7 +119,6 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		errChan <- err
 		return
 	}
-	fmt.Println("got here :-)")
 
 	if request.ResumeAtTopicSequenceNumber == 0 && request.SequencePage == 0 {
 		c.log.Debug("Starting new subscription with new sequence number and sequence page.")

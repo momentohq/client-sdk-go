@@ -65,6 +65,7 @@ func (r *fixedCountRetryStrategy) WithEligibilityStrategy(s EligibilityStrategy)
 }
 
 func (r *fixedCountRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
+	fmt.Printf("fixedCountRetryStrategy.DetermineWhenToRetry: props=%v\n", props)
 	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
 		r.log.Debug(
 			"Request is not retryable: [method: %s, status: %s]", props.GrpcMethod, props.GrpcStatusCode.String(),
