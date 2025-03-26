@@ -18,10 +18,6 @@ type ListPushBackRequest struct {
 	Value               Value
 	TruncateFrontToSize uint32
 	Ttl                 *utils.CollectionTtl
-
-	grpcRequest  *pb.XListPushBackRequest
-	grpcResponse *pb.XListPushBackResponse
-	response     responses.ListPushBackResponse
 }
 
 func (r *ListPushBackRequest) cacheName() string { return r.CacheName }
@@ -34,25 +30,25 @@ func (r *ListPushBackRequest) collectionTtl() *utils.CollectionTtl { return r.Tt
 
 func (r *ListPushBackRequest) requestName() string { return "ListPushBack" }
 
-func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
+func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListPushBackRequest{
+	grpcRequest := &pb.XListPushBackRequest{
 		ListName:            []byte(r.ListName),
 		Value:               value,
 		TtlMilliseconds:     ttlMilliseconds,
@@ -60,22 +56,20 @@ func (r *ListPushBackRequest) initGrpcRequest(client scsDataClient) error {
 		TruncateFrontToSize: r.TruncateFrontToSize,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ListPushBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListPushBackRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListPushBack(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListPushBack(requestMetadata, grpcRequest.(*pb.XListPushBackRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListPushBackRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-	r.response = responses.NewListPushBackSuccess(resp.ListLength)
-	return nil
+func (r *ListPushBackRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XListPushBackResponse)
+	return responses.NewListPushBackSuccess(myResp.ListLength), nil
 }

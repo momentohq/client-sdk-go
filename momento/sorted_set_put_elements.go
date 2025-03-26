@@ -18,10 +18,6 @@ type SortedSetPutElementsRequest struct {
 	SetName   string
 	Elements  []SortedSetElement
 	Ttl       *utils.CollectionTtl
-
-	grpcRequest  *pb.XSortedSetPutRequest
-	grpcResponse *pb.XSortedSetPutResponse
-	response     responses.SortedSetPutElementsResponse
 }
 
 func (r *SortedSetPutElementsRequest) cacheName() string { return r.CacheName }
@@ -32,47 +28,45 @@ func (r *SortedSetPutElementsRequest) ttl() time.Duration { return r.Ttl.Ttl }
 
 func (r *SortedSetPutElementsRequest) collectionTtl() *utils.CollectionTtl { return r.Ttl }
 
-func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SortedSetPutElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	elements, err := convertSortedSetElementsToGrpc(r.Elements)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSortedSetPutRequest{
+	grpcRequest := &pb.XSortedSetPutRequest{
 		SetName:         []byte(r.SetName),
 		Elements:        elements,
 		TtlMilliseconds: ttlMilliseconds,
 		RefreshTtl:      refreshTtl,
 	}
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SortedSetPutElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetPutElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetPut(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetPut(requestMetadata, grpcRequest.(*pb.XSortedSetPutRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetPutElementsRequest) interpretGrpcResponse() error {
-	r.response = &responses.SortedSetPutElementsSuccess{}
-	return nil
+func (r *SortedSetPutElementsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.SortedSetPutElementsSuccess{}, nil
 }
 
 func convertSortedSetElementsToGrpc(modelSetElements []SortedSetElement) ([]*pb.XSortedSetElement, error) {

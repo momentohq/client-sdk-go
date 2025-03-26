@@ -15,10 +15,6 @@ type GetRequest struct {
 	CacheName string
 	// string or byte key to be used to store item
 	Key Key
-
-	grpcRequest  *pb.XGetRequest
-	grpcResponse *pb.XGetResponse
-	response     responses.GetResponse
 }
 
 func (r *GetRequest) cacheName() string { return r.CacheName }
@@ -27,44 +23,38 @@ func (r *GetRequest) key() Key { return r.Key }
 
 func (r *GetRequest) requestName() string { return "Get" }
 
-func (r *GetRequest) initGrpcRequest(scsDataClient) error {
+func (r *GetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XGetRequest{
+	grpcRequest := &pb.XGetRequest{
 		CacheKey: key,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *GetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *GetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Get(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Get(requestMetadata, grpcRequest.(*pb.XGetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *GetRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-
-	if resp.Result == pb.ECacheResult_Hit {
-		r.response = responses.NewGetHit(resp.CacheBody)
-		return nil
-	} else if resp.Result == pb.ECacheResult_Miss {
-		r.response = &responses.GetMiss{}
-		return nil
+func (r *GetRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XGetResponse)
+	if myResp.Result == pb.ECacheResult_Hit {
+		return responses.NewGetHit(myResp.CacheBody), nil
+	} else if myResp.Result == pb.ECacheResult_Miss {
+		return &responses.GetMiss{}, nil
 	} else {
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }

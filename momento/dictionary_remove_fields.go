@@ -14,10 +14,6 @@ type DictionaryRemoveFieldsRequest struct {
 	CacheName      string
 	DictionaryName string
 	Fields         []Value
-
-	grpcRequest  *pb.XDictionaryDeleteRequest
-	grpcResponse *pb.XDictionaryDeleteResponse
-	response     responses.DictionaryRemoveFieldsResponse
 }
 
 func (r *DictionaryRemoveFieldsRequest) cacheName() string { return r.CacheName }
@@ -26,37 +22,35 @@ func (r *DictionaryRemoveFieldsRequest) fields() []Value { return r.Fields }
 
 func (r *DictionaryRemoveFieldsRequest) requestName() string { return "DictionaryRemoveFields" }
 
-func (r *DictionaryRemoveFieldsRequest) initGrpcRequest(scsDataClient) error {
+func (r *DictionaryRemoveFieldsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var fields [][]byte
 	if fields, err = prepareFields(r); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XDictionaryDeleteRequest{
+	grpcRequest := &pb.XDictionaryDeleteRequest{
 		DictionaryName: []byte(r.DictionaryName),
 		Delete:         &pb.XDictionaryDeleteRequest_Some_{Some: &pb.XDictionaryDeleteRequest_Some{Fields: fields}},
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryDelete(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryDelete(requestMetadata, grpcRequest.(*pb.XDictionaryDeleteRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse() error {
-	r.response = &responses.DictionaryRemoveFieldsSuccess{}
-	return nil
+func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.DictionaryRemoveFieldsSuccess{}, nil
 }

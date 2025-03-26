@@ -15,19 +15,15 @@ type SortedSetLengthByScoreRequest struct {
 	SetName   string
 	MinScore  *float64
 	MaxScore  *float64
-
-	grpcRequest  *pb.XSortedSetLengthByScoreRequest
-	grpcResponse *pb.XSortedSetLengthByScoreResponse
-	response     responses.SortedSetLengthByScoreResponse
 }
 
 func (r *SortedSetLengthByScoreRequest) cacheName() string { return r.CacheName }
 
 func (r *SortedSetLengthByScoreRequest) requestName() string { return "SortedSetLengthByScore" }
 
-func (r *SortedSetLengthByScoreRequest) initGrpcRequest(scsDataClient) error {
+func (r *SortedSetLengthByScoreRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	grpc_request := &pb.XSortedSetLengthByScoreRequest{
@@ -55,32 +51,27 @@ func (r *SortedSetLengthByScoreRequest) initGrpcRequest(scsDataClient) error {
 			InclusiveMin: *r.MinScore,
 		}
 	}
-
-	r.grpcRequest = grpc_request
-
-	return nil
+	return grpc_request, nil
 }
 
-func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SortedSetLengthByScoreRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SortedSetLengthByScore(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SortedSetLengthByScore(requestMetadata, grpcRequest.(*pb.XSortedSetLengthByScoreRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-	switch rtype := resp.SortedSet.(type) {
+func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XSortedSetLengthByScoreResponse)
+	switch rtype := myResp.SortedSet.(type) {
 	case *pb.XSortedSetLengthByScoreResponse_Found:
-		r.response = responses.NewSortedSetLengthByScoreHit(rtype.Found.Length)
+		return responses.NewSortedSetLengthByScoreHit(rtype.Found.Length), nil
 	case *pb.XSortedSetLengthByScoreResponse_Missing:
-		r.response = &responses.SortedSetLengthByScoreMiss{}
+		return &responses.SortedSetLengthByScoreMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
 }

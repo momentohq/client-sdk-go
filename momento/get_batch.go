@@ -14,10 +14,8 @@ type GetBatchRequest struct {
 	CacheName string
 	Keys      []Value
 
-	grpcRequest *pb.XGetBatchRequest
-	grpcStream  pb.Scs_GetBatchClient
-	response    responses.GetBatchResponse
-	byteKeys    [][]byte
+	grpcStream pb.Scs_GetBatchClient
+	byteKeys   [][]byte
 }
 
 func (r *GetBatchRequest) cacheName() string { return r.CacheName }
@@ -26,11 +24,11 @@ func (r *GetBatchRequest) keys() []Value { return r.Keys }
 
 func (r *GetBatchRequest) requestName() string { return "GetBatch" }
 
-func (r *GetBatchRequest) initGrpcRequest(scsDataClient) error {
+func (r *GetBatchRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.CacheName, "Cache name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	// For each key, prepare a GetRequest
@@ -43,17 +41,17 @@ func (r *GetBatchRequest) initGrpcRequest(scsDataClient) error {
 		})
 	}
 
-	r.grpcRequest = &pb.XGetBatchRequest{
+	grpcRequest := &pb.XGetBatchRequest{
 		Items: getRequests,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *GetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *GetBatchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
 	var responseMetadata []metadata.MD
-	resp, err := client.grpcClient.GetBatch(requestMetadata, r.grpcRequest)
+	resp, err := client.grpcClient.GetBatch(requestMetadata, grpcRequest.(*pb.XGetBatchRequest))
 	// If there is an error, it's possible resp is nil and we should avoid
 	// calling Header() and Trailer() on it to avoid a panic
 	if resp != nil {
@@ -69,7 +67,7 @@ func (r *GetBatchRequest) makeGrpcRequest(requestMetadata context.Context, clien
 	return nil, nil, nil
 }
 
-func (r *GetBatchRequest) interpretGrpcResponse() error {
+func (r *GetBatchRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	var getResponses []responses.GetResponse
 	for {
 		resp, err := r.grpcStream.Recv()
@@ -83,13 +81,12 @@ func (r *GetBatchRequest) interpretGrpcResponse() error {
 			case pb.ECacheResult_Miss:
 				getResponses = append(getResponses, &responses.GetMiss{})
 			default:
-				return momentoerrors.ConvertSvcErr(err)
+				return nil, momentoerrors.ConvertSvcErr(err)
 			}
 		} else {
-			return momentoerrors.ConvertSvcErr(err)
+			return nil, momentoerrors.ConvertSvcErr(err)
 		}
 	}
 
-	r.response = *responses.NewGetBatchSuccess(getResponses, r.byteKeys)
-	return nil
+	return *responses.NewGetBatchSuccess(getResponses, r.byteKeys), nil
 }

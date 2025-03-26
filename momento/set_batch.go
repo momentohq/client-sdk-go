@@ -16,9 +16,7 @@ type SetBatchRequest struct {
 	Items     []BatchSetItem
 	Ttl       time.Duration
 
-	grpcRequest *pb.XSetBatchRequest
-	grpcStream  pb.Scs_SetBatchClient
-	response    responses.SetBatchResponse
+	grpcStream pb.Scs_SetBatchClient
 }
 
 func (r *SetBatchRequest) cacheName() string { return r.CacheName }
@@ -27,15 +25,15 @@ func (r *SetBatchRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetBatchRequest) requestName() string { return "SetBatch" }
 
-func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	if _, err = prepareName(r.CacheName, "Cache name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	// For each item, prepare a SetRequest
@@ -48,17 +46,17 @@ func (r *SetBatchRequest) initGrpcRequest(client scsDataClient) error {
 		})
 	}
 
-	r.grpcRequest = &pb.XSetBatchRequest{
+	grpcRequest := &pb.XSetBatchRequest{
 		Items: setRequests,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetBatchRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
 	var responseMetadata []metadata.MD
-	resp, err := client.grpcClient.SetBatch(requestMetadata, r.grpcRequest)
+	resp, err := client.grpcClient.SetBatch(requestMetadata, grpcRequest.(*pb.XSetBatchRequest))
 	// If there is an error, it's possible resp is nil and we should avoid
 	// calling Header() and Trailer() on it to avoid a panic
 	if resp != nil {
@@ -74,7 +72,7 @@ func (r *SetBatchRequest) makeGrpcRequest(requestMetadata context.Context, clien
 	return nil, nil, nil
 }
 
-func (r *SetBatchRequest) interpretGrpcResponse() error {
+func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	var setResponses []responses.SetResponse
 	for {
 		resp, err := r.grpcStream.Recv()
@@ -85,13 +83,12 @@ func (r *SetBatchRequest) interpretGrpcResponse() error {
 			case pb.ECacheResult_Ok:
 				setResponses = append(setResponses, &responses.SetSuccess{})
 			default:
-				return momentoerrors.ConvertSvcErr(err)
+				return nil, momentoerrors.ConvertSvcErr(err)
 			}
 		} else {
-			return momentoerrors.ConvertSvcErr(err)
+			return nil, momentoerrors.ConvertSvcErr(err)
 		}
 	}
 
-	r.response = *responses.NewSetBatchSuccess(setResponses)
-	return nil
+	return *responses.NewSetBatchSuccess(setResponses), nil
 }

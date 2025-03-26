@@ -23,10 +23,6 @@ type SetIfPresentAndNotEqualRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
-	grpcRequest  *pb.XSetIfRequest
-	grpcResponse *pb.XSetIfResponse
-	response     responses.SetIfPresentAndNotEqualResponse
 }
 
 func (r *SetIfPresentAndNotEqualRequest) cacheName() string { return r.CacheName }
@@ -41,27 +37,27 @@ func (r *SetIfPresentAndNotEqualRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetIfPresentAndNotEqualRequest) requestName() string { return "SetIfPresentAndNotEqual" }
 
-func (r *SetIfPresentAndNotEqualRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfPresentAndNotEqualRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var notEqual []byte
 	if notEqual, err = prepareNotEqual(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	var condition = &pb.XSetIfRequest_PresentAndNotEqual{
@@ -69,40 +65,34 @@ func (r *SetIfPresentAndNotEqualRequest) initGrpcRequest(client scsDataClient) e
 			ValueToCheck: notEqual,
 		},
 	}
-	r.grpcRequest = &pb.XSetIfRequest{
+	grpcRequest := &pb.XSetIfRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       condition,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetIfPresentAndNotEqualRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetIfPresentAndNotEqualRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIf(requestMetadata, grpcRequest.(*pb.XSetIfRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfPresentAndNotEqualResponse
-
-	switch grpcResp.Result.(type) {
+func (r *SetIfPresentAndNotEqualRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XSetIfResponse)
+	switch myResp.Result.(type) {
 	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfPresentAndNotEqualStored{}
+		return &responses.SetIfPresentAndNotEqualStored{}, nil
 	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfPresentAndNotEqualNotStored{}
+		return &responses.SetIfPresentAndNotEqualNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-
-	r.response = resp
-	return nil
 }

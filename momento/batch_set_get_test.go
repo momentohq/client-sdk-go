@@ -17,7 +17,7 @@ var _ = Describe("cache-client get-batch set-batch", Label(CACHE_SERVICE_LABEL),
 	var sharedContext SharedContext
 
 	BeforeEach(func() {
-		sharedContext = NewSharedContext()
+		sharedContext = NewSharedContext(SharedContextProps{})
 		sharedContext.CreateDefaultCaches()
 		DeferCleanup(func() {
 			sharedContext.Close()

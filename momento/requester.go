@@ -2,8 +2,6 @@ package momento
 
 // The requester interface is implemented by individual
 // method request objects, for example SetRequest.
-// requester.template is a template file to help implement
-// a requester.
 
 import (
 	"context"
@@ -30,9 +28,9 @@ func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors
 
 type requester interface {
 	hasCacheName
-	initGrpcRequest(client scsDataClient) error
-	makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)
-	interpretGrpcResponse() error
+	initGrpcRequest(client scsDataClient) (interface{}, error)
+	makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)
+	interpretGrpcResponse(theResponse interface{}) (interface{}, error)
 	requestName() string
 }
 

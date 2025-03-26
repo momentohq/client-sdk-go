@@ -9,7 +9,6 @@ GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aw
 TEST_DIRS = momento/ auth/ batchutils/
 GINKGO_OPTS = --no-color -v
 
-
 install-goimport:
 	@if ! command -v goimports &> /dev/null; then \
 		echo "goimports not found, installing..."; \
@@ -113,11 +112,12 @@ precommit: lint test
 
 test: install-ginkgo
 	@echo "Running tests..."
-	@ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
+	@ginkgo ${GINKGO_OPTS} --label-filter "!momento-local" ${TEST_DIRS}
+
 
 prod-test: install-ginkgo
 	@echo "Running tests with consistent reads..."
-	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} ${TEST_DIRS}
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "!momento-local" ${TEST_DIRS}
 
 
 test-auth-service: install-ginkgo
@@ -126,6 +126,11 @@ test-auth-service: install-ginkgo
 
 
 test-cache-service: install-ginkgo
+	@echo "Testing cache service..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
+
+
+test-cache-service-all: install-ginkgo
 	@echo "Testing cache service..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter cache-service ${TEST_DIRS}
 
@@ -143,6 +148,12 @@ test-storage-service: install-ginkgo
 test-topics-service: install-ginkgo
 	@echo "Testing topics service..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter topics-service ${TEST_DIRS}
+
+test-retry: install-ginkgo
+	@echo "Testing automated retry..."
+	# Note: all retry tests are currently momento-local tests, but we pass the redundant label filter
+	#  so the test suite can know we need a momento-local credential provider
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "retry && momento-local" ${TEST_DIRS}
 
 test-http-service:
 	@echo "No tests for http service."

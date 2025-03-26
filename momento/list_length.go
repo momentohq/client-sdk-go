@@ -13,48 +13,42 @@ import (
 type ListLengthRequest struct {
 	CacheName string
 	ListName  string
-
-	grpcRequest  *pb.XListLengthRequest
-	grpcResponse *pb.XListLengthResponse
-	response     responses.ListLengthResponse
 }
 
 func (r *ListLengthRequest) cacheName() string { return r.CacheName }
 
 func (r *ListLengthRequest) requestName() string { return "ListLength" }
 
-func (r *ListLengthRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListLengthRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XListLengthRequest{
+	grpcRequest := &pb.XListLengthRequest{
 		ListName: []byte(r.ListName),
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ListLengthRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListLengthRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListLength(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListLength(requestMetadata, grpcRequest.(*pb.XListLengthRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListLengthRequest) interpretGrpcResponse() error {
-	resp := r.grpcResponse
-	switch rtype := resp.List.(type) {
+func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XListLengthResponse)
+	switch rtype := myResp.List.(type) {
 	case *pb.XListLengthResponse_Found:
-		r.response = responses.NewListLengthHit(rtype.Found.Length)
+		return responses.NewListLengthHit(rtype.Found.Length), nil
 	case *pb.XListLengthResponse_Missing:
-		r.response = &responses.ListLengthMiss{}
+		return &responses.ListLengthMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
 }

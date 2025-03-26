@@ -15,10 +15,6 @@ type DeleteRequest struct {
 	CacheName string
 	// string or byte key to be used to delete the item.
 	Key Key
-
-	grpcRequest  *pb.XDeleteRequest
-	grpcResponse *pb.XDeleteResponse
-	response     responses.DeleteResponse
 }
 
 func (r *DeleteRequest) cacheName() string { return r.CacheName }
@@ -27,33 +23,30 @@ func (r *DeleteRequest) key() Key { return r.Key }
 
 func (r *DeleteRequest) requestName() string { return "Delete" }
 
-func (r *DeleteRequest) initGrpcRequest(scsDataClient) error {
+func (r *DeleteRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XDeleteRequest{CacheKey: key}
+	grpcRequest := &pb.XDeleteRequest{CacheKey: key}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *DeleteRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DeleteRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Delete(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Delete(requestMetadata, grpcRequest.(*pb.XDeleteRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
 
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *DeleteRequest) interpretGrpcResponse() error {
-	r.response = &responses.DeleteSuccess{}
-	return nil
+func (r *DeleteRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.DeleteSuccess{}, nil
 }

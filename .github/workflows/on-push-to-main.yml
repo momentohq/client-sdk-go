@@ -82,8 +82,12 @@ jobs:
       - name: Build examples
         run: make build-examples
 
+      - name: Start Momento Local
+        run: |
+          docker run -d -p 8080:8080 gomomento/momento-local
+
       - name: Run test
-        run: make prod-test
+        run: make prod-test-all
 
   release-please:
     runs-on: ubuntu-latest

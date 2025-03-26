@@ -12,10 +12,6 @@ import (
 type ItemGetTtlRequest struct {
 	CacheName string
 	Key       Key
-
-	grpcRequest  *pb.XItemGetTtlRequest
-	grpcResponse *pb.XItemGetTtlResponse
-	response     responses.ItemGetTtlResponse
 }
 
 func (r *ItemGetTtlRequest) cacheName() string { return r.CacheName }
@@ -24,42 +20,37 @@ func (r *ItemGetTtlRequest) key() Key { return r.Key }
 
 func (r *ItemGetTtlRequest) requestName() string { return "ItemGetTtl" }
 
-func (r *ItemGetTtlRequest) initGrpcRequest(scsDataClient) error {
+func (r *ItemGetTtlRequest) initGrpcRequest(scsDataClient) (interface{}, error) {
 	var err error
 	var key []byte
 
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XItemGetTtlRequest{CacheKey: key}
+	grpcRequest := &pb.XItemGetTtlRequest{CacheKey: key}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ItemGetTtlRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ItemGetTtlRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ItemGetTtl(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ItemGetTtl(requestMetadata, grpcRequest.(*pb.XItemGetTtlRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *ItemGetTtlRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
+func (r *ItemGetTtlRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XItemGetTtlResponse)
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XItemGetTtlResponse_Found:
-		r.response = responses.NewItemGetTtlHit(grpcResp.GetFound().GetRemainingTtlMillis())
-		return nil
+		return responses.NewItemGetTtlHit(myResp.GetFound().GetRemainingTtlMillis()), nil
 	case *pb.XItemGetTtlResponse_Missing:
-		r.response = &responses.ItemGetTtlMiss{}
-		return nil
+		return &responses.ItemGetTtlMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }

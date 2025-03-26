@@ -13,45 +13,40 @@ import (
 type ListPopBackRequest struct {
 	CacheName string
 	ListName  string
-
-	grpcRequest  *pb.XListPopBackRequest
-	grpcResponse *pb.XListPopBackResponse
-	response     responses.ListPopBackResponse
 }
 
 func (r *ListPopBackRequest) cacheName() string { return r.CacheName }
 
 func (r *ListPopBackRequest) requestName() string { return "ListPopBack" }
 
-func (r *ListPopBackRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListPopBackRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XListPopBackRequest{
+	grpcRequest := &pb.XListPopBackRequest{
 		ListName: []byte(r.ListName),
 	}
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ListPopBackRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListPopBackRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListPopBack(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListPopBack(requestMetadata, grpcRequest.(*pb.XListPopBackRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListPopBackRequest) interpretGrpcResponse() error {
-	switch rtype := r.grpcResponse.List.(type) {
+func (r *ListPopBackRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XListPopBackResponse)
+	switch rtype := myResp.List.(type) {
 	case *pb.XListPopBackResponse_Found:
-		r.response = responses.NewListPopBackHit(rtype.Found.Back)
+		return responses.NewListPopBackHit(rtype.Found.Back), nil
 	case *pb.XListPopBackResponse_Missing:
-		r.response = &responses.ListPopBackMiss{}
+		return &responses.ListPopBackMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
 }

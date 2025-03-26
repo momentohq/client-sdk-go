@@ -13,45 +13,40 @@ import (
 type ListPopFrontRequest struct {
 	CacheName string
 	ListName  string
-
-	grpcRequest  *pb.XListPopFrontRequest
-	grpcResponse *pb.XListPopFrontResponse
-	response     responses.ListPopFrontResponse
 }
 
 func (r *ListPopFrontRequest) cacheName() string { return r.CacheName }
 
 func (r *ListPopFrontRequest) requestName() string { return "ListPopFront" }
 
-func (r *ListPopFrontRequest) initGrpcRequest(scsDataClient) error {
+func (r *ListPopFrontRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	if _, err := prepareName(r.ListName, "List name"); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XListPopFrontRequest{
+	grpcRequest := &pb.XListPopFrontRequest{
 		ListName: []byte(r.ListName),
 	}
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ListPopFrontRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ListPopFrontRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ListPopFront(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ListPopFront(requestMetadata, grpcRequest.(*pb.XListPopFrontRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *ListPopFrontRequest) interpretGrpcResponse() error {
-	switch rtype := r.grpcResponse.List.(type) {
+func (r *ListPopFrontRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XListPopFrontResponse)
+	switch rtype := myResp.List.(type) {
 	case *pb.XListPopFrontResponse_Found:
-		r.response = responses.NewListPopFrontHit(rtype.Found.Front)
+		return responses.NewListPopFrontHit(rtype.Found.Front), nil
 	case *pb.XListPopFrontResponse_Missing:
-		r.response = &responses.ListPopFrontMiss{}
+		return &responses.ListPopFrontMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
 }

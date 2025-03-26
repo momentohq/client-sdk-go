@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/internal/retry"
+	"github.com/momentohq/client-sdk-go/config/retry"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal/interceptor"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -19,8 +20,21 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	endpoint := request.CredentialProvider.GetCacheEndpoint()
 	authToken := request.CredentialProvider.GetAuthToken()
 
+	// Check the middleware list for an "InterceptorCallbackMiddleware" and use the OnInterceptorRequest callback method
+	// if it is found. This is currently used for testing purposes only by the RetryMetricsMiddleware, but it could be
+	// extended to inject lists of callbacks for various purposes. Because it is intended for a single specific use now,
+	// we break after finding the first one.
+	middlewareList := request.Middleware
+	var onRequestCallback func(context.Context, string)
+	for _, mw := range middlewareList {
+		if rmw, ok := mw.(middleware.InterceptorCallbackMiddleware); ok {
+			onRequestCallback = rmw.OnInterceptorRequest
+			break
+		}
+	}
+
 	headerInterceptors := []grpc.UnaryClientInterceptor{
-		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy),
+		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy, onRequestCallback),
 		interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern),
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}
@@ -47,10 +61,10 @@ func (dataManager *DataGrpcManager) Close() momentoerrors.MomentoSvcErr {
 	return momentoerrors.ConvertSvcErr(dataManager.Conn.Close())
 }
 
-func (gm *DataGrpcManager) Connect(ctx context.Context) error {
+func (dataManager *DataGrpcManager) Connect(ctx context.Context) error {
 	// grpc.NewClient remains in IDLE until first RPC, but we force
 	// an eager connection when we call Connect here
-	gm.Conn.Connect()
+	dataManager.Conn.Connect()
 
 	for {
 		select {
@@ -59,14 +73,14 @@ func (gm *DataGrpcManager) Connect(ctx context.Context) error {
 			return ctx.Err()
 		default:
 			// Check current state
-			state := gm.Conn.GetState()
+			state := dataManager.Conn.GetState()
 			switch state {
 			case connectivity.Ready:
 				// Connection is ready, exit the method
 				return nil
 			case connectivity.Idle, connectivity.Connecting:
 				// If Idle or Connecting, wait for a state change
-				if !gm.Conn.WaitForStateChange(ctx, state) {
+				if !dataManager.Conn.WaitForStateChange(ctx, state) {
 					// Context was done while waiting
 					return ctx.Err()
 				}

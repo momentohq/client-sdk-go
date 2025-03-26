@@ -13,10 +13,6 @@ import (
 type ItemGetTypeRequest struct {
 	CacheName string
 	Key       Key
-
-	grpcRequest  *pb.XItemGetTypeRequest
-	grpcResponse *pb.XItemGetTypeResponse
-	response     responses.ItemGetTypeResponse
 }
 
 func (r *ItemGetTypeRequest) cacheName() string { return r.CacheName }
@@ -25,42 +21,37 @@ func (r *ItemGetTypeRequest) key() Key { return r.Key }
 
 func (r *ItemGetTypeRequest) requestName() string { return "ItemGetType" }
 
-func (r *ItemGetTypeRequest) initGrpcRequest(scsDataClient) error {
+func (r *ItemGetTypeRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 	var key []byte
 
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
-	r.grpcRequest = &pb.XItemGetTypeRequest{CacheKey: key}
+	grpcRequest := &pb.XItemGetTypeRequest{CacheKey: key}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *ItemGetTypeRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *ItemGetTypeRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.ItemGetType(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.ItemGetType(requestMetadata, grpcRequest.(*pb.XItemGetTypeRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-
-	r.grpcResponse = resp
-
 	return resp, nil, nil
 }
 
-func (r *ItemGetTypeRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
+func (r *ItemGetTypeRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XItemGetTypeResponse)
 
-	switch grpcResp.Result.(type) {
+	switch myResp.Result.(type) {
 	case *pb.XItemGetTypeResponse_Found:
-		r.response = responses.NewItemGetTypeHit(grpcResp.GetFound().ItemType)
-		return nil
+		return responses.NewItemGetTypeHit(myResp.GetFound().ItemType), nil
 	case *pb.XItemGetTypeResponse_Missing:
-		r.response = &responses.ItemGetTypeMiss{}
-		return nil
+		return &responses.ItemGetTypeMiss{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }

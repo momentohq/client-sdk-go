@@ -21,10 +21,6 @@ type SetRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
-	grpcRequest  *pb.XSetRequest
-	grpcResponse *pb.XSetResponse
-	response     responses.SetResponse
 }
 
 func (r *SetRequest) cacheName() string { return r.CacheName }
@@ -37,45 +33,43 @@ func (r *SetRequest) ttl() time.Duration { return r.Ttl }
 
 func (r *SetRequest) requestName() string { return "Set" }
 
-func (r *SetRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetRequest{
+	grpcRequest := &pb.XSetRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.Set(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.Set(requestMetadata, grpcRequest.(*pb.XSetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetRequest) interpretGrpcResponse() error {
-	r.response = &responses.SetSuccess{}
-	return nil
+func (r *SetRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
+	return &responses.SetSuccess{}, nil
 }

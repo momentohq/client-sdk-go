@@ -14,21 +14,17 @@ type SetContainsElementsRequest struct {
 	CacheName string
 	SetName   string
 	Elements  []Value
-
-	grpcRequest  *pb.XSetContainsRequest
-	grpcResponse *pb.XSetContainsResponse
-	response     responses.SetContainsElementsResponse
 }
 
 func (r *SetContainsElementsRequest) cacheName() string { return r.CacheName }
 
 func (r *SetContainsElementsRequest) requestName() string { return "SetContainsElements" }
 
-func (r *SetContainsElementsRequest) initGrpcRequest(scsDataClient) error {
+func (r *SetContainsElementsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.SetName, "Set name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var values [][]byte
@@ -36,33 +32,32 @@ func (r *SetContainsElementsRequest) initGrpcRequest(scsDataClient) error {
 		values = append(values, v.asBytes())
 	}
 
-	r.grpcRequest = &pb.XSetContainsRequest{
+	grpcRequest := &pb.XSetContainsRequest{
 		SetName:  []byte(r.SetName),
 		Elements: values,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetContainsElementsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetContainsElementsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetContains(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetContains(requestMetadata, grpcRequest.(*pb.XSetContainsRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetContainsElementsRequest) interpretGrpcResponse() error {
-	switch rtype := r.grpcResponse.Set.(type) {
+func (r *SetContainsElementsRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XSetContainsResponse)
+	switch rtype := myResp.Set.(type) {
 	case *pb.XSetContainsResponse_Missing:
-		r.response = &responses.SetContainsElementsMiss{}
+		return &responses.SetContainsElementsMiss{}, nil
 	case *pb.XSetContainsResponse_Found:
-		r.response = responses.NewSetContainsElementsHit(rtype.Found.Contains)
+		return responses.NewSetContainsElementsHit(rtype.Found.Contains), nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
-	return nil
 }

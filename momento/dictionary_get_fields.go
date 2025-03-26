@@ -15,9 +15,7 @@ type DictionaryGetFieldsRequest struct {
 	DictionaryName string
 	Fields         []Value
 
-	grpcRequest  *pb.XDictionaryGetRequest
 	grpcResponse *pb.XDictionaryGetResponse
-	response     responses.DictionaryGetFieldsResponse
 }
 
 func (r *DictionaryGetFieldsRequest) cacheName() string { return r.CacheName }
@@ -26,41 +24,41 @@ func (r *DictionaryGetFieldsRequest) fields() []Value { return r.Fields }
 
 func (r *DictionaryGetFieldsRequest) requestName() string { return "DictionaryGetFields" }
 
-func (r *DictionaryGetFieldsRequest) initGrpcRequest(scsDataClient) error {
+func (r *DictionaryGetFieldsRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var fields [][]byte
 	if fields, err = prepareFields(r); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XDictionaryGetRequest{
+	grpcRequest := &pb.XDictionaryGetRequest{
 		DictionaryName: []byte(r.DictionaryName),
 		Fields:         fields,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryGetFieldsRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryGetFieldsRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryGet(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryGet(requestMetadata, grpcRequest.(*pb.XDictionaryGetRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
+func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	r.grpcResponse = resp.(*pb.XDictionaryGetResponse)
 	switch rtype := r.grpcResponse.Dictionary.(type) {
 	case *pb.XDictionaryGetResponse_Missing:
-		r.response = &responses.DictionaryGetFieldsMiss{}
+		return &responses.DictionaryGetFieldsMiss{}, nil
 	case *pb.XDictionaryGetResponse_Found:
 		var responsesToReturn []responses.DictionaryGetFieldResponse
 		var fields [][]byte
@@ -75,9 +73,8 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse() error {
 			}
 			fields = append(fields, field)
 		}
-		r.response = responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn)
+		return responses.NewDictionaryGetFieldsHit(fields, rtype.Found.Items, responsesToReturn), nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
-	return nil
 }

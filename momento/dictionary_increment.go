@@ -20,10 +20,6 @@ type DictionaryIncrementRequest struct {
 	Field          Value
 	Amount         int64
 	Ttl            *utils.CollectionTtl
-
-	grpcRequest  *pb.XDictionaryIncrementRequest
-	grpcResponse *pb.XDictionaryIncrementResponse
-	response     responses.DictionaryIncrementResponse
 }
 
 func (r *DictionaryIncrementRequest) cacheName() string { return r.CacheName }
@@ -36,33 +32,33 @@ func (r *DictionaryIncrementRequest) collectionTtl() *utils.CollectionTtl { retu
 
 func (r *DictionaryIncrementRequest) requestName() string { return "DictionaryIncrement" }
 
-func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error {
+func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	if _, err = prepareName(r.DictionaryName, "Dictionary name"); err != nil {
-		return err
+		return nil, err
 	}
 
 	var field []byte
 	if field, err = prepareField(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttlMilliseconds uint64
 	var refreshTtl bool
 	if ttlMilliseconds, refreshTtl, err = prepareCollectionTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
 	if r.Amount == 0 {
-		return momentoerrors.NewMomentoSvcErr(
+		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Amount must be given and cannot be 0",
 			errors.New("invalid argument"),
 		)
 	}
 
-	r.grpcRequest = &pb.XDictionaryIncrementRequest{
+	grpcRequest := &pb.XDictionaryIncrementRequest{
 		DictionaryName:  []byte(r.DictionaryName),
 		Field:           field,
 		Amount:          r.Amount,
@@ -70,21 +66,20 @@ func (r *DictionaryIncrementRequest) initGrpcRequest(client scsDataClient) error
 		RefreshTtl:      refreshTtl,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *DictionaryIncrementRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *DictionaryIncrementRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.DictionaryIncrement(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.DictionaryIncrement(requestMetadata, grpcRequest.(*pb.XDictionaryIncrementRequest), grpc.Header(&header), grpc.Trailer(&trailer))
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *DictionaryIncrementRequest) interpretGrpcResponse() error {
-	r.response = responses.NewDictionaryIncrementSuccess(r.grpcResponse.Value)
-	return nil
+func (r *DictionaryIncrementRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	myResp := resp.(*pb.XDictionaryIncrementResponse)
+	return responses.NewDictionaryIncrementSuccess(myResp.Value), nil
 }
