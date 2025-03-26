@@ -87,7 +87,7 @@ jobs:
           docker run -d -p 8080:8080 gomomento/momento-local
 
       - name: Run test
-        run: make prod-test-all
+        run: make prod-test
 
   release-please:
     runs-on: ubuntu-latest
