@@ -1,7 +1,6 @@
 package retry
 
 import (
-	"fmt"
 	"google.golang.org/grpc/codes"
 )
 
@@ -76,7 +75,6 @@ var retryableRequestMethods = map[string]bool{
 type DefaultEligibilityStrategy struct{}
 
 func (s DefaultEligibilityStrategy) IsEligibleForRetry(props StrategyProps) bool {
-	fmt.Printf("checking eligibility for code %v, method %v\n", props.GrpcStatusCode, props.GrpcMethod)
 	if !retryableStatusCodes[props.GrpcStatusCode] {
 		return false
 	}

@@ -44,8 +44,6 @@ type DataStreamGrpcManagerRequest struct {
 type TopicStreamGrpcManagerRequest struct {
 	CredentialProvider auth.CredentialProvider
 	GrpcConfiguration  config.TopicsGrpcConfiguration
-	Middleware         []middleware.Middleware
-	RetryStrategy      retry.Strategy
 }
 
 type PingGrpcManagerRequest struct {

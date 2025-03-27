@@ -67,11 +67,10 @@ func newWrappedStream(s grpc.ClientStream) grpc.ClientStream {
 	return &wrappedStream{s}
 }
 
-// AddStreamRetryInterceptor returns a stream interceptor that will retry the request based on the retry strategy.
-func AddStreamRetryInterceptor() func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+// AddStreamRetryInterceptor returns a stream interceptor that will wrap the stream for inspection.
+// This is currently unused but I want to keep it here for reference.
+func AddStreamInterceptor() func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		// TODO: Seems like retries should go here, but I'll need to confirm with Momento local.
-		//  It could be that I need to trigger retries in RecvMsg instead.
 		s, err := streamer(ctx, desc, cc, method, opts...)
 		if err != nil {
 			return nil, err

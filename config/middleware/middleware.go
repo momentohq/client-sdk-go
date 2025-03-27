@@ -25,8 +25,8 @@ type Middleware interface {
 type InterceptorCallbackMiddleware interface {
 	Middleware
 	OnInterceptorRequest(ctx context.Context, method string)
-	OnStreamInterceptorRequest(ctx context.Context, method string)
 }
+
 
 type Props struct {
 	Logger       logger.MomentoLogger

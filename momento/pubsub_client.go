@@ -2,16 +2,12 @@ package momento
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync/atomic"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
-	"github.com/momentohq/client-sdk-go/config/middleware"
-	"github.com/momentohq/client-sdk-go/config/retry"
-
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -37,7 +33,7 @@ type pubSubClient struct {
 	log                     logger.MomentoLogger
 	requestTimeout          time.Duration
 	maxConcurrentStreams    int
-	middleware              []middleware.Middleware
+	middleware              []middleware.TopicMiddleware
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
@@ -49,16 +45,9 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numStreamChannels; i++ {
-		fmt.Printf("making stream topic manager %d\n", i)
 		streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
 			CredentialProvider: request.CredentialProvider,
 			GrpcConfiguration:  grpcConfig,
-			Middleware:         request.TopicsConfiguration.GetMiddleware(),
-			RetryStrategy: retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
-				LoggerFactory:       momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO),
-				MaxAttempts:         3,
-				EligibilityStrategy: retry.DefaultEligibilityStrategy{},
-			}),
 		})
 		if err != nil {
 			return nil, err
@@ -75,12 +64,6 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		unaryTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
 			CredentialProvider: request.CredentialProvider,
 			GrpcConfiguration:  grpcConfig,
-			Middleware:         request.TopicsConfiguration.GetMiddleware(),
-			RetryStrategy: retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
-				LoggerFactory:       momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO),
-				MaxAttempts:         3,
-				EligibilityStrategy: retry.DefaultEligibilityStrategy{},
-			}),
 		})
 		if err != nil {
 			return nil, err
@@ -165,7 +148,6 @@ func (client *pubSubClient) checkNumConcurrentStreams() error {
 }
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
-	fmt.Println("IN topicSubscribe")
 	// First check if there is enough grpc stream capacity to make a new subscription
 	err := client.checkNumConcurrentStreams()
 	if err != nil {
@@ -187,26 +169,11 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 
 	requestMetadata := make(map[string]string)
 	for _, mw := range client.middleware {
-
-		// TODO: topic middleware won't use request handlers. All we need here is the metadata.
-		newBaseHandler, err := mw.GetBaseRequestHandler(subscriptionRequest, "Subscribe", request.CacheName)
-		if err != nil {
-			continue
-		}
-		newHandler, err := mw.GetRequestHandler(newBaseHandler)
-		if err != nil {
-			return nil, nil, nil, nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
-		}
-
-		newMd := newHandler.OnMetadata(deepCopyMap(requestMetadata))
+		newMd := mw.OnSubscribeMetadata(deepCopyMap(requestMetadata))
 		if newMd != nil {
 			requestMetadata = newMd
 		}
-
 	}
-
-	myJson, _ := json.MarshalIndent(requestMetadata, "", "    ")
-	fmt.Printf("connecting or reconnecting with md: %s\n", myJson)
 
 	// add withCancel to context
 	cancelContext, cancelFunction := context.WithCancel(ctx)
@@ -214,7 +181,6 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 
 	var header, trailer metadata.MD
 	subscribeClient, err := topicManager.StreamClient.Subscribe(requestContext, subscriptionRequest)
-	fmt.Printf("subscribeClient: %#v (err = %v)\n", subscribeClient, err)
 
 	if err != nil {
 		topicManager.NumActiveSubscriptions.Add(-1)
@@ -243,30 +209,15 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	//requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
 	requestMetadata := make(map[string]string)
 	for _, mw := range client.middleware {
-		newBaseHandler, err := mw.GetBaseRequestHandler(&pb.XPublishRequest{}, "Publish", request.CacheName)
-		if err != nil {
-			continue
-		}
-		newHandler, err := mw.GetRequestHandler(newBaseHandler)
-		if err != nil {
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
-		}
-
-		// TODO: add OnRequest call
-
-		newMd := newHandler.OnMetadata(deepCopyMap(requestMetadata))
+		newMd := mw.OnPublishMetadata(deepCopyMap(requestMetadata))
 		if newMd != nil {
 			requestMetadata = newMd
 		}
-
 	}
 
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(ctx, request.CacheName, requestMetadata)
-
-
 	topicManager := client.getNextUnaryTopicManager()
 	var header, trailer metadata.MD
 	switch value := request.Value.(type) {

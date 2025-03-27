@@ -425,54 +425,40 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 		})
 	})
 
-	Describe("Stream Interceptor Retries", func() {
-		It("publishes and subscribes", func() {
+	Describe("Topic Subscription Reconnects", func() {
+		It("should reconnect on recoverable error", func() {
 			ctx := context.Background()
 			cacheName := "cache"
 			topicName := "topic"
 			status := "unavailable"
-			streamErrorMessageLimit := 10
+			streamErrorMessageLimit := 8
 			strategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
 				LoggerFactory: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 				MaxAttempts:   10,
 			})
 			retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
-				MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
+				MomentoLocalMiddlewareTopicProps: helpers.MomentoLocalMiddlewareTopicProps{
 					StreamError: &status,
 					StreamErrorRpcList: &[]string{"topic-subscribe"},
 					StreamErrorMessageLimit: &streamErrorMessageLimit,
 				},
 			})
-			//metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
-			//clientConfig := config.TopicsDefaultWithLogger(
-			//	momento_default_logger.NewDefaultMomentoLoggerFactory(
-			//		momento_default_logger.DEBUG)).AddMiddleware(retryMiddleware).WithRetryStrategy(strategy)
 			clientConfig := config.TopicsDefaultWithLogger(
 				momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE),
-			).AddMiddleware(retryMiddleware).WithRetryStrategy(strategy)
+			).AddMiddleware(retryMiddleware.(middleware.TopicMiddleware)).WithRetryStrategy(strategy)
 
 			topicClient := setupTopicClientTest(clientConfig)
 			_ = setupCacheClientTest(config.LaptopLatest())
 
-			publishedValues := []TopicValue{
-				String("aaa00"),
-				String("aaa01"),
-				String("aaa02"),
-				String("aaa03"),
-				String("aaa04"),
-				String("aaa05"),
-				String("aaa06"),
-				String("aaa07"),
-				String("aaa08"),
-				String("aaa09"),
-				String("aaa10"),
+			publishedValues := make([]TopicValue, 0)
+			for i := 0; i < 10; i++ {
+				publishedValues = append(publishedValues, String(fmt.Sprintf("aaa%02d", i)))
 			}
 
 			sub, err := topicClient.Subscribe(ctx, &TopicSubscribeRequest{
 				CacheName: cacheName,
 				TopicName: topicName,
 			})
-			fmt.Printf("client is back from subscribe with %v\n", sub)
 			if err != nil {
 				panic(err)
 			}
@@ -485,17 +471,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				for {
 					select {
 					case <-cancelContext.Done():
-						fmt.Println("subscribe goroutine done")
 						return
 					default:
-						fmt.Println("*** waiting for item")
-						item, err := sub.Item(ctx)
+						_, err := sub.Item(ctx)
 						if err != nil {
 							panic(err)
 						}
-						fmt.Printf("received item: %v\n", item)
 						numReceivedValues++
-						fmt.Printf("received %d values\n", numReceivedValues)
 					}
 				}
 			}()
@@ -503,7 +485,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 
 			time.Sleep(time.Millisecond * 1000)
 			for _, value := range publishedValues {
-				fmt.Printf("Publishing %s\n", value)
+				fmt.Printf("Publishing value: %s\n", value)
 				_, err := topicClient.Publish(ctx, &TopicPublishRequest{
 					CacheName: cacheName,
 					TopicName: topicName,
@@ -513,14 +495,43 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 					panic(err)
 				}
 			}
-			fmt.Println("sleeping before cancelling")
 			time.Sleep(time.Millisecond * 5000)
-			fmt.Println("CANCELLING")
 			cancelFunction()
 
-			//fmt.Printf("metrics: %#v", metricsCollector.GetAllMetrics())
+			topicEventMetricsCollector := retryMiddleware.(helpers.MomentoLocalMiddleware).GetTopicEventCollector()
+			counter, err := topicEventMetricsCollector.GetEventCounter(cacheName, "Subscribe")
 
-			Expect(numReceivedValues).To(Equal(len(publishedValues)))
+			Expect(err).To(BeNil())
+			Expect(counter.Errors).To(Equal(1))
+			Expect(counter.Reconnects).To(Equal(1))
+			Expect(counter.Items > 0).To(BeTrue())
+			Expect(counter.Heartbeats > 0).To(BeTrue())
+			Expect(counter.Discontinuities).To(Equal(0))
+		})
+
+		It("should not reconnect on unrecoverable error", func() {
+			ctx := context.Background()
+			cacheName := "cache"
+			topicName := "topic"
+			status := "unavailable"
+			streamErrorMessageLimit := 8
+			strategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+				LoggerFactory: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
+				MaxAttempts:   10,
+			})
+			retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+				MomentoLocalMiddlewareTopicProps: helpers.MomentoLocalMiddlewareTopicProps{
+					StreamError: &status,
+					StreamErrorRpcList: &[]string{"topic-subscribe"},
+					StreamErrorMessageLimit: &streamErrorMessageLimit,
+				},
+			})
+			clientConfig := config.TopicsDefaultWithLogger(
+				momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE),
+			).AddMiddleware(retryMiddleware.(middleware.TopicMiddleware)).WithRetryStrategy(strategy)
+
+			topicClient := setupTopicClientTest(clientConfig)
+			_ = setupCacheClientTest(config.LaptopLatest())
 
 		})
 	})
