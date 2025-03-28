@@ -27,7 +27,6 @@ type InterceptorCallbackMiddleware interface {
 	OnInterceptorRequest(ctx context.Context, method string)
 }
 
-
 type Props struct {
 	Logger       logger.MomentoLogger
 	IncludeTypes []interface{}

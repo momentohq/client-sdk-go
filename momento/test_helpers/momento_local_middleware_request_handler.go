@@ -2,14 +2,15 @@ package helpers
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/middleware"
-	"strings"
 )
 
 type momentoLocalMiddlewareRequestHandler struct {
 	middleware.RequestHandler
-	middlewareId uuid.UUID
+	middlewareId  uuid.UUID
 	metricsChan   chan *timestampPayload
 	metadataProps MomentoLocalMiddlewareMetadataProps
 }

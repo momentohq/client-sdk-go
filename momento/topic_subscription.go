@@ -3,10 +3,11 @@ package momento
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/config/retry"
 	"google.golang.org/grpc/status"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
@@ -216,8 +217,8 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 	for {
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
 			GrpcStatusCode: status.Code(err),
-			GrpcMethod: "/cache_client.pubsub.Pubsub/Subscribe",
-			AttemptNumber: attempt,
+			GrpcMethod:     "/cache_client.pubsub.Pubsub/Subscribe",
+			AttemptNumber:  attempt,
 		})
 
 		if retryBackoffTime == nil {

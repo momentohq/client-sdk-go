@@ -7,7 +7,7 @@ type TopicSubscribeRequest struct {
 	TopicName                   string
 	ResumeAtTopicSequenceNumber uint64
 	SequencePage                uint64
-	RetryStrategy retry.Strategy
+	RetryStrategy               retry.Strategy
 }
 
 func (r TopicSubscribeRequest) cacheName() string { return r.CacheName }

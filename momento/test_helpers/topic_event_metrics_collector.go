@@ -2,21 +2,22 @@ package helpers
 
 import (
 	"fmt"
+
 	"github.com/momentohq/client-sdk-go/config/middleware"
 )
 
 type topicEventPayload struct {
-	cacheName string
+	cacheName   string
 	requestName string
-	eventType middleware.TopicSubscriptionEventType
+	eventType   middleware.TopicSubscriptionEventType
 }
 
 type TopicEventCounter struct {
-	Heartbeats int
+	Heartbeats      int
 	Discontinuities int
-	Items int
-	Errors int
-	Reconnects int
+	Items           int
+	Errors          int
+	Reconnects      int
 }
 
 type topicEventMetrics struct {
@@ -51,11 +52,11 @@ func (t *topicEventMetrics) initializeEventMap(cacheName string, requestName str
 	}
 	if _, ok := t.data[cacheName][requestName]; !ok {
 		t.data[cacheName][requestName] = TopicEventCounter{
-			Heartbeats: 0,
+			Heartbeats:      0,
 			Discontinuities: 0,
-			Items: 0,
-			Errors: 0,
-			Reconnects: 0,
+			Items:           0,
+			Errors:          0,
+			Reconnects:      0,
 		}
 	}
 }
@@ -79,4 +80,3 @@ func (t *topicEventMetrics) AddEvent(cacheName string, requestName string, event
 
 	t.data[cacheName][requestName] = eventCounter
 }
-

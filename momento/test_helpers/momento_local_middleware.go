@@ -3,10 +3,11 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -35,12 +36,12 @@ type MomentoLocalMiddlewareMetadataProps struct {
 
 type momentoLocalMiddleware struct {
 	middleware.Middleware
-	id uuid.UUID
-	metricsCollector    RetryMetricsCollector
+	id                         uuid.UUID
+	metricsCollector           RetryMetricsCollector
 	topicEventMetricsCollector TopicEventMetricsCollector
-	metricsChan         chan *timestampPayload
-	metadataProps MomentoLocalMiddlewareMetadataProps
-	topicEventChan chan *topicEventPayload
+	metricsChan                chan *timestampPayload
+	metadataProps              MomentoLocalMiddlewareMetadataProps
+	topicEventChan             chan *topicEventPayload
 }
 
 // MomentoLocalMiddleware implements both the Middleware and TopicMiddleware interfaces. As such, instantiating one
@@ -69,13 +70,13 @@ func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Mid
 	topicEventMetricsCollector := NewTopicEventMetricsCollector()
 	topicEventChan := make(chan *topicEventPayload, 1000)
 	mw := &momentoLocalMiddleware{
-		Middleware:          baseMw,
-		id:                  uuid.New(),
-		metricsCollector:    metricsCollector,
+		Middleware:                 baseMw,
+		id:                         uuid.New(),
+		metricsCollector:           metricsCollector,
 		topicEventMetricsCollector: topicEventMetricsCollector,
-		metricsChan:         metricsChan,
-		metadataProps: props.MomentoLocalMiddlewareMetadataProps,
-		topicEventChan:      topicEventChan,
+		metricsChan:                metricsChan,
+		metadataProps:              props.MomentoLocalMiddlewareMetadataProps,
+		topicEventChan:             topicEventChan,
 	}
 
 	// launch goroutine to listen for metrics from the unary interceptor callback
@@ -235,9 +236,9 @@ func MomentoErrorCodeToMomentoLocalMetadataValue(errorCode string) string {
 		return "invalid-argument"
 	case momentoerrors.UnknownServiceError:
 		return "unknown"
-	case momentoerrors.AlreadyExistsError, momentoerrors.StoreAlreadyExistsError:
+	case momentoerrors.CacheAlreadyExistsError, momentoerrors.StoreAlreadyExistsError:
 		return "already-exists"
-	case momentoerrors.NotFoundError, momentoerrors.StoreNotFoundError:
+	case momentoerrors.CacheNotFoundError, momentoerrors.StoreNotFoundError:
 		return "not-found"
 	case momentoerrors.InternalServerError:
 		return "internal"

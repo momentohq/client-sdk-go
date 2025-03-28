@@ -3,12 +3,13 @@ package momento_test
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/config/retry"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/config/retry"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
 
@@ -28,9 +29,9 @@ import (
 )
 
 var (
-	testCtx context.Context
-	cacheName string
-	topicName string
+	testCtx     context.Context
+	cacheName   string
+	topicName   string
 	cacheClient CacheClient
 )
 
@@ -82,11 +83,11 @@ func setupTopicClient(config config.TopicsConfiguration) TopicClient {
 }
 
 type clientConfigProps struct {
-	status *string
+	status                  *string
 	streamErrorMessageLimit *int
-	streamErrorRpcList *[]string
-	delayRpcList *[]string
-	delayMillis *int
+	streamErrorRpcList      *[]string
+	delayRpcList            *[]string
+	delayMillis             *int
 }
 
 func getClientConfig(props *clientConfigProps) (config.TopicsConfiguration, middleware.Middleware) {
@@ -96,11 +97,11 @@ func getClientConfig(props *clientConfigProps) (config.TopicsConfiguration, midd
 	})
 	retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 		MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
-			StreamError: props.status,
-			StreamErrorRpcList: props.streamErrorRpcList,
+			StreamError:             props.status,
+			StreamErrorRpcList:      props.streamErrorRpcList,
 			StreamErrorMessageLimit: props.streamErrorMessageLimit,
-			DelayRpcList: props.delayRpcList,
-			DelayMillis: props.delayMillis,
+			DelayRpcList:            props.delayRpcList,
+			DelayMillis:             props.delayMillis,
 		},
 	})
 	return config.TopicsDefaultWithLogger(
@@ -548,12 +549,12 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 		})
 
 		It("should reconnect on recoverable error", func() {
-			msgLimit  := 8
+			msgLimit := 8
 			status := helpers.MomentoErrorCodeToMomentoLocalMetadataValue(momentoerrors.ServerUnavailableError)
 			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{
-				status: &status,
+				status:                  &status,
 				streamErrorMessageLimit: &msgLimit,
-				streamErrorRpcList: &[]string{"topic-subscribe"},
+				streamErrorRpcList:      &[]string{"topic-subscribe"},
 			})
 			topicClient := setupTopicClient(clientConfig)
 
@@ -580,9 +581,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			msgLimit := 8
 			status := helpers.MomentoErrorCodeToMomentoLocalMetadataValue(momentoerrors.CanceledError)
 			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{
-				status: &status,
+				status:                  &status,
 				streamErrorMessageLimit: &msgLimit,
-				streamErrorRpcList: &[]string{"topic-subscribe"},
+				streamErrorRpcList:      &[]string{"topic-subscribe"},
 			})
 			topicClient := setupTopicClient(clientConfig)
 			publishedValues := make([]TopicValue, 0)
@@ -608,7 +609,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			delayMillis := 10_000
 			clientConfig, _ := getClientConfig(&clientConfigProps{
 				delayRpcList: &[]string{"topic-subscribe"},
-				delayMillis: &delayMillis,
+				delayMillis:  &delayMillis,
 			})
 			topicClient := setupTopicClient(clientConfig)
 
@@ -639,7 +640,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			delayMillis := 10_000
 			clientConfig, _ := getClientConfig(&clientConfigProps{
 				delayRpcList: &[]string{"topic-publish"},
-				delayMillis: &delayMillis,
+				delayMillis:  &delayMillis,
 			})
 			topicClient := setupTopicClient(clientConfig)
 			publishResp, err := topicClient.Publish(testCtx, &TopicPublishRequest{
@@ -667,7 +668,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 		It("should pause subscription when admin port is blocked and resume subscription once admin port is unblocked", func() {
 			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{})
 			topicClient := setupTopicClient(clientConfig.WithTransportStrategy(
-				clientConfig.GetTransportStrategy().WithClientTimeout(time.Duration(5)*time.Minute)))
+				clientConfig.GetTransportStrategy().WithClientTimeout(time.Duration(5) * time.Minute)))
 			sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
 				CacheName: cacheName,
 				TopicName: topicName,

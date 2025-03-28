@@ -3,7 +3,7 @@ package middleware
 import "github.com/momentohq/client-sdk-go/config/logger"
 
 type topicMiddleware struct {
-	logger       logger.MomentoLogger
+	logger logger.MomentoLogger
 }
 
 type TopicMiddlewareProps struct {
@@ -42,7 +42,7 @@ const (
 	ITEM          TopicSubscriptionEventType = "item"
 	DISCONTINUITY TopicSubscriptionEventType = "discontinuity"
 	RECONNECT     TopicSubscriptionEventType = "reconnect"
-	ERROR		  TopicSubscriptionEventType = "error"
+	ERROR         TopicSubscriptionEventType = "error"
 )
 
 type TopicEventCallbackMiddleware interface {

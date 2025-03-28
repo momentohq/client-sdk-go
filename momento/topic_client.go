@@ -4,9 +4,10 @@ package momento
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/config/retry"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +35,7 @@ type defaultTopicClient struct {
 	pubSubClient       *pubSubClient
 	log                logger.MomentoLogger
 	requestTimeout     time.Duration
-	retryStrategy 	retry.Strategy
+	retryStrategy      retry.Strategy
 }
 
 // NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
@@ -53,7 +54,7 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 		numChannels:        numChannels,
 		log:                topicsConfiguration.GetLoggerFactory().GetLogger("topic-client"),
 		requestTimeout:     timeout,
-		retryStrategy: topicsConfiguration.GetRetryStrategy(),
+		retryStrategy:      topicsConfiguration.GetRetryStrategy(),
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
@@ -179,7 +180,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		log:                c.log,
 		cancelContext:      cancelContext,
 		cancelFunction:     cancelFunction,
-		retryStrategy: c.retryStrategy,
+		retryStrategy:      c.retryStrategy,
 	}
 }
 
