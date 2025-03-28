@@ -10,55 +10,46 @@ import (
 type momentoLocalMiddlewareRequestHandler struct {
 	middleware.RequestHandler
 	middlewareId uuid.UUID
-	metricsChan chan *timestampPayload
-	props       MomentoLocalMiddlewareRequestHandlerProps
-}
-
-type MomentoLocalMiddlewareRequestHandlerProps struct {
-	ReturnError             *string
-	ErrorRpcList            *[]string
-	ErrorCount              *int
-	DelayRpcList            *[]string
-	DelayMillis             *int
-	DelayCount              *int
+	metricsChan   chan *timestampPayload
+	metadataProps MomentoLocalMiddlewareMetadataProps
 }
 
 func NewMomentoLocalMiddlewareRequestHandler(
 	rh middleware.RequestHandler,
 	id uuid.UUID,
 	metricsChan chan *timestampPayload,
-	props MomentoLocalMiddlewareRequestHandlerProps,
+	props MomentoLocalMiddlewareMetadataProps,
 ) middleware.RequestHandler {
 	return &momentoLocalMiddlewareRequestHandler{
-		RequestHandler: rh, middlewareId: id, metricsChan: metricsChan, props: props}
+		RequestHandler: rh, middlewareId: id, metricsChan: metricsChan, metadataProps: props}
 }
 
 func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
-	// request-id is a little misleading-- this is actually more of a session id
+	// request-id is actually a session id and must be the same throughout a given test.
 	requestMetadata["request-id"] = rh.middlewareId.String()
 
-	if rh.props.ReturnError != nil {
-		requestMetadata["return-error"] = *rh.props.ReturnError
+	if rh.metadataProps.ReturnError != nil {
+		requestMetadata["return-error"] = *rh.metadataProps.ReturnError
 	}
 
-	if rh.props.ErrorRpcList != nil {
-		requestMetadata["error-rpcs"] = strings.Join(*rh.props.ErrorRpcList, " ")
+	if rh.metadataProps.ErrorRpcList != nil {
+		requestMetadata["error-rpcs"] = strings.Join(*rh.metadataProps.ErrorRpcList, " ")
 	}
 
-	if rh.props.ErrorCount != nil {
-		requestMetadata["error-count"] = fmt.Sprintf("%d", *rh.props.ErrorCount)
+	if rh.metadataProps.ErrorCount != nil {
+		requestMetadata["error-count"] = fmt.Sprintf("%d", *rh.metadataProps.ErrorCount)
 	}
 
-	if rh.props.DelayCount != nil {
-		requestMetadata["delay-count"] = fmt.Sprintf("%d", *rh.props.DelayCount)
+	if rh.metadataProps.DelayCount != nil {
+		requestMetadata["delay-count"] = fmt.Sprintf("%d", *rh.metadataProps.DelayCount)
 	}
 
-	if rh.props.DelayMillis != nil {
-		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *rh.props.DelayMillis)
+	if rh.metadataProps.DelayMillis != nil {
+		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *rh.metadataProps.DelayMillis)
 	}
 
-	if rh.props.DelayRpcList != nil {
-		requestMetadata["delay-rpcs"] = strings.Join(*rh.props.DelayRpcList, " ")
+	if rh.metadataProps.DelayRpcList != nil {
+		requestMetadata["delay-rpcs"] = strings.Join(*rh.metadataProps.DelayRpcList, " ")
 	}
 
 	return requestMetadata

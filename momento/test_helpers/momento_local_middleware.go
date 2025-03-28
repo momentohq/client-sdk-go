@@ -15,18 +15,21 @@ import (
 
 type MomentoLocalMiddlewareProps struct {
 	middleware.Props
-	// MomentoLocalMiddlewareRequestHandlerProps holds properties from which the request handler will create metadata
-	// to be sent to the server to control the behavior of the request.
-	MomentoLocalMiddlewareRequestHandlerProps
-	// MomentoLocalMiddlewareTopicProps holds properties from which the topic middleware will create metadata
-	// to be sent to the server to control the behavior of the topic subscription.
-	MomentoLocalMiddlewareTopicProps
+	// MomentoLocalMiddlewareMetadataProps holds properties from which the request handlers and topic middleware
+	// will create metadata to be sent to the server to control the behavior of the request.
+	MomentoLocalMiddlewareMetadataProps
 }
 
-type MomentoLocalMiddlewareTopicProps struct {
+type MomentoLocalMiddlewareMetadataProps struct {
 	StreamErrorRpcList      *[]string
 	StreamError             *string
 	StreamErrorMessageLimit *int
+	ReturnError             *string
+	ErrorRpcList            *[]string
+	ErrorCount              *int
+	DelayRpcList            *[]string
+	DelayMillis             *int
+	DelayCount              *int
 }
 
 type momentoLocalMiddleware struct {
@@ -35,8 +38,7 @@ type momentoLocalMiddleware struct {
 	metricsCollector    RetryMetricsCollector
 	topicEventMetricsCollector TopicEventMetricsCollector
 	metricsChan         chan *timestampPayload
-	requestHandlerProps MomentoLocalMiddlewareRequestHandlerProps
-	topicProps MomentoLocalMiddlewareTopicProps
+	metadataProps MomentoLocalMiddlewareMetadataProps
 	topicEventChan chan *topicEventPayload
 }
 
@@ -71,8 +73,7 @@ func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Mid
 		metricsCollector:    metricsCollector,
 		topicEventMetricsCollector: topicEventMetricsCollector,
 		metricsChan:         metricsChan,
-		requestHandlerProps: props.MomentoLocalMiddlewareRequestHandlerProps,
-		topicProps:          props.MomentoLocalMiddlewareTopicProps,
+		metadataProps: props.MomentoLocalMiddlewareMetadataProps,
 		topicEventChan:      topicEventChan,
 	}
 
@@ -102,32 +103,45 @@ func (mw *momentoLocalMiddleware) GetRequestHandler(
 		baseHandler,
 		mw.id,
 		mw.metricsChan,
-		mw.requestHandlerProps,
+		mw.metadataProps,
 	), nil
 }
 
 // middleware.TopicMiddleware interface methods
 
 func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string]string) map[string]string {
+	// request-id is actually a session id and must be the same throughout a given test.
 	requestMetadata["request-id"] = mw.id.String()
 
-	if mw.topicProps.StreamErrorRpcList != nil {
-		requestMetadata["stream-error-rpcs"] = strings.Join(*mw.topicProps.StreamErrorRpcList, " ")
+	if mw.metadataProps.StreamErrorRpcList != nil {
+		requestMetadata["stream-error-rpcs"] = strings.Join(*mw.metadataProps.StreamErrorRpcList, " ")
 	}
 
-	if mw.topicProps.StreamError != nil {
-		requestMetadata["stream-error"] = *mw.topicProps.StreamError
+	if mw.metadataProps.StreamError != nil {
+		requestMetadata["stream-error"] = *mw.metadataProps.StreamError
 	}
 
-	if mw.topicProps.StreamErrorMessageLimit != nil {
-		requestMetadata["stream-error-message-limit"] = fmt.Sprintf("%d", *mw.topicProps.StreamErrorMessageLimit)
+	if mw.metadataProps.StreamErrorMessageLimit != nil {
+		requestMetadata["stream-error-message-limit"] = fmt.Sprintf("%d", *mw.metadataProps.StreamErrorMessageLimit)
+	}
+
+	if mw.metadataProps.DelayCount != nil {
+		requestMetadata["delay-count"] = fmt.Sprintf("%d", *mw.metadataProps.DelayCount)
+	}
+
+	if mw.metadataProps.DelayMillis != nil {
+		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *mw.metadataProps.DelayMillis)
+	}
+
+	if mw.metadataProps.DelayRpcList != nil {
+		requestMetadata["delay-rpcs"] = strings.Join(*mw.metadataProps.DelayRpcList, " ")
 	}
 
 	return requestMetadata
 }
 
 func (mw *momentoLocalMiddleware) OnPublishMetadata(requestMetadata map[string]string) map[string]string {
-	// request-id is a little misleading-- this is actually more of a session id
+	// request-id is actually a session id and must be the same throughout a given test.
 	requestMetadata["request-id"] = mw.id.String()
 	return requestMetadata
 }
