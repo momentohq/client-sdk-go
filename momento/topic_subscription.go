@@ -212,7 +212,6 @@ func (s *topicSubscription) decrementSubscriptionCount() {
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
-	s.onTopicEvent("Subscribe", middleware.RECONNECT)
 	attempt := 1
 	for {
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
@@ -225,6 +224,8 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			s.log.Warn("Retry strategy determined that we should not retry, returning error")
 			return err
 		}
+
+		s.onTopicEvent("Subscribe", middleware.RECONNECT)
 
 		if *retryBackoffTime > 0 {
 			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(retryBackoffTime))
