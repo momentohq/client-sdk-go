@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"strings"
 	"time"
 
@@ -130,7 +131,7 @@ func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string
 	}
 
 	if mw.metadataProps.DelayMillis != nil {
-		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *mw.metadataProps.DelayMillis)
+		requestMetadata["delay-ms"] = fmt.Sprintf("%d", *mw.metadataProps.DelayMillis)
 	}
 
 	if mw.metadataProps.DelayRpcList != nil {
@@ -143,6 +144,31 @@ func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string
 func (mw *momentoLocalMiddleware) OnPublishMetadata(requestMetadata map[string]string) map[string]string {
 	// request-id is actually a session id and must be the same throughout a given test.
 	requestMetadata["request-id"] = mw.id.String()
+
+	if mw.metadataProps.ReturnError != nil {
+		requestMetadata["return-error"] = *mw.metadataProps.ReturnError
+	}
+
+	if mw.metadataProps.ErrorRpcList != nil {
+		requestMetadata["error-rpcs"] = strings.Join(*mw.metadataProps.ErrorRpcList, " ")
+	}
+
+	if mw.metadataProps.ErrorCount != nil {
+		requestMetadata["error-count"] = fmt.Sprintf("%d", *mw.metadataProps.ErrorCount)
+	}
+
+	if mw.metadataProps.DelayCount != nil {
+		requestMetadata["delay-count"] = fmt.Sprintf("%d", *mw.metadataProps.DelayCount)
+	}
+
+	if mw.metadataProps.DelayMillis != nil {
+		requestMetadata["delay-ms"] = fmt.Sprintf("%d", *mw.metadataProps.DelayMillis)
+	}
+
+	if mw.metadataProps.DelayRpcList != nil {
+		requestMetadata["delay-rpcs"] = strings.Join(*mw.metadataProps.DelayRpcList, " ")
+	}
+
 	return requestMetadata
 }
 
@@ -200,5 +226,40 @@ func (mw *momentoLocalMiddleware) listenForTopicEvents(topicEventChan chan *topi
 			return
 		}
 		mw.topicEventMetricsCollector.AddEvent(msg.cacheName, msg.requestName, msg.eventType)
+	}
+}
+
+func MomentoErrorCodeToMomentoLocalMetadataValue(errorCode string) string {
+	switch errorCode {
+	case momentoerrors.InvalidArgumentError:
+		return "invalid-argument"
+	case momentoerrors.UnknownServiceError:
+		return "unknown"
+	case momentoerrors.AlreadyExistsError, momentoerrors.StoreAlreadyExistsError:
+		return "already-exists"
+	case momentoerrors.NotFoundError, momentoerrors.StoreNotFoundError:
+		return "not-found"
+	case momentoerrors.InternalServerError:
+		return "internal"
+	case momentoerrors.PermissionError:
+		return "permission-denied"
+	case momentoerrors.AuthenticationError:
+		return "unauthenticated"
+	case momentoerrors.CanceledError:
+		return "cancelled"
+	case momentoerrors.ConnectionError:
+		return "unavailable"
+	case momentoerrors.LimitExceededError:
+		return "resource-exhausted"
+	case momentoerrors.BadRequestError:
+		return "invalid-argument"
+	case momentoerrors.TimeoutError:
+		return "deadline-exceeded"
+	case momentoerrors.ServerUnavailableError:
+		return "unavailable"
+	case momentoerrors.FailedPreconditionError:
+		return "failed-precondition"
+	default:
+		return "unknown"
 	}
 }
