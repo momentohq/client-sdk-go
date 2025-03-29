@@ -2,7 +2,6 @@ package interceptor
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/retry"
@@ -16,7 +15,6 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
 		for {
-			fmt.Printf("unary interceptor attempt %d for %s\n", attempt, method)
 			// This is currently used for testing purposes only by the RetryMetricsMiddleware.
 			if onRequest != nil {
 				onRequest(ctx, method)
@@ -24,7 +22,6 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 			// Execute api call
 			lastErr := invoker(ctx, method, req, reply, cc, opts...)
 			if lastErr == nil {
-				fmt.Printf("got REPLY -----> %#v\n", reply)
 				// Success no error returned stop interceptor
 				return nil
 			}
@@ -55,7 +52,6 @@ type wrappedStream struct {
 }
 
 func (w *wrappedStream) RecvMsg(m interface{}) error {
-	fmt.Printf("wrapped stream recv msg for %T, %#v\n", m, m)
 	return w.ClientStream.RecvMsg(m)
 }
 
