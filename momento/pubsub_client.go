@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
@@ -32,12 +33,13 @@ type pubSubClient struct {
 	log                     logger.MomentoLogger
 	requestTimeout          time.Duration
 	maxConcurrentStreams    int
+	middleware              []middleware.TopicMiddleware
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
 	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
 
-	numStreamChannels := uint32(DEFAULT_NUM_STREAM_GRPC_CHANNELS)
+	numStreamChannels := DEFAULT_NUM_STREAM_GRPC_CHANNELS
 	if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
 		numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
 	}
@@ -53,7 +55,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
 
-	numUnaryChannels := uint32(DEFAULT_NUM_UNARY_GRPC_CHANNELS)
+	numUnaryChannels := DEFAULT_NUM_UNARY_GRPC_CHANNELS
 	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
 		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
 	}
@@ -85,6 +87,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		log:                  request.Log,
 		requestTimeout:       timeout,
 		maxConcurrentStreams: int(numStreamChannels) * MAX_CONCURRENT_STREAMS_PER_CHANNEL,
+		middleware:           request.TopicsConfiguration.GetMiddleware(),
 	}, nil
 }
 
@@ -145,7 +148,7 @@ func (client *pubSubClient) checkNumConcurrentStreams() error {
 }
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
-	// First check if there is enough grpc stream capabity to make a new subscription
+	// First check if there is enough grpc stream capacity to make a new subscription
 	err := client.checkNumConcurrentStreams()
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -157,19 +160,27 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		return nil, nil, nil, nil, err
 	}
 
-	// add metadata to context
-	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
-
-	// add withCancel to context
-	cancelContext, cancelFunction := context.WithCancel(requestMetadata)
-
-	var header, trailer metadata.MD
-	subscribeClient, err := topicManager.StreamClient.Subscribe(cancelContext, &pb.XSubscriptionRequest{
+	subscriptionRequest := &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
 		Topic:                       request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 		SequencePage:                request.SequencePage,
-	})
+	}
+
+	requestMetadata := make(map[string]string)
+	for _, mw := range client.middleware {
+		newMd := mw.OnSubscribeMetadata(deepCopyMap(requestMetadata))
+		if newMd != nil {
+			requestMetadata = newMd
+		}
+	}
+
+	// add withCancel to context
+	cancelContext, cancelFunction := context.WithCancel(ctx)
+	requestContext := internal.CreateTopicRequestContextFromMetadataMap(cancelContext, request.CacheName, requestMetadata)
+
+	var header, trailer metadata.MD
+	subscribeClient, err := topicManager.StreamClient.Subscribe(requestContext, subscriptionRequest)
 
 	if err != nil {
 		topicManager.NumActiveSubscriptions.Add(-1)
@@ -198,12 +209,20 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
 
-	requestMetadata := internal.CreateMetadata(ctx, internal.Topic)
+	requestMetadata := make(map[string]string)
+	for _, mw := range client.middleware {
+		newMd := mw.OnPublishMetadata(deepCopyMap(requestMetadata))
+		if newMd != nil {
+			requestMetadata = newMd
+		}
+	}
+
+	requestContext := internal.CreateTopicRequestContextFromMetadataMap(ctx, request.CacheName, requestMetadata)
 	topicManager := client.getNextUnaryTopicManager()
 	var header, trailer metadata.MD
 	switch value := request.Value.(type) {
 	case String:
-		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(requestContext, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
@@ -217,7 +236,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 		}
 		return err
 	case Bytes:
-		_, err := topicManager.StreamClient.Publish(requestMetadata, &pb.XPublishRequest{
+		_, err := topicManager.StreamClient.Publish(requestContext, &pb.XPublishRequest{
 			CacheName: request.CacheName,
 			Topic:     request.TopicName,
 			Value: &pb.XTopicValue{
@@ -242,12 +261,14 @@ func (client *pubSubClient) close() {
 	// Close all stream grpc channels
 	client.numStreamChannels = 0
 	for clientIndex := range client.streamTopicManagers {
+		// TODO: could we be leaking connections here?
 		defer client.streamTopicManagers[clientIndex].Close()
 	}
 
 	// Close all unary grpc channels
 	client.numUnaryChannels = 0
 	for clientIndex := range client.unaryTopicManagers {
+		// TODO: could we be leaking connections here?
 		defer client.unaryTopicManagers[clientIndex].Close()
 	}
 }
