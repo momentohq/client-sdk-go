@@ -722,6 +722,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 						testAdminPort = "9090"
 					}
 					_, err := http.Get(fmt.Sprintf("http://%s:%s/block", testAdminHost, testAdminPort))
+					Expect(err).To(BeNil())
 					counter, err := topicEventCounter.GetEventCounter(cacheName, "Subscribe")
 					Expect(err).To(BeNil())
 					numItemsAtBlock = counter.Items
