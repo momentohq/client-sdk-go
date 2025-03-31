@@ -52,10 +52,7 @@ func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) 
 	return 0, fmt.Errorf("request name '%s' is not valid", requestName)
 }
 
-// GetAverageTimeBetweenRetries returns the average time between retries in seconds.
-//
-//	Limited to second resolution, but I can obviously change that if desired.
-//	This tracks with the JS implementation.
+// GetAverageTimeBetweenRetries returns the average time between retries in milliseconds.
 func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error) {
 	if _, ok := r.data[cacheName]; !ok {
 		return int64(0), fmt.Errorf("cache name '%s' is not valid", cacheName)
@@ -157,7 +154,7 @@ func (r *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, metho
 		r.metricsChan <- &timestampPayload{
 			cacheName:   md.Get("cache")[0],
 			requestName: method,
-			timestamp:   time.Now().Unix(),
+			timestamp:   time.Now().UnixMilli(),
 		}
 	} else {
 		// Because this middleware is for test use only, we can panic here.
@@ -208,7 +205,7 @@ func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[s
 	}
 
 	if rh.props.DelayMillis != nil {
-		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *rh.props.DelayMillis)
+		requestMetadata["delay-ms"] = fmt.Sprintf("%d", *rh.props.DelayMillis)
 	}
 
 	if rh.props.DelayRpcList != nil {
