@@ -19,58 +19,58 @@ var retryableStatusCodes = map[codes.Code]bool{
 	codes.Canceled: false,
 }
 
-var retryableRequestMethods = map[string]bool{
-	string(momento_rpc_names.Get):      true,
-	string(momento_rpc_names.GetBatch): true,
-	string(momento_rpc_names.Set):      true,
-	string(momento_rpc_names.SetBatch): true,
-	string(momento_rpc_names.SetIf):    false,
+var retryableRequestMethods = map[momento_rpc_names.MomentoRPCMethod]bool{
+	momento_rpc_names.Get:      true,
+	momento_rpc_names.GetBatch: true,
+	momento_rpc_names.Set:      true,
+	momento_rpc_names.SetBatch: true,
+	momento_rpc_names.SetIf:    false,
 	// SetIfNotExists is deprecated
-	string(momento_rpc_names.SetIfNotExists): false,
-	string(momento_rpc_names.Delete):         true,
-	string(momento_rpc_names.KeysExist):      true,
-	string(momento_rpc_names.Increment):      false,
-	string(momento_rpc_names.UpdateTtl):      false,
-	string(momento_rpc_names.ItemGetTtl):     true,
-	string(momento_rpc_names.ItemGetType):    true,
+	momento_rpc_names.SetIfNotExists: false,
+	momento_rpc_names.Delete:         true,
+	momento_rpc_names.KeysExist:      true,
+	momento_rpc_names.Increment:      false,
+	momento_rpc_names.UpdateTtl:      false,
+	momento_rpc_names.ItemGetTtl:     true,
+	momento_rpc_names.ItemGetType:    true,
 
-	string(momento_rpc_names.DictionaryGet):       true,
-	string(momento_rpc_names.DictionaryFetch):     true,
-	string(momento_rpc_names.DictionarySet):       true,
-	string(momento_rpc_names.DictionaryIncrement): false,
-	string(momento_rpc_names.DictionaryDelete):    true,
-	string(momento_rpc_names.DictionaryLength):    true,
+	momento_rpc_names.DictionaryGet:       true,
+	momento_rpc_names.DictionaryFetch:     true,
+	momento_rpc_names.DictionarySet:       true,
+	momento_rpc_names.DictionaryIncrement: false,
+	momento_rpc_names.DictionaryDelete:    true,
+	momento_rpc_names.DictionaryLength:    true,
 
-	string(momento_rpc_names.SetFetch):      true,
-	string(momento_rpc_names.SetSample):     true,
-	string(momento_rpc_names.SetUnion):      true,
-	string(momento_rpc_names.SetDifference): true,
-	string(momento_rpc_names.SetContains):   true,
-	string(momento_rpc_names.SetLength):     true,
-	string(momento_rpc_names.SetPop):        false,
+	momento_rpc_names.SetFetch:      true,
+	momento_rpc_names.SetSample:     true,
+	momento_rpc_names.SetUnion:      true,
+	momento_rpc_names.SetDifference: true,
+	momento_rpc_names.SetContains:   true,
+	momento_rpc_names.SetLength:     true,
+	momento_rpc_names.SetPop:        false,
 
-	string(momento_rpc_names.ListPushFront): false,
-	string(momento_rpc_names.ListPushBack):  false,
-	string(momento_rpc_names.ListPopFront):  false,
-	string(momento_rpc_names.ListPopBack):   false,
+	momento_rpc_names.ListPushFront: false,
+	momento_rpc_names.ListPushBack:  false,
+	momento_rpc_names.ListPopFront:  false,
+	momento_rpc_names.ListPopBack:   false,
 	// Not used, and unknown "/cache_client.Scs/ListErase",
-	string(momento_rpc_names.ListRemove):           true,
-	string(momento_rpc_names.ListFetch):            true,
-	string(momento_rpc_names.ListLength):           true,
-	string(momento_rpc_names.ListConcatenateFront): false,
-	string(momento_rpc_names.ListConcatenateBack):  false,
-	string(momento_rpc_names.ListRetain):           false,
+	momento_rpc_names.ListRemove:           true,
+	momento_rpc_names.ListFetch:            true,
+	momento_rpc_names.ListLength:           true,
+	momento_rpc_names.ListConcatenateFront: false,
+	momento_rpc_names.ListConcatenateBack:  false,
+	momento_rpc_names.ListRetain:           false,
 
-	string(momento_rpc_names.SortedSetPut):           true,
-	string(momento_rpc_names.SortedSetFetch):         true,
-	string(momento_rpc_names.SortedSetGetScore):      true,
-	string(momento_rpc_names.SortedSetRemove):        true,
-	string(momento_rpc_names.SortedSetIncrement):     false,
-	string(momento_rpc_names.SortedSetGetRank):       true,
-	string(momento_rpc_names.SortedSetLength):        true,
-	string(momento_rpc_names.SortedSetLengthByScore): true,
+	momento_rpc_names.SortedSetPut:           true,
+	momento_rpc_names.SortedSetFetch:         true,
+	momento_rpc_names.SortedSetGetScore:      true,
+	momento_rpc_names.SortedSetRemove:        true,
+	momento_rpc_names.SortedSetIncrement:     false,
+	momento_rpc_names.SortedSetGetRank:       true,
+	momento_rpc_names.SortedSetLength:        true,
+	momento_rpc_names.SortedSetLengthByScore: true,
 
-	string(momento_rpc_names.TopicSubscribe): true,
+	momento_rpc_names.TopicSubscribe: true,
 }
 
 type DefaultEligibilityStrategy struct{}
@@ -80,7 +80,7 @@ func (s DefaultEligibilityStrategy) IsEligibleForRetry(props StrategyProps) bool
 		return false
 	}
 
-	if !retryableRequestMethods[props.GrpcMethod] {
+	if !retryableRequestMethods[momento_rpc_names.MomentoRPCMethod(props.GrpcMethod)] {
 		return false
 	}
 	return true
