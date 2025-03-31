@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/momento_rpc_names"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -127,13 +128,7 @@ func (r *momentoLocalMiddleware) listenForMetrics(metricsChan chan *timestampPay
 		if msg == nil {
 			return
 		}
-		// All requests are prefixed with "/cache_client.Scs/", so we cut that off.
-		parts := strings.Split(msg.requestName, "/")
-		if len(parts) < 2 {
-			// Because this middleware is for test use only, we can panic here.
-			panic(fmt.Sprintf("Could not parse request name %s", msg.requestName))
-		}
-		shortRequestName := parts[2]
+		shortRequestName := ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.MomentoRPCMethod(msg.requestName))
 		r.metricsCollector.AddTimestamp(msg.cacheName, shortRequestName, msg.timestamp)
 	}
 }

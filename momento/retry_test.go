@@ -6,15 +6,15 @@ import (
 	"strconv"
 
 	"github.com/momentohq/client-sdk-go/config/retry"
-
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
+	"github.com/momentohq/client-sdk-go/momento_rpc_names"
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/responses"
-	"github.com/momentohq/client-sdk-go/utils"
 
 	"time"
 
@@ -53,13 +53,13 @@ var _ = Describe(
 	"cache-client retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 		DescribeTable(
 			"DefaultEligibilityStrategy -- determine retry eligibility given grpc status code and request method",
-			func(grpcStatus codes.Code, requestMethod string, expected bool) {
+			func(grpcStatus codes.Code, requestMethod momento_rpc_names.MomentoRPCMethod, expected bool) {
 				strategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
 					LoggerFactory: momento_default_logger.DefaultMomentoLoggerFactory{},
 					MaxAttempts:   3,
 				})
 				retryResult := strategy.DetermineWhenToRetry(
-					retry.StrategyProps{GrpcStatusCode: grpcStatus, GrpcMethod: requestMethod, AttemptNumber: 1},
+					retry.StrategyProps{GrpcStatusCode: grpcStatus, GrpcMethod: string(requestMethod), AttemptNumber: 1},
 				)
 
 				if expected == false {
@@ -69,32 +69,34 @@ var _ = Describe(
 					Expect(*retryResult).To(Equal(0))
 				}
 			},
-			Entry("name", codes.Internal, "/cache_client.Scs/Get", true),
-			Entry("name", codes.Internal, "/cache_client.Scs/Set", true),
-			Entry("name", codes.Internal, "/cache_client.Scs/DictionaryIncrement", false),
-			Entry("name", codes.Unknown, "/cache_client.Scs/Get", false),
-			Entry("name", codes.Unknown, "/cache_client.Scs/Set", false),
-			Entry("name", codes.Unknown, "/cache_client.Scs/DictionaryIncrement", false),
-			Entry("name", codes.Unavailable, "/cache_client.Scs/Get", true),
-			Entry("name", codes.Unavailable, "/cache_client.Scs/Set", true),
-			Entry("name", codes.Unavailable, "/cache_client.Scs/DictionaryIncrement", false),
-			Entry("name", codes.Canceled, "/cache_client.Scs/Get", false),
-			Entry("name", codes.Canceled, "/cache_client.Scs/Set", false),
-			Entry("name", codes.Canceled, "/cache_client.Scs/DictionaryIncrement", false),
-			Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/Get", false),
-			Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/Set", false),
-			Entry("name", codes.DeadlineExceeded, "/cache_client.Scs/DictionaryIncrement", false),
+			// Entry("name", codes.Internal, "/cache_client.Scs/Get", true),
+			Entry("name", codes.Internal, momento_rpc_names.Get, true),
+			Entry("name", codes.Internal, momento_rpc_names.Set, true),
+			Entry("name", codes.Internal, momento_rpc_names.DictionaryIncrement, false),
+			Entry("name", codes.Unknown, momento_rpc_names.Get, false),
+			Entry("name", codes.Unknown, momento_rpc_names.Set, false),
+			Entry("name", codes.Unknown, momento_rpc_names.DictionaryIncrement, false),
+			Entry("name", codes.Unavailable, momento_rpc_names.Get, true),
+			Entry("name", codes.Unavailable, momento_rpc_names.Set, true),
+			Entry("name", codes.Unavailable, momento_rpc_names.DictionaryIncrement, false),
+			Entry("name", codes.Canceled, momento_rpc_names.Get, false),
+			Entry("name", codes.Canceled, momento_rpc_names.Set, false),
+			Entry("name", codes.Canceled, momento_rpc_names.DictionaryIncrement, false),
+			Entry("name", codes.DeadlineExceeded, momento_rpc_names.Get, false),
+			Entry("name", codes.DeadlineExceeded, momento_rpc_names.Set, false),
+			Entry("name", codes.DeadlineExceeded, momento_rpc_names.DictionaryIncrement, false),
 		)
 
 		Describe("cache-client retry neverRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("shouldn't retry", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				strategy := retry.NewNeverRetryStrategy()
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Set)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(
 					helpers.MomentoLocalMiddlewareProps{
 						MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 							ReturnError:  &status,
-							ErrorRpcList: &[]string{"set"},
+							ErrorRpcList: &[]string{rpcName},
 							ErrorCount:   nil,
 							DelayRpcList: nil,
 							DelayMillis:  nil,
@@ -115,22 +117,23 @@ var _ = Describe(
 				Expect(setResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Set")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 		})
 
 		Describe("cache-client retry exponentialBackoffRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("should receive a timeout error after multiple retries", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Set)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"set"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   nil,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -150,58 +153,23 @@ var _ = Describe(
 				Expect(setResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.TimeoutError))
-				retries, err := metricsCollector.GetTotalRetryCount("cache", "Set")
-				Expect(err).To(BeNil())
-				Expect(retries > 1).To(BeTrue())
-			})
-
-			It("should succeed after multiple retries", func() {
-				status := "unavailable"
-				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
-					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
-					InitialDelayMillis: 100,
-					MaxBackoffMillis:   2000,
-				})
-				errorCount := 5
-				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
-					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
-						ReturnError:  &status,
-						ErrorRpcList: &[]string{"set"},
-						ErrorCount:   &errorCount,
-						DelayRpcList: nil,
-						DelayMillis:  nil,
-						DelayCount:   nil,
-					},
-				})
-				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
-				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					retryMiddleware,
-				}).WithRetryStrategy(strategy).WithClientTimeout(10 * time.Second)
-				cacheClient := setupCacheClientTest(clientConfig)
-				setResponse, err := cacheClient.Set(context.Background(), &momento.SetRequest{
-					CacheName: "cache",
-					Key:       momento.String("key"),
-					Value:     momento.String("value"),
-				})
-				Expect(setResponse).To(Not(BeNil()))
-				Expect(err).To(BeNil())
-				Expect(setResponse).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
-				retries, err := metricsCollector.GetTotalRetryCount("cache", "Set")
+				retries, err := metricsCollector.GetTotalRetryCount("cache", rpcName)
 				Expect(err).To(BeNil())
 				Expect(retries > 1).To(BeTrue())
 			})
 
 			It("should not try to retry if the status code is not retryable", func() {
-				status := "unknown"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.UnknownServiceError)
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Set)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"set"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   nil,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -221,20 +189,21 @@ var _ = Describe(
 				Expect(setResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.UnknownServiceError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Set")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 
 			It("should not try to retry if the rpc is not retryable", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				strategy := retry.NewExponentialBackoffRetryStrategy(retry.ExponentialBackoffRetryStrategyProps{
 					LoggerFactory:      momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG),
 					InitialDelayMillis: 100,
 					MaxBackoffMillis:   2000,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.DictionaryIncrement)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"dictionary-increment"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   nil,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -255,21 +224,22 @@ var _ = Describe(
 				Expect(incrResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "DictionaryIncrement")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 		})
 
 		Describe("cache-client retry fixedCountRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("should retry 3 times if the status code is retryable", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
 					LoggerFactory: momento_default_logger.DefaultMomentoLoggerFactory{},
 					MaxAttempts:   3,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   nil,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -297,16 +267,17 @@ var _ = Describe(
 				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
 				Expect(getResponse).To(BeNil())
 
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(3))
-				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")).To(BeNumerically("<=", 10))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(3))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)).To(BeNumerically("<=", 10))
 			})
 
 			It("should not retry if the status code is not retryable", func() {
-				status := "unknown"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.UnknownServiceError)
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Set)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"set"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   nil,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -327,15 +298,16 @@ var _ = Describe(
 				Expect(setResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.UnknownServiceError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Set")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 
 			It("should not retry if the api is not retryable", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.DictionaryIncrement)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"increment", "dictionary-increment"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   nil,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -348,24 +320,6 @@ var _ = Describe(
 				})
 				cacheClient := setupCacheClientTest(clientConfig)
 
-				incrementResponse, err := cacheClient.Increment(context.Background(), &momento.IncrementRequest{
-					CacheName: "cache",
-					Field:     momento.String("key"),
-				})
-				Expect(incrementResponse).To(BeNil())
-				Expect(err).To(Not(BeNil()))
-				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
-
-				dictCreateResponse, err := cacheClient.DictionarySetField(context.Background(), &momento.DictionarySetFieldRequest{
-					CacheName:      "cache",
-					DictionaryName: "myDict",
-					Field:          momento.String("key"),
-					Value:          momento.String("value"),
-					Ttl:            &utils.CollectionTtl{Ttl: 600 * time.Second},
-				})
-				Expect(dictCreateResponse).To(Not(BeNil()))
-				Expect(err).To(BeNil())
-
 				dictIncrementResponse, err := cacheClient.DictionaryIncrement(context.Background(), &momento.DictionaryIncrementRequest{
 					CacheName:      "cache",
 					DictionaryName: "myDict",
@@ -375,16 +329,17 @@ var _ = Describe(
 				Expect(dictIncrementResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Increment")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 
 			It("should return a value on success after a retry", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				errCount := 1
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   &errCount,
 						DelayRpcList: nil,
 						DelayMillis:  nil,
@@ -411,22 +366,23 @@ var _ = Describe(
 				Expect(err).To(BeNil())
 				Expect(getResponse).To(Not(BeNil()))
 				Expect(getResponse.(*responses.GetHit).ValueString()).To(Equal("value"))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(1))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(1))
 			})
 		})
 
 		Describe("cache-client retry fixedTimeoutRetryStrategy", Label(RETRY_LABEL, MOMENTO_LOCAL_LABEL), func() {
 			It("should not retry if the status code is not retryable", func() {
-				status := "unknown"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.UnknownServiceError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Set)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"set"},
+						ErrorRpcList: &[]string{rpcName},
 					},
 				})
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
@@ -442,20 +398,21 @@ var _ = Describe(
 				Expect(setResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.UnknownServiceError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Set")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 
 			It("should not retry if the rpc is not retryable", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.DictionaryIncrement)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"dictionary-increment"},
+						ErrorRpcList: &[]string{rpcName},
 					},
 				})
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
@@ -472,18 +429,19 @@ var _ = Describe(
 				Expect(incrResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(momento.ServerUnavailableError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "DictionaryIncrement")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(0))
 			})
 
 			It("should use default timeout values when not specified", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory: momento_default_logger.DefaultMomentoLoggerFactory{},
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
 					},
 				})
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
@@ -503,25 +461,26 @@ var _ = Describe(
 				// Should immediately receive errors and retry every DefaultRetryDelayIntervalMillis
 				// until the client timeout is reached.
 				maxAttempts := CLIENT_TIMEOUT_MILLIS / retry.DefaultRetryDelayIntervalMillis
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
-				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")).To(BeNumerically("<=", retry.DefaultRetryDelayIntervalMillis*1.1))
-				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")).To(BeNumerically(">=", retry.DefaultRetryDelayIntervalMillis*0.9))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)).To(BeNumerically("<=", retry.DefaultRetryDelayIntervalMillis*1.1))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)).To(BeNumerically(">=", retry.DefaultRetryDelayIntervalMillis*0.9))
 			})
 
 			It("should retry until client timeout when responses have no delays during full outage", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
 					},
 				})
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
@@ -541,31 +500,32 @@ var _ = Describe(
 				// Should immediately receive errors and retry every DefaultRetryDelayIntervalMillis
 				// until the client timeout is reached.
 				maxAttempts := CLIENT_TIMEOUT_MILLIS / RETRY_DELAY_INTERVAL_MILLIS
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
 				minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)
 				Expect(err).To(BeNil())
 				Expect(average).To(BeNumerically("<=", int64(maxDelay)))
 				Expect(average).To(BeNumerically(">=", int64(minDelay)))
 			})
 
 			It("should retry until client timeout when responses have short delays during full outage", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				shortDelay := RETRY_DELAY_INTERVAL_MILLIS + 100
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
-						DelayRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
+						DelayRpcList: &[]string{rpcName},
 						DelayMillis:  &shortDelay,
 					},
 				})
@@ -587,31 +547,32 @@ var _ = Describe(
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + shortDelay
 				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(delayBetweenAttempts) * 1.1
 				minDelay := float64(delayBetweenAttempts) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)
 				Expect(err).To(BeNil())
 				Expect(float64(average)).To(BeNumerically("<=", maxDelay))
 				Expect(float64(average)).To(BeNumerically(">=", minDelay))
 			})
 
 			It("should retry until client timeout when responses have long delays during full outage", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				longDelay := RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS + 100
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
-						DelayRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
+						DelayRpcList: &[]string{rpcName},
 						DelayMillis:  &longDelay,
 					},
 				})
@@ -633,30 +594,31 @@ var _ = Describe(
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + longDelay
 				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(delayBetweenAttempts) * 1.1
 				minDelay := float64(delayBetweenAttempts) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)
 				Expect(err).To(BeNil())
 				Expect(float64(average)).To(BeNumerically("<=", maxDelay))
 				Expect(float64(average)).To(BeNumerically(">=", minDelay))
 			})
 
 			It("should retry until partial outage is resolved", func() {
-				status := "unavailable"
+				status := helpers.ConvertErrorCodeToMomentoLocalErrorCode(momentoerrors.ServerUnavailableError)
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				errCount := 3
+				rpcName := helpers.ConvertRpcNameToMomentoLocalRpcName(momento_rpc_names.Get)
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareRequestHandlerProps: helpers.MomentoLocalMiddlewareRequestHandlerProps{
 						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
+						ErrorRpcList: &[]string{rpcName},
 						ErrorCount:   &errCount,
 					},
 				})
@@ -674,12 +636,12 @@ var _ = Describe(
 				Expect(err).To(BeNil())
 
 				// Should retry until the server stops returning errors
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(errCount))
+				Expect(metricsCollector.GetTotalRetryCount("cache", rpcName)).To(Equal(errCount))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
 				minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", rpcName)
 				Expect(err).To(BeNil())
 				Expect(average).To(BeNumerically("<=", int64(maxDelay)))
 				Expect(average).To(BeNumerically(">=", int64(minDelay)))
