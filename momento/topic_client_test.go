@@ -80,8 +80,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 						}
 					default:
 						if err != nil {
-							fmt.Println("Error receiving item:", err)
-							return
+							panic(err)
 						}
 					}
 					receivedValues = append(receivedValues, value)
@@ -146,8 +145,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 						}
 					default:
 						if err != nil {
-							fmt.Println("Error receiving item:", err)
-							return
+							panic(err)
 						}
 					}
 					receivedItems = append(receivedItems, item)

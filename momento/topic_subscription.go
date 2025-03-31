@@ -2,7 +2,6 @@ package momento
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -125,7 +124,6 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		}
 
 		rawMsg, err := s.subscribeClient.Recv()
-
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -157,17 +155,10 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
 						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
 					)
+
 					err := s.attemptReconnect(ctx, err)
 					if err != nil {
-						var t momentoerrors.MomentoSvcErr
-						switch {
-						case errors.As(err, &t):
-							if t.Code() == momentoerrors.CanceledError {
-								s.log.Debug("Received CanceledError, returning nil")
-								return nil, nil
-							}
-						}
-						return nil, err
+						return nil, momentoerrors.ConvertSvcErr(err)
 					}
 				}
 			}
