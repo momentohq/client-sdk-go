@@ -26,6 +26,11 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 				return nil
 			}
 
+			if s == nil {
+				// No retry strategy is configured so return the error
+				return lastErr
+			}
+
 			// Check retry eligibility based off last error received
 			retryBackoffTime := s.DetermineWhenToRetry(retry.StrategyProps{
 				GrpcStatusCode: status.Code(lastErr),

@@ -2,10 +2,11 @@ package momento_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
-
 	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -70,8 +71,17 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 					return
 				default:
 					value, err := sub.Item(sharedContext.Ctx)
-					if err != nil {
-						panic(err)
+					var momentoSvcErr momentoerrors.MomentoSvcErr
+					switch {
+					case errors.As(err, &momentoSvcErr):
+						if momentoSvcErr.Code() == momentoerrors.CanceledError {
+							return
+						}
+					default:
+						if err != nil {
+							fmt.Println("Error receiving item:", err)
+							return
+						}
 					}
 					receivedValues = append(receivedValues, value)
 				}
@@ -127,8 +137,17 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 					return
 				default:
 					item, err := sub.Event(sharedContext.Ctx)
-					if err != nil {
-						panic(err)
+					var momentoSvcErr momentoerrors.MomentoSvcErr
+					switch {
+					case errors.As(err, &momentoSvcErr):
+						if momentoSvcErr.Code() == momentoerrors.CanceledError {
+							return
+						}
+					default:
+						if err != nil {
+							fmt.Println("Error receiving item:", err)
+							return
+						}
 					}
 					receivedItems = append(receivedItems, item)
 				}

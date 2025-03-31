@@ -202,6 +202,9 @@ func (shared *SharedContext) CreateDefaultStores() {
 }
 
 func (shared SharedContext) Close() {
+	// close topic client before deleting the cache in which it is subscribed
+	shared.TopicClient.Close()
+
 	_, err := shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.CacheName})
 	if err != nil {
 		panic(err)
@@ -210,8 +213,9 @@ func (shared SharedContext) Close() {
 	if err != nil {
 		panic(err)
 	}
+
 	if shared.CleanupStore {
-		_, err = shared.StorageClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
+		_, err := shared.StorageClient.DeleteStore(shared.Ctx, &momento.DeleteStoreRequest{StoreName: shared.StoreName})
 		if err != nil {
 			if err.(momento.MomentoError).Code() != momento.StoreNotFoundError {
 				panic(err)
@@ -220,7 +224,6 @@ func (shared SharedContext) Close() {
 	}
 
 	shared.Client.Close()
-	shared.TopicClient.Close()
 	shared.AuthClient.Close()
 	shared.LeaderboardClient.Close()
 	shared.StorageClient.Close()

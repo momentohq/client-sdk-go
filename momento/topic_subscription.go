@@ -2,7 +2,9 @@ package momento
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
@@ -156,6 +158,14 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					)
 					err := s.attemptReconnect(ctx, err)
 					if err != nil {
+						var t momentoerrors.MomentoSvcErr
+						switch {
+						case errors.As(err, &t):
+							if t.Code() == momentoerrors.CanceledError {
+								s.log.Debug("Received CanceledError, returning nil")
+								return nil, nil
+							}
+						}
 						return nil, err
 					}
 				}
@@ -213,6 +223,10 @@ func (s *topicSubscription) decrementSubscriptionCount() {
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
+	if s.retryStrategy == nil {
+		s.log.Info("No retry strategy provided, returning error")
+		return err
+	}
 	attempt := 1
 	for {
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
