@@ -623,36 +623,6 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 		})
 	})
 
-	Describe("Topic publish deadline", func() {
-
-		BeforeEach(func() {
-			testCtx = context.Background()
-			cacheName = uuid.NewString()
-			topicName = uuid.NewString()
-			setupCacheClient(config.LaptopLatest())
-		})
-
-		AfterEach(func() {
-			cleanup()
-		})
-
-		It("should error on deadline exceeded", func() {
-			delayMillis := 10_000
-			clientConfig, _ := getClientConfig(&clientConfigProps{
-				delayRpcList: &[]string{"topic-publish"},
-				delayMillis:  &delayMillis,
-			})
-			topicClient := setupTopicClient(clientConfig)
-			publishResp, err := topicClient.Publish(testCtx, &TopicPublishRequest{
-				CacheName: cacheName,
-				TopicName: topicName,
-				Value:     String("hello"),
-			})
-			Expect(publishResp).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(TimeoutError))
-		})
-	})
-
 	Describe("Network Outage", func() {
 		BeforeEach(func() {
 			testCtx = context.Background()

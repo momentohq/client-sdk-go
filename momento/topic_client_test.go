@@ -106,6 +106,23 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		Expect(receivedValues).To(Equal(publishedValues))
 	})
 
+	It("should error on deadline exceeded", func() {
+		newGrpcConfig := sharedContext.TopicConfiguration.GetTransportStrategy().GetGrpcConfig()
+		newCfg := sharedContext.TopicConfiguration.WithTransportStrategy(
+			sharedContext.TopicConfiguration.GetTransportStrategy().WithGrpcConfig(newGrpcConfig.WithClientTimeout(1)))
+		newTopicClient, err := NewTopicClient(newCfg, sharedContext.CredentialProvider)
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = newTopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+			CacheName: sharedContext.CacheName,
+			TopicName: "topic",
+			Value:     String("hi"),
+		})
+		Expect(err).To(HaveMomentoErrorCode(TimeoutError))
+	})
+
 	It("Publishes and receives detailed subscription items", func() {
 		publishedValues := []TopicValue{
 			String("aaa"),
