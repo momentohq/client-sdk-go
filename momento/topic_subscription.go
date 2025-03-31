@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	"time"
+
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/config/retry"
