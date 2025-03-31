@@ -21,10 +21,6 @@ type SetWithHashRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
-	grpcRequest  *pb.XSetIfHashRequest
-	grpcResponse *pb.XSetIfHashResponse
-	response     responses.SetWithHashResponse
 }
 
 func (r *SetWithHashRequest) cacheName() string { return r.CacheName }
@@ -39,58 +35,57 @@ func (r *SetWithHashRequest) requestName() string {
 	return "SetWithHash"
 }
 
-func (r *SetWithHashRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetWithHashRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
-	r.grpcRequest = &pb.XSetIfHashRequest{
+	grpcRequest := &pb.XSetIfHashRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       &pb.XSetIfHashRequest_Unconditional{},
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetWithHashRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetWithHashRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIfHash(
+		requestMetadata,
+		grpcRequest.(*pb.XSetIfHashRequest),
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetWithHashRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetWithHashResponse
-
-	switch grpcResp.Result.(type) {
-	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetWithHashStored{}
-	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetWithHashNotStored{}
+func (r *SetWithHashRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	grpcResponse := resp.(*pb.XSetIfHashResponse)
+	switch response := grpcResponse.Result.(type) {
+	case *pb.XSetIfHashResponse_Stored:
+		return responses.NewSetWithHashStored(response.Stored.NewHash), nil
+	case *pb.XSetIfHashResponse_NotStored:
+		return &responses.SetWithHashNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, grpcResponse)
 	}
-
-	r.response = resp
-	return nil
 }

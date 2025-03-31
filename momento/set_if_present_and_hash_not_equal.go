@@ -23,10 +23,6 @@ type SetIfPresentAndHashNotEqualRequest struct {
 	// Optional Time to live in cache in seconds.
 	// If not provided, then default TTL for the cache client instance is used.
 	Ttl time.Duration
-
-	grpcRequest  *pb.XSetIfHashRequest
-	grpcResponse *pb.XSetIfHashResponse
-	response     responses.SetIfPresentAndHashNotEqualResponse
 }
 
 func (r *SetIfPresentAndHashNotEqualRequest) cacheName() string { return r.CacheName }
@@ -43,68 +39,67 @@ func (r *SetIfPresentAndHashNotEqualRequest) requestName() string {
 	return "SetIfPresentAndHashNotEqual"
 }
 
-func (r *SetIfPresentAndHashNotEqualRequest) initGrpcRequest(client scsDataClient) error {
+func (r *SetIfPresentAndHashNotEqualRequest) initGrpcRequest(client scsDataClient) (interface{}, error) {
 	var err error
 
 	var key []byte
 	if key, err = prepareKey(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var value []byte
 	if value, err = prepareValue(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var hashNotEqual []byte
 	if hashNotEqual, err = prepareNotEqual(r); err != nil {
-		return err
+		return nil, err
 	}
 
 	var ttl uint64
 	if ttl, err = prepareTtl(r, client.defaultTtl); err != nil {
-		return err
+		return nil, err
 	}
 
-	var condition = &pb.XSetIfHashRequest_PresentAndHashNotEqual{
-		PresentAndEqual: &pb.PresentAndHashNotEqual{
+	var condition = &pb.XSetIfHashRequest_PresentAndNotHashEqual{
+		PresentAndNotHashEqual: &pb.PresentAndNotHashEqual{
 			HashToCheck: hashNotEqual,
 		},
 	}
-	r.grpcRequest = &pb.XSetIfHashRequest{
+	grpcRequest := &pb.XSetIfHashRequest{
 		CacheKey:        key,
 		CacheBody:       value,
 		TtlMilliseconds: ttl,
 		Condition:       condition,
 	}
 
-	return nil
+	return grpcRequest, nil
 }
 
-func (r *SetIfPresentAndHashNotEqualRequest) makeGrpcRequest(requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
+func (r *SetIfPresentAndHashNotEqualRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error) {
 	var header, trailer metadata.MD
-	resp, err := client.grpcClient.SetIf(requestMetadata, r.grpcRequest, grpc.Header(&header), grpc.Trailer(&trailer))
+	resp, err := client.grpcClient.SetIfHash(
+		requestMetadata,
+		grpcRequest.(*pb.XSetIfHashRequest),
+		grpc.Header(&header),
+		grpc.Trailer(&trailer),
+	)
 	responseMetadata := []metadata.MD{header, trailer}
 	if err != nil {
 		return nil, responseMetadata, err
 	}
-	r.grpcResponse = resp
 	return resp, nil, nil
 }
 
-func (r *SetIfPresentAndHashNotEqualRequest) interpretGrpcResponse() error {
-	grpcResp := r.grpcResponse
-	var resp responses.SetIfPresentAndHashNotEqualResponse
-
-	switch grpcResp.Result.(type) {
-	case *pb.XSetIfResponse_Stored:
-		resp = &responses.SetIfPresentAndHashNotEqualStored{}
-	case *pb.XSetIfResponse_NotStored:
-		resp = &responses.SetIfPresentAndHashNotEqualNotStored{}
+func (r *SetIfPresentAndHashNotEqualRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
+	grpcResponse := resp.(*pb.XSetIfHashResponse)
+	switch response := grpcResponse.Result.(type) {
+	case *pb.XSetIfHashResponse_Stored:
+		return responses.NewSetIfPresentAndHashNotEqualStored(response.Stored.NewHash), nil
+	case *pb.XSetIfHashResponse_NotStored:
+		return &responses.SetIfPresentAndHashNotEqualNotStored{}, nil
 	default:
-		return errUnexpectedGrpcResponse(r, r.grpcResponse)
+		return nil, errUnexpectedGrpcResponse(r, grpcResponse)
 	}
-
-	r.response = resp
-	return nil
 }
