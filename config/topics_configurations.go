@@ -2,6 +2,7 @@
 package config
 
 import (
+	"github.com/momentohq/client-sdk-go/config/retry"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -21,6 +22,10 @@ func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsCo
 			GrpcConfiguration: NewTopicsStaticGrpcConfiguration(&TopicsGrpcConfigurationProps{
 				client_timeout: 5 * time.Second,
 			}),
+		}),
+		RetryStrategy: retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
+			LoggerFactory: loggerFactory,
+			MaxAttempts:   3,
 		}),
 	})
 }
