@@ -235,7 +235,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		s.onTopicEvent("Subscribe", middleware.RECONNECT)
 
 		if *retryBackoffTime > 0 {
-			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(retryBackoffTime))
+			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(*retryBackoffTime))
 			time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
 		}
 

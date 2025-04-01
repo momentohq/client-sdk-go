@@ -2,13 +2,14 @@ package retry
 
 import (
 	"fmt"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
-type alwaysRetryStrategy struct{
+type alwaysRetryStrategy struct {
 	eligibilityStrategy EligibilityStrategy
-	log logger.MomentoLogger
-	reconnectMs *int
+	log                 logger.MomentoLogger
+	reconnectMs         *int
 }
 
 type AlwaysRetryStrategy interface {
@@ -28,7 +29,7 @@ func (r *alwaysRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	fmt.Printf("always retry determining when for props: %v", props)
 	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
 		r.log.Debug(
-		"Request is not retryable: [method: %s, status: %s]", props.GrpcMethod, props.GrpcStatusCode.String(),
+			"Request is not retryable: [method: %s, status: %s]", props.GrpcMethod, props.GrpcStatusCode.String(),
 		)
 		//return nil
 	}

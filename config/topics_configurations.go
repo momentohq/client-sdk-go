@@ -26,8 +26,8 @@ func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsCo
 			}),
 		}),
 		RetryStrategy: retry.NewAlwaysRetryStrategy(retry.AlwaysRetryStrategyProps{
-			LoggerFactory:       loggerFactory,
-			ReconnectMs:         &reconnectMs,
+			LoggerFactory: loggerFactory,
+			ReconnectMs:   &reconnectMs,
 		}),
 	})
 }

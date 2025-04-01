@@ -2,13 +2,12 @@ package momento_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	"github.com/momentohq/client-sdk-go/config/retry"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -72,16 +71,8 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 					return
 				default:
 					value, err := sub.Item(sharedContext.Ctx)
-					var momentoSvcErr momentoerrors.MomentoSvcErr
-					switch {
-					case errors.As(err, &momentoSvcErr):
-						if momentoSvcErr.Code() == momentoerrors.CanceledError {
-							return
-						}
-					default:
-						if err != nil {
-							panic(err)
-						}
+					if err != nil {
+						panic(err)
 					}
 					receivedValues = append(receivedValues, value)
 				}
@@ -124,6 +115,16 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 	})
 
 	It("Publishes and receives detailed subscription items", func() {
+		reconnectMs := 500
+		newCfg := sharedContext.TopicConfiguration.WithRetryStrategy(
+			retry.NewAlwaysRetryStrategy(retry.AlwaysRetryStrategyProps{
+				LoggerFactory: sharedContext.TopicConfiguration.GetLoggerFactory(),
+				ReconnectMs:   &reconnectMs,
+			}),
+		)
+		newTopicClient, err := NewTopicClient(newCfg, sharedContext.CredentialProvider)
+		sharedContext.TopicClient = newTopicClient
+
 		publishedValues := []TopicValue{
 			String("aaa"),
 			Bytes([]byte{1, 2, 3}),
@@ -154,16 +155,8 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 					return
 				default:
 					item, err := sub.Event(sharedContext.Ctx)
-					var momentoSvcErr momentoerrors.MomentoSvcErr
-					switch {
-					case errors.As(err, &momentoSvcErr):
-						if momentoSvcErr.Code() == momentoerrors.CanceledError {
-							return
-						}
-					default:
-						if err != nil {
-							panic(err)
-						}
+					if err != nil {
+						panic(err)
 					}
 					receivedItems = append(receivedItems, item)
 				}
