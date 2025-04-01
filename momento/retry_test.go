@@ -561,7 +561,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 		})
 
 		It("should reconnect on recoverable error", func() {
-			msgLimit := 8
+			msgLimit := 9
 			status := helpers.MomentoErrorCodeToMomentoLocalMetadataValue(momentoerrors.ServerUnavailableError)
 			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{
 				status:                  &status,
