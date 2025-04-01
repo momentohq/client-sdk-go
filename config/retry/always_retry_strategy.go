@@ -14,7 +14,6 @@ type alwaysRetryStrategy struct {
 
 type AlwaysRetryStrategy interface {
 	Strategy
-	// TODO: implement these
 	WithEligibilityStrategy(s EligibilityStrategy) Strategy
 	WithReconnectMs(ms int) Strategy
 }
@@ -25,15 +24,29 @@ type AlwaysRetryStrategyProps struct {
 	ReconnectMs         *int
 }
 
-func (r *alwaysRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
-	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
-		r.log.Debug(
-			"Request is not retryable: [method: %s, status: %s]", props.GrpcMethod, props.GrpcStatusCode.String(),
-		)
-		//return nil
+func (r *alwaysRetryStrategy) WithEligibilityStrategy(s EligibilityStrategy) Strategy {
+	return &alwaysRetryStrategy{
+		log:                 r.log,
+		reconnectMs:         r.reconnectMs,
+		eligibilityStrategy: s,
 	}
-	r.log.Debug("Request is retryable: [method: %s, status: %s]", props.GrpcMethod, props.GrpcStatusCode.String())
-	r.log.Debug("returning reconnectMs: %d", *r.reconnectMs)
+}
+
+func (r *alwaysRetryStrategy) WithReconnectMs(ms int) Strategy {
+	return &alwaysRetryStrategy{
+		log:                 r.log,
+		reconnectMs:         &ms,
+		eligibilityStrategy: r.eligibilityStrategy,
+	}
+}
+
+func (r *alwaysRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
+	r.log.Debug(
+		"Always retry strategy returning %d ms for [method: %s, status: %s]",
+		*r.reconnectMs,
+		props.GrpcMethod,
+		props.GrpcStatusCode.String(),
+	)
 	return r.reconnectMs
 }
 
