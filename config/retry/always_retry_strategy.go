@@ -26,7 +26,6 @@ type AlwaysRetryStrategyProps struct {
 }
 
 func (r *alwaysRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
-	fmt.Printf("always retry determining when for props: %v", props)
 	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
 		r.log.Debug(
 			"Request is not retryable: [method: %s, status: %s]", props.GrpcMethod, props.GrpcStatusCode.String(),
