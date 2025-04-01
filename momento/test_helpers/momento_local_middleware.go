@@ -112,8 +112,8 @@ func (mw *momentoLocalMiddleware) GetRequestHandler(
 // middleware.TopicMiddleware interface methods
 
 func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string]string) map[string]string {
-	// request-id is actually a session id and must be the same throughout a given test.
-	requestMetadata["request-id"] = mw.id.String()
+	// Subscribe shares most metadata with publish but adds some streaming config.
+	requestMetadata = mw.OnPublishMetadata(requestMetadata)
 
 	if mw.metadataProps.StreamErrorRpcList != nil {
 		requestMetadata["stream-error-rpcs"] = strings.Join(*mw.metadataProps.StreamErrorRpcList, " ")
@@ -125,18 +125,6 @@ func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string
 
 	if mw.metadataProps.StreamErrorMessageLimit != nil {
 		requestMetadata["stream-error-message-limit"] = fmt.Sprintf("%d", *mw.metadataProps.StreamErrorMessageLimit)
-	}
-
-	if mw.metadataProps.DelayCount != nil {
-		requestMetadata["delay-count"] = fmt.Sprintf("%d", *mw.metadataProps.DelayCount)
-	}
-
-	if mw.metadataProps.DelayMillis != nil {
-		requestMetadata["delay-ms"] = fmt.Sprintf("%d", *mw.metadataProps.DelayMillis)
-	}
-
-	if mw.metadataProps.DelayRpcList != nil {
-		requestMetadata["delay-rpcs"] = strings.Join(*mw.metadataProps.DelayRpcList, " ")
 	}
 
 	return requestMetadata
