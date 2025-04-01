@@ -7,8 +7,8 @@ import (
 )
 
 type alwaysRetryStrategy struct {
-	log                 logger.MomentoLogger
-	reconnectMs         *int
+	log         logger.MomentoLogger
+	reconnectMs *int
 }
 
 type AlwaysRetryStrategy interface {
@@ -17,14 +17,14 @@ type AlwaysRetryStrategy interface {
 }
 
 type AlwaysRetryStrategyProps struct {
-	LoggerFactory       logger.MomentoLoggerFactory
-	ReconnectMs         *int
+	LoggerFactory logger.MomentoLoggerFactory
+	ReconnectMs   *int
 }
 
 func (r *alwaysRetryStrategy) WithReconnectMs(ms int) Strategy {
 	return &alwaysRetryStrategy{
-		log:                 r.log,
-		reconnectMs:         &ms,
+		log:         r.log,
+		reconnectMs: &ms,
 	}
 }
 
@@ -62,7 +62,7 @@ func NewAlwaysRetryStrategy(props AlwaysRetryStrategyProps) Strategy {
 		log = logger.NewNoopMomentoLoggerFactory().GetLogger("always-retry-strategy")
 	}
 	return &alwaysRetryStrategy{
-		log:                 log,
-		reconnectMs:         reconnectMs,
+		log:         log,
+		reconnectMs: reconnectMs,
 	}
 }
