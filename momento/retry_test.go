@@ -703,7 +703,8 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 					if !ok {
 						testAdminPort = "9090"
 					}
-					_, err := http.Get(fmt.Sprintf("http://%s:%s/block", testAdminHost, testAdminPort))
+					testAdminUrl := fmt.Sprintf("http://%s:%s/", testAdminHost, testAdminPort)
+					_, err := http.Get(fmt.Sprintf("%s/block", testAdminUrl))
 					Expect(err).To(BeNil())
 					counter, err := topicEventCounter.GetEventCounter(cacheName, "Subscribe")
 					Expect(err).To(BeNil())
@@ -711,7 +712,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 					Expect(numItemsAtBlock >= 5).To(BeTrue())
 					time.Sleep(time.Millisecond * 2000)
 					Expect(numItemsAtBlock).To(Equal(counter.Items))
-					_, err = http.Get("http://127.0.0.1:9090/unblock")
+					_, err = http.Get(fmt.Sprintf("%s/unblock", testAdminUrl))
 					Expect(err).To(BeNil())
 				}
 			}
