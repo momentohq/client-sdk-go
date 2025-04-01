@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -130,8 +131,19 @@ func doPubSub(topicClient TopicClient, publishedValues []TopicValue) error {
 			default:
 				_, err := sub.Item(cancelContext)
 				if err != nil {
-					fmt.Printf("error receiving item: %v\n", err)
-					return
+					// canceled errors are expected, so we can ignore them
+					if errors.Is(err, context.Canceled) {
+						return
+					}
+					var svcErr momentoerrors.MomentoSvcErr
+					switch {
+					case errors.As(err, &svcErr):
+						if svcErr.Code() == momentoerrors.CanceledError {
+							return
+						}
+					default:
+						panic(err)
+					}
 				}
 			}
 		}

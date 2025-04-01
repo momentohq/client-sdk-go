@@ -123,6 +123,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 			}),
 		)
 		newTopicClient, err := NewTopicClient(newCfg, sharedContext.CredentialProvider)
+		Expect(err).To(BeNil())
 		sharedContext.TopicClient = newTopicClient
 
 		publishedValues := []TopicValue{
