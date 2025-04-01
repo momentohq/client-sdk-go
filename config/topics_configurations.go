@@ -17,6 +17,7 @@ func TopicsDefault() TopicsConfiguration {
 }
 
 func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsConfiguration {
+	reconnectMs := 500
 	return NewTopicConfiguration(&TopicsConfigurationProps{
 		LoggerFactory: loggerFactory,
 		TransportStrategy: NewTopicsStaticTransportStrategy(&TopicsTransportStrategyProps{
@@ -24,9 +25,9 @@ func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsCo
 				client_timeout: 5 * time.Second,
 			}),
 		}),
-		RetryStrategy: retry.NewFixedCountRetryStrategy(retry.FixedCountRetryStrategyProps{
-			LoggerFactory: loggerFactory,
-			MaxAttempts:   3,
+		RetryStrategy: retry.NewAlwaysRetryStrategy(retry.AlwaysRetryStrategyProps{
+			LoggerFactory:       loggerFactory,
+			ReconnectMs:         &reconnectMs,
 		}),
 	})
 }
