@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.34.0](https://github.com/momentohq/client-sdk-go/compare/v1.33.2...v1.34.0) (2025-04-02)
+
+
+### Features
+
+* add middleware and data client retry strategies and tests  ([#601](https://github.com/momentohq/client-sdk-go/issues/601)) ([5a0c06f](https://github.com/momentohq/client-sdk-go/commit/5a0c06f89df123e9fa38f96f976296a958241aaf))
+* add new get/set if hash apis ([#603](https://github.com/momentohq/client-sdk-go/issues/603)) ([77a3627](https://github.com/momentohq/client-sdk-go/commit/77a3627d4befdd4a99127d71851c0b7d34644045))
+
+
+### Bug Fixes
+
+* add topic subscribe timeout ([#596](https://github.com/momentohq/client-sdk-go/issues/596)) ([06337c3](https://github.com/momentohq/client-sdk-go/commit/06337c39bba021244ea52a19a5fe96b99994cd46))
+
+
+### Miscellaneous
+
+* fix make target in github workflow ([#609](https://github.com/momentohq/client-sdk-go/issues/609)) ([f3eee9e](https://github.com/momentohq/client-sdk-go/commit/f3eee9e86f0ca62c6d77c5fd9599e60bff16c5cb))
+* fix request names in several requester objects ([#600](https://github.com/momentohq/client-sdk-go/issues/600)) ([7aeb3d4](https://github.com/momentohq/client-sdk-go/commit/7aeb3d4770abd7ad3a1d5bca6e16c93173a5f152))
+* **protos:** update protos to v0.124.0 and regenerate code ([#608](https://github.com/momentohq/client-sdk-go/issues/608)) ([7a99843](https://github.com/momentohq/client-sdk-go/commit/7a998430c15c285deb26fea735e61f00d13e7234))
+* remove cache name field from leaderboard requests ([#607](https://github.com/momentohq/client-sdk-go/issues/607)) ([3cd39a6](https://github.com/momentohq/client-sdk-go/commit/3cd39a64c4ee13e6705a6122588b008eb0d95976))
+* update topics loadgen example ([#593](https://github.com/momentohq/client-sdk-go/issues/593)) ([b6fdb79](https://github.com/momentohq/client-sdk-go/commit/b6fdb794fdd8a58f510c7deefbaaf237e0b8f90a))
+
 ## [1.33.2](https://github.com/momentohq/client-sdk-go/compare/v1.33.1...v1.33.2) (2025-03-05)
 
 
