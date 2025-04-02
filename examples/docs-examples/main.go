@@ -31,6 +31,7 @@ var (
 	topicClient        momento.TopicClient
 	authClient         momento.AuthClient
 	err                error
+	hashValue          string
 )
 
 func RetrieveApiKeyFromYourSecretsManager() string {
@@ -528,6 +529,112 @@ func example_API_SetIfAbsentOrEqual() {
 	}
 }
 
+func example_API_GetWithHash() {
+	resp, err := client.GetWithHash(ctx, &momento.GetWithHashRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.GetWithHashHit:
+		log.Printf("Successfully got value %s with hash %s\n", r.ValueString(), r.HashString())
+	case *responses.GetWithHashMiss:
+		log.Printf("Key does not exist in cache\n")
+	}
+}
+
+func example_API_SetWithHash() {
+	resp, err := client.SetWithHash(ctx, &momento.SetWithHashRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetWithHashStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+		hashValue = r.HashString()
+	case *responses.SetWithHashNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfPresentAndHashNotEqual() {
+	resp, err := client.SetIfPresentAndHashNotEqual(ctx, &momento.SetIfPresentAndHashNotEqualRequest{
+		CacheName:    cacheName,
+		Key:          momento.String("key"),
+		Value:        momento.String("value"),
+		HashNotEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfPresentAndHashNotEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfPresentAndHashNotEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfPresentAndHashEqual() {
+	resp, err := client.SetIfPresentAndHashEqual(ctx, &momento.SetIfPresentAndHashEqualRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		HashEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfPresentAndHashEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfPresentAndHashEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfAbsentOrHashEqual() {
+	resp, err := client.SetIfAbsentOrHashEqual(ctx, &momento.SetIfAbsentOrHashEqualRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		HashEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfAbsentOrHashEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfAbsentOrHashEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfAbsentOrHashNotEqual() {
+	resp, err := client.SetIfAbsentOrHashNotEqual(ctx, &momento.SetIfAbsentOrHashNotEqualRequest{
+		CacheName:    cacheName,
+		Key:          momento.String("key"),
+		Value:        momento.String("value"),
+		HashNotEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfAbsentOrHashNotEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfAbsentOrHashNotEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
 func example_API_KeysExist() {
 	keys := []momento.Value{momento.String("key1"), momento.String("key2")}
 	resp, err := client.KeysExist(ctx, &momento.KeysExistRequest{
@@ -1014,6 +1121,13 @@ func main() {
 	example_API_SetIfNotEqual()
 	example_API_SetIfPresentAndNotEqual()
 	example_API_SetIfAbsentOrEqual()
+
+	example_API_SetWithHash()
+	example_API_GetWithHash()
+	example_API_SetIfPresentAndHashNotEqual()
+	example_API_SetIfPresentAndHashEqual()
+	example_API_SetIfAbsentOrHashNotEqual()
+	example_API_SetIfAbsentOrHashEqual()
 
 	example_API_KeysExist()
 	example_API_ItemGetType()
