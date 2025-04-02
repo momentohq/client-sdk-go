@@ -7,53 +7,57 @@ import (
 )
 
 type alwaysRetryStrategy struct {
-	log         logger.MomentoLogger
-	reconnectMs *int
+	log     logger.MomentoLogger
+	retryMs *int
 }
 
 type AlwaysRetryStrategy interface {
 	Strategy
-	WithReconnectMs(ms int) Strategy
+	WithRetryMs(ms int) Strategy
 }
 
 type AlwaysRetryStrategyProps struct {
 	LoggerFactory logger.MomentoLoggerFactory
-	ReconnectMs   *int
+	RetryMs       *int
 }
 
-func (r *alwaysRetryStrategy) WithReconnectMs(ms int) Strategy {
+func (r *alwaysRetryStrategy) WithRetryMs(ms int) Strategy {
 	return &alwaysRetryStrategy{
-		log:         r.log,
-		reconnectMs: &ms,
+		log:     r.log,
+		retryMs: &ms,
 	}
 }
 
 func (r *alwaysRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	r.log.Debug(
 		"Always retry strategy returning %d ms for [method: %s, status: %s]",
-		*r.reconnectMs,
+		*r.retryMs,
 		props.GrpcMethod,
 		props.GrpcStatusCode.String(),
 	)
-	return r.reconnectMs
+	return r.retryMs
 }
 
 func (r *alwaysRetryStrategy) String() string {
 	return fmt.Sprintf(
-		"alwaysRetryStrategy{reconnectMs: %d, log: %s}\n",
-		*r.reconnectMs,
+		"alwaysRetryStrategy{retryMs: %d, log: %s}\n",
+		*r.retryMs,
 		r.log,
 	)
 }
 
 // NewAlwaysRetryStrategy is a retry strategy that always retries any request after a fixed delay.
-// This maintains compatibility with the legacy behavior of the client, but is not the optimal
-// implementation for most use cases. It is recommended to use a more sophisticated retry strategy.
+// It is intended to maintain compatibility with the legacy behavior of Momento Topic subscriptions,
+// which are now able to specify a retry strategy for determining when to reconnect to a subscription
+// that has been interrupted. Switching to any of the other available retry strategies is recommended
+// but not required and may require additional error handling after `Item()` or `Event()` calls as
+// errors that previously resulted in a retry will now be returned to the caller.
+// Deprecated: This strategy is deprecated and will be removed in a future release.
 func NewAlwaysRetryStrategy(props AlwaysRetryStrategyProps) Strategy {
-	reconnectMsInt := 500
-	reconnectMs := &reconnectMsInt
-	if props.ReconnectMs != nil {
-		reconnectMs = props.ReconnectMs
+	retryMsInt := 500
+	retryMs := &retryMsInt
+	if props.RetryMs != nil {
+		retryMs = props.RetryMs
 	}
 	var log logger.MomentoLogger
 	if props.LoggerFactory != nil {
@@ -62,7 +66,7 @@ func NewAlwaysRetryStrategy(props AlwaysRetryStrategyProps) Strategy {
 		log = logger.NewNoopMomentoLoggerFactory().GetLogger("always-retry-strategy")
 	}
 	return &alwaysRetryStrategy{
-		log:         log,
-		reconnectMs: reconnectMs,
+		log:     log,
+		retryMs: retryMs,
 	}
 }
