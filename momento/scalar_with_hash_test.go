@@ -11,8 +11,6 @@ import (
 	. "github.com/momentohq/client-sdk-go/responses"
 )
 
-// TODO: what is the expected behavior of testing with empty or blank values?
-
 var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LABEL), func() {
 	DescribeTable("Set and get with hash",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
@@ -77,6 +75,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			}
 
 			// Make sure the value has been overwritten
+			newExpectedBytes := []byte(newValue)
+			newExpectedString := string(newValue)
 			getResp, err = client.GetWithHash(sharedContext.Ctx, &GetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
@@ -84,8 +84,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			Expect(err).To(BeNil())
 			switch result := getResp.(type) {
 			case *GetWithHashHit:
-				Expect(result.ValueByte()).To(Equal(expectedBytes))
-				Expect(result.ValueString()).To(Equal(expectedString))
+				Expect(result.ValueByte()).To(Equal(newExpectedBytes))
+				Expect(result.ValueString()).To(Equal(newExpectedString))
 				Expect(result.HashString()).To(Equal(secondHash))
 			default:
 				Fail(fmt.Sprintf("Expected GetWithHashHit, got: %T, %v", result, result))
@@ -104,7 +104,21 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 	DescribeTable("Set if present and hash not equal",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-			var firstHash, secondHash string
+			var firstHash, secondHash, notEqualHash string
+
+			// Set some other key to get a hash value we can use for the not equal test
+			setResp, err := client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
+				CacheName: cacheName,
+				Key:       NewRandomMomentoString(),
+				Value:     String("some-other-value"),
+			})
+			Expect(err).To(BeNil())
+			switch result := setResp.(type) {
+			case *SetWithHashStored:
+				notEqualHash = result.HashString()
+			default:
+				Fail(fmt.Sprintf("Expected SetWithHashStored, got: %T, %v", result, result))
+			}
 
 			// Initial set if should return not stored
 			setIfResp, err := client.SetIfPresentAndHashNotEqual(sharedContext.Ctx, &SetIfPresentAndHashNotEqualRequest{
@@ -119,7 +133,7 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			).To(BeAssignableToTypeOf(&SetIfPresentAndHashNotEqualNotStored{}))
 
 			// Add the value for the key
-			setResp, err := client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
+			setResp, err = client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -166,7 +180,7 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 				CacheName:    cacheName,
 				Key:          key,
 				Value:        newValue,
-				HashNotEqual: String("some-other-hash-value"),
+				HashNotEqual: String(notEqualHash),
 			})
 			Expect(err).To(BeNil())
 			switch result := setIfResp.(type) {
@@ -179,6 +193,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			}
 
 			// Make sure the value has been overwritten
+			newExpectedBytes := []byte(newValue)
+			newExpectedString := string(newValue)
 			getResp, err = client.GetWithHash(sharedContext.Ctx, &GetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
@@ -186,8 +202,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			Expect(err).To(BeNil())
 			switch result := getResp.(type) {
 			case *GetWithHashHit:
-				Expect(result.ValueByte()).To(Equal([]byte(newValue)))
-				Expect(result.ValueString()).To(Equal(newValue))
+				Expect(result.ValueByte()).To(Equal(newExpectedBytes))
+				Expect(result.ValueString()).To(Equal(newExpectedString))
 				Expect(result.HashString()).To(Equal(secondHash))
 			default:
 				Fail(fmt.Sprintf("Expected GetWithHashHit, got: %T, %v", result, result))
@@ -214,7 +230,21 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 	DescribeTable("Set if present and hash equal",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-			var firstHash, secondHash string
+			var firstHash, secondHash, equalHash string
+
+			// Set some other key to get a hash value we can use for the equal test
+			setResp, err := client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
+				CacheName: cacheName,
+				Key:       NewRandomMomentoString(),
+				Value:     String("some-other-value"),
+			})
+			Expect(err).To(BeNil())
+			switch result := setResp.(type) {
+			case *SetWithHashStored:
+				equalHash = result.HashString()
+			default:
+				Fail(fmt.Sprintf("Expected SetWithHashStored, got: %T, %v", result, result))
+			}
 
 			// Initial set if should return not stored
 			setIfResp, err := client.SetIfPresentAndHashEqual(sharedContext.Ctx, &SetIfPresentAndHashEqualRequest{
@@ -229,7 +259,7 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			).To(BeAssignableToTypeOf(&SetIfPresentAndHashEqualNotStored{}))
 
 			// Add the value for the key
-			setResp, err := client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
+			setResp, err = client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
@@ -264,7 +294,7 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 				CacheName: cacheName,
 				Key:       key,
 				Value:     newValue,
-				HashEqual: String("some-other-hash-value"),
+				HashEqual: String(equalHash),
 			})
 			Expect(err).To(BeNil())
 			Expect(
@@ -289,6 +319,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			}
 
 			// Make sure the value has been overwritten
+			newExpectedBytes := []byte(newValue)
+			newExpectedString := string(newValue)
 			getResp, err = client.GetWithHash(sharedContext.Ctx, &GetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
@@ -296,8 +328,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			Expect(err).To(BeNil())
 			switch result := getResp.(type) {
 			case *GetWithHashHit:
-				Expect(result.ValueByte()).To(Equal([]byte(newValue)))
-				Expect(result.ValueString()).To(Equal(newValue))
+				Expect(result.ValueByte()).To(Equal(newExpectedBytes))
+				Expect(result.ValueString()).To(Equal(newExpectedString))
 				Expect(result.HashString()).To(Equal(secondHash))
 			default:
 				Fail(fmt.Sprintf("Expected GetWithHashHit, got: %T, %v", result, result))
@@ -323,14 +355,28 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 	DescribeTable("Set if absent or hash equal",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-			var firstHash, secondHash string
+			var firstHash, secondHash, equalHash string
+
+			// Set some other key to get a hash value we can use for the equal test
+			setResp, err := client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
+				CacheName: cacheName,
+				Key:       NewRandomMomentoString(),
+				Value:     String("some-other-value"),
+			})
+			Expect(err).To(BeNil())
+			switch result := setResp.(type) {
+			case *SetWithHashStored:
+				equalHash = result.HashString()
+			default:
+				Fail(fmt.Sprintf("Expected SetWithHashStored, got: %T, %v", result, result))
+			}
 
 			// Initial set if should store the value because key was absent
 			setIfResp, err := client.SetIfAbsentOrHashEqual(sharedContext.Ctx, &SetIfAbsentOrHashEqualRequest{
 				CacheName: cacheName,
 				Key:       key,
 				Value:     value,
-				HashEqual: String("some-hash-value"),
+				HashEqual: String(equalHash),
 			})
 			Expect(err).To(BeNil())
 			switch result := setIfResp.(type) {
@@ -362,7 +408,7 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 				CacheName: cacheName,
 				Key:       key,
 				Value:     newValue,
-				HashEqual: String("some-other-hash-value"),
+				HashEqual: String(equalHash),
 			})
 			Expect(err).To(BeNil())
 			Expect(
@@ -387,6 +433,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			}
 
 			// Make sure the value has been overwritten
+			newExpectedBytes := []byte(newValue)
+			newExpectedString := string(newValue)
 			getResp, err = client.GetWithHash(sharedContext.Ctx, &GetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
@@ -394,8 +442,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			Expect(err).To(BeNil())
 			switch result := getResp.(type) {
 			case *GetWithHashHit:
-				Expect(result.ValueByte()).To(Equal([]byte(newValue)))
-				Expect(result.ValueString()).To(Equal(newValue))
+				Expect(result.ValueByte()).To(Equal(newExpectedBytes))
+				Expect(result.ValueString()).To(Equal(newExpectedString))
 				Expect(result.HashString()).To(Equal(secondHash))
 			default:
 				Fail(fmt.Sprintf("Expected GetWithHashHit, got: %T, %v", result, result))
@@ -421,14 +469,28 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 	DescribeTable("Set if absent or hash not equal",
 		func(clientType string, key Key, value Value, expectedString string, expectedBytes []byte) {
 			client, cacheName := sharedContext.GetClientPrereqsForType(clientType)
-			var firstHash, secondHash string
+			var firstHash, secondHash, notEqualHash string
+
+			// Set some other key to get a hash value we can use for the not equal test
+			setResp, err := client.SetWithHash(sharedContext.Ctx, &SetWithHashRequest{
+				CacheName: cacheName,
+				Key:       NewRandomMomentoString(),
+				Value:     String("some-other-value"),
+			})
+			Expect(err).To(BeNil())
+			switch result := setResp.(type) {
+			case *SetWithHashStored:
+				notEqualHash = result.HashString()
+			default:
+				Fail(fmt.Sprintf("Expected SetWithHashStored, got: %T, %v", result, result))
+			}
 
 			// Initial set if should store the value because key was absent
 			setIfResp, err := client.SetIfAbsentOrHashNotEqual(sharedContext.Ctx, &SetIfAbsentOrHashNotEqualRequest{
 				CacheName:    cacheName,
 				Key:          key,
 				Value:        value,
-				HashNotEqual: String("some-hash-value"),
+				HashNotEqual: String(notEqualHash),
 			})
 			Expect(err).To(BeNil())
 			switch result := setIfResp.(type) {
@@ -472,7 +534,7 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 				CacheName:    cacheName,
 				Key:          key,
 				Value:        newValue,
-				HashNotEqual: String("some-other-hash-value"),
+				HashNotEqual: String(notEqualHash),
 			})
 			Expect(err).To(BeNil())
 			switch result := setIfResp.(type) {
@@ -485,6 +547,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			}
 
 			// Make sure the value has been overwritten
+			newExpectedBytes := []byte(newValue)
+			newExpectedString := string(newValue)
 			getResp, err = client.GetWithHash(sharedContext.Ctx, &GetWithHashRequest{
 				CacheName: cacheName,
 				Key:       key,
@@ -492,8 +556,8 @@ var _ = Describe("cache-client scalar-with-hash-methods", Label(CACHE_SERVICE_LA
 			Expect(err).To(BeNil())
 			switch result := getResp.(type) {
 			case *GetWithHashHit:
-				Expect(result.ValueByte()).To(Equal([]byte(newValue)))
-				Expect(result.ValueString()).To(Equal(newValue))
+				Expect(result.ValueByte()).To(Equal(newExpectedBytes))
+				Expect(result.ValueString()).To(Equal(newExpectedString))
 				Expect(result.HashString()).To(Equal(secondHash))
 			default:
 				Fail(fmt.Sprintf("Expected GetWithHashHit, got: %T, %v", result, result))
