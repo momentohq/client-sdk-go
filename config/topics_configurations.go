@@ -25,7 +25,7 @@ func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsCo
 				client_timeout: 5 * time.Second,
 			}),
 		}),
-		RetryStrategy: retry.NewAlwaysRetryStrategy(retry.AlwaysRetryStrategyProps{
+		RetryStrategy: retry.NewLegacyTopicSubscriptionRetryStrategy(retry.LegacyTopicSubscriptionRetryStrategyProps{
 			LoggerFactory: loggerFactory,
 			RetryMs:       &reconnectMs,
 		}),
