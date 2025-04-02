@@ -82,7 +82,7 @@ install-protoc-from-client-protos: install-protos-devtools
 update-protos:
 	@echo "Updating .proto files from the latest release of the client_protos repository..."
 # Note: httpcache.proto is not needed and causes errors, so make sure it's not present.
-# Note: global_admin.proto and permissionrules.proto are for the console and not needed here, 
+# Note: global_admin.proto and permissionrules.proto are for the console and not needed here,
 #       will cause errors, so make sure they're not present.
 	@temp_dir=$$(mktemp -d) && \
 		latest_tag=$(shell $(MAKE) fetch-latest-client-protos-version) && \
@@ -138,11 +138,6 @@ test-cache-service-all: install-ginkgo
 test-leaderboard-service: install-ginkgo
 	@echo "Testing leaderboard service..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter leaderboard-service ${TEST_DIRS}
-
-
-test-storage-service: install-ginkgo
-	@echo "Testing storage service..."
-	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter storage-service ${TEST_DIRS}
 
 
 test-topics-service: install-ginkgo

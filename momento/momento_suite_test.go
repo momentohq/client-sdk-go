@@ -17,7 +17,6 @@ var sharedContext helpers.SharedContext
 var AUTH_SERVICE_LABEL = "auth-service"
 var CACHE_SERVICE_LABEL = "cache-service"
 var LEADERBOARD_SERVICE_LABEL = "leaderboard-service"
-var STORAGE_SERVICE_LABEL = "storage-service"
 var TOPICS_SERVICE_LABEL = "topics-service"
 var MOMENTO_LOCAL_LABEL = "momento-local"
 var RETRY_LABEL = "retry"
@@ -31,10 +30,6 @@ var _ = BeforeSuite(func() {
 	sharedContext = helpers.NewSharedContext(
 		helpers.SharedContextProps{IsMomentoLocal: includesMomentoLocalTests()})
 	sharedContext.CreateDefaultCaches()
-
-	if includesStorageTests() {
-		sharedContext.CreateDefaultStores()
-	}
 })
 
 var _ = AfterSuite(func() {
@@ -46,12 +41,6 @@ var _ = AfterSuite(func() {
 //
 // If we want to focus tests based on test regex pattern, we will need to
 // update this function to check the test regex pattern instead of labels.
-func includesStorageTests() bool {
-	// Case 1: No filter is set: run all tests, including storage tests
-	// Case 2: Filter is set and it matches storage tests
-	return Label("", STORAGE_SERVICE_LABEL).MatchesLabelFilter(GinkgoLabelFilter())
-}
-
 func includesMomentoLocalTests() bool {
 	labelFilter := GinkgoLabelFilter()
 	r := regexp.MustCompile(`(!?)` + MOMENTO_LOCAL_LABEL)
