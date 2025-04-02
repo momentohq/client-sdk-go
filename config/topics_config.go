@@ -33,6 +33,8 @@ type TopicsConfigurationProps struct {
 	// including the number of stream and unary grpc channels that should be used.
 	TransportStrategy TopicsTransportStrategy
 
+	// RetryStrategy is responsible for configuring the strategy for reconnecting a subscription to a
+	// topic that has been interrupted. It is not applicable to publish requests.
 	RetryStrategy retry.Strategy
 
 	// Middleware is a list of middleware to be used by the topic client.
@@ -99,7 +101,7 @@ type TopicsConfiguration interface {
 
 	WithRetryStrategy(retryStrategy retry.Strategy) TopicsConfiguration
 
-	// GetRetryStrategy Returns the current configuration options for wire interactions with the Momento service
+	// GetRetryStrategy Returns the current strategy for topic subscription reconnection
 	GetRetryStrategy() retry.Strategy
 
 	// GetMiddleware Returns the list of middleware to be used by the topic client.
