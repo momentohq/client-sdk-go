@@ -169,7 +169,7 @@ func (mw *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, meth
 		mw.metricsChan <- &timestampPayload{
 			cacheName:   md.Get("cache")[0],
 			requestName: method,
-			timestamp:   time.Now().Unix(),
+			timestamp:   time.Now().UnixMilli(),
 		}
 	} else {
 		// Because this middleware is for test use only, we can panic here.
