@@ -46,7 +46,7 @@ func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[s
 	}
 
 	if rh.metadataProps.DelayMillis != nil {
-		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *rh.metadataProps.DelayMillis)
+		requestMetadata["delay-ms"] = fmt.Sprintf("%d", *rh.metadataProps.DelayMillis)
 	}
 
 	if rh.metadataProps.DelayRpcList != nil {
