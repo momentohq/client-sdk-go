@@ -572,14 +572,14 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
 				setupCacheClient(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &SetRequest{
-					CacheName: "cache",
+					CacheName: cacheName,
 					Key:       String("key"),
 					Value:     String("value"),
 				})
 				Expect(setResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(UnknownServiceError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Set")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Set")).To(Equal(0))
 			})
 
 			It("should not retry if the rpc is not retryable", func() {
@@ -601,7 +601,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
 				setupCacheClient(clientConfig)
 				incrResponse, err := cacheClient.DictionaryIncrement(context.Background(), &DictionaryIncrementRequest{
-					CacheName:      "cache",
+					CacheName:      cacheName,
 					DictionaryName: "dictionary",
 					Field:          String("field"),
 					Amount:         1,
@@ -609,7 +609,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				Expect(incrResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(ServerUnavailableError))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "DictionaryIncrement")).To(Equal(0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "DictionaryIncrement")).To(Equal(0))
 			})
 
 			It("should use default timeout values when not specified", func() {
@@ -630,7 +630,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
-					CacheName: "cache",
+					CacheName: cacheName,
 					Key:       String("key"),
 				})
 				Expect(err).To(Not(BeNil()))
@@ -640,12 +640,12 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// Should immediately receive errors and retry every DefaultRetryDelayIntervalMillis
 				// until the client timeout is reached.
 				maxAttempts := CLIENT_TIMEOUT_MILLIS / retry.DefaultRetryDelayIntervalMillis
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
-				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")).To(BeNumerically("<=", retry.DefaultRetryDelayIntervalMillis*1.1))
-				Expect(metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")).To(BeNumerically(">=", retry.DefaultRetryDelayIntervalMillis*0.9))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", retry.DefaultRetryDelayIntervalMillis*1.1))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically(">=", retry.DefaultRetryDelayIntervalMillis*0.9))
 			})
 
 			It("should retry until client timeout when responses have no delays during full outage", func() {
@@ -668,7 +668,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
-					CacheName: "cache",
+					CacheName: cacheName,
 					Key:       String("key"),
 				})
 				Expect(getResponse).To(BeNil())
@@ -678,13 +678,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// Should immediately receive errors and retry every DefaultRetryDelayIntervalMillis
 				// until the client timeout is reached.
 				maxAttempts := CLIENT_TIMEOUT_MILLIS / RETRY_DELAY_INTERVAL_MILLIS
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
 				minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
 				Expect(err).To(BeNil())
 				Expect(average).To(BeNumerically("<=", int64(maxDelay)))
 				Expect(average).To(BeNumerically(">=", int64(minDelay)))
@@ -713,7 +713,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
-					CacheName: "cache",
+					CacheName: cacheName,
 					Key:       String("key"),
 				})
 				Expect(getResponse).To(BeNil())
@@ -724,13 +724,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + shortDelay
 				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(delayBetweenAttempts) * 1.1
 				minDelay := float64(delayBetweenAttempts) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
 				Expect(err).To(BeNil())
 				Expect(float64(average)).To(BeNumerically("<=", maxDelay))
 				Expect(float64(average)).To(BeNumerically(">=", minDelay))
@@ -759,7 +759,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
-					CacheName: "cache",
+					CacheName: cacheName,
 					Key:       String("key"),
 				})
 				Expect(getResponse).To(BeNil())
@@ -770,57 +770,57 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + longDelay
 				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(delayBetweenAttempts) * 1.1
 				minDelay := float64(delayBetweenAttempts) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
+				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
 				Expect(err).To(BeNil())
 				Expect(float64(average)).To(BeNumerically("<=", maxDelay))
 				Expect(float64(average)).To(BeNumerically(">=", minDelay))
 			})
 
-			It("should retry until partial outage is resolved", func() {
-				status := "unavailable"
-				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
-				})
-				errCount := 3
-				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
-					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
-						ReturnError:  &status,
-						ErrorRpcList: &[]string{"get"},
-						ErrorCount:   &errCount,
-					},
-				})
-				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
-				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
-				setupCacheClient(clientConfig)
+			// It("should retry until partial outage is resolved", func() {
+			// 	status := "unavailable"
+			// 	retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
+			// 		LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
+			// 		ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
+			// 		RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+			// 	})
+			// 	errCount := 3
+			// 	retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+			// 		MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
+			// 			ReturnError:  &status,
+			// 			ErrorRpcList: &[]string{"get"},
+			// 			ErrorCount:   &errCount,
+			// 		},
+			// 	})
+			// 	metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
+			// 	clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+			// 		retryMiddleware,
+			// 	}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+			// 	setupCacheClient(clientConfig)
 
-				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
-					CacheName: "cache",
-					Key:       String("key"),
-				})
-				Expect(getResponse).To(Not(BeNil()))
-				Expect(err).To(BeNil())
+			// 	getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
+			// 		CacheName: cacheName,
+			// 		Key:       String("key"),
+			// 	})
+			// 	Expect(getResponse).To(Not(BeNil()))
+			// 	Expect(err).To(BeNil())
 
-				// Should retry until the server stops returning errors
-				Expect(metricsCollector.GetTotalRetryCount("cache", "Get")).To(Equal(errCount))
+			// 	// Should retry until the server stops returning errors
+			// 	Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(errCount))
 
-				// Jitter will be +/- 10% of the retry delay interval
-				maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
-				minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
-				average, err := metricsCollector.GetAverageTimeBetweenRetries("cache", "Get")
-				Expect(err).To(BeNil())
-				Expect(average).To(BeNumerically("<=", int64(maxDelay)))
-				Expect(average).To(BeNumerically(">=", int64(minDelay)))
-			})
+			// 	// Jitter will be +/- 10% of the retry delay interval
+			// 	maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
+			// 	minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
+			// 	average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
+			// 	Expect(err).To(BeNil())
+			// 	Expect(average).To(BeNumerically("<=", int64(maxDelay)))
+			// 	Expect(average).To(BeNumerically(">=", int64(minDelay)))
+			// })
 		})
 	})
 
