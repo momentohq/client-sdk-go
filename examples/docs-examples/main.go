@@ -7,15 +7,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/storageTypes"
-	"github.com/momentohq/client-sdk-go/utils"
-
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 	auth_resp "github.com/momentohq/client-sdk-go/responses/auth"
+	"github.com/momentohq/client-sdk-go/utils"
 )
 
 var (
@@ -25,12 +23,11 @@ var (
 	cacheName          string
 	leaderboardClient  momento.PreviewLeaderboardClient
 	leaderboard        momento.Leaderboard
-	storageClient      momento.PreviewStorageClient
-	storeName          string
 	credentialProvider auth.CredentialProvider
 	topicClient        momento.TopicClient
 	authClient         momento.AuthClient
 	err                error
+	hashValue          string
 )
 
 func RetrieveApiKeyFromYourSecretsManager() string {
@@ -53,7 +50,6 @@ func example_API_CredentialProviderFromEnvVar() {
 }
 
 func example_API_InstantiateCacheClient() {
-	context := context.Background()
 	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
@@ -71,11 +67,10 @@ func example_API_InstantiateCacheClient() {
 		panic(err)
 	}
 
-	client.Ping(context)
+	client.Ping(ctx)
 }
 
 func example_API_InstantiateCacheClientWithReadConcern() {
-	context := context.Background()
 	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
@@ -93,7 +88,7 @@ func example_API_InstantiateCacheClientWithReadConcern() {
 		panic(err)
 	}
 
-	client.Ping(context)
+	client.Ping(ctx)
 }
 
 func example_API_ListCaches() {
@@ -528,6 +523,112 @@ func example_API_SetIfAbsentOrEqual() {
 	}
 }
 
+func example_API_GetWithHash() {
+	resp, err := client.GetWithHash(ctx, &momento.GetWithHashRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.GetWithHashHit:
+		log.Printf("Successfully got value %s with hash %s\n", r.ValueString(), r.HashString())
+	case *responses.GetWithHashMiss:
+		log.Printf("Key does not exist in cache\n")
+	}
+}
+
+func example_API_SetWithHash() {
+	resp, err := client.SetWithHash(ctx, &momento.SetWithHashRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetWithHashStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+		hashValue = r.HashString()
+	case *responses.SetWithHashNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfPresentAndHashNotEqual() {
+	resp, err := client.SetIfPresentAndHashNotEqual(ctx, &momento.SetIfPresentAndHashNotEqualRequest{
+		CacheName:    cacheName,
+		Key:          momento.String("key"),
+		Value:        momento.String("value"),
+		HashNotEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfPresentAndHashNotEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfPresentAndHashNotEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfPresentAndHashEqual() {
+	resp, err := client.SetIfPresentAndHashEqual(ctx, &momento.SetIfPresentAndHashEqualRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		HashEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfPresentAndHashEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfPresentAndHashEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfAbsentOrHashEqual() {
+	resp, err := client.SetIfAbsentOrHashEqual(ctx, &momento.SetIfAbsentOrHashEqualRequest{
+		CacheName: cacheName,
+		Key:       momento.String("key"),
+		Value:     momento.String("value"),
+		HashEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfAbsentOrHashEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfAbsentOrHashEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
+func example_API_SetIfAbsentOrHashNotEqual() {
+	resp, err := client.SetIfAbsentOrHashNotEqual(ctx, &momento.SetIfAbsentOrHashNotEqualRequest{
+		CacheName:    cacheName,
+		Key:          momento.String("key"),
+		Value:        momento.String("value"),
+		HashNotEqual: momento.String(hashValue),
+	})
+	if err != nil {
+		panic(err)
+	}
+	switch r := resp.(type) {
+	case *responses.SetIfAbsentOrHashNotEqualStored:
+		log.Printf("Successfully set key in cache, item has new hash %s\n", r.HashString())
+	case *responses.SetIfAbsentOrHashNotEqualNotStored:
+		log.Printf("Unable to set key in cache\n")
+	}
+}
+
 func example_API_KeysExist() {
 	keys := []momento.Value{momento.String("key1"), momento.String("key2")}
 	resp, err := client.KeysExist(ctx, &momento.KeysExistRequest{
@@ -842,133 +943,6 @@ func example_patterns_WriteThroughCaching() {
 	})
 }
 
-func example_API_Storage_InstantiateClient() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
-	if err != nil {
-		panic(err)
-	}
-
-	storageClient, err = momento.NewPreviewStorageClient(config.StorageLaptopLatest(), credentialProvider)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func example_API_Storage_CreateStore() {
-	resp, err := storageClient.CreateStore(ctx, &momento.CreateStoreRequest{
-		StoreName: storeName,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	switch resp.(type) {
-	case *responses.CreateStoreSuccess:
-		fmt.Printf("Successfully created store %s\n", storeName)
-	case *responses.CreateStoreAlreadyExists:
-		fmt.Printf("Store %s already exists\n", storeName)
-	}
-}
-
-func example_API_Storage_ListStores() {
-	resp, err := storageClient.ListStores(ctx, &momento.ListStoresRequest{})
-	if err != nil {
-		panic(err)
-	}
-
-	switch r := resp.(type) {
-	case *responses.ListStoresSuccess:
-		log.Printf("Found stores:\n")
-		for _, store := range r.Stores() {
-			log.Printf("\tStore name: %s\n", store.Name())
-		}
-	}
-}
-
-func example_API_Storage_DeleteStore() {
-	_, err := storageClient.DeleteStore(ctx, &momento.DeleteStoreRequest{
-		StoreName: storeName,
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func example_API_Storage_Delete() {
-	_, err := storageClient.Delete(ctx, &momento.StorageDeleteRequest{
-		StoreName: storeName,
-		Key:       "key",
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func example_API_Storage_Get() {
-	getResp, err := storageClient.Get(ctx, &momento.StorageGetRequest{
-		StoreName: storeName,
-		Key:       "key",
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	// If the value was not found, the response's Value will be nil.
-	if getResp.Value() == nil {
-		fmt.Println("Got nil")
-	}
-
-	// If you know the type you're expecting, you can assert it directly:
-	intVal, ok := getResp.Value().(storageTypes.Int)
-	if !ok {
-		fmt.Printf("Not an integer, received type: %T\n", getResp.Value())
-	} else {
-		fmt.Printf("Got the integer %d\n", intVal)
-	}
-
-	// Use switch if you don't know the type beforehand:
-	switch t := getResp.Value().(type) {
-	case storageTypes.String:
-		fmt.Printf("Got the string %s\n", t)
-	case storageTypes.Bytes:
-		fmt.Printf("Got the bytes %b\n", t)
-	case storageTypes.Float:
-		fmt.Printf("Got the float %f\n", t)
-	case storageTypes.Int:
-		fmt.Printf("Got the integer %d\n", t)
-	case nil:
-		fmt.Println("Got nil")
-	}
-}
-
-func example_API_Storage_Put() {
-	_, err := storageClient.Put(ctx, &momento.StoragePutRequest{
-		StoreName: storeName,
-		Key:       "key",
-		Value:     storageTypes.String("my-value"),
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	// Momento storage also supports these other data types:
-	storageClient.Put(ctx, &momento.StoragePutRequest{
-		StoreName: storeName,
-		Key:       "key",
-		Value:     storageTypes.Int(42),
-	})
-	storageClient.Put(ctx, &momento.StoragePutRequest{
-		StoreName: storeName,
-		Key:       "key",
-		Value:     storageTypes.Float(3.14),
-	})
-	storageClient.Put(ctx, &momento.StoragePutRequest{
-		StoreName: storeName,
-		Key:       "key",
-		Value:     storageTypes.Bytes{0x01, 0x02, 0x03},
-	})
-}
-
 // Clean up any lingering resources even if something panics
 func cleanup() {
 	if leaderboard != nil {
@@ -980,12 +954,6 @@ func cleanup() {
 			CacheName: cacheName,
 		})
 	}
-
-	if storageClient != nil {
-		storageClient.DeleteStore(ctx, &momento.DeleteStoreRequest{
-			StoreName: storeName,
-		})
-	}
 }
 
 func main() {
@@ -993,7 +961,6 @@ func main() {
 
 	ctx = context.Background()
 	cacheName = fmt.Sprintf("golang-docs-examples-%s", uuid.NewString())
-	storeName = fmt.Sprintf("golang-docs-examples-%s", uuid.NewString())
 	database = make(map[string]string)
 
 	example_API_CredentialProviderFromString()
@@ -1014,6 +981,13 @@ func main() {
 	example_API_SetIfNotEqual()
 	example_API_SetIfPresentAndNotEqual()
 	example_API_SetIfAbsentOrEqual()
+
+	example_API_SetWithHash()
+	example_API_GetWithHash()
+	example_API_SetIfPresentAndHashNotEqual()
+	example_API_SetIfPresentAndHashEqual()
+	example_API_SetIfAbsentOrHashNotEqual()
+	example_API_SetIfAbsentOrHashEqual()
 
 	example_API_KeysExist()
 	example_API_ItemGetType()
@@ -1049,12 +1023,4 @@ func main() {
 	example_API_GenerateDisposableToken()
 	example_API_GenerateApiKey()
 	example_API_RefreshApiKey()
-
-	example_API_Storage_InstantiateClient()
-	example_API_Storage_CreateStore()
-	example_API_Storage_ListStores()
-	example_API_Storage_Put()
-	example_API_Storage_Get()
-	example_API_Storage_Delete()
-	example_API_Storage_DeleteStore()
 }

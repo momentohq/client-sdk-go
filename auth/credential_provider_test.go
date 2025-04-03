@@ -130,8 +130,6 @@ var _ = Describe("auth credential-provider", func() {
 			Expect(credentialProvider.IsCacheEndpointSecure()).To(BeFalse())
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(defaultEndpoint))
 			Expect(credentialProvider.IsControlEndpointSecure()).To(BeFalse())
-			Expect(credentialProvider.GetStorageEndpoint()).To(Equal(defaultEndpoint))
-			Expect(credentialProvider.IsStorageEndpointSecure()).To(BeFalse())
 			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(defaultEndpoint))
 			Expect(credentialProvider.IsTokenEndpointSecure()).To(BeFalse())
 
@@ -147,8 +145,6 @@ var _ = Describe("auth credential-provider", func() {
 			Expect(credentialProvider.IsCacheEndpointSecure()).To(BeFalse())
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(nonDefaultEndpoint))
 			Expect(credentialProvider.IsControlEndpointSecure()).To(BeFalse())
-			Expect(credentialProvider.GetStorageEndpoint()).To(Equal(nonDefaultEndpoint))
-			Expect(credentialProvider.IsStorageEndpointSecure()).To(BeFalse())
 			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(nonDefaultEndpoint))
 			Expect(credentialProvider.IsTokenEndpointSecure()).To(BeFalse())
 		})
