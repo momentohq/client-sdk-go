@@ -782,45 +782,45 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				Expect(float64(average)).To(BeNumerically(">=", minDelay))
 			})
 
-			// It("should retry until partial outage is resolved", func() {
-			// 	status := "unavailable"
-			// 	retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-			// 		LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-			// 		ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-			// 		RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
-			// 	})
-			// 	errCount := 3
-			// 	retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
-			// 		MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
-			// 			ReturnError:  &status,
-			// 			ErrorRpcList: &[]string{"get"},
-			// 			ErrorCount:   &errCount,
-			// 		},
-			// 	})
-			// 	metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
-			// 	clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-			// 		retryMiddleware,
-			// 	}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
-			// 	setupCacheClient(clientConfig)
+			It("should retry until partial outage is resolved", func() {
+				status := "unavailable"
+				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
+					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
+					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+				})
+				errCount := 3
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"get"},
+						ErrorCount:   &errCount,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
+				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+					retryMiddleware,
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				setupCacheClient(clientConfig)
 
-			// 	getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
-			// 		CacheName: cacheName,
-			// 		Key:       String("key"),
-			// 	})
-			// 	Expect(getResponse).To(Not(BeNil()))
-			// 	Expect(err).To(BeNil())
+				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
+					CacheName: cacheName,
+					Key:       String("key"),
+				})
+				Expect(getResponse).To(Not(BeNil()))
+				Expect(err).To(BeNil())
 
-			// 	// Should retry until the server stops returning errors
-			// 	Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(errCount))
+				// Should retry until the server stops returning errors
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(errCount))
 
-			// 	// Jitter will be +/- 10% of the retry delay interval
-			// 	maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
-			// 	minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
-			// 	average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
-			// 	Expect(err).To(BeNil())
-			// 	Expect(average).To(BeNumerically("<=", int64(maxDelay)))
-			// 	Expect(average).To(BeNumerically(">=", int64(minDelay)))
-			// })
+				// Jitter will be +/- 10% of the retry delay interval
+				maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
+				minDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 0.9
+				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
+				Expect(err).To(BeNil())
+				Expect(average).To(BeNumerically("<=", int64(maxDelay)))
+				Expect(average).To(BeNumerically(">=", int64(minDelay)))
+			})
 		})
 	})
 
