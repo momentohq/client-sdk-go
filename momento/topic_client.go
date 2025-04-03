@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/retry"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -32,6 +35,7 @@ type defaultTopicClient struct {
 	pubSubClient       *pubSubClient
 	log                logger.MomentoLogger
 	requestTimeout     time.Duration
+	retryStrategy      retry.Strategy
 }
 
 // NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
@@ -50,6 +54,7 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 		numChannels:        numChannels,
 		log:                topicsConfiguration.GetLoggerFactory().GetLogger("topic-client"),
 		requestTimeout:     timeout,
+		retryStrategy:      topicsConfiguration.GetRetryStrategy(),
 	}
 
 	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
@@ -156,8 +161,18 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		return
 	}
 
+	var topicEventCallback func(cacheName string, requestName string, event middleware.TopicSubscriptionEventType)
+	for _, mw := range c.pubSubClient.middleware {
+		if rmw, ok := mw.(middleware.TopicEventCallbackMiddleware); ok {
+			// currently this is exclusively used for resubscribe metrics in the MomentoLocalMiddleware,
+			// so we break after we find the first one.
+			topicEventCallback = rmw.OnTopicEvent
+			break
+		}
+	}
 	subChan <- topicSubscription{
 		topicManager:       topicManager,
+		topicEventCallback: topicEventCallback,
 		subscribeClient:    subscribeClient,
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
@@ -165,6 +180,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		log:                c.log,
 		cancelContext:      cancelContext,
 		cancelFunction:     cancelFunction,
+		retryStrategy:      c.retryStrategy,
 	}
 }
 

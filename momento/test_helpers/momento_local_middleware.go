@@ -6,92 +6,51 @@ import (
 	"strings"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/config/logger"
-	"google.golang.org/grpc/metadata"
+	"github.com/google/uuid"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
+	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	"google.golang.org/grpc/metadata"
 )
-
-type timestampPayload struct {
-	cacheName   string
-	requestName string
-	timestamp   int64
-}
-
-type retryMetrics struct {
-	data map[string]map[string][]int64
-}
-
-type RetryMetricsCollector interface {
-	AddTimestamp(cacheName string, requestName string, timestamp int64)
-	GetTotalRetryCount(cacheName string, requestName string) (int, error)
-	GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error)
-	GetAllMetrics() map[string]map[string][]int64
-}
-
-func NewRetryMetricsCollector() RetryMetricsCollector {
-	return &retryMetrics{data: make(map[string]map[string][]int64)}
-}
-
-func (r *retryMetrics) AddTimestamp(cacheName string, requestName string, timestamp int64) {
-	if _, ok := r.data[cacheName]; !ok {
-		r.data[cacheName] = make(map[string][]int64)
-	}
-	r.data[cacheName][requestName] = append(r.data[cacheName][requestName], timestamp)
-}
-
-func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) (int, error) {
-	if _, ok := r.data[cacheName]; !ok {
-		return 0, fmt.Errorf("cache name '%s' is not valid", cacheName)
-	}
-	if timestamps, ok := r.data[cacheName][requestName]; ok {
-		// The first timestamp is the original request, so we subtract 1
-		return len(timestamps) - 1, nil
-	}
-	return 0, fmt.Errorf("request name '%s' is not valid", requestName)
-}
-
-// GetAverageTimeBetweenRetries returns the average time between retries in seconds.
-//
-//	Limited to second resolution, but I can obviously change that if desired.
-//	This tracks with the JS implementation.
-func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error) {
-	if _, ok := r.data[cacheName]; !ok {
-		return int64(0), fmt.Errorf("cache name '%s' is not valid", cacheName)
-	}
-	if timestamps, ok := r.data[cacheName][requestName]; ok {
-		if len(timestamps) < 2 {
-			return 0, nil
-		}
-		var sum int64
-		for i := 1; i < len(timestamps); i++ {
-			sum += timestamps[i] - timestamps[i-1]
-		}
-		return sum / int64(len(timestamps)-1), nil
-	}
-	return 0, fmt.Errorf("request name '%s' is not valid", requestName)
-}
-
-func (r *retryMetrics) GetAllMetrics() map[string]map[string][]int64 {
-	return r.data
-}
 
 type MomentoLocalMiddlewareProps struct {
 	middleware.Props
-	MomentoLocalMiddlewareRequestHandlerProps
+	// MomentoLocalMiddlewareMetadataProps holds properties from which the request handlers and topic middleware
+	// will create metadata to be sent to the server to control the behavior of the request.
+	MomentoLocalMiddlewareMetadataProps
+}
+
+type MomentoLocalMiddlewareMetadataProps struct {
+	StreamErrorRpcList      *[]string
+	StreamError             *string
+	StreamErrorMessageLimit *int
+	ReturnError             *string
+	ErrorRpcList            *[]string
+	ErrorCount              *int
+	DelayRpcList            *[]string
+	DelayMillis             *int
+	DelayCount              *int
 }
 
 type momentoLocalMiddleware struct {
 	middleware.Middleware
-	metricsCollector    RetryMetricsCollector
-	metricsChan         chan *timestampPayload
-	requestHandlerProps MomentoLocalMiddlewareRequestHandlerProps
+	id                         uuid.UUID
+	metricsCollector           RetryMetricsCollector
+	topicEventMetricsCollector TopicEventMetricsCollector
+	metricsChan                chan *timestampPayload
+	metadataProps              MomentoLocalMiddlewareMetadataProps
+	topicEventChan             chan *topicEventPayload
 }
 
+// MomentoLocalMiddleware implements both the Middleware and TopicMiddleware interfaces. As such, instantiating one
+// fires both goroutines to listen for both retry and topic event data.
 type MomentoLocalMiddleware interface {
 	middleware.Middleware
+	middleware.TopicMiddleware
 	GetMetricsCollector() *RetryMetricsCollector
+	GetTopicEventCollector() *TopicEventMetricsCollector
 }
 
 func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Middleware {
@@ -108,21 +67,129 @@ func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Mid
 	})
 	metricsCollector := NewRetryMetricsCollector()
 	metricsChan := make(chan *timestampPayload, 1000)
+	topicEventMetricsCollector := NewTopicEventMetricsCollector()
+	topicEventChan := make(chan *topicEventPayload, 1000)
 	mw := &momentoLocalMiddleware{
-		Middleware:          baseMw,
-		metricsCollector:    metricsCollector,
-		metricsChan:         metricsChan,
-		requestHandlerProps: props.MomentoLocalMiddlewareRequestHandlerProps,
+		Middleware:                 baseMw,
+		id:                         uuid.New(),
+		metricsCollector:           metricsCollector,
+		topicEventMetricsCollector: topicEventMetricsCollector,
+		metricsChan:                metricsChan,
+		metadataProps:              props.MomentoLocalMiddlewareMetadataProps,
+		topicEventChan:             topicEventChan,
 	}
+
+	// launch goroutine to listen for metrics from the unary interceptor callback
 	go mw.listenForMetrics(metricsChan)
+	// launch goroutine to listen for topic events from the topic middleware callback
+	go mw.listenForTopicEvents(topicEventChan)
 	return mw
 }
 
-func (r *momentoLocalMiddleware) GetMetricsCollector() *RetryMetricsCollector {
-	return &r.metricsCollector
+// MomentoLocalMiddleware interface methods
+
+func (mw *momentoLocalMiddleware) GetMetricsCollector() *RetryMetricsCollector {
+	return &mw.metricsCollector
 }
 
-func (r *momentoLocalMiddleware) listenForMetrics(metricsChan chan *timestampPayload) {
+func (mw *momentoLocalMiddleware) GetTopicEventCollector() *TopicEventMetricsCollector {
+	return &mw.topicEventMetricsCollector
+}
+
+// middleware.Middleware interface methods
+
+func (mw *momentoLocalMiddleware) GetRequestHandler(
+	baseHandler middleware.RequestHandler,
+) (middleware.RequestHandler, error) {
+	return NewMomentoLocalMiddlewareRequestHandler(
+		baseHandler,
+		mw.id,
+		mw.metricsChan,
+		mw.metadataProps,
+	), nil
+}
+
+// middleware.TopicMiddleware interface methods
+
+func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string]string) map[string]string {
+	// Subscribe shares most metadata with publish but adds some streaming config.
+	requestMetadata = mw.OnPublishMetadata(requestMetadata)
+
+	if mw.metadataProps.StreamErrorRpcList != nil {
+		requestMetadata["stream-error-rpcs"] = strings.Join(*mw.metadataProps.StreamErrorRpcList, " ")
+	}
+
+	if mw.metadataProps.StreamError != nil {
+		requestMetadata["stream-error"] = *mw.metadataProps.StreamError
+	}
+
+	if mw.metadataProps.StreamErrorMessageLimit != nil {
+		requestMetadata["stream-error-message-limit"] = fmt.Sprintf("%d", *mw.metadataProps.StreamErrorMessageLimit)
+	}
+
+	return requestMetadata
+}
+
+func (mw *momentoLocalMiddleware) OnPublishMetadata(requestMetadata map[string]string) map[string]string {
+	// request-id is actually a session id and must be the same throughout a given test.
+	requestMetadata["request-id"] = mw.id.String()
+
+	if mw.metadataProps.ReturnError != nil {
+		requestMetadata["return-error"] = *mw.metadataProps.ReturnError
+	}
+
+	if mw.metadataProps.ErrorRpcList != nil {
+		requestMetadata["error-rpcs"] = strings.Join(*mw.metadataProps.ErrorRpcList, " ")
+	}
+
+	if mw.metadataProps.ErrorCount != nil {
+		requestMetadata["error-count"] = fmt.Sprintf("%d", *mw.metadataProps.ErrorCount)
+	}
+
+	if mw.metadataProps.DelayCount != nil {
+		requestMetadata["delay-count"] = fmt.Sprintf("%d", *mw.metadataProps.DelayCount)
+	}
+
+	if mw.metadataProps.DelayMillis != nil {
+		requestMetadata["delay-ms"] = fmt.Sprintf("%d", *mw.metadataProps.DelayMillis)
+	}
+
+	if mw.metadataProps.DelayRpcList != nil {
+		requestMetadata["delay-rpcs"] = strings.Join(*mw.metadataProps.DelayRpcList, " ")
+	}
+
+	return requestMetadata
+}
+
+// middleware.InterceptorCallbackMiddleware interface methods
+
+func (mw *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if ok {
+		mw.metricsChan <- &timestampPayload{
+			cacheName:   md.Get("cache")[0],
+			requestName: method,
+			timestamp:   time.Now().Unix(),
+		}
+	} else {
+		// Because this middleware is for test use only, we can panic here.
+		panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
+	}
+}
+
+// middleware.TopicEventCallbackMiddleware interface methods
+
+func (mw *momentoLocalMiddleware) OnTopicEvent(cacheName string, requestName string, event middleware.TopicSubscriptionEventType) {
+	mw.topicEventChan <- &topicEventPayload{
+		cacheName:   cacheName,
+		requestName: requestName,
+		eventType:   event,
+	}
+}
+
+// listeners for the goroutines that receive metrics and topic events on their respective channels
+
+func (mw *momentoLocalMiddleware) listenForMetrics(metricsChan chan *timestampPayload) {
 	for {
 		msg := <-metricsChan
 		// this shouldn't happen under normal circumstances, but I thought it would
@@ -137,83 +204,51 @@ func (r *momentoLocalMiddleware) listenForMetrics(metricsChan chan *timestampPay
 			panic(fmt.Sprintf("Could not parse request name %s", msg.requestName))
 		}
 		shortRequestName := parts[2]
-		r.metricsCollector.AddTimestamp(msg.cacheName, shortRequestName, msg.timestamp)
+		mw.metricsCollector.AddTimestamp(msg.cacheName, shortRequestName, msg.timestamp)
 	}
 }
 
-func (r *momentoLocalMiddleware) GetRequestHandler(
-	baseHandler middleware.RequestHandler,
-) (middleware.RequestHandler, error) {
-	return NewRetryMetricsMiddlewareRequestHandler(
-		baseHandler,
-		r.metricsChan,
-		r.requestHandlerProps,
-	), nil
-}
-
-func (r *momentoLocalMiddleware) OnInterceptorRequest(ctx context.Context, method string) {
-	md, ok := metadata.FromOutgoingContext(ctx)
-	if ok {
-		r.metricsChan <- &timestampPayload{
-			cacheName:   md.Get("cache")[0],
-			requestName: method,
-			timestamp:   time.Now().Unix(),
+func (mw *momentoLocalMiddleware) listenForTopicEvents(topicEventChan chan *topicEventPayload) {
+	for {
+		msg := <-topicEventChan
+		if msg == nil {
+			return
 		}
-	} else {
-		// Because this middleware is for test use only, we can panic here.
-		panic(fmt.Sprintf("no metadata found in context: %#v", ctx))
+		mw.topicEventMetricsCollector.AddEvent(msg.cacheName, msg.requestName, msg.eventType)
 	}
 }
 
-type momentoLocalMiddlewareRequestHandler struct {
-	middleware.RequestHandler
-	metricsChan chan *timestampPayload
-	props       MomentoLocalMiddlewareRequestHandlerProps
-}
-
-type MomentoLocalMiddlewareRequestHandlerProps struct {
-	ReturnError  *string
-	ErrorRpcList *[]string
-	ErrorCount   *int
-	DelayRpcList *[]string
-	DelayMillis  *int
-	DelayCount   *int
-}
-
-func NewRetryMetricsMiddlewareRequestHandler(
-	rh middleware.RequestHandler,
-	metricsChan chan *timestampPayload,
-	props MomentoLocalMiddlewareRequestHandlerProps,
-) middleware.RequestHandler {
-	return &momentoLocalMiddlewareRequestHandler{RequestHandler: rh, metricsChan: metricsChan, props: props}
-}
-
-func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
-	requestMetadata["request-id"] = rh.GetId().String()
-
-	if rh.props.ReturnError != nil {
-		requestMetadata["return-error"] = *rh.props.ReturnError
+func MomentoErrorCodeToMomentoLocalMetadataValue(errorCode string) string {
+	switch errorCode {
+	case momentoerrors.InvalidArgumentError:
+		return "invalid-argument"
+	case momentoerrors.UnknownServiceError:
+		return "unknown"
+	case momentoerrors.CacheAlreadyExistsError, momentoerrors.StoreAlreadyExistsError:
+		return "already-exists"
+	case momentoerrors.CacheNotFoundError, momentoerrors.StoreNotFoundError:
+		return "not-found"
+	case momentoerrors.InternalServerError:
+		return "internal"
+	case momentoerrors.PermissionError:
+		return "permission-denied"
+	case momentoerrors.AuthenticationError:
+		return "unauthenticated"
+	case momentoerrors.CanceledError:
+		return "cancelled"
+	case momentoerrors.ConnectionError:
+		return "unavailable"
+	case momentoerrors.LimitExceededError:
+		return "resource-exhausted"
+	case momentoerrors.BadRequestError:
+		return "invalid-argument"
+	case momentoerrors.TimeoutError:
+		return "deadline-exceeded"
+	case momentoerrors.ServerUnavailableError:
+		return "unavailable"
+	case momentoerrors.FailedPreconditionError:
+		return "failed-precondition"
+	default:
+		return "unknown"
 	}
-
-	if rh.props.ErrorRpcList != nil {
-		requestMetadata["error-rpcs"] = strings.Join(*rh.props.ErrorRpcList, " ")
-	}
-
-	if rh.props.ErrorCount != nil {
-		requestMetadata["error-count"] = fmt.Sprintf("%d", *rh.props.ErrorCount)
-	}
-
-	if rh.props.DelayCount != nil {
-		requestMetadata["delay-count"] = fmt.Sprintf("%d", *rh.props.DelayCount)
-	}
-
-	if rh.props.DelayMillis != nil {
-		requestMetadata["delay-millis"] = fmt.Sprintf("%d", *rh.props.DelayMillis)
-	}
-
-	if rh.props.DelayRpcList != nil {
-		requestMetadata["delay-rpcs"] = strings.Join(*rh.props.DelayRpcList, " ")
-	}
-
-	return requestMetadata
 }

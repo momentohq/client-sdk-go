@@ -21,7 +21,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	authToken := request.CredentialProvider.GetAuthToken()
 
 	// Check the middleware list for an "InterceptorCallbackMiddleware" and use the OnInterceptorRequest callback method
-	// if it is found. This is currently used for testing purposes only by the RetryMetricsMiddleware, but it could be
+	// if it is found. This is currently used for testing purposes only by the MomentoLocalMiddleware, but it could be
 	// extended to inject lists of callbacks for various purposes. Because it is intended for a single specific use now,
 	// we break after finding the first one.
 	middlewareList := request.Middleware

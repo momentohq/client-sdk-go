@@ -5,6 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+
+	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/retry"
+	"google.golang.org/grpc/status"
+
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -59,6 +65,7 @@ type TopicSubscription interface {
 
 type topicSubscription struct {
 	topicManager            *grpcmanagers.TopicGrpcManager
+	topicEventCallback      func(cacheName string, requestName string, event middleware.TopicSubscriptionEventType)
 	subscribeClient         pb.Pubsub_SubscribeClient
 	momentoTopicClient      *pubSubClient
 	cacheName               string
@@ -68,6 +75,7 @@ type topicSubscription struct {
 	lastKnownSequencePage   uint64
 	cancelContext           context.Context
 	cancelFunction          context.CancelFunc
+	retryStrategy           retry.Strategy
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -89,6 +97,8 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 }
 
 func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
+	methodName := "Subscribe"
+
 	for {
 		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
 		// item, so we should check that here.
@@ -136,6 +146,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 				}
 			default:
 				{
+					s.onTopicEvent(methodName, middleware.ERROR)
 					// Disconnected, decrement and explicitly close the stream, then attempt to reconnect
 					s.log.Error("Stream disconnected due to error: %s", err.Error())
 					s.cancelFunction()
@@ -144,23 +155,28 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
 						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
 					)
-					s.attemptReconnect(ctx)
+
+					err := s.attemptReconnect(ctx, err)
+					if err != nil {
+						return nil, momentoerrors.ConvertSvcErr(err)
+					}
 				}
 			}
 
-			// retry getting the latest item
 			continue
 		}
 
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
 			s.log.Debug("received discontinuity item: %+v", typedMsg.Discontinuity)
+			s.onTopicEvent(methodName, middleware.DISCONTINUITY)
 			return NewTopicDiscontinuity(
 				typedMsg.Discontinuity.LastTopicSequence,
 				typedMsg.Discontinuity.NewTopicSequence,
 				typedMsg.Discontinuity.NewSequencePage,
 			), nil
 		case *pb.XSubscriptionItem_Item:
+			s.onTopicEvent(methodName, middleware.ITEM)
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			s.lastKnownSequencePage = typedMsg.Item.GetSequencePage()
 			publisherId := typedMsg.Item.GetPublisherId()
@@ -178,6 +194,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Trace("received heartbeat item")
+			s.onTopicEvent(methodName, middleware.HEARTBEAT)
 			return TopicHeartbeat{}, nil
 		default:
 			s.log.Warn("Unrecognized response detected.",
@@ -187,16 +204,42 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 	}
 }
 
+func (s *topicSubscription) onTopicEvent(method string, event middleware.TopicSubscriptionEventType) {
+	if s.topicEventCallback != nil {
+		s.topicEventCallback(s.cacheName, method, event)
+	}
+}
+
 func (s *topicSubscription) decrementSubscriptionCount() {
 	s.topicManager.NumActiveSubscriptions.Add(-1)
 }
 
-func (s *topicSubscription) attemptReconnect(ctx context.Context) {
-	// This will attempt to reconnect indefinetly
-	reconnectDelay := 500 * time.Millisecond
+func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
+	if s.retryStrategy == nil {
+		s.log.Info("No retry strategy provided, returning error")
+		return err
+	}
+	attempt := 1
 	for {
+		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
+			GrpcStatusCode: status.Code(err),
+			GrpcMethod:     "/cache_client.pubsub.Pubsub/Subscribe",
+			AttemptNumber:  attempt,
+		})
+
+		if retryBackoffTime == nil {
+			s.log.Warn("Retry strategy determined that we should not retry, returning error")
+			return err
+		}
+
+		s.onTopicEvent("Subscribe", middleware.RECONNECT)
+
+		if *retryBackoffTime > 0 {
+			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(*retryBackoffTime))
+			time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
+		}
+
 		s.log.Info("Attempting reconnecting to client stream")
-		time.Sleep(reconnectDelay)
 		topicManager, subscribeClient, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
@@ -205,14 +248,14 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context) {
 		})
 
 		if err != nil {
-			s.log.Warn("failed to reconnect to stream, will continue to try in %s milliseconds", fmt.Sprint(reconnectDelay))
+			s.log.Warn("Failed to reconnect to stream")
 		} else {
-			s.log.Info("successfully reconnected to subscription stream")
+			s.log.Info("Successfully reconnected to subscription stream")
 			s.topicManager = topicManager
 			s.subscribeClient = subscribeClient
 			s.cancelContext = cancelContext
 			s.cancelFunction = cancelFunction
-			return
+			return nil
 		}
 	}
 }

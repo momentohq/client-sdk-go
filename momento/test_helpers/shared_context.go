@@ -182,6 +182,9 @@ func (shared SharedContext) CreateDefaultCaches() {
 }
 
 func (shared SharedContext) Close() {
+	// close topic client before deleting the cache in which it is subscribed
+	shared.TopicClient.Close()
+
 	_, err := shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.CacheName})
 	if err != nil {
 		panic(err)
@@ -192,7 +195,6 @@ func (shared SharedContext) Close() {
 	}
 
 	shared.Client.Close()
-	shared.TopicClient.Close()
 	shared.AuthClient.Close()
 	shared.LeaderboardClient.Close()
 }
