@@ -7,6 +7,9 @@ require (
 	// they are used in the loadgen example
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/google/uuid v1.6.0
+
+	// compression is used in the compression example
+	github.com/klauspost/compress v1.17.11
 	github.com/loov/hrtime v1.0.3
 	github.com/momentohq/client-sdk-go v1.34.0
 
