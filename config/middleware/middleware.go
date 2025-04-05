@@ -123,6 +123,7 @@ type RequestHandler interface {
 	GetRequestName() string
 	GetResourceName() string
 	GetLogger() logger.MomentoLogger
+	OnInitRequest(requester interface{}) interface{}
 	OnRequest(theRequest interface{}) (interface{}, error)
 	OnMetadata(map[string]string) map[string]string
 	OnResponse(theResponse interface{}) (interface{}, error)
@@ -155,6 +156,8 @@ func (rh *requestHandler) GetLogger() logger.MomentoLogger {
 func (rh *requestHandler) GetResourceName() string {
 	return rh.resourceName
 }
+
+func (rh *requestHandler) OnInitRequest(interface{}) interface{} { return nil }
 
 // OnRequest is called before the request is made to the backend. It can be used to modify the request object or
 // return an error to halt the request. If the method is used to modify the request, the new request object returned here

@@ -6,14 +6,12 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
-	"github.com/momentohq/client-sdk-go/responses"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -36,7 +34,7 @@ func doWork(ctx context.Context, client momento.CacheClient, index int) {
 	}
 
 	log.Printf("Getting key: %s\n", key)
-	resp, err := client.Get(ctx, &momento.GetRequest{
+	_, err = client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
 		Key:       momento.String(key),
 	})
@@ -44,12 +42,12 @@ func doWork(ctx context.Context, client momento.CacheClient, index int) {
 		panic(err.Error())
 	}
 
-	switch r := resp.(type) {
-	case *responses.GetHit:
-		log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
-	case *responses.GetMiss:
-		log.Printf("Look up did not find a value key=%s", key)
-	}
+	//switch r := resp.(type) {
+	//case *responses.GetHit:
+	//	log.Printf("Lookup resulted in cache HIT. value=%s\n", r.ValueString())
+	//case *responses.GetMiss:
+	//	log.Printf("Look up did not find a value key=%s", key)
+	//}
 }
 
 func main() {

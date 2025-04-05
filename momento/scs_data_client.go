@@ -72,6 +72,33 @@ func deepCopyMap(original map[string]string) map[string]string {
 	return newMap
 }
 
+func (client scsDataClient) applyMiddlewarePreRequestHandlers(r requester) requester {
+	for _, mw := range client.middleware {
+		// An error here means the middleware is configured to skip this type of request, so we
+		// don't add it to the list of request handlers to call on response.
+		newBaseHandler, err := mw.GetBaseRequestHandler(r, r.requestName(), r.cacheName())
+		if err != nil {
+			continue
+		}
+
+		// If the middleware is allowed to handle this request type, we use the base handler
+		// to compose a more specific handler off of. An error here means something actually went wrong,
+		// so we return it.
+		newHandler, err := mw.GetRequestHandler(newBaseHandler)
+		if err != nil {
+			return nil
+		}
+
+		newR := newHandler.OnInitRequest(r)
+		if newR == nil {
+			return nil
+		}
+
+		r = newR.(requester)
+	}
+	return r
+}
+
 func (client scsDataClient) applyMiddlewareRequestHandlers(
 	r requester, req interface{}, requestMetadata map[string]string,
 ) ([]middleware.RequestHandler, interface{}, map[string]string, error) {
@@ -147,6 +174,8 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 		return nil, err
 	}
 
+
+
 	req, err := r.initGrpcRequest(client)
 	if err != nil {
 		return nil, err
@@ -158,9 +187,6 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 	var middlewareRequestHandlers []middleware.RequestHandler
 	requestMetadata := make(map[string]string)
 	middlewareRequestHandlers, req, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, req, requestMetadata)
-	if err != nil {
-		return nil, err
-	}
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
 	resp, responseMetadata, err := r.makeGrpcRequest(req, requestContext, client)
