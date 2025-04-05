@@ -20,6 +20,7 @@ func (mw *compressionMiddleware) GetRequestHandler(baseHandler middleware.Reques
 }
 
 func NewCompressionMiddleware(props middleware.Props) middleware.Middleware {
+	fmt.Println("Creating compression middleware")
 	encoder, _ := zstd.NewWriter(nil, zstd.WithEncoderLevel(zstd.SpeedDefault))
 	decoder, _ := zstd.NewReader(nil)
 	mw := middleware.NewMiddleware(props)
@@ -33,27 +34,35 @@ type compressionMiddlewareRequestHandler struct {
 }
 
 func NewCompressionMiddlewareRequestHandler(rh middleware.RequestHandler, encoder *zstd.Encoder, decoder *zstd.Decoder) middleware.RequestHandler {
+	fmt.Println("Creating compression middleware request handler")
 	return &compressionMiddlewareRequestHandler{rh, encoder, decoder}
 }
 
+func (rh *compressionMiddlewareRequestHandler) OnInitRequest(requester interface{}) interface{} {
+	fmt.Println("CompressionMiddlewareRequestHandler.OnInitRequest")
+	// Initialize the request handler
+	return nil
+}
+
 func (rh *compressionMiddlewareRequestHandler) OnRequest(req interface{}) (interface{}, error) {
+	fmt.Println("CompressionMiddlewareRequestHandler.OnRequest")
 	// Compress on writes
 	switch r := req.(type) {
 	case *momento.SetRequest:
-		rh.GetLogger().Info(fmt.Sprintf("(%s) Setting key: %s, value: %s", rh.GetId(), r.Key, r.Value))
+		fmt.Printf("(%s) Setting key: %s, value: %s", rh.GetId(), r.Key, r.Value)
 		rawData := r.Value
 		compressed := rh.encoder.EncodeAll([]byte(fmt.Sprintf("%v", rawData)), nil)
-		rh.GetLogger().Info(
-			fmt.Sprintf(
-				"(%s) Compressed request %T: %d bytes -> %d bytes",
-				rh.GetId(), req, len(fmt.Sprintf("%v", rawData)), len(compressed),
-			),
+		fmt.Printf(
+			"(%s) Compressed request %T: %d bytes -> %d bytes",
+			rh.GetId(), req, len(fmt.Sprintf("%v", rawData)), len(compressed),
 		)
 		return &momento.SetRequest{
 			CacheName: r.CacheName,
 			Key:       r.Key,
 			Value:     momento.String(compressed),
 		}, nil
+	default:
+		fmt.Printf("(%s) Unhandled request type: %T", rh.GetId(), req)
 	}
 	return req, nil
 }
