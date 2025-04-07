@@ -87,12 +87,7 @@ func main() {
 		Key:       momento.String("key-1"),
 	})
 	if err != nil {
-		momentoError, ok := err.(momento.MomentoError)
-		if ok {
-			log.Printf("[GetWithHash] Error: %s\n", momentoError.Message())
-		} else {
-			log.Printf("[GetWithHash] Error: %s\n", err.Error())
-		}
+		log.Printf("[GetWithHash] Error: %s\n", err)
 	}
 	switch r := getWithHashResp.(type) {
 	case *responses.GetWithHashHit:
