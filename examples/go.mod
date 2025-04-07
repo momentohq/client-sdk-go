@@ -11,7 +11,7 @@ require (
 	// compression is used in the compression example
 	github.com/klauspost/compress v1.17.11
 	github.com/loov/hrtime v1.0.3
-	github.com/momentohq/client-sdk-go v1.34.0
+	github.com/momentohq/client-sdk-go v1.35.0
 
 	// logrus is not required to use momento, but it is used in the logging-example
 	github.com/sirupsen/logrus v1.9.0
