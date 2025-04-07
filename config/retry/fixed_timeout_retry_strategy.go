@@ -3,8 +3,10 @@ package retry
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -88,12 +90,30 @@ func (r *fixedTimeoutRetryStrategy) WithEligibilityStrategy(strategy Eligibility
 	}
 }
 
+func (r *fixedTimeoutRetryStrategy) GetResponseDataReceivedTimeoutMillis() *int {
+	return &r.responseDataReceivedTimeoutMillis
+}
+
 func (r *fixedTimeoutRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	r.log.Debug(
 		"Determining whether request is eligible for retry; status code: %s, "+
 			"request type: %s, attemptNumber: %d",
 		props.GrpcStatusCode, props.GrpcMethod, props.AttemptNumber,
 	)
+
+	// If a retry attempt's timeout has passed but the client's overall timeout has not yet passed,
+	// we should reset the deadline and retry.
+	if props.AttemptNumber > 0 && props.GrpcStatusCode == codes.DeadlineExceeded && props.OverallDeadline.After(time.Now()) {
+		timeoutWithJitter := addJitter(r.retryDelayIntervalMillis)
+		r.log.Debug(
+			"Determined request is retryable; retrying after %d ms: [method: %s, status: %s, attempt: %d]",
+			timeoutWithJitter,
+			props.GrpcMethod,
+			props.GrpcStatusCode.String(),
+			props.AttemptNumber,
+		)
+		return &timeoutWithJitter
+	}
 
 	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
 		r.log.Debug(

@@ -821,6 +821,44 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				Expect(average).To(BeNumerically("<=", int64(maxDelay)))
 				Expect(average).To(BeNumerically(">=", int64(minDelay)))
 			})
+
+			It("should not exceed client timeout when retry timeout is greater than client timeout", func() {
+				response_data_received_timeout_millis := 3000
+				client_timeout_millis := 2000
+				response_delay := 1000
+				status := "unavailable"
+				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
+					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
+					ResponseDataReceivedTimeoutMillis: response_data_received_timeout_millis,
+					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+				})
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
+						ReturnError:  &status,
+						ErrorRpcList: &[]string{"get"},
+						DelayRpcList: &[]string{"get"},
+						DelayMillis:  &response_delay,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
+				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+					retryMiddleware,
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(time.Duration(client_timeout_millis) * time.Millisecond)
+				setupCacheClient(clientConfig)
+
+				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
+					CacheName: cacheName,
+					Key:       String("key"),
+				})
+				Expect(getResponse).To(BeNil())
+				Expect(err).To(Not(BeNil()))
+				Expect(err).To(HaveMomentoErrorCode(TimeoutError))
+
+				// Should retry once and retry attempt should not exceedclient timeout
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(1))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", int64(client_timeout_millis)))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically(">", int64(0)))
+			})
 		})
 	})
 

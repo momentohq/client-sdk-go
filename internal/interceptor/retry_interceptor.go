@@ -10,15 +10,41 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func calculateDeadline(deadlineOffsetMillis *int, overallDeadline time.Time) time.Time {
+	if deadlineOffsetMillis == nil {
+		return overallDeadline
+	}
+	deadlineOffset := time.Duration(*deadlineOffsetMillis) * time.Millisecond
+	deadline := time.Now().Add(deadlineOffset)
+	if deadline.After(overallDeadline) {
+		deadline = overallDeadline
+	}
+	return deadline
+}
+
 // AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy.
 func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
+		var overallDeadline time.Time
+		deadline, ok := ctx.Deadline()
+		if ok {
+			overallDeadline = deadline
+		} else {
+			overallDeadline = time.Now().Add(5 * time.Second)
+		}
+
 		for {
 			// This is currently used for testing purposes only by the RetryMetricsMiddleware.
 			if onRequest != nil {
 				onRequest(ctx, method)
 			}
+
+			// Set the retry deadline
+			retryDeadline := calculateDeadline(s.GetResponseDataReceivedTimeoutMillis(), overallDeadline)
+			ctx, cancel := context.WithDeadline(ctx, retryDeadline)
+			defer cancel()
+
 			// Execute api call
 			lastErr := invoker(ctx, method, req, reply, cc, opts...)
 			if lastErr == nil {
@@ -33,9 +59,10 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 
 			// Check retry eligibility based off last error received
 			retryBackoffTime := s.DetermineWhenToRetry(retry.StrategyProps{
-				GrpcStatusCode: status.Code(lastErr),
-				GrpcMethod:     method,
-				AttemptNumber:  attempt,
+				GrpcStatusCode:  status.Code(lastErr),
+				GrpcMethod:      method,
+				AttemptNumber:   attempt,
+				OverallDeadline: overallDeadline,
 			})
 
 			if retryBackoffTime == nil {

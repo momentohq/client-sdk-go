@@ -111,6 +111,10 @@ func (r *exponentialBackoffRetryStrategy) WithGrowthFactor(growthFactor int) Str
 	}
 }
 
+func (r *exponentialBackoffRetryStrategy) GetResponseDataReceivedTimeoutMillis() *int {
+	return nil
+}
+
 func (r *exponentialBackoffRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	// attempt is 0-based, so we subtract 1 to get the correct attempt number
 	attempt := props.AttemptNumber - 1
