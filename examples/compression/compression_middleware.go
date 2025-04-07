@@ -62,7 +62,7 @@ func (rh *compressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 			HashEqual: r.HashEqual,
 		}, nil
 	default:
-		rh.GetLogger().Info("[compressionMiddleware] No action for OnRequest type: %T", req)
+		rh.GetLogger().Info("No action for OnRequest type: %T", req)
 		return req, nil
 	}
 }
@@ -95,7 +95,7 @@ func (rh *compressionMiddlewareRequestHandler) OnResponse(resp interface{}) (int
 		newGetWithHashResponse := responses.NewGetWithHashHit(decompressed, r.HashByte())
 		return newGetWithHashResponse, nil
 	default:
-		rh.GetLogger().Info("[compressionMiddleware] No action for OnResponse type: %T", resp)
+		rh.GetLogger().Info("No action for OnResponse type: %T", resp)
 		return resp, nil
 	}
 }
