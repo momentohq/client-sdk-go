@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.35.0](https://github.com/momentohq/client-sdk-go/compare/v1.34.0...v1.35.0) (2025-04-07)
+
+
+### Features
+
+* topics retries ([#610](https://github.com/momentohq/client-sdk-go/issues/610)) ([eb38e0c](https://github.com/momentohq/client-sdk-go/commit/eb38e0ce7dbc0806d9457216a4c28da521ae40eb))
+
+
+### Miscellaneous
+
+* add docs snippets for new get/set if hash methods ([#613](https://github.com/momentohq/client-sdk-go/issues/613)) ([e5e7c0f](https://github.com/momentohq/client-sdk-go/commit/e5e7c0f64ae3b2bc13ec22a950bbe95a13801fae))
+* add middleware examples ([#617](https://github.com/momentohq/client-sdk-go/issues/617)) ([4db9c05](https://github.com/momentohq/client-sdk-go/commit/4db9c05f331f5436a2170faec7c5e6c8539a9319))
+* fix the timing of the OnRequest handler ([#620](https://github.com/momentohq/client-sdk-go/issues/620)) ([de55607](https://github.com/momentohq/client-sdk-go/commit/de55607830a485584311196a597199567058e669))
+* remove storage tests ([#615](https://github.com/momentohq/client-sdk-go/issues/615)) ([108d047](https://github.com/momentohq/client-sdk-go/commit/108d047341a59237d6d7df380cbfa6798ce66b56))
+
 ## [1.34.0](https://github.com/momentohq/client-sdk-go/compare/v1.33.2...v1.34.0) (2025-04-02)
 
 
