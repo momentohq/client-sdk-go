@@ -73,8 +73,8 @@ func deepCopyMap(original map[string]string) map[string]string {
 }
 
 func (client scsDataClient) applyMiddlewareRequestHandlers(
-	r requester, req interface{}, requestMetadata map[string]string,
-) ([]middleware.RequestHandler, interface{}, map[string]string, error) {
+	r requester, requestMetadata map[string]string,
+) ([]middleware.RequestHandler, requester, map[string]string, error) {
 	middlewareRequestHandlers := make([]middleware.RequestHandler, 0, len(client.middleware))
 	for _, mw := range client.middleware {
 		// An error here means the middleware is configured to skip this type of request, so we
@@ -89,24 +89,24 @@ func (client scsDataClient) applyMiddlewareRequestHandlers(
 		// so we return it.
 		newHandler, err := mw.GetRequestHandler(newBaseHandler)
 		if err != nil {
-			return nil, nil, nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+			return nil, nil, nil, err
 		}
 
 		// Call the request handler OnRequest method and then add the handler to list of handlers to
 		// call OnResponse on when the response comes back.
-		newReq, err := newHandler.OnRequest(req)
+		newReq, err := newHandler.OnRequest(r)
 		if err != nil {
-			return nil, nil, nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, err.Error(), err)
+			return nil, nil, nil, err
 		}
 		if newReq != nil {
-			if reflect.TypeOf(newReq) != reflect.TypeOf(req) {
+			if reflect.TypeOf(newReq) != reflect.TypeOf(r) {
 				return nil, nil, nil, NewMomentoError(
 					ClientSdkError,
 					fmt.Sprintf("middleware request handler %T OnRequest returned an invalid request", newHandler),
 					nil,
 				)
 			}
-			req = newReq
+			r = newReq.(requester)
 		}
 
 		newMd := newHandler.OnMetadata(deepCopyMap(requestMetadata))
@@ -117,7 +117,7 @@ func (client scsDataClient) applyMiddlewareRequestHandlers(
 		middlewareRequestHandlers = append(middlewareRequestHandlers, newHandler)
 	}
 
-	return middlewareRequestHandlers, req, requestMetadata, nil
+	return middlewareRequestHandlers, r, requestMetadata, nil
 }
 
 // Iterate over the middleware request handlers in reverse order, giving them a chance to
@@ -147,6 +147,14 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 		return nil, err
 	}
 
+	var middlewareRequestHandlers []middleware.RequestHandler
+	requestMetadata := make(map[string]string)
+	var err error
+	middlewareRequestHandlers, r, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, requestMetadata)
+	if err != nil {
+		return nil, err
+	}
+
 	req, err := r.initGrpcRequest(client)
 	if err != nil {
 		return nil, err
@@ -154,13 +162,6 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
-
-	var middlewareRequestHandlers []middleware.RequestHandler
-	requestMetadata := make(map[string]string)
-	middlewareRequestHandlers, req, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, req, requestMetadata)
-	if err != nil {
-		return nil, err
-	}
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
 	resp, responseMetadata, err := r.makeGrpcRequest(req, requestContext, client)
