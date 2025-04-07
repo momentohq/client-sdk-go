@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/klauspost/compress/zstd"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
@@ -37,30 +36,32 @@ func NewCompressionMiddlewareRequestHandler(rh middleware.RequestHandler, encode
 	return &compressionMiddlewareRequestHandler{rh, encoder, decoder}
 }
 
+func (rh *compressionMiddlewareRequestHandler) compress(requestType string, key string, data []byte) ([]byte, error) {
+	rh.GetLogger().Info("Setting key for %T: %s, value: %s", requestType, key, data)
+	compressed := rh.encoder.EncodeAll(data, nil)
+	rh.GetLogger().Info("Compressed request: %d bytes -> %d bytes", len(fmt.Sprintf("%v", data)), len(compressed))
+	return compressed, nil
+}
+
 func (rh *compressionMiddlewareRequestHandler) OnRequest(req interface{}) (interface{}, error) {
 	// Compress on writes
 	switch r := req.(type) {
 	case *momento.SetRequest:
-		rh.GetLogger().Info("Setting key: %s, value: %s", r.Key, r.Value)
-		rawData := r.Value
-		compressed := rh.encoder.EncodeAll([]byte(fmt.Sprintf("%v", rawData)), nil)
-		rh.GetLogger().Info("Compressed request %T: %d bytes -> %d bytes", req, len(fmt.Sprintf("%v", rawData)), len(compressed))
-		return &momento.SetRequest{
-			CacheName: r.CacheName,
-			Key:       r.Key,
-			Value:     momento.String(compressed),
-		}, nil
+		compressed, err := rh.compress(
+			fmt.Sprintf("%T", r), fmt.Sprintf("%s", r.Key), []byte(fmt.Sprintf("%v", r.Value)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compress request: %v", err)
+		}
+		r.Value = momento.String(compressed)
+		return r, nil
 	case *momento.SetIfAbsentOrHashEqualRequest:
-		rh.GetLogger().Info("Setting key: %s, value: %s", r.Key, r.Value)
-		rawData := r.Value
-		compressed := rh.encoder.EncodeAll([]byte(fmt.Sprintf("%v", rawData)), nil)
-		rh.GetLogger().Info("Compressed request %T: %d bytes -> %d bytes", req, len(fmt.Sprintf("%v", rawData)), len(compressed))
-		return &momento.SetIfAbsentOrHashEqualRequest{
-			CacheName: r.CacheName,
-			Key:       r.Key,
-			Value:     momento.String(compressed),
-			HashEqual: r.HashEqual,
-		}, nil
+		compressed, err := rh.compress(
+			fmt.Sprintf("%T", r), fmt.Sprintf("%s", r.Key), []byte(fmt.Sprintf("%v", r.Value)))
+		if err != nil {
+			return nil, fmt.Errorf("failed to compress request: %v", err)
+		}
+		r.Value = momento.String(compressed)
+		return r, nil
 	default:
 		rh.GetLogger().Info("No action for OnRequest type: %T", req)
 		return req, nil
