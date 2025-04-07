@@ -20,6 +20,7 @@ func (mw *compressionMiddleware) GetRequestHandler(baseHandler middleware.Reques
 }
 
 func NewCompressionMiddleware(props middleware.Props) middleware.Middleware {
+	// We use the default compression level for the encoder, but this could be made configurable.
 	encoder, _ := zstd.NewWriter(nil, zstd.WithEncoderLevel(zstd.SpeedDefault))
 	decoder, _ := zstd.NewReader(nil)
 	mw := middleware.NewMiddleware(props)

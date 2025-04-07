@@ -27,7 +27,9 @@ func main() {
 		panic(err)
 	}
 
-	// Initialize Momento client with compression middleware
+	// Initialize Momento client with compression middleware.
+	// The optional IncludeTypes parameter is used to specify the types of requests that
+	// should be compressed and allows the middleware to ignore all other request types.
 	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
 	myConfig := config.LaptopLatestWithLogger(loggerFactory).WithMiddleware(
 		[]middleware.Middleware{
