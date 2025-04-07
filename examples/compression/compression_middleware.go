@@ -36,26 +36,24 @@ func NewCompressionMiddlewareRequestHandler(rh middleware.RequestHandler, encode
 	return &compressionMiddlewareRequestHandler{rh, encoder, decoder}
 }
 
-// TODO: use updated middleware interface
-
 func (rh *compressionMiddlewareRequestHandler) OnRequest(req interface{}) (interface{}, error) {
 	// Compress on writes
 	switch r := req.(type) {
 	case *momento.SetRequest:
-		fmt.Printf("(%s) Setting key: %s, value: %s", rh.GetId(), r.Key, r.Value)
+		rh.GetLogger().Info("Setting key: %s, value: %s", r.Key, r.Value)
 		rawData := r.Value
 		compressed := rh.encoder.EncodeAll([]byte(fmt.Sprintf("%v", rawData)), nil)
-		fmt.Printf("(%s) Compressed request %T: %d bytes -> %d bytes", rh.GetId(), req, len(fmt.Sprintf("%v", rawData)), len(compressed))
+		rh.GetLogger().Info("Compressed request %T: %d bytes -> %d bytes", req, len(fmt.Sprintf("%v", rawData)), len(compressed))
 		return &momento.SetRequest{
 			CacheName: r.CacheName,
 			Key:       r.Key,
 			Value:     momento.String(compressed),
 		}, nil
 	case *momento.SetIfAbsentOrHashEqualRequest:
-		fmt.Printf("(%s) Setting key: %s, value: %s", rh.GetId(), r.Key, r.Value)
+		rh.GetLogger().Info("Setting key: %s, value: %s", r.Key, r.Value)
 		rawData := r.Value
 		compressed := rh.encoder.EncodeAll([]byte(fmt.Sprintf("%v", rawData)), nil)
-		fmt.Printf("(%s) Compressed request %T: %d bytes -> %d bytes", rh.GetId(), req, len(fmt.Sprintf("%v", rawData)), len(compressed))
+		rh.GetLogger().Info("Compressed request %T: %d bytes -> %d bytes", req, len(fmt.Sprintf("%v", rawData)), len(compressed))
 		return &momento.SetIfAbsentOrHashEqualRequest{
 			CacheName: r.CacheName,
 			Key:       r.Key,
@@ -63,7 +61,7 @@ func (rh *compressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 			HashEqual: r.HashEqual,
 		}, nil
 	default:
-		fmt.Printf("[compressionMiddleware] Unhandled OnRequest type: %T\n", req)
+		rh.GetLogger().Info("[compressionMiddleware] No action for OnRequest type: %T", req)
 		return req, nil
 	}
 }
@@ -77,9 +75,9 @@ func (rh *compressionMiddlewareRequestHandler) OnResponse(resp interface{}) (int
 		if err != nil {
 			return nil, fmt.Errorf("failed to decompress response: %v", err)
 		}
-		fmt.Printf(
-			"(%s) Decompressed response %T: %d bytes -> %d bytes",
-			rh.GetId(), resp, len(rawData), len(decompressed),
+		rh.GetLogger().Info(
+			"Decompressed response %T: %d bytes -> %d bytes",
+			resp, len(rawData), len(decompressed),
 		)
 		newGetResponse := responses.NewGetHit(decompressed)
 		return newGetResponse, nil
@@ -89,14 +87,14 @@ func (rh *compressionMiddlewareRequestHandler) OnResponse(resp interface{}) (int
 		if err != nil {
 			return nil, fmt.Errorf("failed to decompress response: %v", err)
 		}
-		fmt.Printf(
-			"(%s) Decompressed response %T: %d bytes -> %d bytes",
-			rh.GetId(), resp, len(rawData), len(decompressed),
+		rh.GetLogger().Info(
+			"Decompressed response %T: %d bytes -> %d bytes",
+			resp, len(rawData), len(decompressed),
 		)
 		newGetWithHashResponse := responses.NewGetWithHashHit(decompressed, r.HashByte())
 		return newGetWithHashResponse, nil
 	default:
-		fmt.Printf("[compressionMiddleware] Unhandled OnResponse type: %T\n", resp)
+		rh.GetLogger().Info("[compressionMiddleware] No action for OnResponse type: %T", resp)
 		return resp, nil
 	}
 }

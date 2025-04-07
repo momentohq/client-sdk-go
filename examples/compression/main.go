@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/auth"
@@ -31,7 +31,15 @@ func main() {
 	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
 	myConfig := config.LaptopLatestWithLogger(loggerFactory).WithMiddleware(
 		[]middleware.Middleware{
-			NewCompressionMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("compression-middleware")}),
+			NewCompressionMiddleware(middleware.Props{
+				Logger: loggerFactory.GetLogger("compression-middleware"),
+				IncludeTypes: []interface{}{
+					momento.SetRequest{},
+					momento.GetRequest{},
+					momento.SetIfAbsentOrHashEqualRequest{},
+					momento.GetWithHashRequest{},
+				},
+			}),
 		},
 	)
 	client, err := momento.NewCacheClientWithEagerConnectTimeout(
@@ -62,14 +70,14 @@ func main() {
 		HashEqual: momento.Bytes("set-if-absent-or-hash-equal"),
 	})
 	if err != nil {
-		fmt.Printf("[SetIfAbsentOrHashEqual] Error: %s\n", err.Error())
+		log.Printf("[SetIfAbsentOrHashEqual] Error: %s\n", err.Error())
 	}
 	switch r := setResp.(type) {
 	case *responses.SetIfAbsentOrHashEqualStored:
-		fmt.Printf("[SetIfAbsentOrHashEqual] Stored value\n")
+		log.Printf("[SetIfAbsentOrHashEqual] Stored value\n")
 		storedHashValue = r.HashByte()
 	case *responses.SetIfAbsentOrHashEqualNotStored:
-		fmt.Printf("[SetIfAbsentOrHashEqual] Unable to store the value\n")
+		log.Printf("[SetIfAbsentOrHashEqual] Unable to store the value\n")
 	}
 
 	getWithHashResp, err := client.GetWithHash(ctx, &momento.GetWithHashRequest{
@@ -77,24 +85,23 @@ func main() {
 		Key:       momento.String("key-1"),
 	})
 	if err != nil {
-		// TODO: failed to decompress message isn't propagated?
 		momentoError, ok := err.(momento.MomentoError)
 		if ok {
-			fmt.Printf("[GetWithHash] Error: %s\n", momentoError.Message())
+			log.Printf("[GetWithHash] Error: %s\n", momentoError.Message())
 		} else {
-			fmt.Printf("[GetWithHash] Error: %s\n", err.Error())
+			log.Printf("[GetWithHash] Error: %s\n", err.Error())
 		}
 	}
 	switch r := getWithHashResp.(type) {
 	case *responses.GetWithHashHit:
-		fmt.Printf("[GetWithHash] Lookup resulted in cache HIT\n")
+		log.Printf("[GetWithHash] Lookup resulted in cache HIT\n")
 		if bytes.Equal(r.HashByte(), storedHashValue) {
-			fmt.Printf("[GetWithHash] Hash is equal to stored hash value\n")
+			log.Printf("[GetWithHash] Hash is equal to stored hash value\n")
 		} else {
-			fmt.Printf("[GetWithHash] Hash is not equal to stored hash value\n")
+			log.Printf("[GetWithHash] Hash is not equal to stored hash value\n")
 		}
 	case *responses.GetWithHashMiss:
-		fmt.Printf("[GetWithHash] Lookup resulted in cache MISS\n")
+		log.Printf("[GetWithHash] Lookup resulted in cache MISS\n")
 	}
 
 	// Compression example 2: Regular Set and Get
@@ -105,22 +112,22 @@ func main() {
 		Value:     momento.String(longStringValue),
 	})
 	if err != nil {
-		fmt.Printf("[Set] Error: %s\n", err.Error())
+		log.Printf("[Set] Error: %s\n", err.Error())
 	}
-	fmt.Printf("[Set] Stored value\n")
+	log.Printf("[Set] Stored value\n")
 
 	getResp, err := client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
 		Key:       momento.String("key-2"),
 	})
 	if err != nil {
-		fmt.Printf("[Get] Error: %s\n", err.Error())
+		log.Printf("[Get] Error: %s\n", err.Error())
 	}
 	switch getResp.(type) {
 	case *responses.GetHit:
-		fmt.Printf("[Get] Lookup resulted in cache HIT\n")
+		log.Printf("[Get] Lookup resulted in cache HIT\n")
 	case *responses.GetMiss:
-		fmt.Printf("[Get] Lookup resulted in cache MISS\n")
+		log.Printf("[Get] Lookup resulted in cache MISS\n")
 	}
 
 	// Cleanup: delete the cache
