@@ -1,7 +1,6 @@
 # Compression Middleware Example
 
-This example implements a middleware that uses zstd on Get and Set requests. 
-Additional methods could be added to the middleware, but we showcase only Get and Set for simplicity.
+This example implements a middleware that uses zstd on a several different read and write requests: Get, Set, GetWithHash, and SetIfAbsentOrHashEqual.
 
 To run the example:
 
