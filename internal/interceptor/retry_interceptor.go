@@ -29,7 +29,7 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 			}
 
 			// If the FixedTimeoutRetryStrategy is used, overwrite the deadline using
-			// the retry attempt's timeout (responseDataReceivedTimeoutMillis).
+			// the configured retry timeout. Otherwise, use the given context.
 			retryCtx := ctx
 			if s, ok := s.(retry.FixedTimeoutRetryStrategy); ok {
 				retryDeadline := s.CalculateRetryDeadline(overallDeadline)

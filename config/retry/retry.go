@@ -7,9 +7,12 @@ import (
 )
 
 type StrategyProps struct {
-	GrpcStatusCode  codes.Code
-	GrpcMethod      string
-	AttemptNumber   int
+	GrpcStatusCode codes.Code
+	GrpcMethod     string
+	AttemptNumber  int
+
+	// OverallDeadline is the overall deadline for the request. It is currently only used
+	// by the FixedTimeoutRetryStrategy to determine when to stop retrying.
 	OverallDeadline time.Time
 }
 type Strategy interface {
