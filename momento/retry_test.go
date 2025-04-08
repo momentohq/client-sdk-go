@@ -4,33 +4,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/momentohq/client-sdk-go/config/retry"
-	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-
-	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
-
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/retry"
+	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
+	. "github.com/momentohq/client-sdk-go/momento"
+	helpers "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
-
-	"time"
-
-	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc/codes"
 )
 
 const (
-	CLIENT_TIMEOUT_MILLIS                 = 3 * time.Second
+	CLIENT_TIMEOUT_MILLIS                 = 5 * time.Second
 	RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS = 1000
 	RETRY_DELAY_INTERVAL_MILLIS           = 100
 )
@@ -641,7 +638,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// until the client timeout is reached.
 				maxAttempts := CLIENT_TIMEOUT_MILLIS / retry.DefaultRetryDelayIntervalMillis
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", retry.DefaultRetryDelayIntervalMillis*1.1))
@@ -679,7 +676,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// until the client timeout is reached.
 				maxAttempts := CLIENT_TIMEOUT_MILLIS / RETRY_DELAY_INTERVAL_MILLIS
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
 
 				// Jitter will be +/- 10% of the retry delay interval
 				maxDelay := float64(RETRY_DELAY_INTERVAL_MILLIS) * 1.1
@@ -725,9 +722,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + shortDelay
 				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
 
-				// Jitter will be +/- 10% of the retry delay interval
+				// Jitter will be +/- 10% of the delay between retry attempts
 				maxDelay := float64(delayBetweenAttempts) * 1.1
 				minDelay := float64(delayBetweenAttempts) * 0.9
 				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
@@ -743,7 +740,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
 					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
 				})
-				longDelay := RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS + 100
+				// Momento-local should delay responses for longer than the retry timeout so that
+				// we can test the retry strategy's timeout is actually being respected.
+				longDelay := RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS + 500
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
 						ReturnError:  &status,
@@ -769,13 +768,20 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// Should receive errors after longDelay ms and retry every RETRY_DELAY_INTERVAL_MILLIS
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + longDelay
-				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
+				maxAttempts := math.Ceil(float64(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / float64(delayBetweenAttempts))
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
-				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">", 0))
 
-				// Jitter will be +/- 10% of the retry delay interval
-				maxDelay := float64(delayBetweenAttempts) * 1.1
-				minDelay := float64(delayBetweenAttempts) * 0.9
+				// Fixed timeout retry strategy should retry at least twice.
+				// If it retries only once, it could mean that the retry attempt is timing out and if we aren't
+				// handling that case correctly, then it won't continue retrying until the client timeout is reached.
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
+
+				// Jitter will contribute +/- 10% of the delay between retry attempts.
+				// The expected delay here is not longDelay because the retry strategy's timeout is
+				// shorter than that and retry attempts should stop before longDelay is reached.
+				expectedDelayBetweenAttempts := float64(RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS + RETRY_DELAY_INTERVAL_MILLIS)
+				maxDelay := expectedDelayBetweenAttempts * 1.1
+				minDelay := expectedDelayBetweenAttempts * 0.9
 				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
 				Expect(err).To(BeNil())
 				Expect(float64(average)).To(BeNumerically("<=", maxDelay))
@@ -856,8 +862,8 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 
 				// Should retry once and retry attempt should not exceedclient timeout
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(1))
-				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", int64(client_timeout_millis)))
-				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically(">", int64(0)))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", client_timeout_millis))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically(">", 1))
 			})
 		})
 	})
@@ -1038,4 +1044,5 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			Expect(counter.Items > numItemsAtBlock).To(BeTrue())
 		})
 	})
+
 })
