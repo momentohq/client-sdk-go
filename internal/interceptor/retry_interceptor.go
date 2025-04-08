@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/retry"
@@ -14,6 +15,12 @@ func calculateDeadline(deadlineOffsetMillis *int, overallDeadline time.Time) tim
 	if deadlineOffsetMillis == nil {
 		return overallDeadline
 	}
+
+	fmt.Printf(
+		"======> calculating deadline with offset %v and overall deadline %v\n",
+		*deadlineOffsetMillis,
+		overallDeadline,
+	)
 	deadlineOffset := time.Duration(*deadlineOffsetMillis) * time.Millisecond
 	deadline := time.Now().Add(deadlineOffset)
 	if deadline.After(overallDeadline) {
@@ -26,13 +33,25 @@ func calculateDeadline(deadlineOffsetMillis *int, overallDeadline time.Time) tim
 func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
+
+		// FixedTimeoutStrategy interface requires a deadline to be set and potentially reset multiple times.
+		// These variables are used in deadline calculation but are ignored by other strategy interfaces.
 		var overallDeadline time.Time
-		deadline, ok := ctx.Deadline()
-		if ok {
-			overallDeadline = deadline
-		} else {
-			overallDeadline = time.Now().Add(5 * time.Second)
+		isFixedTimeStrategy := false
+		var cancel context.CancelFunc
+		_, ok := s.(retry.FixedTimeoutStrategy); if ok {
+			fmt.Printf("Using fixed time strategy for method: %s\n", method)
+			isFixedTimeStrategy = true
+			deadline, ok := ctx.Deadline()
+			if ok {
+				overallDeadline = deadline
+				fmt.Printf("overall deadline set to: %v\n", overallDeadline)
+			} else {
+				fmt.Println("no deadline set, using default")
+				overallDeadline = time.Now().Add(5 * time.Second)
+			}
 		}
+		fmt.Printf("overall deadline: %v\n", overallDeadline)
 
 		for {
 			// This is currently used for testing purposes only by the RetryMetricsMiddleware.
@@ -41,9 +60,13 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 			}
 
 			// Set the retry deadline
-			retryDeadline := calculateDeadline(s.GetResponseDataReceivedTimeoutMillis(), overallDeadline)
-			ctx, cancel := context.WithDeadline(ctx, retryDeadline)
-			defer cancel()
+			if isFixedTimeStrategy {
+				retryDeadline := calculateDeadline(
+					s.(retry.FixedTimeoutStrategy).GetResponseDataReceivedTimeoutMillis(), overallDeadline)
+				fmt.Printf("retry deadline: %v\n", retryDeadline)
+				ctx, cancel = context.WithDeadline(ctx, retryDeadline)
+				defer cancel()
+			}
 
 			// Execute api call
 			lastErr := invoker(ctx, method, req, reply, cc, opts...)

@@ -22,7 +22,7 @@ type fixedTimeoutRetryStrategy struct {
 }
 
 type FixedTimeoutRetryStrategy interface {
-	Strategy
+	FixedTimeoutStrategy
 	WithResponseDataReceivedTimeoutMillis(timeout int) Strategy
 	WithRetryDelayIntervalMillis(delay int) Strategy
 	WithEligibilityStrategy(s EligibilityStrategy) Strategy
