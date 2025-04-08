@@ -28,10 +28,6 @@ func (r *legacyTopicSubscriptionRetryStrategy) WithRetryMs(ms int) Strategy {
 	}
 }
 
-func (r *legacyTopicSubscriptionRetryStrategy) GetResponseDataReceivedTimeoutMillis() *int {
-	return nil
-}
-
 func (r *legacyTopicSubscriptionRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	r.log.Debug(
 		"Always retry strategy returning %d ms for [method: %s, status: %s]",

@@ -20,7 +20,4 @@ type Strategy interface {
 	//
 	// Returns The time in milliseconds before the next retry should occur or nil if no retry should be attempted.
 	DetermineWhenToRetry(props StrategyProps) *int
-
-	// GetResponseDataReceivedTimeoutMillis returns the timeout for a retry attemptin milliseconds.
-	GetResponseDataReceivedTimeoutMillis() *int
 }

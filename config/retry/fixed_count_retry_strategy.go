@@ -64,10 +64,6 @@ func (r *fixedCountRetryStrategy) WithEligibilityStrategy(s EligibilityStrategy)
 	}
 }
 
-func (r *fixedCountRetryStrategy) GetResponseDataReceivedTimeoutMillis() *int {
-	return nil
-}
-
 func (r *fixedCountRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {
 	if !r.eligibilityStrategy.IsEligibleForRetry(props) {
 		r.log.Debug(

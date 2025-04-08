@@ -10,18 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func calculateDeadline(deadlineOffsetMillis *int, overallDeadline time.Time) time.Time {
-	if deadlineOffsetMillis == nil {
-		return overallDeadline
-	}
-	deadlineOffset := time.Duration(*deadlineOffsetMillis) * time.Millisecond
-	deadline := time.Now().Add(deadlineOffset)
-	if deadline.After(overallDeadline) {
-		deadline = overallDeadline
-	}
-	return deadline
-}
-
 // AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy.
 func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -40,13 +28,18 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 				onRequest(ctx, method)
 			}
 
-			// Set the retry deadline
-			retryDeadline := calculateDeadline(s.GetResponseDataReceivedTimeoutMillis(), overallDeadline)
-			ctx, cancel := context.WithDeadline(ctx, retryDeadline)
-			defer cancel()
+			// If the FixedTimeoutRetryStrategy is used, overwrite the deadline using
+			// the retry attempt's timeout (responseDataReceivedTimeoutMillis).
+			retryCtx := ctx
+			if s, ok := s.(retry.FixedTimeoutRetryStrategy); ok {
+				retryDeadline := s.CalculateRetryDeadline(overallDeadline)
+				ctxWithRetryDeadline, cancel := context.WithDeadline(ctx, retryDeadline)
+				defer cancel()
+				retryCtx = ctxWithRetryDeadline
+			}
 
 			// Execute api call
-			lastErr := invoker(ctx, method, req, reply, cc, opts...)
+			lastErr := invoker(retryCtx, method, req, reply, cc, opts...)
 			if lastErr == nil {
 				// Success no error returned stop interceptor
 				return nil
