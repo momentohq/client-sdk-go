@@ -33,10 +33,6 @@ type FixedTimeoutRetryStrategy interface {
 	WithRetryTimeoutMillis(timeout int) Strategy
 	WithRetryDelayIntervalMillis(delay int) Strategy
 	WithEligibilityStrategy(s EligibilityStrategy) Strategy
-
-	// CalculateRetryDeadline calculates the deadline for a retry attempt based on retryTimeoutMillis,
-	// but clips it to the overall deadline if the overall deadline is sooner.
-	CalculateRetryDeadline(overallDeadline time.Time) time.Time
 }
 
 type FixedTimeoutRetryStrategyProps struct {
@@ -101,13 +97,15 @@ func (r *fixedTimeoutRetryStrategy) WithEligibilityStrategy(strategy Eligibility
 	}
 }
 
-func (r *fixedTimeoutRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) time.Time {
+// CalculateRetryDeadline calculates the deadline for a retry attempt using the retry timeout,
+// but clips it to the overall deadline if the overall deadline is sooner.
+func (r *fixedTimeoutRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) *time.Time {
 	deadlineOffset := time.Duration(r.retryTimeoutMillis) * time.Millisecond
 	deadline := time.Now().Add(deadlineOffset)
 	if deadline.After(overallDeadline) {
 		deadline = overallDeadline
 	}
-	return deadline
+	return &deadline
 }
 
 func (r *fixedTimeoutRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {

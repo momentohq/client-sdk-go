@@ -3,6 +3,7 @@ package retry
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -101,4 +102,8 @@ func (r *fixedCountRetryStrategy) String() string {
 		r.maxAttempts,
 		r.log,
 	)
+}
+
+func (r *fixedCountRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) *time.Time {
+	return nil
 }

@@ -23,4 +23,8 @@ type Strategy interface {
 	//
 	// Returns The time in milliseconds before the next retry should occur or nil if no retry should be attempted.
 	DetermineWhenToRetry(props StrategyProps) *int
+
+	// CalculateRetryDeadline calculates the deadline for a retry attempt.
+	// Returns nil if there is no adjustment to the deadline.
+	CalculateRetryDeadline(overallDeadline time.Time) *time.Time
 }
