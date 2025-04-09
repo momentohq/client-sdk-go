@@ -1,18 +1,20 @@
-package middleware
+package impl
 
 import (
 	"fmt"
 	"sync/atomic"
+
+	"github.com/momentohq/client-sdk-go/config/middleware"
 )
 
 type inFlightRequestCountMiddleware struct {
-	Middleware
+	middleware.Middleware
 	numActiveRequests atomic.Int64
 }
 
 func (mw *inFlightRequestCountMiddleware) GetRequestHandler(
-	baseHandler RequestHandler,
-) (RequestHandler, error) {
+	baseHandler middleware.RequestHandler,
+) (middleware.RequestHandler, error) {
 	return NewInFlightRequestCountMiddlewareRequestHandler(
 		baseHandler,
 		mw.add,
@@ -20,8 +22,8 @@ func (mw *inFlightRequestCountMiddleware) GetRequestHandler(
 	), nil
 }
 
-func NewInFlightRequestCountMiddleware(props Props) Middleware {
-	mw := NewMiddleware(props)
+func NewInFlightRequestCountMiddleware(props middleware.Props) middleware.Middleware {
+	mw := middleware.NewMiddleware(props)
 	return &inFlightRequestCountMiddleware{mw, atomic.Int64{}}
 }
 
@@ -34,14 +36,14 @@ func (mw *inFlightRequestCountMiddleware) remove() int64 {
 }
 
 type inFlightRequestCountMiddlewareRequestHandler struct {
-	RequestHandler
+	middleware.RequestHandler
 	requestsAtStart int64
 	remover         func() int64
 }
 
 func NewInFlightRequestCountMiddlewareRequestHandler(
-	rh RequestHandler, adder func() int64, remover func() int64,
-) RequestHandler {
+	rh middleware.RequestHandler, adder func() int64, remover func() int64,
+) middleware.RequestHandler {
 	countAfterAdd := adder()
 	return &inFlightRequestCountMiddlewareRequestHandler{rh, countAfterAdd, remover}
 }

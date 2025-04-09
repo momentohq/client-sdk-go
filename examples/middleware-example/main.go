@@ -63,6 +63,13 @@ func main() {
 	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
 	myConfig := config.LaptopLatest().WithMiddleware(
 		[]middleware.Middleware{
+			// This is a middleware bundled with the SDK that we access through the `middleware` package.
+			// It is configured to process only GetRequest and SetRequest types, ignoring all other request types.
+			middleware.NewInFlightRequestCountMiddleware(middleware.Props{
+				Logger:       loggerFactory.GetLogger("inflight-request-count"),
+				IncludeTypes: []interface{}{momento.GetRequest{}, momento.SetRequest{}},
+			}),
+			// These are custom middleware built using the `middleware.Middleware` interface
 			NewTimingMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("timing")}),
 			NewLoggingMiddleware(middleware.Props{Logger: loggerFactory.GetLogger("logging-middleware")}),
 		},
