@@ -829,13 +829,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			})
 
 			It("should not exceed client timeout when retry timeout is greater than client timeout", func() {
-				response_data_received_timeout_millis := 3000
-				client_timeout_millis := 2000
-				response_delay := 1000
+				retryTimeoutMillis := 3000
+				clientTimeoutMillis := 2000
+				responseDelay := 1000
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
 					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
-					RetryTimeoutMillis:       response_data_received_timeout_millis,
+					RetryTimeoutMillis:       retryTimeoutMillis,
 					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
@@ -843,13 +843,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 						ReturnError:  &status,
 						ErrorRpcList: &[]string{"get"},
 						DelayRpcList: &[]string{"get"},
-						DelayMillis:  &response_delay,
+						DelayMillis:  &responseDelay,
 					},
 				})
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(time.Duration(client_timeout_millis) * time.Millisecond)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(time.Duration(clientTimeoutMillis) * time.Millisecond)
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
@@ -860,9 +860,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(TimeoutError))
 
-				// Should retry once and retry attempt should not exceedclient timeout
+				// Should retry once and retry attempt should not exceed client timeout
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(1))
-				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", client_timeout_millis))
+				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", clientTimeoutMillis))
 				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically(">", 1))
 			})
 		})
