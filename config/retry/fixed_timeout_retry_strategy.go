@@ -10,33 +10,40 @@ import (
 )
 
 const (
-	DefaultResponseDataReceivedTimeoutMillis = 1000 // 1 second default timeout for retry attempts
-	DefaultRetryDelayIntervalMillis          = 100  // Schedule retry attempt for 100ms later +/- jitter
+	// DefaultRetryTimeoutMillis is the number of milliseconds the client is willing to wait for
+	// a response on a retry attempt. Defaults to 1 second.
+	DefaultRetryTimeoutMillis = 1000
+	// DefaultRetryDelayIntervalMillis is the number of milliseconds to wait between retry attempts.
+	// Defaults to 100ms +/- jitter.
+	DefaultRetryDelayIntervalMillis = 100
 )
 
 type fixedTimeoutRetryStrategy struct {
-	eligibilityStrategy               EligibilityStrategy
-	log                               logger.MomentoLogger
-	responseDataReceivedTimeoutMillis int
-	retryDelayIntervalMillis          int
+	eligibilityStrategy      EligibilityStrategy
+	log                      logger.MomentoLogger
+	retryTimeoutMillis       int
+	retryDelayIntervalMillis int
 }
 
+// FixedTimeoutRetryStrategy is a retry strategy that retries a request up until the client timeout
+// is reached. After the initial request fails, the next retry will be scheduled for retryDelayIntervalMillis
+// from the current time, and the retried request will timeout after retryTimeoutMillis if there is no response.
 type FixedTimeoutRetryStrategy interface {
 	Strategy
-	WithResponseDataReceivedTimeoutMillis(timeout int) Strategy
+	WithRetryTimeoutMillis(timeout int) Strategy
 	WithRetryDelayIntervalMillis(delay int) Strategy
 	WithEligibilityStrategy(s EligibilityStrategy) Strategy
 
-	// CalculateRetryDeadline calculates the deadline for a retry attempt based on responseDataReceivedTimeoutMillis,
+	// CalculateRetryDeadline calculates the deadline for a retry attempt based on retryTimeoutMillis,
 	// but clips it to the overall deadline if the overall deadline is sooner.
 	CalculateRetryDeadline(overallDeadline time.Time) time.Time
 }
 
 type FixedTimeoutRetryStrategyProps struct {
-	EligibilityStrategy               EligibilityStrategy
-	LoggerFactory                     logger.MomentoLoggerFactory
-	ResponseDataReceivedTimeoutMillis int
-	RetryDelayIntervalMillis          int
+	EligibilityStrategy      EligibilityStrategy
+	LoggerFactory            logger.MomentoLoggerFactory
+	RetryTimeoutMillis       int
+	RetryDelayIntervalMillis int
 }
 
 func NewFixedTimeoutRetryStrategy(props FixedTimeoutRetryStrategyProps) Strategy {
@@ -44,9 +51,9 @@ func NewFixedTimeoutRetryStrategy(props FixedTimeoutRetryStrategyProps) Strategy
 	if props.EligibilityStrategy != nil {
 		eligibilityStrategy = props.EligibilityStrategy
 	}
-	responseDataReceivedTimeoutMillis := DefaultResponseDataReceivedTimeoutMillis
-	if props.ResponseDataReceivedTimeoutMillis != 0 {
-		responseDataReceivedTimeoutMillis = props.ResponseDataReceivedTimeoutMillis
+	retryTimeoutMillis := DefaultRetryTimeoutMillis
+	if props.RetryTimeoutMillis != 0 {
+		retryTimeoutMillis = props.RetryTimeoutMillis
 	}
 	retryDelayIntervalMillis := DefaultRetryDelayIntervalMillis
 	if props.RetryDelayIntervalMillis != 0 {
@@ -60,42 +67,42 @@ func NewFixedTimeoutRetryStrategy(props FixedTimeoutRetryStrategyProps) Strategy
 	}
 
 	return &fixedTimeoutRetryStrategy{
-		eligibilityStrategy:               eligibilityStrategy,
-		log:                               log,
-		responseDataReceivedTimeoutMillis: responseDataReceivedTimeoutMillis,
-		retryDelayIntervalMillis:          retryDelayIntervalMillis,
+		eligibilityStrategy:      eligibilityStrategy,
+		log:                      log,
+		retryTimeoutMillis:       retryTimeoutMillis,
+		retryDelayIntervalMillis: retryDelayIntervalMillis,
 	}
 }
 
-func (r *fixedTimeoutRetryStrategy) WithResponseDataReceivedTimeoutMillis(timeout int) Strategy {
+func (r *fixedTimeoutRetryStrategy) WithRetryTimeoutMillis(timeout int) Strategy {
 	return &fixedTimeoutRetryStrategy{
-		log:                               r.log,
-		eligibilityStrategy:               r.eligibilityStrategy,
-		responseDataReceivedTimeoutMillis: timeout,
-		retryDelayIntervalMillis:          r.retryDelayIntervalMillis,
+		log:                      r.log,
+		eligibilityStrategy:      r.eligibilityStrategy,
+		retryTimeoutMillis:       timeout,
+		retryDelayIntervalMillis: r.retryDelayIntervalMillis,
 	}
 }
 
 func (r *fixedTimeoutRetryStrategy) WithRetryDelayIntervalMillis(delay int) Strategy {
 	return &fixedTimeoutRetryStrategy{
-		log:                               r.log,
-		eligibilityStrategy:               r.eligibilityStrategy,
-		responseDataReceivedTimeoutMillis: r.responseDataReceivedTimeoutMillis,
-		retryDelayIntervalMillis:          delay,
+		log:                      r.log,
+		eligibilityStrategy:      r.eligibilityStrategy,
+		retryTimeoutMillis:       r.retryTimeoutMillis,
+		retryDelayIntervalMillis: delay,
 	}
 }
 
 func (r *fixedTimeoutRetryStrategy) WithEligibilityStrategy(strategy EligibilityStrategy) Strategy {
 	return &fixedTimeoutRetryStrategy{
-		log:                               r.log,
-		eligibilityStrategy:               strategy,
-		responseDataReceivedTimeoutMillis: r.responseDataReceivedTimeoutMillis,
-		retryDelayIntervalMillis:          r.retryDelayIntervalMillis,
+		log:                      r.log,
+		eligibilityStrategy:      strategy,
+		retryTimeoutMillis:       r.retryTimeoutMillis,
+		retryDelayIntervalMillis: r.retryDelayIntervalMillis,
 	}
 }
 
 func (r *fixedTimeoutRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) time.Time {
-	deadlineOffset := time.Duration(r.responseDataReceivedTimeoutMillis) * time.Millisecond
+	deadlineOffset := time.Duration(r.retryTimeoutMillis) * time.Millisecond
 	deadline := time.Now().Add(deadlineOffset)
 	if deadline.After(overallDeadline) {
 		deadline = overallDeadline
@@ -149,9 +156,9 @@ func addJitter(whenToRetry int) int {
 
 func (r *fixedTimeoutRetryStrategy) String() string {
 	return fmt.Sprintf(
-		"fixedTimeoutRetryStrategy{eligibilityStrategy=%v, responseDataReceivedTimeoutMillis=%v, retryDelayIntervalMillis=%v}",
+		"fixedTimeoutRetryStrategy{eligibilityStrategy=%v, retryTimeoutMillis=%v, retryDelayIntervalMillis=%v}",
 		r.eligibilityStrategy,
-		r.responseDataReceivedTimeoutMillis,
+		r.retryTimeoutMillis,
 		r.retryDelayIntervalMillis,
 	)
 }

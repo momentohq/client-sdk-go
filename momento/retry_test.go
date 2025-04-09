@@ -27,9 +27,9 @@ import (
 )
 
 const (
-	CLIENT_TIMEOUT_MILLIS                 = 5 * time.Second
-	RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS = 1000
-	RETRY_DELAY_INTERVAL_MILLIS           = 100
+	CLIENT_TIMEOUT              = 5 * time.Second
+	RETRY_TIMEOUT_MILLIS        = 1000
+	RETRY_DELAY_INTERVAL_MILLIS = 100
 )
 
 var (
@@ -553,9 +553,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			It("should not retry if the status code is not retryable", func() {
 				status := "unknown"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       RETRY_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
@@ -566,7 +566,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 				setResponse, err := cacheClient.Set(context.Background(), &SetRequest{
 					CacheName: cacheName,
@@ -582,9 +582,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			It("should not retry if the rpc is not retryable", func() {
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       RETRY_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
@@ -595,7 +595,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 				incrResponse, err := cacheClient.DictionaryIncrement(context.Background(), &DictionaryIncrementRequest{
 					CacheName:      cacheName,
@@ -623,7 +623,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
@@ -636,7 +636,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 
 				// Should immediately receive errors and retry every DefaultRetryDelayIntervalMillis
 				// until the client timeout is reached.
-				maxAttempts := CLIENT_TIMEOUT_MILLIS / retry.DefaultRetryDelayIntervalMillis
+				maxAttempts := CLIENT_TIMEOUT / retry.DefaultRetryDelayIntervalMillis
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
 
@@ -648,9 +648,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			It("should retry until client timeout when responses have no delays during full outage", func() {
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       RETRY_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
@@ -661,7 +661,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
@@ -674,7 +674,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 
 				// Should immediately receive errors and retry every DefaultRetryDelayIntervalMillis
 				// until the client timeout is reached.
-				maxAttempts := CLIENT_TIMEOUT_MILLIS / RETRY_DELAY_INTERVAL_MILLIS
+				maxAttempts := CLIENT_TIMEOUT / RETRY_DELAY_INTERVAL_MILLIS
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
 
@@ -690,9 +690,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			It("should retry until client timeout when responses have short delays during full outage", func() {
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       RETRY_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				shortDelay := RETRY_DELAY_INTERVAL_MILLIS + 100
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
@@ -706,7 +706,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
@@ -720,7 +720,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// Should receive errors after shortDelay ms and retry every RETRY_DELAY_INTERVAL_MILLIS
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + shortDelay
-				maxAttempts := int(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / delayBetweenAttempts
+				maxAttempts := int(CLIENT_TIMEOUT.Milliseconds()) / delayBetweenAttempts
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically(">=", 2))
 
@@ -736,13 +736,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			It("should retry until client timeout when responses have long delays during full outage", func() {
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       RETRY_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				// Momento-local should delay responses for longer than the retry timeout so that
 				// we can test the retry strategy's timeout is actually being respected.
-				longDelay := RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS + 500
+				longDelay := RETRY_TIMEOUT_MILLIS + 500
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
 						ReturnError:  &status,
@@ -754,7 +754,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
@@ -768,7 +768,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// Should receive errors after longDelay ms and retry every RETRY_DELAY_INTERVAL_MILLIS
 				// until the client timeout is reached.
 				delayBetweenAttempts := RETRY_DELAY_INTERVAL_MILLIS + longDelay
-				maxAttempts := math.Ceil(float64(CLIENT_TIMEOUT_MILLIS.Milliseconds()) / float64(delayBetweenAttempts))
+				maxAttempts := math.Ceil(float64(CLIENT_TIMEOUT.Milliseconds()) / float64(delayBetweenAttempts))
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(BeNumerically("<=", maxAttempts))
 
 				// Fixed timeout retry strategy should retry at least twice.
@@ -779,7 +779,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// Jitter will contribute +/- 10% of the delay between retry attempts.
 				// The expected delay here is not longDelay because the retry strategy's timeout is
 				// shorter than that and retry attempts should stop before longDelay is reached.
-				expectedDelayBetweenAttempts := float64(RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS + RETRY_DELAY_INTERVAL_MILLIS)
+				expectedDelayBetweenAttempts := float64(RETRY_TIMEOUT_MILLIS + RETRY_DELAY_INTERVAL_MILLIS)
 				maxDelay := expectedDelayBetweenAttempts * 1.1
 				minDelay := expectedDelayBetweenAttempts * 0.9
 				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
@@ -791,9 +791,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			It("should retry until partial outage is resolved", func() {
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: RESPONSE_DATA_RECEIVED_TIMEOUT_MILLIS,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       RETRY_TIMEOUT_MILLIS,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				errCount := 3
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
@@ -806,7 +806,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
 				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 					retryMiddleware,
-				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT_MILLIS)
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
 				setupCacheClient(clientConfig)
 
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
@@ -834,9 +834,9 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				response_delay := 1000
 				status := "unavailable"
 				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
-					LoggerFactory:                     momento_default_logger.DefaultMomentoLoggerFactory{},
-					ResponseDataReceivedTimeoutMillis: response_data_received_timeout_millis,
-					RetryDelayIntervalMillis:          RETRY_DELAY_INTERVAL_MILLIS,
+					LoggerFactory:            momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis:       response_data_received_timeout_millis,
+					RetryDelayIntervalMillis: RETRY_DELAY_INTERVAL_MILLIS,
 				})
 				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
 					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
