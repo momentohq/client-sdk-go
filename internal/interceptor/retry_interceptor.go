@@ -11,15 +11,18 @@ import (
 )
 
 // AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy.
-func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string), clientTimeout time.Duration) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
+
+		// Make note of the overall deadline using the context.
+		// If for some reason the context has no deadline, use the client timeout.
 		var overallDeadline time.Time
 		deadline, ok := ctx.Deadline()
 		if ok {
 			overallDeadline = deadline
 		} else {
-			overallDeadline = time.Now().Add(5 * time.Second)
+			overallDeadline = time.Now().Add(clientTimeout)
 		}
 
 		for {
