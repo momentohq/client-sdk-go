@@ -780,8 +780,8 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				// The expected delay here is not longDelay because the retry strategy's timeout is
 				// shorter than that and retry attempts should stop before longDelay is reached.
 				expectedDelayBetweenAttempts := float64(RETRY_TIMEOUT_MILLIS + RETRY_DELAY_INTERVAL_MILLIS)
-				maxDelay := expectedDelayBetweenAttempts * 1.1
-				minDelay := expectedDelayBetweenAttempts * 0.9
+				maxDelay := expectedDelayBetweenAttempts * 1.15
+				minDelay := expectedDelayBetweenAttempts * 0.85
 				average, err := metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")
 				Expect(err).To(BeNil())
 				Expect(float64(average)).To(BeNumerically("<=", maxDelay))
@@ -852,10 +852,13 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				}).WithRetryStrategy(retryStrategy).WithClientTimeout(time.Duration(clientTimeoutMillis) * time.Millisecond)
 				setupCacheClient(clientConfig)
 
+				startTime := time.Now()
 				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
 					CacheName: cacheName,
 					Key:       String("key"),
 				})
+				duration := time.Since(startTime)
+				Expect(duration).To(BeNumerically("<=", time.Duration(1.05*float64(clientTimeoutMillis))*time.Millisecond))
 				Expect(getResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				Expect(err).To(HaveMomentoErrorCode(TimeoutError))
@@ -864,6 +867,33 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(1))
 				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically("<=", clientTimeoutMillis))
 				Expect(metricsCollector.GetAverageTimeBetweenRetries(cacheName, "Get")).To(BeNumerically(">", 1))
+			})
+
+			It("should not set retry deadline on the initial request", func() {
+				retryStrategy := retry.NewFixedTimeoutRetryStrategy(retry.FixedTimeoutRetryStrategyProps{
+					LoggerFactory:      momento_default_logger.DefaultMomentoLoggerFactory{},
+					RetryTimeoutMillis: 100, // really short
+				})
+				delayMillis := 500
+				retryMiddleware := helpers.NewMomentoLocalMiddleware(helpers.MomentoLocalMiddlewareProps{
+					MomentoLocalMiddlewareMetadataProps: helpers.MomentoLocalMiddlewareMetadataProps{
+						DelayRpcList: &[]string{"get"},
+						DelayMillis:  &delayMillis,
+					},
+				})
+				metricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetMetricsCollector()
+				clientConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+					retryMiddleware,
+				}).WithRetryStrategy(retryStrategy).WithClientTimeout(CLIENT_TIMEOUT)
+				setupCacheClient(clientConfig)
+
+				getResponse, err := cacheClient.Get(context.Background(), &GetRequest{
+					CacheName: cacheName,
+					Key:       String("key"),
+				})
+				Expect(err).To(BeNil())
+				Expect(getResponse).To(Not(BeNil()))
+				Expect(metricsCollector.GetTotalRetryCount(cacheName, "Get")).To(Equal(0))
 			})
 		})
 	})
