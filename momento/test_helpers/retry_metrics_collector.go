@@ -41,10 +41,8 @@ func (r *retryMetrics) GetTotalRetryCount(cacheName string, requestName string) 
 	return 0, fmt.Errorf("request name '%s' is not valid", requestName)
 }
 
-// GetAverageTimeBetweenRetries returns the average time between retries in seconds.
-//
-//	Limited to second resolution, but I can obviously change that if desired.
-//	This tracks with the JS implementation.
+// GetAverageTimeBetweenRetries returns the average time between retries in milliseconds.
+// OnInterceptorRequest in momento_local_middleware.go records Unix timestamps in milliseconds.
 func (r *retryMetrics) GetAverageTimeBetweenRetries(cacheName string, requestName string) (int64, error) {
 	if _, ok := r.data[cacheName]; !ok {
 		return int64(0), fmt.Errorf("cache name '%s' is not valid", cacheName)

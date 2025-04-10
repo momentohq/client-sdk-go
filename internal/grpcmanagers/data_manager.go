@@ -34,7 +34,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 	}
 
 	headerInterceptors := []grpc.UnaryClientInterceptor{
-		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy, onRequestCallback),
+		interceptor.AddUnaryRetryInterceptor(request.RetryStrategy, onRequestCallback, request.GrpcConfiguration.GetDeadline()),
 		interceptor.AddReadConcernHeaderInterceptor(request.ReadConcern),
 		interceptor.AddAuthHeadersInterceptor(authToken),
 	}

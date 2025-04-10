@@ -11,16 +11,37 @@ import (
 )
 
 // AddUnaryRetryInterceptor returns a unary interceptor that will retry the request based on the retry strategy.
-func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string)) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, string), clientTimeout time.Duration) func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		attempt := 1
+
+		// Make note of the overall deadline using the context.
+		// If for some reason the context has no deadline, use the client timeout.
+		var overallDeadline time.Time
+		deadline, ok := ctx.Deadline()
+		if ok {
+			overallDeadline = deadline
+		} else {
+			overallDeadline = time.Now().Add(clientTimeout)
+		}
+
 		for {
 			// This is currently used for testing purposes only by the RetryMetricsMiddleware.
 			if onRequest != nil {
 				onRequest(ctx, method)
 			}
+
+			// If a retry strategy overwrites the deadline for a retry attempt, use the new deadline.
+			// Otherwise, use the given context and deadline.
+			retryCtx := ctx
+			if retryDeadline := s.CalculateRetryDeadline(overallDeadline); retryDeadline != nil {
+				ctxWithRetryDeadline, cancel := context.WithDeadline(ctx, *retryDeadline)
+				defer cancel()
+				retryCtx = ctxWithRetryDeadline
+			}
+
 			// Execute api call
-			lastErr := invoker(ctx, method, req, reply, cc, opts...)
+			lastErr := invoker(retryCtx, method, req, reply, cc, opts...)
 			if lastErr == nil {
 				// Success no error returned stop interceptor
 				return nil
@@ -33,9 +54,10 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 
 			// Check retry eligibility based off last error received
 			retryBackoffTime := s.DetermineWhenToRetry(retry.StrategyProps{
-				GrpcStatusCode: status.Code(lastErr),
-				GrpcMethod:     method,
-				AttemptNumber:  attempt,
+				GrpcStatusCode:  status.Code(lastErr),
+				GrpcMethod:      method,
+				AttemptNumber:   attempt,
+				OverallDeadline: overallDeadline,
 			})
 
 			if retryBackoffTime == nil {

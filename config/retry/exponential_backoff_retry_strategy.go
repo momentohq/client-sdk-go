@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -156,4 +157,8 @@ func randInRange(min, max int) int {
 		return min
 	}
 	return rand.Intn(max-min) + min
+}
+
+func (r *exponentialBackoffRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) *time.Time {
+	return nil
 }
