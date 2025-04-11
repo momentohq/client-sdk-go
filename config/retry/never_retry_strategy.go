@@ -1,7 +1,5 @@
 package retry
 
-import "time"
-
 type neverRetryStrategy struct{}
 
 func (r *neverRetryStrategy) DetermineWhenToRetry(_ StrategyProps) *int {
@@ -15,8 +13,4 @@ func (r *neverRetryStrategy) String() string {
 // NewNeverRetryStrategy is a retry strategy that never retries any request
 func NewNeverRetryStrategy() Strategy {
 	return &neverRetryStrategy{}
-}
-
-func (r *neverRetryStrategy) CalculateRetryDeadline(_ time.Time) *time.Time {
-	return nil
 }

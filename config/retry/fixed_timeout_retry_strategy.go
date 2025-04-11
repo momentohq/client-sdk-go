@@ -29,7 +29,7 @@ type fixedTimeoutRetryStrategy struct {
 // is reached. After the initial request fails, the next retry will be scheduled for retryDelayIntervalMillis
 // from the current time, and the retried request will timeout after retryTimeoutMillis if there is no response.
 type FixedTimeoutRetryStrategy interface {
-	Strategy
+	DeadlineAwareRetryStrategy
 	WithRetryTimeoutMillis(timeout int) Strategy
 	WithRetryDelayIntervalMillis(delay int) Strategy
 	WithEligibilityStrategy(s EligibilityStrategy) Strategy
@@ -99,13 +99,13 @@ func (r *fixedTimeoutRetryStrategy) WithEligibilityStrategy(strategy Eligibility
 
 // CalculateRetryDeadline calculates the deadline for a retry attempt using the retry timeout,
 // but clips it to the overall deadline if the overall deadline is sooner.
-func (r *fixedTimeoutRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) *time.Time {
+func (r *fixedTimeoutRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) time.Time {
 	deadlineOffset := time.Duration(r.retryTimeoutMillis) * time.Millisecond
 	deadline := time.Now().Add(deadlineOffset)
 	if deadline.After(overallDeadline) {
 		deadline = overallDeadline
 	}
-	return &deadline
+	return deadline
 }
 
 func (r *fixedTimeoutRetryStrategy) DetermineWhenToRetry(props StrategyProps) *int {

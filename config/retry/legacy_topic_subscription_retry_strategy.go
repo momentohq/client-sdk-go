@@ -2,7 +2,6 @@ package retry
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
@@ -70,8 +69,4 @@ func NewLegacyTopicSubscriptionRetryStrategy(props LegacyTopicSubscriptionRetryS
 		log:     log,
 		retryMs: retryMs,
 	}
-}
-
-func (r *legacyTopicSubscriptionRetryStrategy) CalculateRetryDeadline(overallDeadline time.Time) *time.Time {
-	return nil
 }
