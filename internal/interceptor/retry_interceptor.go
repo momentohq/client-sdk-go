@@ -31,12 +31,13 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 				onRequest(ctx, method)
 			}
 
-			// If a retry strategy overwrites the deadline for a retry attempt, use the new deadline.
+			// If a DeadlineAwareRetryStrategy overwrites the deadline for a retry attempt, use the new deadline.
 			// Otherwise, use the given context and deadline.
 			retryCtx := ctx
 			if attempt > 1 {
-				if retryDeadline := s.CalculateRetryDeadline(overallDeadline); retryDeadline != nil {
-					ctxWithRetryDeadline, cancel := context.WithDeadline(ctx, *retryDeadline)
+				if deadlineAwareStrategy, ok := s.(retry.DeadlineAwareRetryStrategy); ok {
+					retryDeadline := deadlineAwareStrategy.CalculateRetryDeadline(overallDeadline)
+					ctxWithRetryDeadline, cancel := context.WithDeadline(ctx, retryDeadline)
 					defer cancel()
 					retryCtx = ctxWithRetryDeadline
 				}
