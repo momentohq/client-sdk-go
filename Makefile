@@ -6,7 +6,7 @@
 	vendor build-examples run-docs-examples
 
 GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aws-lambda/infrastructure/*")
-TEST_DIRS = momento/ auth/ batchutils/ config/middleware/impl/
+TEST_DIRS = momento/ auth/ batchutils/ client-sdk-go-compression-zstd/
 GINKGO_OPTS = --no-color -v
 
 install-goimport:
@@ -149,10 +149,6 @@ test-retry: install-ginkgo
 	# Note: all retry tests are currently momento-local tests, but we pass the redundant label filter
 	#  so the test suite can know we need a momento-local credential provider
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "retry && momento-local" ${TEST_DIRS}
-
-test-middleware: install-ginkgo
-	@echo "Testing middleware implementations..."
-	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter middleware-impl ${TEST_DIRS}
 
 test-http-service:
 	@echo "No tests for http service."

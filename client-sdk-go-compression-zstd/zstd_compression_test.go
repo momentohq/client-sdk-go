@@ -1,4 +1,4 @@
-package impl_test
+package zstd_compression_test
 
 import (
 	"context"
@@ -8,17 +8,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/klauspost/compress/zstd"
 	"github.com/momentohq/client-sdk-go/auth"
+	zstd_compression "github.com/momentohq/client-sdk-go/client-sdk-go-compression-zstd"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
-	"github.com/momentohq/client-sdk-go/config/middleware/impl"
 	. "github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-const MIDDLEWARE_IMPL_LABEL = "middleware-impl"
 
 var (
 	testCtx     context.Context
@@ -55,7 +53,7 @@ func getCompressableString() string {
 	return fmt.Sprintf("%s %s", longString, uuid.NewString())
 }
 
-var _ = Describe("middleware-impl zstd-compression", Label(MIDDLEWARE_IMPL_LABEL), func() {
+var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 	BeforeEach(func() {
 		testCtx = context.Background()
 		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
@@ -71,7 +69,7 @@ var _ = Describe("middleware-impl zstd-compression", Label(MIDDLEWARE_IMPL_LABEL
 	Describe("should compress and decompress when IncludeTypes is not specified", func() {
 		It("should successfully set and get a value", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				impl.NewZstdCompressionMiddleware(impl.ZstdCompressionMiddlewareProps{
+				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
 					Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("zstd-test"),
 					CompressionLevel: zstd.SpeedBetterCompression,
 				}),
@@ -96,7 +94,7 @@ var _ = Describe("middleware-impl zstd-compression", Label(MIDDLEWARE_IMPL_LABEL
 
 		It("should successfully setIf and get a value", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				impl.NewZstdCompressionMiddleware(impl.ZstdCompressionMiddlewareProps{
+				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
 					Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("zstd-test"),
 					CompressionLevel: zstd.SpeedBetterCompression,
 				}),
@@ -138,7 +136,7 @@ var _ = Describe("middleware-impl zstd-compression", Label(MIDDLEWARE_IMPL_LABEL
 
 		It("should successfully setWithHash and getWithHash", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				impl.NewZstdCompressionMiddleware(impl.ZstdCompressionMiddlewareProps{
+				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
 					Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("zstd-test"),
 					CompressionLevel: zstd.SpeedBetterCompression,
 				}),
@@ -167,7 +165,7 @@ var _ = Describe("middleware-impl zstd-compression", Label(MIDDLEWARE_IMPL_LABEL
 
 		It("should successfully setIfHash and getWithHash", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				impl.NewZstdCompressionMiddleware(impl.ZstdCompressionMiddlewareProps{
+				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
 					Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("zstd-test"),
 					CompressionLevel: zstd.SpeedBetterCompression,
 				}),
@@ -223,7 +221,7 @@ var _ = Describe("middleware-impl zstd-compression", Label(MIDDLEWARE_IMPL_LABEL
 	Describe("should compress and decompress when IncludeTypes is specified", func() {
 		It("should successfully set and get a value without compression when not included", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				impl.NewZstdCompressionMiddleware(impl.ZstdCompressionMiddlewareProps{
+				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
 					Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.DEBUG).GetLogger("zstd-test"),
 					CompressionLevel: zstd.SpeedBetterCompression,
 					IncludeTypes: []interface{}{

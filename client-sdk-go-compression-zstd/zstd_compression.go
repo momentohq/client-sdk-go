@@ -1,4 +1,4 @@
-package impl
+package zstd_compression
 
 import (
 	"fmt"
