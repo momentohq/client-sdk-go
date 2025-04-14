@@ -3,6 +3,7 @@ package impl
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/binary"
 	"io"
 
 	"github.com/momentohq/client-sdk-go/config/compression"
@@ -31,6 +32,10 @@ type gzipCompressor struct {
 	compressionLevel int
 }
 
+// The byte sequence that begins a gzip compressed data frame.
+// https://loc.gov/preservation/digital/formats/fdd/fdd000599.shtml#sign
+const MAGIC_NUMBER = 0x1f8b
+
 func (c gzipCompressor) Compress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	gzWriter, err := gzip.NewWriterLevel(&buf, c.compressionLevel)
@@ -58,7 +63,19 @@ func (c gzipCompressor) Decompress(data []byte) ([]byte, error) {
 	}
 	defer reader.Close()
 
-	return io.ReadAll(reader)
+	if isGzipCompressed(data) {
+		return io.ReadAll(reader)
+	}
+	return data, nil
+}
+
+func isGzipCompressed(data []byte) bool {
+	if len(data) < 2 {
+		return false
+	}
+	// Extract the first 2 bytes in little endian order to compare
+	// to the magic number.
+	return binary.LittleEndian.Uint16(data[:2]) == MAGIC_NUMBER
 }
 
 type GzipCompressionMiddlewareProps struct {

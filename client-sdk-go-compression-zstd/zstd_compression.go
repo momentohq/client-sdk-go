@@ -1,6 +1,8 @@
 package zstd_compression
 
 import (
+	"encoding/binary"
+
 	"github.com/klauspost/compress/zstd"
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -34,12 +36,28 @@ type zstdCompressor struct {
 	decoder *zstd.Decoder
 }
 
+// The byte sequence that begins a ZSTD compressed data frame.
+// https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md
+const MAGIC_NUMBER = 0xfd2fb528
+
 func (c zstdCompressor) Compress(data []byte) ([]byte, error) {
 	return c.encoder.EncodeAll(data, nil), nil
 }
 
 func (c zstdCompressor) Decompress(data []byte) ([]byte, error) {
-	return c.decoder.DecodeAll(data, nil)
+	if isZstdCompressed(data) {
+		return c.decoder.DecodeAll(data, nil)
+	}
+	return data, nil
+}
+
+func isZstdCompressed(data []byte) bool {
+	if len(data) < 4 {
+		return false
+	}
+	// Extract the first 4 bytes in little endian order to compare
+	// to the magic number.
+	return binary.LittleEndian.Uint32(data[:4]) == MAGIC_NUMBER
 }
 
 type ZstdCompressionMiddlewareProps struct {
