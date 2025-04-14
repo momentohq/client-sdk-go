@@ -56,16 +56,19 @@ func (c gzipCompressor) Compress(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (c gzipCompressor) Decompress(data []byte) ([]byte, error) {
+func (c gzipCompressor) Decompress(data []byte, logger logger.MomentoLogger) ([]byte, error) {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
+		logger.Error("Failed to create gzip reader", "error", err)
 		return nil, err
 	}
 	defer reader.Close()
 
 	if isGzipCompressed(data) {
+		logger.Trace("Decompressing gzip compressed data")
 		return io.ReadAll(reader)
 	}
+	logger.Trace("Data is not gzip compressed, passing through")
 	return data, nil
 }
 

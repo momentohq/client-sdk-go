@@ -66,7 +66,7 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 
 	// Some happy-path tests to verify set/get methods still work even when compression middleware is enabled
 	// and no IncludeTypes are specified to narrow down the types of requests that should be compressed.
-	Describe("should compress and decompress when IncludeTypes is not specified", func() {
+	Describe("when IncludeTypes is not specified", func() {
 		It("should successfully set and get a value", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
@@ -226,7 +226,7 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 
 	// Some tests to verify set/get methods still work even when compression middleware is enabled and
 	// IncludeTypes is specified to narrow down the types of requests that should be compressed.
-	Describe("should compress and decompress when IncludeTypes is specified", func() {
+	Describe("when IncludeTypes is specified", func() {
 		It("should successfully set and get a value without compression when not included", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
@@ -281,6 +281,38 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 			Expect(getResp).To(BeAssignableToTypeOf(&responses.GetWithHashHit{}))
 			Expect(getResp.(*responses.GetWithHashHit).ValueString()).To(Equal(value))
 			Expect(getResp.(*responses.GetWithHashHit).HashByte()).To(Equal(hash))
+		})
+
+		It("should not decompress when response was not compressed", func() {
+			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
+					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
+					CompressorProps: compression.CompressionStrategyProps{
+						CompressionLevel: compression.CompressionLevelDefault,
+					},
+					IncludeTypes: []interface{}{
+						GetRequest{}, // try to decompress without any compression
+					},
+				}),
+			}))
+
+			value := "some-value"
+			_, err := cacheClient.Set(testCtx, &SetRequest{
+				CacheName: cacheName,
+				Key:       String("key"),
+				Value:     String(value),
+			})
+			Expect(err).To(BeNil())
+
+			// should still be able to fetch, attempted decompression should be a no-op,
+			// trace logs should indicate that decompression was not performed
+			resp, err := cacheClient.Get(testCtx, &GetRequest{
+				CacheName: cacheName,
+				Key:       String("key"),
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
+			Expect(resp.(*responses.GetHit).ValueString()).To(Equal(value))
 		})
 	})
 })

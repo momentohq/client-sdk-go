@@ -1,8 +1,10 @@
 package compression
 
+import "github.com/momentohq/client-sdk-go/config/logger"
+
 type CompressionStrategy interface {
 	Compress(data []byte) ([]byte, error)
-	Decompress(data []byte) ([]byte, error)
+	Decompress(data []byte, logger logger.MomentoLogger) ([]byte, error)
 }
 
 type CompressionStrategyProps struct {

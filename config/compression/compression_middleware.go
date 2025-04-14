@@ -181,7 +181,7 @@ func (rh *CompressionMiddlewareRequestHandler) OnResponse(resp interface{}) (int
 	switch r := resp.(type) {
 	case *responses.GetHit:
 		rawData := r.ValueByte()
-		decompressed, err := rh.compressor.Decompress(rawData)
+		decompressed, err := rh.compressor.Decompress(rawData, rh.GetLogger())
 		if err != nil {
 			return nil, fmt.Errorf("failed to decompress response: %v", err)
 		}
@@ -189,7 +189,7 @@ func (rh *CompressionMiddlewareRequestHandler) OnResponse(resp interface{}) (int
 		return responses.NewGetHit(decompressed), nil
 	case *responses.GetWithHashHit:
 		rawData := r.ValueByte()
-		decompressed, err := rh.compressor.Decompress(rawData)
+		decompressed, err := rh.compressor.Decompress(rawData, rh.GetLogger())
 		if err != nil {
 			return nil, fmt.Errorf("failed to decompress response: %v", err)
 		}

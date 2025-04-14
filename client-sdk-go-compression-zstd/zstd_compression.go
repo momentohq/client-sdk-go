@@ -44,10 +44,12 @@ func (c zstdCompressor) Compress(data []byte) ([]byte, error) {
 	return c.encoder.EncodeAll(data, nil), nil
 }
 
-func (c zstdCompressor) Decompress(data []byte) ([]byte, error) {
+func (c zstdCompressor) Decompress(data []byte, logger logger.MomentoLogger) ([]byte, error) {
 	if isZstdCompressed(data) {
+		logger.Trace("Decompressing ZSTD compressed data")
 		return c.decoder.DecodeAll(data, nil)
 	}
+	logger.Trace("Data is not ZSTD compressed, passing through")
 	return data, nil
 }
 
