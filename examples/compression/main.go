@@ -30,13 +30,6 @@ func main() {
 	}
 
 	// Initialize Momento client with gzip compression middleware.
-	//
-	// The optional IncludeTypes parameter is used to specify the types of requests that
-	// should be compressed and allows the middleware to ignore all other request types.
-	//
-	// Omit the IncludeTypes parameter to compress all scalar requests handled by the
-	// base compression middleware:
-	// https://github.com/momentohq/client-sdk-go/blob/main/config/middleware/impl/compression_middleware.go
 	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE)
 	myConfig := config.LaptopLatestWithLogger(loggerFactory).WithMiddleware(
 		[]middleware.Middleware{
@@ -44,12 +37,6 @@ func main() {
 				CompressionStrategyProps: compression.CompressionStrategyProps{
 					CompressionLevel: compression.CompressionLevelDefault,
 					Logger:           loggerFactory.GetLogger("compression-middleware"),
-				},
-				IncludeTypes: []interface{}{
-					momento.SetRequest{},
-					momento.GetRequest{},
-					momento.SetIfAbsentOrHashEqualRequest{},
-					momento.GetWithHashRequest{},
 				},
 			}),
 		},
