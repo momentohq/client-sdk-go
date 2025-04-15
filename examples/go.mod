@@ -10,11 +10,12 @@ require (
 	github.com/loov/hrtime v1.0.3
 	github.com/momentohq/client-sdk-go v1.36.0
 
+	// zstd compression middleware
+	github.com/momentohq/client-sdk-go-compression-zstd v0.1.0
+
 	// logrus is not required to use momento, but it is used in the logging-example
 	github.com/sirupsen/logrus v1.9.0
 )
-
-require github.com/momentohq/client-sdk-go-compression-zstd v0.1.0
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
