@@ -1,6 +1,6 @@
 # Compression Middleware Example
 
-This example shows you how to enable gzip compression middleware on scalar read and write requests.
+This example shows you how to enable zstd compression middleware on scalar read and write requests.
 
 To run the example:
 
