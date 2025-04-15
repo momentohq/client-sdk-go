@@ -8,8 +8,10 @@ import (
 
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/middleware/impl"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -27,14 +29,22 @@ func main() {
 		panic(err)
 	}
 
-	// Initialize Momento client with compression middleware.
+	// Initialize Momento client with gzip compression middleware.
+	//
 	// The optional IncludeTypes parameter is used to specify the types of requests that
 	// should be compressed and allows the middleware to ignore all other request types.
-	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.INFO)
+	//
+	// Omit the IncludeTypes parameter to compress all scalar requests handled by the
+	// base compression middleware:
+	// https://github.com/momentohq/client-sdk-go/blob/main/config/middleware/impl/compression_middleware.go
+	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE)
 	myConfig := config.LaptopLatestWithLogger(loggerFactory).WithMiddleware(
 		[]middleware.Middleware{
-			NewCompressionMiddleware(middleware.Props{
-				Logger: loggerFactory.GetLogger("compression-middleware"),
+			impl.NewGzipCompressionMiddleware(impl.GzipCompressionMiddlewareProps{
+				CompressionStrategyProps: compression.CompressionStrategyProps{
+					CompressionLevel: compression.CompressionLevelDefault,
+					Logger:           loggerFactory.GetLogger("compression-middleware"),
+				},
 				IncludeTypes: []interface{}{
 					momento.SetRequest{},
 					momento.GetRequest{},
@@ -44,6 +54,7 @@ func main() {
 			}),
 		},
 	)
+
 	client, err := momento.NewCacheClientWithEagerConnectTimeout(
 		myConfig,
 		credentialProvider,
