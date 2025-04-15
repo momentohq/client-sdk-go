@@ -27,6 +27,7 @@ func (f ZstdCompressorFactory) NewCompressionStrategy(props compression.Compress
 	return zstdCompressor{
 		encoder: encoder,
 		decoder: decoder,
+		logger:  props.Logger,
 	}
 }
 
@@ -35,29 +36,29 @@ func (f ZstdCompressorFactory) NewCompressionStrategy(props compression.Compress
 type zstdCompressor struct {
 	encoder *zstd.Encoder
 	decoder *zstd.Decoder
+	logger  logger.MomentoLogger
 }
 
 // The byte sequence that begins a ZSTD compressed data frame.
 // https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md
 const MAGIC_NUMBER = 0xfd2fb528
 
-func (c zstdCompressor) Compress(data []byte, logger logger.MomentoLogger, requestType string) ([]byte, error) {
+func (c zstdCompressor) Compress(data []byte) ([]byte, error) {
 	compressed := c.encoder.EncodeAll(data, nil)
-	logger.Info("Compressed request %s: %d bytes -> %d bytes", requestType, len(data), len(compressed))
+	c.logger.Trace("Compressed request: %d bytes -> %d bytes", len(data), len(compressed))
 	return compressed, nil
 }
 
-func (c zstdCompressor) Decompress(data []byte, logger logger.MomentoLogger, requestType string) ([]byte, error) {
+func (c zstdCompressor) Decompress(data []byte) ([]byte, error) {
 	if isZstdCompressed(data) {
-		logger.Trace("Decompressing ZSTD compressed data")
 		decompressed, err := c.decoder.DecodeAll(data, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decompress response: %v", err)
 		}
-		logger.Info("Decompressed response %s: %d bytes -> %d bytes", requestType, len(data), len(decompressed))
+		c.logger.Trace("Decompressed response: %d bytes -> %d bytes", len(data), len(decompressed))
 		return decompressed, nil
 	}
-	logger.Trace("Data is not ZSTD compressed, passing through")
+	c.logger.Trace("Data is not ZSTD compressed, passing through")
 	return data, nil
 }
 
