@@ -1,22 +1,25 @@
-package compression
+package impl
 
 import (
 	"fmt"
 
+	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
+// CompressionMiddleware is the base type for a middleware that compresses and decompresses
+// scalar get and set requests and responses.
 type CompressionMiddleware struct {
 	middleware.Middleware
-	compressor CompressionStrategy
+	compressor compression.CompressionStrategy
 }
 
 type CompressionMiddlewareProps struct {
 	IncludeTypes             []interface{}
-	CompressionStrategyProps CompressionStrategyProps
-	CompressorFactory        CompressionStrategyFactory
+	CompressionStrategyProps compression.CompressionStrategyProps
+	CompressorFactory        compression.CompressionStrategyFactory
 }
 
 func NewCompressionMiddleware(props CompressionMiddlewareProps) middleware.Middleware {
@@ -33,10 +36,10 @@ func NewCompressionMiddleware(props CompressionMiddlewareProps) middleware.Middl
 
 type CompressionMiddlewareRequestHandler struct {
 	middleware.RequestHandler
-	compressor CompressionStrategy
+	compressor compression.CompressionStrategy
 }
 
-func NewCompressionMiddlewareRequestHandler(rh middleware.RequestHandler, compressor CompressionStrategy) middleware.RequestHandler {
+func NewCompressionMiddlewareRequestHandler(rh middleware.RequestHandler, compressor compression.CompressionStrategy) middleware.RequestHandler {
 	return &CompressionMiddlewareRequestHandler{rh, compressor}
 }
 

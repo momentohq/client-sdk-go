@@ -110,10 +110,10 @@ type GzipCompressionMiddlewareProps struct {
 //		CompressionLevel: gzip_compression.CompressionLevelFastest,
 //	})
 func NewGzipCompressionMiddleware(props GzipCompressionMiddlewareProps) middleware.Middleware {
-	compressionMiddlewareProps := compression.CompressionMiddlewareProps{
+	compressionMiddlewareProps := CompressionMiddlewareProps{
 		CompressorFactory:        GzipCompressorFactory{},
 		CompressionStrategyProps: props.CompressionStrategyProps,
 		IncludeTypes:             props.IncludeTypes,
 	}
-	return compression.NewCompressionMiddleware(compressionMiddlewareProps)
+	return NewCompressionMiddleware(compressionMiddlewareProps)
 }
