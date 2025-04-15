@@ -22,6 +22,10 @@ func (f ZstdCompressorFactory) NewCompressionStrategy(props compression.Compress
 		compressionLevel = zstd.SpeedBestCompression
 	}
 
+	if props.Logger == nil {
+		props.Logger = logger.NewNoopMomentoLoggerFactory().GetLogger("zstd-compression")
+	}
+
 	encoder, _ := zstd.NewWriter(nil, zstd.WithEncoderLevel(compressionLevel))
 	decoder, _ := zstd.NewReader(nil)
 	return zstdCompressor{
@@ -72,9 +76,8 @@ func isZstdCompressed(data []byte) bool {
 }
 
 type ZstdCompressionMiddlewareProps struct {
-	Logger          logger.MomentoLogger
-	IncludeTypes    []interface{}
-	CompressorProps compression.CompressionStrategyProps
+	IncludeTypes             []interface{}
+	CompressionStrategyProps compression.CompressionStrategyProps
 }
 
 // NewZstdCompressionMiddleware creates a new compression middleware that uses zstd.
@@ -86,10 +89,9 @@ type ZstdCompressionMiddlewareProps struct {
 //	})
 func NewZstdCompressionMiddleware(props ZstdCompressionMiddlewareProps) middleware.Middleware {
 	compressionMiddlewareProps := compression.CompressionMiddlewareProps{
-		CompressorFactory: ZstdCompressorFactory{},
-		CompressorProps:   props.CompressorProps,
-		Logger:            props.Logger,
-		IncludeTypes:      props.IncludeTypes,
+		CompressorFactory:        ZstdCompressorFactory{},
+		CompressionStrategyProps: props.CompressionStrategyProps,
+		IncludeTypes:             props.IncludeTypes,
 	}
 	return compression.NewCompressionMiddleware(compressionMiddlewareProps)
 }

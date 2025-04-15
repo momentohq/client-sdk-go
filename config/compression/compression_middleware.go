@@ -3,7 +3,6 @@ package compression
 import (
 	"fmt"
 
-	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
@@ -15,21 +14,17 @@ type CompressionMiddleware struct {
 }
 
 type CompressionMiddlewareProps struct {
-	Logger            logger.MomentoLogger
-	IncludeTypes      []interface{}
-	CompressorProps   CompressionStrategyProps
-	CompressorFactory CompressionStrategyFactory
+	IncludeTypes             []interface{}
+	CompressionStrategyProps CompressionStrategyProps
+	CompressorFactory        CompressionStrategyFactory
 }
 
 func NewCompressionMiddleware(props CompressionMiddlewareProps) middleware.Middleware {
 	mw := middleware.NewMiddleware(middleware.Props{
-		Logger:       props.Logger,
+		Logger:       props.CompressionStrategyProps.Logger,
 		IncludeTypes: props.IncludeTypes,
 	})
-	compressor := props.CompressorFactory.NewCompressionStrategy(CompressionStrategyProps{
-		CompressionLevel: props.CompressorProps.CompressionLevel,
-		Logger:           props.Logger,
-	})
+	compressor := props.CompressorFactory.NewCompressionStrategy(props.CompressionStrategyProps)
 	return &CompressionMiddleware{
 		Middleware: mw,
 		compressor: compressor,

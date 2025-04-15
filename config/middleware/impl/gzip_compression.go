@@ -22,6 +22,10 @@ func (f GzipCompressorFactory) NewCompressionStrategy(props compression.Compress
 		compressionLevel = gzip.BestCompression
 	}
 
+	if props.Logger == nil {
+		props.Logger = logger.NewNoopMomentoLoggerFactory().GetLogger("zstd-compression")
+	}
+
 	return gzipCompressor{
 		compressionLevel: compressionLevel,
 		logger:           props.Logger,
@@ -94,9 +98,8 @@ func isGzipCompressed(data []byte) bool {
 }
 
 type GzipCompressionMiddlewareProps struct {
-	Logger          logger.MomentoLogger
-	IncludeTypes    []interface{}
-	CompressorProps compression.CompressionStrategyProps
+	IncludeTypes             []interface{}
+	CompressionStrategyProps compression.CompressionStrategyProps
 }
 
 // NewGzipCompressionMiddleware creates a new compression middleware that uses gzip.
@@ -108,10 +111,9 @@ type GzipCompressionMiddlewareProps struct {
 //	})
 func NewGzipCompressionMiddleware(props GzipCompressionMiddlewareProps) middleware.Middleware {
 	compressionMiddlewareProps := compression.CompressionMiddlewareProps{
-		CompressorFactory: GzipCompressorFactory{},
-		CompressorProps:   props.CompressorProps,
-		Logger:            props.Logger,
-		IncludeTypes:      props.IncludeTypes,
+		CompressorFactory:        GzipCompressorFactory{},
+		CompressionStrategyProps: props.CompressionStrategyProps,
+		IncludeTypes:             props.IncludeTypes,
 	}
 	return compression.NewCompressionMiddleware(compressionMiddlewareProps)
 }

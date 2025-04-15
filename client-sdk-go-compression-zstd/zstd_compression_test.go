@@ -70,9 +70,9 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 		It("should successfully set and get a value", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
-					CompressorProps: compression.CompressionStrategyProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
 						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
 					},
 				}),
 			}))
@@ -97,9 +97,9 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 		It("should successfully setIf and get a value", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
-					CompressorProps: compression.CompressionStrategyProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
 						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
 					},
 				}),
 			}))
@@ -141,9 +141,9 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 		It("should successfully setWithHash and getWithHash", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
-					CompressorProps: compression.CompressionStrategyProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
 						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
 					},
 				}),
 			}))
@@ -172,9 +172,9 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 		It("should successfully setIfHash and getWithHash", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
-					CompressorProps: compression.CompressionStrategyProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
 						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
 					},
 				}),
 			}))
@@ -230,9 +230,9 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 		It("should successfully set and get a value without compression when not included", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
-					CompressorProps: compression.CompressionStrategyProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
 						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
 					},
 					IncludeTypes: []interface{}{
 						SetWithHashRequest{},
@@ -286,9 +286,9 @@ var _ = Describe("zstd-compression-middleware", Label("cache-service"), func() {
 		It("should not decompress when response was not compressed", func() {
 			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 				zstd_compression.NewZstdCompressionMiddleware(zstd_compression.ZstdCompressionMiddlewareProps{
-					Logger: momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
-					CompressorProps: compression.CompressionStrategyProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
 						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("zstd-test"),
 					},
 					IncludeTypes: []interface{}{
 						GetRequest{}, // try to decompress without any compression
