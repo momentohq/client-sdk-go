@@ -11,7 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
-	"github.com/momentohq/client-sdk-go/config/middleware/impl"
+	middleware_impl "github.com/momentohq/client-sdk-go/config/middleware/impl"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 
@@ -66,7 +66,7 @@ func main() {
 		[]middleware.Middleware{
 			// This is a middleware bundled with the SDK that we access through the `middleware` package.
 			// It is configured to process only GetRequest and SetRequest types, ignoring all other request types.
-			impl.NewInFlightRequestCountMiddleware(middleware.Props{
+			middleware_impl.NewInFlightRequestCountMiddleware(middleware.Props{
 				Logger:       loggerFactory.GetLogger("inflight-request-count"),
 				IncludeTypes: []interface{}{momento.GetRequest{}, momento.SetRequest{}},
 			}),

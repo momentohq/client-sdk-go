@@ -11,7 +11,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
-	"github.com/momentohq/client-sdk-go/config/middleware/impl"
+	middleware_impl "github.com/momentohq/client-sdk-go/config/middleware/impl"
 	"github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
 )
@@ -40,7 +40,7 @@ func main() {
 	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE)
 	myConfig := config.LaptopLatestWithLogger(loggerFactory).WithMiddleware(
 		[]middleware.Middleware{
-			impl.NewGzipCompressionMiddleware(impl.GzipCompressionMiddlewareProps{
+			middleware_impl.NewGzipCompressionMiddleware(middleware_impl.GzipCompressionMiddlewareProps{
 				CompressionStrategyProps: compression.CompressionStrategyProps{
 					CompressionLevel: compression.CompressionLevelDefault,
 					Logger:           loggerFactory.GetLogger("compression-middleware"),
