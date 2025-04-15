@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.36.0](https://github.com/momentohq/client-sdk-go/compare/v1.35.0...v1.36.0) (2025-04-15)
+
+
+### Features
+
+* add base and gzip compression middleware for scalar get and set requests ([#628](https://github.com/momentohq/client-sdk-go/issues/628)) ([b695689](https://github.com/momentohq/client-sdk-go/commit/b69568960e8790edbc4deaf8246ce09b544321ec))
+* add FixedTimeoutRetryStrategy and tests ([#616](https://github.com/momentohq/client-sdk-go/issues/616)) ([ca1cd2e](https://github.com/momentohq/client-sdk-go/commit/ca1cd2e3830bd13c368c530e96984ba9e8a4abfd))
+
+
+### Bug Fixes
+
+* retry interceptor should not set retry deadline until after initial request ([#625](https://github.com/momentohq/client-sdk-go/issues/625)) ([f8d8bc0](https://github.com/momentohq/client-sdk-go/commit/f8d8bc03c222420fd8b5359135ced731c8b834a7))
+* revise retry strategy interface additions to maintain backwards compatibility ([#627](https://github.com/momentohq/client-sdk-go/issues/627)) ([748f5cb](https://github.com/momentohq/client-sdk-go/commit/748f5cb2bcf5210e2fe57bc8a06870ee761b6fbd))
+
+
+### Miscellaneous
+
+* add a package for middleware implementations ([#624](https://github.com/momentohq/client-sdk-go/issues/624)) ([ab78c57](https://github.com/momentohq/client-sdk-go/commit/ab78c5774579d01a95fc3e6c7bb3d3c9df74e8df))
+* add compression middleware example ([#618](https://github.com/momentohq/client-sdk-go/issues/618)) ([63ec741](https://github.com/momentohq/client-sdk-go/commit/63ec74144c04bde4a970bcaab401f462fbf4656a))
+
 ## [1.35.0](https://github.com/momentohq/client-sdk-go/compare/v1.34.0...v1.35.0) (2025-04-07)
 
 
