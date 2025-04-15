@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	zstd_middleware "github.com/momentohq/client-sdk-go-compression-zstd/zstd_compression"
+	zstdMiddleware "github.com/momentohq/client-sdk-go-compression-zstd/zstd_compression"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/compression"
@@ -33,7 +33,7 @@ func main() {
 	loggerFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE)
 	myConfig := config.LaptopLatestWithLogger(loggerFactory).WithMiddleware(
 		[]middleware.Middleware{
-			zstd_middleware.NewZstdCompressionMiddleware(zstd_middleware.ZstdCompressionMiddlewareProps{
+			zstdMiddleware.NewZstdCompressionMiddleware(zstdMiddleware.ZstdCompressionMiddlewareProps{
 				CompressionStrategyProps: compression.CompressionStrategyProps{
 					CompressionLevel: compression.CompressionLevelDefault,
 					Logger:           loggerFactory.GetLogger("compression-middleware"),
