@@ -69,8 +69,8 @@ func (c gzipCompressor) Compress(data []byte) ([]byte, error) {
 func (c gzipCompressor) Decompress(data []byte) ([]byte, error) {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
-		c.logger.Error("Failed to create gzip reader: %v", err)
-		return nil, err
+		c.logger.Error("Failed to create gzip reader: %v. Data was not compressed, passing through", err)
+		return data, nil
 	}
 	defer reader.Close()
 
@@ -92,9 +92,9 @@ func isGzipCompressed(data []byte) bool {
 	if len(data) < 2 {
 		return false
 	}
-	// Extract the first 2 bytes in little endian order to compare
+	// Extract the first 2 bytes in big endian order to compare
 	// to the magic number.
-	return binary.LittleEndian.Uint16(data[:2]) == MAGIC_NUMBER
+	return binary.BigEndian.Uint16(data[:2]) == MAGIC_NUMBER
 }
 
 type GzipCompressionMiddlewareProps struct {
