@@ -23,7 +23,7 @@ func (f GzipCompressorFactory) NewCompressionStrategy(props compression.Compress
 	}
 
 	if props.Logger == nil {
-		props.Logger = logger.NewNoopMomentoLoggerFactory().GetLogger("zstd-compression")
+		props.Logger = logger.NewNoopMomentoLoggerFactory().GetLogger("gzip-compression")
 	}
 
 	return gzipCompressor{

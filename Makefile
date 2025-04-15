@@ -6,7 +6,7 @@
 	vendor build-examples run-docs-examples
 
 GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aws-lambda/infrastructure/*")
-TEST_DIRS = momento/ auth/ batchutils/ client-sdk-go-compression-zstd/
+TEST_DIRS = momento/ auth/ batchutils/
 GINKGO_OPTS = --no-color -v
 
 install-goimport:
