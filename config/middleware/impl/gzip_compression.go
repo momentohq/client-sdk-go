@@ -36,37 +36,47 @@ type gzipCompressor struct {
 // https://loc.gov/preservation/digital/formats/fdd/fdd000599.shtml#sign
 const MAGIC_NUMBER = 0x1f8b
 
-func (c gzipCompressor) Compress(data []byte) ([]byte, error) {
+func (c gzipCompressor) Compress(data []byte, logger logger.MomentoLogger, requestType string) ([]byte, error) {
 	var buf bytes.Buffer
 	gzWriter, err := gzip.NewWriterLevel(&buf, c.compressionLevel)
 	if err != nil {
+		logger.Error("Failed to create gzip writer: %v", err)
 		return nil, err
 	}
 
 	_, err = gzWriter.Write(data)
 	if err != nil {
+		logger.Error("Failed to write data to gzip writer: %v", err)
 		return nil, err
 	}
 
 	err = gzWriter.Close()
 	if err != nil {
+		logger.Error("Failed to close gzip writer: %v", err)
 		return nil, err
 	}
 
+	logger.Info("Compressed request %s: %d bytes -> %d bytes", requestType, len(data), buf.Len())
 	return buf.Bytes(), nil
 }
 
-func (c gzipCompressor) Decompress(data []byte, logger logger.MomentoLogger) ([]byte, error) {
+func (c gzipCompressor) Decompress(data []byte, logger logger.MomentoLogger, requestType string) ([]byte, error) {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
-		logger.Error("Failed to create gzip reader", "error", err)
+		logger.Error("Failed to create gzip reader: %v", err)
 		return nil, err
 	}
 	defer reader.Close()
 
 	if isGzipCompressed(data) {
 		logger.Trace("Decompressing gzip compressed data")
-		return io.ReadAll(reader)
+		decompressed, err := io.ReadAll(reader)
+		if err != nil {
+			logger.Error("Failed to read decompressed data: %v", err)
+			return nil, err
+		}
+		logger.Info("Decompressed response %s: %d bytes -> %d bytes", requestType, len(data), len(decompressed))
+		return decompressed, nil
 	}
 	logger.Trace("Data is not gzip compressed, passing through")
 	return data, nil

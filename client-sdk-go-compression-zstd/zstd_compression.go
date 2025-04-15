@@ -2,6 +2,7 @@ package zstd_compression
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/momentohq/client-sdk-go/config/compression"
@@ -40,14 +41,21 @@ type zstdCompressor struct {
 // https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md
 const MAGIC_NUMBER = 0xfd2fb528
 
-func (c zstdCompressor) Compress(data []byte) ([]byte, error) {
-	return c.encoder.EncodeAll(data, nil), nil
+func (c zstdCompressor) Compress(data []byte, logger logger.MomentoLogger, requestType string) ([]byte, error) {
+	compressed := c.encoder.EncodeAll(data, nil)
+	logger.Info("Compressed request %s: %d bytes -> %d bytes", requestType, len(data), len(compressed))
+	return compressed, nil
 }
 
-func (c zstdCompressor) Decompress(data []byte, logger logger.MomentoLogger) ([]byte, error) {
+func (c zstdCompressor) Decompress(data []byte, logger logger.MomentoLogger, requestType string) ([]byte, error) {
 	if isZstdCompressed(data) {
 		logger.Trace("Decompressing ZSTD compressed data")
-		return c.decoder.DecodeAll(data, nil)
+		decompressed, err := c.decoder.DecodeAll(data, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decompress response: %v", err)
+		}
+		logger.Info("Decompressed response %s: %d bytes -> %d bytes", requestType, len(data), len(decompressed))
+		return decompressed, nil
 	}
 	logger.Trace("Data is not ZSTD compressed, passing through")
 	return data, nil
