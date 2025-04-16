@@ -350,7 +350,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			_, err = cacheClient.Set(testCtx, &SetRequest{
 				CacheName: cacheName,
 				Key:       String("key"),
-				Value:     String(sampleUserJSON),
+				Value:     Bytes(sampleUserJSON),
 			})
 			Expect(err).To(BeNil())
 
