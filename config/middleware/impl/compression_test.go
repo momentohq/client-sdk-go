@@ -2,6 +2,7 @@ package impl_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -314,6 +315,55 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
 			Expect(resp.(*responses.GetHit).ValueString()).To(Equal(value))
+		})
+	})
+
+	Describe("when using json data", func() {
+		It("should successfully set and get and compress a json object", func() {
+			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
+				impl.NewGzipCompressionMiddleware(impl.GzipCompressionMiddlewareProps{
+					CompressionStrategyProps: compression.CompressionStrategyProps{
+						CompressionLevel: compression.CompressionLevelDefault,
+						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("gzip-test"),
+					},
+				}),
+			}))
+
+			// User represents a sample JSON object
+			type User struct {
+				ID    int      `json:"id"`
+				Name  string   `json:"name"`
+				Email string   `json:"email"`
+				Tags  []string `json:"tags"`
+			}
+
+			sampleUser := User{
+				ID:    1,
+				Name:  "John Doe",
+				Email: "john.doe@example.com",
+				Tags:  []string{"tag1", "tag2"},
+			}
+
+			sampleUserJSON, err := json.Marshal(sampleUser)
+			Expect(err).To(BeNil())
+
+			_, err = cacheClient.Set(testCtx, &SetRequest{
+				CacheName: cacheName,
+				Key:       String("key"),
+				Value:     Bytes(sampleUserJSON),
+			})
+			Expect(err).To(BeNil())
+
+			resp, err := cacheClient.Get(testCtx, &GetRequest{
+				CacheName: cacheName,
+				Key:       String("key"),
+			})
+			Expect(err).To(BeNil())
+			Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
+			var retrievedUser User
+			jsonErr := json.Unmarshal(resp.(*responses.GetHit).ValueByte(), &retrievedUser)
+			Expect(jsonErr).To(BeNil())
+			Expect(retrievedUser).To(Equal(sampleUser))
 		})
 	})
 })
