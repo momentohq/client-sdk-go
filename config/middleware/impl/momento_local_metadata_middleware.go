@@ -11,15 +11,15 @@ import (
 	"github.com/momentohq/client-sdk-go/config/middleware"
 )
 
-// MomentoLocalMiddlewareProps holds properties from which the middleware will be instantiated.
-type MomentoLocalMiddlewareProps struct {
+// MomentoLocalMetadataMiddlewareProps holds properties from which the middleware will be instantiated.
+type MomentoLocalMetadataMiddlewareProps struct {
 	middleware.Props
-	MomentoLocalMiddlewareMetadataProps
+	MomentoLocalMetadataMiddlewareMetadataProps
 }
 
-// MomentoLocalMiddlewareMetadataProps holds properties from which the request handlers
+// MomentoLocalMetadataMiddlewareMetadataProps holds properties from which the request handlers
 // will create metadata to be sent to the server to control the behavior of the request.
-type MomentoLocalMiddlewareMetadataProps struct {
+type MomentoLocalMetadataMiddlewareMetadataProps struct {
 	// ReturnError is the error code to return for a request.
 	//
 	// Valid values are: "unavailable", "unknown", "already-exists", "not-found", "internal",
@@ -71,20 +71,22 @@ type MomentoLocalMiddlewareMetadataProps struct {
 	StreamErrorMessageLimit *int
 }
 
-type momentoLocalMiddleware struct {
+type momentoLocalMetadataMiddleware struct {
 	middleware.Middleware
 	id            uuid.UUID
-	metadataProps MomentoLocalMiddlewareMetadataProps
+	metadataProps MomentoLocalMetadataMiddlewareMetadataProps
 }
 
-// MomentoLocalMiddleware implements both the Middleware and TopicMiddleware interfaces.
-type MomentoLocalMiddleware interface {
+// MomentoLocalMetadataMiddleware implements both the Middleware and TopicMiddleware interfaces.
+// It is used to set metadata on requests to control the behavior of the momento-local server
+// for specific tests (identified by the request-id header).
+type MomentoLocalMetadataMiddleware interface {
 	middleware.Middleware
 	middleware.TopicMiddleware
 }
 
-// NewMomentoLocalMiddleware creates a new MomentoLocalMiddleware instance.
-func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Middleware {
+// NewMomentoLocalMetadataMiddleware creates a new MomentoLocalMetadataMiddleware instance.
+func NewMomentoLocalMetadataMiddleware(props MomentoLocalMetadataMiddlewareProps) middleware.Middleware {
 	var myLogger logger.MomentoLogger
 	if props.Logger == nil {
 		myLogger = momento_default_logger.NewDefaultMomentoLoggerFactory(
@@ -96,45 +98,45 @@ func NewMomentoLocalMiddleware(props MomentoLocalMiddlewareProps) middleware.Mid
 		Logger:       myLogger,
 		IncludeTypes: props.IncludeTypes,
 	})
-	mw := &momentoLocalMiddleware{
+	mw := &momentoLocalMetadataMiddleware{
 		Middleware:    baseMw,
 		id:            uuid.New(),
-		metadataProps: props.MomentoLocalMiddlewareMetadataProps,
+		metadataProps: props.MomentoLocalMetadataMiddlewareMetadataProps,
 	}
 	return mw
 }
 
 // middleware.Middleware interface methods
 
-func (mw *momentoLocalMiddleware) GetRequestHandler(
+func (mw *momentoLocalMetadataMiddleware) GetRequestHandler(
 	baseHandler middleware.RequestHandler,
 ) (middleware.RequestHandler, error) {
-	return NewMomentoLocalMiddlewareRequestHandler(
+	return NewMomentoLocalMetadataMiddlewareRequestHandler(
 		baseHandler,
 		mw.id,
 		mw.metadataProps,
 	), nil
 }
 
-type momentoLocalMiddlewareRequestHandler struct {
+type momentoLocalMetadataMiddlewareRequestHandler struct {
 	middleware.RequestHandler
 	middlewareId  uuid.UUID
-	metadataProps MomentoLocalMiddlewareMetadataProps
+	metadataProps MomentoLocalMetadataMiddlewareMetadataProps
 }
 
-func NewMomentoLocalMiddlewareRequestHandler(
+func NewMomentoLocalMetadataMiddlewareRequestHandler(
 	rh middleware.RequestHandler,
 	id uuid.UUID,
-	props MomentoLocalMiddlewareMetadataProps,
+	props MomentoLocalMetadataMiddlewareMetadataProps,
 ) middleware.RequestHandler {
-	return &momentoLocalMiddlewareRequestHandler{
+	return &momentoLocalMetadataMiddlewareRequestHandler{
 		RequestHandler: rh,
 		middlewareId:   id,
 		metadataProps:  props,
 	}
 }
 
-func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
+func (rh *momentoLocalMetadataMiddlewareRequestHandler) OnMetadata(requestMetadata map[string]string) map[string]string {
 	// request-id is actually a session id and must be the same throughout a given test.
 	requestMetadata["request-id"] = rh.middlewareId.String()
 
@@ -167,7 +169,7 @@ func (rh *momentoLocalMiddlewareRequestHandler) OnMetadata(requestMetadata map[s
 
 // middleware.TopicMiddleware interface methods
 
-func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string]string) map[string]string {
+func (mw *momentoLocalMetadataMiddleware) OnSubscribeMetadata(requestMetadata map[string]string) map[string]string {
 	// Subscribe shares most metadata with publish but adds some streaming config.
 	requestMetadata = mw.OnPublishMetadata(requestMetadata)
 
@@ -186,7 +188,7 @@ func (mw *momentoLocalMiddleware) OnSubscribeMetadata(requestMetadata map[string
 	return requestMetadata
 }
 
-func (mw *momentoLocalMiddleware) OnPublishMetadata(requestMetadata map[string]string) map[string]string {
+func (mw *momentoLocalMetadataMiddleware) OnPublishMetadata(requestMetadata map[string]string) map[string]string {
 	// request-id is actually a session id and must be the same throughout a given test.
 	requestMetadata["request-id"] = mw.id.String()
 
