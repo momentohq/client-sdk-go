@@ -8,7 +8,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/google/uuid v1.6.0
 	github.com/loov/hrtime v1.0.3
-	github.com/momentohq/client-sdk-go v1.36.0
+	github.com/momentohq/client-sdk-go v1.37.0
 
 	// zstd compression middleware
 	github.com/momentohq/client-sdk-go-compression-zstd v0.1.0
