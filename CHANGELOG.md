@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0](https://github.com/momentohq/client-sdk-go/compare/v1.36.1...v1.37.0) (2025-04-16)
+
+
+### Features
+
+* add public-facing momento-local middleware ([#634](https://github.com/momentohq/client-sdk-go/issues/634)) ([fc44a7a](https://github.com/momentohq/client-sdk-go/commit/fc44a7a09d9bc3f1a7efc7962c4eb12f9e801892))
+
 ## [1.36.1](https://github.com/momentohq/client-sdk-go/compare/v1.36.0...v1.36.1) (2025-04-16)
 
 
