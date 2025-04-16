@@ -52,6 +52,18 @@ func (mw *CompressionMiddleware) GetRequestHandler(
 	), nil
 }
 
+// getValueBytes converts a momento.Value to []byte
+func getValueBytes(value momento.Value) ([]byte, error) {
+	switch v := value.(type) {
+	case momento.Bytes:
+		return v, nil
+	case momento.String:
+		return []byte(v), nil
+	default:
+		return nil, fmt.Errorf("unsupported value type: %T", v)
+	}
+}
+
 // We currently compress only on these scalar write requests:
 // Set, SetIfAbsent, SetIfPresent, SetIfEqual, SetIfNotEqual, SetIfAbsentOrEqual, SetIfPresentAndNotEqual,
 // SetWithHash, SetIfPresentAndHashEqual, SetIfPresentAndHashNotEqual, SetIfAbsentOrHashEqual, SetIfAbsentOrHashNotEqual.
@@ -61,7 +73,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 	// as the specific request types in order to access the Value field.
 	switch r := req.(type) {
 	case *momento.SetRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetRequest: %v", err)
@@ -69,7 +84,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfAbsentRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfAbsentRequest: %v", err)
@@ -77,7 +95,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfPresentRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfPresentRequest: %v", err)
@@ -85,7 +106,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfEqualRequest: %v", err)
@@ -93,7 +117,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfNotEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfNotEqualRequest: %v", err)
@@ -101,7 +128,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfAbsentOrEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfAbsentOrEqualRequest: %v", err)
@@ -109,7 +139,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfPresentAndNotEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfPresentAndNotEqualRequest: %v", err)
@@ -117,7 +150,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetWithHashRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetWithHashRequest: %v", err)
@@ -125,7 +161,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfPresentAndHashEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfPresentAndHashEqualRequest: %v", err)
@@ -133,7 +172,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfPresentAndHashNotEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfPresentAndHashNotEqualRequest: %v", err)
@@ -141,7 +183,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfAbsentOrHashEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfAbsentOrHashEqualRequest: %v", err)
@@ -149,7 +194,10 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 		r.Value = momento.Bytes(compressed)
 		return r, nil
 	case *momento.SetIfAbsentOrHashNotEqualRequest:
-		rawData := []byte(fmt.Sprintf("%v", r.Value))
+		rawData, err := getValueBytes(r.Value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get value bytes: %v", err)
+		}
 		compressed, err := rh.compressor.Compress(rawData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compress SetIfAbsentOrHashNotEqualRequest: %v", err)
