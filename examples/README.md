@@ -3,7 +3,7 @@
 ## Requirements.
 
 - [Go](https://go.dev/dl/)
-- A Momento Auth Token; you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli).
+- You'll need a Momento API key to authenticate with Momento. You can get one from the [Momento Console](https://console.gomomento.com/caches).
 - Run `go mod vendor` to install dependencies.
 
 ## Running an example.
