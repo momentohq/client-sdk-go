@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.36.1](https://github.com/momentohq/client-sdk-go/compare/v1.36.0...v1.36.1) (2025-04-16)
+
+
+### Bug Fixes
+
+* base compression middleware was not properly handling bytes ([#635](https://github.com/momentohq/client-sdk-go/issues/635)) ([b5c25d9](https://github.com/momentohq/client-sdk-go/commit/b5c25d905285491d7df219bfc0e308ea88dca757))
+
+
+### Miscellaneous
+
+* add zstd compression example using new module ([#632](https://github.com/momentohq/client-sdk-go/issues/632)) ([ebc9fcb](https://github.com/momentohq/client-sdk-go/commit/ebc9fcbdabcf1fa50ed71117c67ca243a137003d))
+* minor revisions on zstd compression example ([#633](https://github.com/momentohq/client-sdk-go/issues/633)) ([e665823](https://github.com/momentohq/client-sdk-go/commit/e6658230a84fabfe19763dd1003e48208f3744a0))
+* remove IncludeTypes from compression example ([#631](https://github.com/momentohq/client-sdk-go/issues/631)) ([69dba34](https://github.com/momentohq/client-sdk-go/commit/69dba349eaf75002856d5997cb1cf922fd915efd))
+* update compression and middleware examples ([#629](https://github.com/momentohq/client-sdk-go/issues/629)) ([3a629ec](https://github.com/momentohq/client-sdk-go/commit/3a629ecbc70fd24d59323742b92872a6b78d8ec0))
+
 ## [1.36.0](https://github.com/momentohq/client-sdk-go/compare/v1.35.0...v1.36.0) (2025-04-15)
 
 
