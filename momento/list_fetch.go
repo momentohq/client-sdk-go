@@ -70,3 +70,7 @@ func (r *ListFetchRequest) interpretGrpcResponse(resp interface{}) (interface{},
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c ListFetchRequest) GetRequestName() string {
+	return "ListFetchRequest"
+}

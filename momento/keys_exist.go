@@ -49,3 +49,7 @@ func (r *KeysExistRequest) interpretGrpcResponse(resp interface{}) (interface{},
 	myResp := resp.(*pb.XKeysExistResponse)
 	return responses.NewKeysExistSuccess(myResp.Exists), nil
 }
+
+func (c KeysExistRequest) GetRequestName() string {
+	return "KeysExistRequest"
+}

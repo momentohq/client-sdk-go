@@ -5,6 +5,7 @@ import (
 	"time"
 
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	momento_request_base "github.com/momentohq/client-sdk-go/momento/request_base"
 	"github.com/momentohq/client-sdk-go/responses"
 	"github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc"
@@ -71,4 +72,15 @@ func (r *ListConcatenateFrontRequest) makeGrpcRequest(grpcRequest interface{}, r
 func (r *ListConcatenateFrontRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XListConcatenateFrontResponse)
 	return responses.NewListConcatenateFrontSuccess(myResp.ListLength), nil
+}
+
+type BaseListConcatenateFrontRequest interface {
+	momento_request_base.MomentoCacheRequest
+	isBaseListConcatenateFrontRequest()
+}
+
+func (c ListConcatenateFrontRequest) isBaseListConcatenateFrontRequest() {}
+
+func (c ListConcatenateFrontRequest) GetRequestName() string {
+	return "ListConcatenateFrontRequest"
 }

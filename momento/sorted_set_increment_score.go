@@ -11,7 +11,6 @@ import (
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
-
 	"github.com/momentohq/client-sdk-go/utils"
 )
 
@@ -82,4 +81,8 @@ func (r *SortedSetIncrementScoreRequest) makeGrpcRequest(grpcRequest interface{}
 func (r *SortedSetIncrementScoreRequest) interpretGrpcResponse(resp interface{}) (interface{}, error) {
 	myResp := resp.(*pb.XSortedSetIncrementResponse)
 	return responses.SortedSetIncrementScoreSuccess(myResp.Score), nil
+}
+
+func (c SortedSetIncrementScoreRequest) GetRequestName() string {
+	return "SortedSetIncrementScoreRequest"
 }

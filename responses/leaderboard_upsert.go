@@ -1,6 +1,7 @@
 package responses
 
 type LeaderboardUpsertResponse interface {
+	MomentoLeaderboardResponse
 	isLeaderboardUpsertResponse()
 }
 

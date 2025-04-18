@@ -52,3 +52,7 @@ func (r *ListLengthRequest) interpretGrpcResponse(resp interface{}) (interface{}
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c ListLengthRequest) GetRequestName() string {
+	return "ListLengthRequest"
+}

@@ -73,3 +73,7 @@ func (r *ListPushFrontRequest) interpretGrpcResponse(resp interface{}) (interfac
 	myResp := resp.(*pb.XListPushFrontResponse)
 	return responses.NewListPushFrontSuccess(myResp.ListLength), nil
 }
+
+func (c ListPushFrontRequest) GetRequestName() string {
+	return "ListPushFrontRequest"
+}

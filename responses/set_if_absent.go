@@ -2,6 +2,7 @@ package responses
 
 // SetIfAbsentResponse is the base response type for a SetIfAbsent request
 type SetIfAbsentResponse interface {
+	MomentoCacheResponse
 	isSetIfAbsentResponse()
 }
 

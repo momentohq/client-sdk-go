@@ -2,6 +2,7 @@ package responses
 
 // SortedSetGetScoreResponse is the base response type for a sorted set get score request.
 type SortedSetGetScoreResponse interface {
+	MomentoCacheResponse
 	isSortedSetGetScoreResponse()
 }
 

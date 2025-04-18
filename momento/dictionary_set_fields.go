@@ -81,3 +81,7 @@ func (r *DictionarySetFieldsRequest) makeGrpcRequest(grpcRequest interface{}, re
 func (r *DictionarySetFieldsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.DictionarySetFieldsSuccess{}, nil
 }
+
+func (c DictionarySetFieldsRequest) GetRequestName() string {
+	return "DictionarySetFieldsRequest"
+}

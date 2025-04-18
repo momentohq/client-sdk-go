@@ -2,6 +2,7 @@ package responses
 
 // ListRemoveValueResponse is the base type for a list remove value request.
 type ListRemoveValueResponse interface {
+	MomentoCacheResponse
 	isListRemoveValueResponse()
 }
 

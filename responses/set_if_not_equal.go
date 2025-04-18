@@ -2,6 +2,7 @@ package responses
 
 // SetIfNotEqualResponse is the base response type for a SetIfNotEqual request
 type SetIfNotEqualResponse interface {
+	MomentoCacheResponse
 	isSetIfNotEqualResponse()
 }
 

@@ -2,6 +2,7 @@ package responses
 
 // SetContainsElementsResponse is the base response type for a set contains elements request.
 type SetContainsElementsResponse interface {
+	MomentoCacheResponse
 	isSetContainsElementsResponse()
 }
 

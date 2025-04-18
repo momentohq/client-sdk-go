@@ -61,3 +61,7 @@ func (r *SetContainsElementsRequest) interpretGrpcResponse(resp interface{}) (in
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetContainsElementsRequest) GetRequestName() string {
+	return "SetContainsElementsRequest"
+}

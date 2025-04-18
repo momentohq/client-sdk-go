@@ -89,3 +89,7 @@ func (r *SetIfAbsentRequest) interpretGrpcResponse(resp interface{}) (interface{
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetIfAbsentRequest) GetRequestName() string {
+	return "SetIfAbsentRequest"
+}

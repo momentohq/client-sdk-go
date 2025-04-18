@@ -78,3 +78,7 @@ func (r *DictionaryGetFieldsRequest) interpretGrpcResponse(resp interface{}) (in
 		return nil, errUnexpectedGrpcResponse(r, r.grpcResponse)
 	}
 }
+
+func (c DictionaryGetFieldsRequest) GetRequestName() string {
+	return "DictionaryGetFieldsRequest"
+}

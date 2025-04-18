@@ -16,6 +16,7 @@ const (
 
 // ItemGetTypeResponse is the base response type for an item get type request.
 type ItemGetTypeResponse interface {
+	MomentoCacheResponse
 	isItemGetTypeResponse()
 }
 

@@ -64,3 +64,7 @@ func (r *GetWithHashRequest) interpretGrpcResponse(resp interface{}) (interface{
 		return nil, errUnexpectedGrpcResponse(r, grpcResponse)
 	}
 }
+
+func (c GetWithHashRequest) GetRequestName() string {
+	return "GetWithHashRequest"
+}

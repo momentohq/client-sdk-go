@@ -83,7 +83,7 @@ type Configuration interface {
 	//   myConfig := config.LaptopLatest().WithMiddleware([]middleware.Middleware{
 	//     NewMyMiddleware(middleware.Props{
 	//       Logger: loggerFactory.GetLogger("MyMiddleware"),
-	//       IncludeTypes: []interface{}{momento.GetRequest{}, momento.SetRequest{}},
+	//       IncludeTypes: []momento_request_base.MomentoCacheRequest{momento.GetRequest{}, momento.SetRequest{}},
 	//     }),
 	//   })
 	WithMiddleware(middleware []middleware.Middleware) Configuration

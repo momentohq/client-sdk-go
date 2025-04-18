@@ -65,3 +65,7 @@ func (r *IncrementRequest) interpretGrpcResponse(resp interface{}) (interface{},
 	myResp := resp.(*pb.XIncrementResponse)
 	return responses.NewIncrementSuccess(myResp.Value), nil
 }
+
+func (c IncrementRequest) GetRequestName() string {
+	return "IncrementRequest"
+}

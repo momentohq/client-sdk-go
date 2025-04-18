@@ -89,3 +89,7 @@ func (r *SetWithHashRequest) interpretGrpcResponse(resp interface{}) (interface{
 		return nil, errUnexpectedGrpcResponse(r, grpcResponse)
 	}
 }
+
+func (c SetWithHashRequest) GetRequestName() string {
+	return "SetWithHashRequest"
+}

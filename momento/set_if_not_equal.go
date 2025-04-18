@@ -97,3 +97,7 @@ func (r *SetIfNotEqualRequest) interpretGrpcResponse(resp interface{}) (interfac
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetIfNotEqualRequest) GetRequestName() string {
+	return "SetIfNotEqualRequest"
+}

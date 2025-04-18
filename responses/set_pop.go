@@ -2,6 +2,7 @@ package responses
 
 // SetPopResponse is the base response type for a set fetch request.
 type SetPopResponse interface {
+	MomentoCacheResponse
 	isSetPopResponse()
 }
 

@@ -10,6 +10,7 @@ type SortedSetStringElement struct {
 	Score float64
 }
 type SortedSetFetchResponse interface {
+	MomentoCacheResponse
 	isSortedSetFetchResponse()
 }
 

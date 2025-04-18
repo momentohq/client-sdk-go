@@ -83,3 +83,7 @@ func (r *DictionaryIncrementRequest) interpretGrpcResponse(resp interface{}) (in
 	myResp := resp.(*pb.XDictionaryIncrementResponse)
 	return responses.NewDictionaryIncrementSuccess(myResp.Value), nil
 }
+
+func (c DictionaryIncrementRequest) GetRequestName() string {
+	return "DictionaryIncrementRequest"
+}

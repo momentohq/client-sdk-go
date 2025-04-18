@@ -2,6 +2,7 @@ package responses
 
 // IncrementResponse is the base response type for a  increment request.
 type IncrementResponse interface {
+	MomentoCacheResponse
 	isIncrementResponse()
 }
 

@@ -83,3 +83,7 @@ func convertSortedSetScoreElement(grpcSetElements []*pb.XSortedSetGetScoreRespon
 	}
 	return rList
 }
+
+func (c SortedSetGetScoresRequest) GetRequestName() string {
+	return "SortedSetGetScoresRequest"
+}

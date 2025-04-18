@@ -2,6 +2,7 @@ package responses
 
 // SetIfPresentResponse is the base response type for a SetIfPresent request
 type SetIfPresentResponse interface {
+	MomentoCacheResponse
 	isSetIfPresentResponse()
 }
 

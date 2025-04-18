@@ -2,6 +2,7 @@ package responses
 
 // DictionaryRemoveFieldsResponse is the base response type for a dictionary remove fields request.
 type DictionaryRemoveFieldsResponse interface {
+	MomentoCacheResponse
 	isDictionaryRemoveFieldsResponse()
 }
 

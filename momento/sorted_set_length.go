@@ -52,3 +52,7 @@ func (r *SortedSetLengthRequest) interpretGrpcResponse(resp interface{}) (interf
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SortedSetLengthRequest) GetRequestName() string {
+	return "SortedSetLengthRequest"
+}

@@ -2,6 +2,7 @@ package responses
 
 // SetLengthResponse is the base response type for a set length request.
 type SetLengthResponse interface {
+	MomentoCacheResponse
 	isSetLengthResponse()
 }
 

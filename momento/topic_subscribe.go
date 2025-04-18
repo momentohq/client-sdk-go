@@ -1,6 +1,8 @@
 package momento
 
-import "github.com/momentohq/client-sdk-go/config/retry"
+import (
+	"github.com/momentohq/client-sdk-go/config/retry"
+)
 
 type TopicSubscribeRequest struct {
 	CacheName                   string

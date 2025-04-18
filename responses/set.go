@@ -2,6 +2,7 @@ package responses
 
 // SetResponse is the base response type for a set request.
 type SetResponse interface {
+	MomentoCacheResponse
 	isSetResponse()
 }
 

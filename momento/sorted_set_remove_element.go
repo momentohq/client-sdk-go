@@ -7,3 +7,7 @@ type SortedSetRemoveElementRequest struct {
 }
 
 func (r *SortedSetRemoveElementRequest) cacheName() string { return r.CacheName }
+
+func (c SortedSetRemoveElementRequest) GetRequestName() string {
+	return "SortedSetRemoveElementRequest"
+}

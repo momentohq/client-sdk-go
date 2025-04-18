@@ -2,6 +2,7 @@ package responses
 
 // GetWithHashResponse is the base response type for a get with hash request.
 type GetWithHashResponse interface {
+	MomentoCacheResponse
 	isGetWithHashResponse()
 }
 

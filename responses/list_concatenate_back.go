@@ -2,6 +2,7 @@ package responses
 
 // ListConcatenateBackResponse is the base response type for a list concatenate back request.
 type ListConcatenateBackResponse interface {
+	MomentoCacheResponse
 	isListConcatenateBackResponse()
 }
 

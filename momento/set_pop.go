@@ -61,3 +61,7 @@ func (r *SetPopRequest) interpretGrpcResponse(resp interface{}) (interface{}, er
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetPopRequest) GetRequestName() string {
+	return "SetPopRequest"
+}

@@ -52,3 +52,7 @@ func (r *SetFetchRequest) interpretGrpcResponse(resp interface{}) (interface{}, 
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetFetchRequest) GetRequestName() string {
+	return "SetFetchRequest"
+}

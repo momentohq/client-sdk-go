@@ -2,6 +2,7 @@ package responses
 
 // ListPopBackResponse is the base response type for a list pop back request.
 type ListPopBackResponse interface {
+	MomentoCacheResponse
 	isListPopBackResponse()
 }
 

@@ -70,3 +70,7 @@ func (r *SetAddElementsRequest) makeGrpcRequest(grpcRequest interface{}, request
 func (r *SetAddElementsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.SetAddElementsSuccess{}, nil
 }
+
+func (c SetAddElementsRequest) GetRequestName() string {
+	return "SetAddElementsRequest"
+}

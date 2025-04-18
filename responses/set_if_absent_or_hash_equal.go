@@ -3,6 +3,7 @@ package responses
 // SetIfAbsentOrHashEqualResponse is the base response type
 // for a set if absent or hash equal request.
 type SetIfAbsentOrHashEqualResponse interface {
+	MomentoCacheResponse
 	isSetIfAbsentOrHashEqualResponse()
 }
 

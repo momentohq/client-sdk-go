@@ -56,3 +56,7 @@ func (r *DictionaryFetchRequest) interpretGrpcResponse(resp interface{}) (interf
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c DictionaryFetchRequest) GetRequestName() string {
+	return "DictionaryFetchRequest"
+}

@@ -71,3 +71,7 @@ func (r *SortedSetGetRankRequest) interpretGrpcResponse(resp interface{}) (inter
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SortedSetGetRankRequest) GetRequestName() string {
+	return "SortedSetGetRankRequest"
+}

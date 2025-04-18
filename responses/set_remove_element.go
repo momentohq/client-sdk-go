@@ -2,6 +2,7 @@ package responses
 
 // SetRemoveElementResponse is the base response type for a set remobe element request.
 type SetRemoveElementResponse interface {
+	MomentoCacheResponse
 	isSetRemoveElementResponse()
 }
 

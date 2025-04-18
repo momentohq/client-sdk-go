@@ -73,3 +73,7 @@ func (r *ListPushBackRequest) interpretGrpcResponse(resp interface{}) (interface
 	myResp := resp.(*pb.XListPushBackResponse)
 	return responses.NewListPushBackSuccess(myResp.ListLength), nil
 }
+
+func (c ListPushBackRequest) GetRequestName() string {
+	return "ListPushBackRequest"
+}

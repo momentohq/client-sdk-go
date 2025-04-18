@@ -2,6 +2,7 @@ package responses
 
 // DeleteCacheResponse is the base response type for a delete cache request.
 type DeleteCacheResponse interface {
+	MomentoCacheResponse
 	isDeleteCacheResponse()
 }
 

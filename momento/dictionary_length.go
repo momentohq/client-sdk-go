@@ -52,3 +52,7 @@ func (r *DictionaryLengthRequest) interpretGrpcResponse(resp interface{}) (inter
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c DictionaryLengthRequest) GetRequestName() string {
+	return "DictionaryLengthRequest"
+}

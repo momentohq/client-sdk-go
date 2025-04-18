@@ -54,3 +54,7 @@ func (r *ItemGetTtlRequest) interpretGrpcResponse(resp interface{}) (interface{}
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c ItemGetTtlRequest) GetRequestName() string {
+	return "ItemGetTtlRequest"
+}

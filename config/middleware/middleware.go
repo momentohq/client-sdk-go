@@ -3,11 +3,11 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/config/logger"
+	momento_request_base "github.com/momentohq/client-sdk-go/momento/request_base"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type middleware struct {
@@ -17,7 +17,7 @@ type middleware struct {
 
 type Middleware interface {
 	GetLogger() logger.MomentoLogger
-	GetBaseRequestHandler(theRequest interface{}, requestName string, resourceName string) (RequestHandler, error)
+	GetBaseRequestHandler(theRequest momento_request_base.MomentoCacheRequest, requestName string, resourceName string) (RequestHandler, error)
 	GetRequestHandler(baseRequestHandler RequestHandler) (RequestHandler, error)
 	GetIncludeTypes() map[string]bool
 }
@@ -29,16 +29,16 @@ type InterceptorCallbackMiddleware interface {
 
 type Props struct {
 	Logger       logger.MomentoLogger
-	IncludeTypes []interface{}
+	IncludeTypes []momento_request_base.MomentoCacheRequest
 }
 
 func (mw *middleware) GetBaseRequestHandler(
-	theRequest interface{}, requestName string, resourceName string,
+	theRequest momento_request_base.MomentoCacheRequest, requestName string, resourceName string,
 ) (RequestHandler, error) {
 	allowedTypes := mw.GetIncludeTypes()
+	mw.GetLogger().Debug("allowedTypes: %v\n", allowedTypes)
 	if allowedTypes != nil {
-		requestType := reflect.TypeOf(theRequest)
-		if _, ok := allowedTypes[requestType.String()]; !ok {
+		if isAllowed, ok := allowedTypes[theRequest.GetRequestName()]; !ok || !isAllowed {
 			return nil, fmt.Errorf("request type %T not in includeTypes", theRequest)
 		}
 	}
@@ -91,12 +91,7 @@ func NewMiddleware(props Props) Middleware {
 	if props.IncludeTypes != nil {
 		includeTypeMap = make(map[string]bool)
 		for _, t := range props.IncludeTypes {
-			myType := reflect.TypeOf(t).String()
-			// Let users pass in types or pointers to types. We'll normalize them to pointers.
-			if !strings.HasPrefix("*", myType) {
-				myType = "*" + myType
-			}
-			includeTypeMap[myType] = true
+			includeTypeMap[t.GetRequestName()] = true
 		}
 	} else {
 		includeTypeMap = nil
@@ -110,7 +105,7 @@ func NewMiddleware(props Props) Middleware {
 type requestHandler struct {
 	id           uuid.UUID
 	logger       logger.MomentoLogger
-	request      interface{}
+	request      momento_request_base.MomentoCacheRequest
 	requestName  string
 	resourceName string
 }
@@ -119,17 +114,17 @@ type requestHandler struct {
 // Custom request handlers will generally only need to implement the OnRequest and OnResponse methods.
 type RequestHandler interface {
 	GetId() uuid.UUID
-	GetRequest() interface{}
+	GetRequest() momento_request_base.MomentoCacheRequest
 	GetRequestName() string
 	GetResourceName() string
 	GetLogger() logger.MomentoLogger
-	OnRequest(theRequest interface{}) (interface{}, error)
+	OnRequest(theRequest momento_request_base.MomentoCacheRequest) (momento_request_base.MomentoCacheRequest, error)
 	OnMetadata(map[string]string) map[string]string
-	OnResponse(theResponse interface{}) (interface{}, error)
+	OnResponse(theResponse interface{}) (responses.MomentoCacheResponse, error)
 }
 
 type HandlerProps struct {
-	Request      interface{}
+	Request      momento_request_base.MomentoCacheRequest
 	RequestName  string
 	ResourceName string
 	Metadata     map[string]string
@@ -140,7 +135,7 @@ func (rh *requestHandler) GetId() uuid.UUID {
 	return rh.id
 }
 
-func (rh *requestHandler) GetRequest() interface{} {
+func (rh *requestHandler) GetRequest() momento_request_base.MomentoCacheRequest {
 	return rh.request
 }
 
@@ -161,7 +156,7 @@ func (rh *requestHandler) GetResourceName() string {
 // must be the same type as the original request object, and an error is returned if this is not the case. Returning nil
 // from this method leaves the request unchanged. Returning an error halts the request and returns a ClientSdkError to
 // the caller.
-func (rh *requestHandler) OnRequest(_ interface{}) (interface{}, error) {
+func (rh *requestHandler) OnRequest(_ momento_request_base.MomentoCacheRequest) (momento_request_base.MomentoCacheRequest, error) {
 	return nil, nil
 }
 
@@ -188,7 +183,7 @@ func (rh *requestHandler) OnMetadata(map[string]string) map[string]string {
 //		  }
 //	      return nil, nil
 //		}
-func (rh *requestHandler) OnResponse(_ interface{}) (interface{}, error) {
+func (rh *requestHandler) OnResponse(_ interface{}) (responses.MomentoCacheResponse, error) {
 	return nil, nil
 }
 

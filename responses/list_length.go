@@ -2,6 +2,7 @@ package responses
 
 // ListLengthResponse is the base response type for a list length request.
 type ListLengthResponse interface {
+	MomentoCacheResponse
 	isListLengthResponse()
 }
 

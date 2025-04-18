@@ -2,6 +2,7 @@ package responses
 
 // SetAddElementsResponse is the base response type for a set add elements request.
 type SetAddElementsResponse interface {
+	MomentoCacheResponse
 	isSetAddElementResponse()
 }
 

@@ -61,3 +61,7 @@ func (r *SetRemoveElementsRequest) makeGrpcRequest(grpcRequest interface{}, requ
 func (r *SetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.SetRemoveElementsSuccess{}, nil
 }
+
+func (c SetRemoveElementsRequest) GetRequestName() string {
+	return "SetRemoveElementsRequest"
+}

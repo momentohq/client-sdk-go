@@ -2,6 +2,7 @@ package responses
 
 // DecreaseTtlResponse is the base response type for a decrease ttl request.
 type DecreaseTtlResponse interface {
+	MomentoCacheResponse
 	isDecreaseTtlResponse()
 }
 

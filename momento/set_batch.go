@@ -92,3 +92,7 @@ func (r *SetBatchRequest) interpretGrpcResponse(_ interface{}) (interface{}, err
 
 	return *responses.NewSetBatchSuccess(setResponses), nil
 }
+
+func (c SetBatchRequest) GetRequestName() string {
+	return "SetBatchRequest"
+}

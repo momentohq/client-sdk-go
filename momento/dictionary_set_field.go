@@ -13,3 +13,7 @@ type DictionarySetFieldRequest struct {
 }
 
 func (r *DictionarySetFieldRequest) cacheName() string { return r.CacheName }
+
+func (c DictionarySetFieldRequest) GetRequestName() string {
+	return "DictionarySetFieldRequest"
+}

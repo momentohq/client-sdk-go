@@ -2,6 +2,7 @@ package responses
 
 // ListConcatenateFrontResponse is the base response for a list concatenate front request.
 type ListConcatenateFrontResponse interface {
+	MomentoCacheResponse
 	isListConcatenateFrontResponse()
 }
 

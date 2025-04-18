@@ -2,6 +2,7 @@ package responses
 
 // DictionaryLengthResponse is the base response type for a dictionary length request.
 type DictionaryLengthResponse interface {
+	MomentoCacheResponse
 	isDictionaryLengthResponse()
 }
 

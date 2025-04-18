@@ -2,6 +2,7 @@ package responses
 
 // CreateCacheResponse is the base response type for a create cache request.
 type CreateCacheResponse interface {
+	MomentoCacheResponse
 	isCreateCacheResponse()
 }
 

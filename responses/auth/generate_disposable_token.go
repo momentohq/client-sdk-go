@@ -1,7 +1,10 @@
 package responses
 
+import "github.com/momentohq/client-sdk-go/responses"
+
 // GenerateDisposableTokenResponse is the base response type for a generate disposable token request.
 type GenerateDisposableTokenResponse interface {
+	responses.MomentoAuthResponse
 	isGenerateDisposableTokenResponse()
 }
 
