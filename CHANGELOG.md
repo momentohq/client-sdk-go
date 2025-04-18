@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.37.1](https://github.com/momentohq/client-sdk-go/compare/v1.37.0...v1.37.1) (2025-04-18)
+
+
+### Miscellaneous
+
+* add example for using momento-local metadata middleware ([#636](https://github.com/momentohq/client-sdk-go/issues/636)) ([2ab2323](https://github.com/momentohq/client-sdk-go/commit/2ab232340b48471fddb37f58e028a7922118fa33))
+* reuse cache client in aws lambda example and update deps ([#639](https://github.com/momentohq/client-sdk-go/issues/639)) ([3d9771d](https://github.com/momentohq/client-sdk-go/commit/3d9771d04315002d95bf10c64743a003e23f17a4))
+
 ## [1.37.0](https://github.com/momentohq/client-sdk-go/compare/v1.36.1...v1.37.0) (2025-04-16)
 
 
