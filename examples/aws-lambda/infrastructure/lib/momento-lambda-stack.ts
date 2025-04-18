@@ -22,7 +22,7 @@ export class MomentoLambdaStack extends cdk.Stack {
 
     const getLambda = new go.GoFunction(this, 'MomentoLambdaExample', {
       functionName: 'MomentoLambdaExample',
-      runtime: lambda.Runtime.GO_1_X,
+      runtime: lambda.Runtime.PROVIDED_AL2,
       entry: path.join(__dirname, '../../lambda'),
       timeout: cdk.Duration.seconds(30),
       memorySize: 128,

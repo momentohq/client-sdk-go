@@ -25,6 +25,7 @@ const (
 var (
 	cachedAuthToken  string = ""
 	secretsClient, _        = secretcache.New()
+	cacheClient      momento.CacheClient
 )
 
 func handler() (string, error) {
@@ -87,6 +88,10 @@ func getSecret(secretName string) (string, error) {
 }
 
 func getCacheClient() (momento.CacheClient, error) {
+	if cacheClient != nil {
+		return cacheClient, nil
+	}
+
 	authToken, secretErr := getSecret("MOMENTO_API_KEY_SECRET_NAME")
 	if secretErr != nil {
 		panic(secretErr)
