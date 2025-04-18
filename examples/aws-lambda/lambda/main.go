@@ -23,8 +23,9 @@ const (
 )
 
 var (
-	cachedAuthToken  string = ""
-	secretsClient, _        = secretcache.New()
+	cachedAuthToken    string = ""
+	secretsClient, _          = secretcache.New()
+	momentoCacheClient momento.CacheClient
 )
 
 func handler() (string, error) {
@@ -87,6 +88,11 @@ func getSecret(secretName string) (string, error) {
 }
 
 func getCacheClient() (momento.CacheClient, error) {
+	if momentoCacheClient != nil {
+		fmt.Println("Using cached Momento cache client")
+		return momentoCacheClient, nil
+	}
+
 	authToken, secretErr := getSecret("MOMENTO_API_KEY_SECRET_NAME")
 	if secretErr != nil {
 		panic(secretErr)
@@ -97,7 +103,7 @@ func getCacheClient() (momento.CacheClient, error) {
 		panic(err)
 	}
 
-	cacheClient, initErr := momento.NewCacheClientWithEagerConnectTimeout(
+	newCacheClient, initErr := momento.NewCacheClientWithEagerConnectTimeout(
 		config.Lambda(),
 		credentialProvider,
 		60*time.Second,
@@ -107,7 +113,9 @@ func getCacheClient() (momento.CacheClient, error) {
 		panic(initErr)
 	}
 
-	return cacheClient, nil
+	fmt.Println("New cache client created")
+	momentoCacheClient = newCacheClient
+	return momentoCacheClient, nil
 }
 
 // To measure the latency of 100 GET requests to your Momento cache,
