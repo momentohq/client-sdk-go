@@ -12,3 +12,7 @@ type SetAddElementRequest struct {
 }
 
 func (r *SetAddElementRequest) cacheName() string { return r.CacheName }
+
+func (c SetAddElementRequest) GetRequestName() string {
+	return "SetAddElementRequest"
+}

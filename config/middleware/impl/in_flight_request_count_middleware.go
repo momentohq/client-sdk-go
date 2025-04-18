@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/responses"
 )
 
 type inFlightRequestCountMiddleware struct {
@@ -48,7 +49,7 @@ func NewInFlightRequestCountMiddlewareRequestHandler(
 	return &inFlightRequestCountMiddlewareRequestHandler{rh, countAfterAdd, remover}
 }
 
-func (rh *inFlightRequestCountMiddlewareRequestHandler) OnResponse(_ interface{}) (interface{}, error) {
+func (rh *inFlightRequestCountMiddlewareRequestHandler) OnResponse(_ interface{}) (responses.MomentoCacheResponse, error) {
 	countAfterRemove := rh.remover()
 	rh.GetLogger().Info(
 		fmt.Sprintf(

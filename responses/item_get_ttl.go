@@ -4,6 +4,7 @@ import "time"
 
 // ItemGetTtlResponse is the base type for item get TTL requests.
 type ItemGetTtlResponse interface {
+	MomentoCacheResponse
 	isItemGetTtlResponse()
 }
 

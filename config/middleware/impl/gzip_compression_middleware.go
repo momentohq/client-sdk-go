@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
+	momento_request_base "github.com/momentohq/client-sdk-go/momento/request_base"
 )
 
 // GzipCompressorFactory implements the CompressionStrategyFactory interface.
@@ -98,7 +99,7 @@ func isGzipCompressed(data []byte) bool {
 }
 
 type GzipCompressionMiddlewareProps struct {
-	IncludeTypes             []interface{}
+	IncludeTypes             []momento_request_base.MomentoCacheRequest
 	CompressionStrategyProps compression.CompressionStrategyProps
 }
 

@@ -2,6 +2,7 @@ package responses
 
 // DictionaryFetchResponse is the base response type for a dictionary fetch request.
 type DictionaryFetchResponse interface {
+	MomentoCacheResponse
 	isDictionaryFetchResponse()
 }
 

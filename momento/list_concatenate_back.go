@@ -73,3 +73,7 @@ func (r *ListConcatenateBackRequest) interpretGrpcResponse(resp interface{}) (in
 	myResp := resp.(*pb.XListConcatenateBackResponse)
 	return responses.NewListConcatenateBackSuccess(myResp.ListLength), nil
 }
+
+func (c ListConcatenateBackRequest) GetRequestName() string {
+	return "ListConcatenateBackRequest"
+}

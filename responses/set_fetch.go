@@ -2,6 +2,7 @@ package responses
 
 // SetFetchResponse is the base response type for a set fetch request.
 type SetFetchResponse interface {
+	MomentoCacheResponse
 	isSetFetchResponse()
 }
 

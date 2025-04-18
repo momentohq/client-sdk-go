@@ -73,3 +73,7 @@ func (r *SetRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata co
 func (r *SetRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.SetSuccess{}, nil
 }
+
+func (c SetRequest) GetRequestName() string {
+	return "SetRequest"
+}

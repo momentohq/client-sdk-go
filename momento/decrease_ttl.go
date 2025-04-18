@@ -71,3 +71,7 @@ func (r *DecreaseTtlRequest) interpretGrpcResponse(theResponse interface{}) (int
 	}
 	return resp, nil
 }
+
+func (c DecreaseTtlRequest) GetRequestName() string {
+	return "DecreaseTtlRequest"
+}

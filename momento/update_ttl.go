@@ -66,3 +66,7 @@ func (r *UpdateTtlRequest) interpretGrpcResponse(resp interface{}) (interface{},
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c UpdateTtlRequest) GetRequestName() string {
+	return "UpdateTtlRequest"
+}

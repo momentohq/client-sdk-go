@@ -2,6 +2,7 @@ package responses
 
 // ListPopFrontResponse is the base response type for a list pop front request.
 type ListPopFrontResponse interface {
+	MomentoCacheResponse
 	isListPopFrontResponse()
 }
 

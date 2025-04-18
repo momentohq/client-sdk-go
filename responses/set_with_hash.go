@@ -2,6 +2,7 @@ package responses
 
 // SetWithHashResponse is the base response type for a set with hash request.
 type SetWithHashResponse interface {
+	MomentoCacheResponse
 	isSetWithHashResponse()
 }
 

@@ -50,3 +50,7 @@ func (r *ListPopBackRequest) interpretGrpcResponse(resp interface{}) (interface{
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c ListPopBackRequest) GetRequestName() string {
+	return "ListPopBackRequest"
+}

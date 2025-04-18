@@ -3,6 +3,7 @@ package responses
 // SetIfPresentAndHashNotEqualResponse is the base response type
 // for a set if present and hash not equal request.
 type SetIfPresentAndHashNotEqualResponse interface {
+	MomentoCacheResponse
 	isSetIfPresentAndHashNotEqualResponse()
 }
 

@@ -2,6 +2,7 @@ package responses
 
 // SortedSetRemoveElementsResponse is the base response type for a sorted set put elements request.
 type SortedSetRemoveElementsResponse interface {
+	MomentoCacheResponse
 	isSortedSetRemoveElementsResponse()
 }
 

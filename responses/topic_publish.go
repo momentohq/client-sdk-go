@@ -2,6 +2,7 @@ package responses
 
 // TopicPublishResponse is the base response type for a publish request.
 type TopicPublishResponse interface {
+	MomentoTopicResponse
 	isTopicPublishResponse()
 }
 

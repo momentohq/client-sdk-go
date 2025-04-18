@@ -81,3 +81,7 @@ func (r *SetIfPresentRequest) interpretGrpcResponse(resp interface{}) (interface
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetIfPresentRequest) GetRequestName() string {
+	return "SetIfPresentRequest"
+}

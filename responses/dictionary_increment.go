@@ -2,6 +2,7 @@ package responses
 
 // DictionaryIncrementResponse is the base response type for a dictionary increment request.
 type DictionaryIncrementResponse interface {
+	MomentoCacheResponse
 	isDictionaryIncrementResponse()
 }
 

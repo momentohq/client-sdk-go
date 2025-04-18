@@ -50,3 +50,7 @@ func (r *DeleteRequest) makeGrpcRequest(grpcRequest interface{}, requestMetadata
 func (r *DeleteRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.DeleteSuccess{}, nil
 }
+
+func (c DeleteRequest) GetRequestName() string {
+	return "DeleteRequest"
+}

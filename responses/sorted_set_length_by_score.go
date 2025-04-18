@@ -2,6 +2,7 @@ package responses
 
 // SortedSetLengthByScoreResponse is the base response type for a sorted set length request.
 type SortedSetLengthByScoreResponse interface {
+	MomentoCacheResponse
 	isSortedSetLengthByScoreResponse()
 }
 

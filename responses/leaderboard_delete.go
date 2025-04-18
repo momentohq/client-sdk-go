@@ -1,6 +1,7 @@
 package responses
 
 type LeaderboardDeleteResponse interface {
+	MomentoLeaderboardResponse
 	isLeaderboardDeleteResponse()
 }
 

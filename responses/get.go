@@ -2,6 +2,7 @@ package responses
 
 // GetResponse is the base response type for a get request.
 type GetResponse interface {
+	MomentoCacheResponse
 	isGetResponse()
 }
 

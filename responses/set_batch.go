@@ -2,6 +2,7 @@ package responses
 
 // SetBatchResponse is the base response type for a batch set request.
 type SetBatchResponse interface {
+	MomentoCacheResponse
 	isSetBatchResponse()
 }
 

@@ -2,6 +2,7 @@ package responses
 
 // IncreaseTtlResponse is the base response type for an increase ttl request.
 type IncreaseTtlResponse interface {
+	MomentoCacheResponse
 	isIncreaseTtlResponse()
 }
 

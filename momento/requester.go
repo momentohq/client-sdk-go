@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	momento_request_base "github.com/momentohq/client-sdk-go/momento/request_base"
 	"github.com/momentohq/client-sdk-go/utils"
 	"google.golang.org/grpc/metadata"
 
@@ -27,6 +28,7 @@ func errUnexpectedGrpcResponse(r requester, grpcResp grpcResponse) momentoerrors
 }
 
 type requester interface {
+	momento_request_base.MomentoCacheRequest
 	hasCacheName
 	initGrpcRequest(client scsDataClient) (interface{}, error)
 	makeGrpcRequest(grpcRequest interface{}, requestMetadata context.Context, client scsDataClient) (grpcResponse, []metadata.MD, error)

@@ -75,3 +75,7 @@ func (r *SortedSetLengthByScoreRequest) interpretGrpcResponse(resp interface{}) 
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SortedSetLengthByScoreRequest) GetRequestName() string {
+	return "SortedSetLengthByScoreRequest"
+}

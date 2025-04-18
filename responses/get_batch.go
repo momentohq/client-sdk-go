@@ -2,6 +2,7 @@ package responses
 
 // GetBatchResponse is the base response type for a batch get request.
 type GetBatchResponse interface {
+	MomentoCacheResponse
 	isGetBatchResponse()
 }
 

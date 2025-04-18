@@ -57,3 +57,7 @@ func (r *SortedSetRemoveElementsRequest) makeGrpcRequest(grpcRequest interface{}
 func (r *SortedSetRemoveElementsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.SortedSetRemoveElementsSuccess{}, nil
 }
+
+func (c SortedSetRemoveElementsRequest) GetRequestName() string {
+	return "SortedSetRemoveElementsRequest"
+}

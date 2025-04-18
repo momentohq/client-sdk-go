@@ -2,6 +2,7 @@ package responses
 
 // ListPushBackResponse is the base response type for a list push back request.
 type ListPushBackResponse interface {
+	MomentoCacheResponse
 	isListPushBackResponse()
 }
 

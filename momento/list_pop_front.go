@@ -50,3 +50,7 @@ func (r *ListPopFrontRequest) interpretGrpcResponse(resp interface{}) (interface
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c ListPopFrontRequest) GetRequestName() string {
+	return "ListPopFrontRequest"
+}

@@ -55,3 +55,7 @@ func (r *ItemGetTypeRequest) interpretGrpcResponse(resp interface{}) (interface{
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c ItemGetTypeRequest) GetRequestName() string {
+	return "ItemGetTypeRequest"
+}
