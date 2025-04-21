@@ -2,6 +2,7 @@ package responses
 
 // ListPushFrontResponse is the base type for a list push front request.
 type ListPushFrontResponse interface {
+	MomentoCacheResponse
 	isListPushFrontResponse()
 }
 

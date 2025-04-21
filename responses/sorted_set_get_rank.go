@@ -2,6 +2,7 @@ package responses
 
 // SortedSetGetRankResponse is the base response type for a sorted set get rank request.
 type SortedSetGetRankResponse interface {
+	MomentoCacheResponse
 	isSortedSetGetRankResponse()
 }
 

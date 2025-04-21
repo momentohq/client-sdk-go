@@ -2,6 +2,7 @@ package responses
 
 // PingResponse is the base response type for a ping request.
 type PingResponse interface {
+	MomentoCacheResponse
 	isPingResponse()
 }
 

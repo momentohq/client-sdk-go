@@ -6,6 +6,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/momento"
+	momento_request_base "github.com/momentohq/client-sdk-go/momento/request_base"
 	"github.com/momentohq/client-sdk-go/responses"
 )
 
@@ -17,7 +18,7 @@ type CompressionMiddleware struct {
 }
 
 type CompressionMiddlewareProps struct {
-	IncludeTypes             []interface{}
+	IncludeTypes             []momento_request_base.MomentoCacheRequest
 	CompressionStrategyProps compression.CompressionStrategyProps
 	CompressorFactory        compression.CompressionStrategyFactory
 }
@@ -68,7 +69,7 @@ func getValueBytes(value momento.Value) ([]byte, error) {
 // Set, SetIfAbsent, SetIfPresent, SetIfEqual, SetIfNotEqual, SetIfAbsentOrEqual, SetIfPresentAndNotEqual,
 // SetWithHash, SetIfPresentAndHashEqual, SetIfPresentAndHashNotEqual, SetIfAbsentOrHashEqual, SetIfAbsentOrHashNotEqual.
 // Specify IncludeTypes in CompressionMiddlewareProps if you wish to compress only a subset of these requests.
-func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (interface{}, error) {
+func (rh *CompressionMiddlewareRequestHandler) OnRequest(req momento_request_base.MomentoCacheRequest) (momento_request_base.MomentoCacheRequest, error) {
 	// We still need to use a switch statement to be able to access the request objects
 	// as the specific request types in order to access the Value field.
 	switch r := req.(type) {
@@ -212,7 +213,7 @@ func (rh *CompressionMiddlewareRequestHandler) OnRequest(req interface{}) (inter
 
 // We currently decompress only on these scalar read responses: Get, GetWithHash.
 // Specify IncludeTypes in CompressionMiddlewareProps if you wish to decompress only a subset of these responses.
-func (rh *CompressionMiddlewareRequestHandler) OnResponse(resp interface{}) (interface{}, error) {
+func (rh *CompressionMiddlewareRequestHandler) OnResponse(resp interface{}) (responses.MomentoCacheResponse, error) {
 	// We still need to use a switch statement to be able to access the response objects
 	// as the specific response types in order to access the Value field.
 	switch r := resp.(type) {

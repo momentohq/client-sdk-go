@@ -1,9 +1,13 @@
 package responses
 
-import "github.com/momentohq/client-sdk-go/utils"
+import (
+	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utils"
+)
 
 // RefreshApiKeyResponse is the base response type for a refresh api key request.
 type RefreshApiKeyResponse interface {
+	responses.MomentoAuthResponse
 	isRefreshApiKeyResponse()
 }
 

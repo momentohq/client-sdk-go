@@ -7,3 +7,7 @@ type DictionaryRemoveFieldRequest struct {
 }
 
 func (r *DictionaryRemoveFieldRequest) cacheName() string { return r.CacheName }
+
+func (c DictionaryRemoveFieldRequest) GetRequestName() string {
+	return "DictionaryRemoveFieldRequest"
+}

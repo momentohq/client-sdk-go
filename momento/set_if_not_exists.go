@@ -86,3 +86,7 @@ func (r *SetIfNotExistsRequest) interpretGrpcResponse(resp interface{}) (interfa
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c SetIfNotExistsRequest) GetRequestName() string {
+	return "SetIfNotExistsRequest"
+}

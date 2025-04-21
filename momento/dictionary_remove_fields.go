@@ -54,3 +54,7 @@ func (r *DictionaryRemoveFieldsRequest) makeGrpcRequest(grpcRequest interface{},
 func (r *DictionaryRemoveFieldsRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.DictionaryRemoveFieldsSuccess{}, nil
 }
+
+func (c DictionaryRemoveFieldsRequest) GetRequestName() string {
+	return "DictionaryRemoveFieldsRequest"
+}

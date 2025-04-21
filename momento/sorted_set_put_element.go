@@ -13,3 +13,7 @@ type SortedSetPutElementRequest struct {
 }
 
 func (r *SortedSetPutElementRequest) cacheName() string { return r.CacheName }
+
+func (c SortedSetPutElementRequest) GetRequestName() string {
+	return "SortedSetPutElementRequest"
+}

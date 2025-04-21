@@ -1,9 +1,13 @@
 package responses
 
-import "github.com/momentohq/client-sdk-go/utils"
+import (
+	"github.com/momentohq/client-sdk-go/responses"
+	"github.com/momentohq/client-sdk-go/utils"
+)
 
 // GenerateApiKeyResponse is the base response type for a generate api key request.
 type GenerateApiKeyResponse interface {
+	responses.MomentoAuthResponse
 	isGenerateApiKeyResponse()
 }
 

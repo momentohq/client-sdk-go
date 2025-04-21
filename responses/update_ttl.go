@@ -2,6 +2,7 @@ package responses
 
 // UpdateTtlResponse is the base response type for an update ttl request.
 type UpdateTtlResponse interface {
+	MomentoCacheResponse
 	isUpdateTtlResponse()
 }
 

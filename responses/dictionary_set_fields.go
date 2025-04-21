@@ -2,6 +2,7 @@ package responses
 
 // DictionarySetFieldsResponse is the base response type for a dictionary set fields request.
 type DictionarySetFieldsResponse interface {
+	MomentoCacheResponse
 	isDictionarySetFieldsResponse()
 }
 

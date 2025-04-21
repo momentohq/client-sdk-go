@@ -2,6 +2,7 @@ package responses
 
 // ListCachesResponse is the base response type for a list caches request.
 type ListCachesResponse interface {
+	MomentoCacheResponse
 	isListCachesResponse()
 }
 

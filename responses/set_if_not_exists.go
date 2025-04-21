@@ -2,6 +2,7 @@ package responses
 
 // SetIfNotExistsResponse is the base response type for a SetIfNotExists request
 type SetIfNotExistsResponse interface {
+	MomentoCacheResponse
 	isSetIfNotExistsResponse()
 }
 

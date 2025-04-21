@@ -1,6 +1,7 @@
 package responses
 
 type LeaderboardLengthResponse interface {
+	MomentoLeaderboardResponse
 	isLeaderboardLengthResponse()
 }
 

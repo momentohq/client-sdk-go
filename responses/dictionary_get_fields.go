@@ -4,6 +4,7 @@ import pb "github.com/momentohq/client-sdk-go/internal/protos"
 
 // DictionaryGetFieldsResponse is the base response type for a dictionary fields request.
 type DictionaryGetFieldsResponse interface {
+	MomentoCacheResponse
 	isDictionaryGetFieldsResponse()
 }
 

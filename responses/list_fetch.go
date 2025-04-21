@@ -2,6 +2,7 @@ package responses
 
 // ListFetchResponse is the base response type for a list fetch request.
 type ListFetchResponse interface {
+	MomentoCacheResponse
 	isListFetchResponse()
 }
 

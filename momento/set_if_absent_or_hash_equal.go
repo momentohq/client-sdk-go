@@ -101,3 +101,7 @@ func (r *SetIfAbsentOrHashEqualRequest) interpretGrpcResponse(resp interface{}) 
 		return nil, errUnexpectedGrpcResponse(r, grpcResponse)
 	}
 }
+
+func (c SetIfAbsentOrHashEqualRequest) GetRequestName() string {
+	return "SetIfAbsentOrHashEqualRequest"
+}

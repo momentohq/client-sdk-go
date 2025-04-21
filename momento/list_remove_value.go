@@ -55,3 +55,7 @@ func (r *ListRemoveValueRequest) makeGrpcRequest(grpcRequest interface{}, reques
 func (r *ListRemoveValueRequest) interpretGrpcResponse(_ interface{}) (interface{}, error) {
 	return &responses.ListRemoveValueSuccess{}, nil
 }
+
+func (c ListRemoveValueRequest) GetRequestName() string {
+	return "ListRemoveValueRequest"
+}

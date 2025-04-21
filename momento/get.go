@@ -58,3 +58,7 @@ func (r *GetRequest) interpretGrpcResponse(resp interface{}) (interface{}, error
 		return nil, errUnexpectedGrpcResponse(r, myResp)
 	}
 }
+
+func (c GetRequest) GetRequestName() string {
+	return "GetRequest"
+}

@@ -2,6 +2,7 @@ package responses
 
 // KeysExistResponse is the base response type for a key exist request.
 type KeysExistResponse interface {
+	MomentoCacheResponse
 	isKeysExistResponse()
 }
 

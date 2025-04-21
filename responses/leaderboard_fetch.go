@@ -1,6 +1,7 @@
 package responses
 
 type LeaderboardFetchResponse interface {
+	MomentoLeaderboardResponse
 	isLeaderboardFetchResponse()
 }
 

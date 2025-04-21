@@ -2,6 +2,7 @@ package responses
 
 // SetIfAbsentOrEqualResponse is the base response type for a SetIfAbsentOrEqual request
 type SetIfAbsentOrEqualResponse interface {
+	MomentoCacheResponse
 	isSetIfAbsentOrEqualResponse()
 }
 

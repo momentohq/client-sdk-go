@@ -98,3 +98,7 @@ func sortedSetByRankGrpcElementToModel(grpcSetElements []*pb.XSortedSetElement) 
 	}
 	return returnList
 }
+
+func (c SortedSetFetchByRankRequest) GetRequestName() string {
+	return "SortedSetFetchByRankRequest"
+}

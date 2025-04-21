@@ -2,6 +2,7 @@ package responses
 
 // SortedSetIncrementScoreResponse is the base response type for a sorted set increment score request.
 type SortedSetIncrementScoreResponse interface {
+	MomentoCacheResponse
 	isSortedSetIncrementResponse()
 }
 

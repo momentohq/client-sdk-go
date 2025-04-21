@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
+	momento_request_base "github.com/momentohq/client-sdk-go/momento/request_base"
 
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
@@ -236,7 +237,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 						CompressionLevel: compression.CompressionLevelDefault,
 						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("gzip-test"),
 					},
-					IncludeTypes: []interface{}{
+					IncludeTypes: []momento_request_base.MomentoCacheRequest{
 						SetWithHashRequest{},
 						GetWithHashRequest{},
 					},
@@ -292,7 +293,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 						CompressionLevel: compression.CompressionLevelDefault,
 						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("gzip-test"),
 					},
-					IncludeTypes: []interface{}{
+					IncludeTypes: []momento_request_base.MomentoCacheRequest{
 						GetRequest{}, // try to decompress without any compression
 					},
 				}),
