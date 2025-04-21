@@ -53,7 +53,7 @@ func getCompressableString() string {
 	return fmt.Sprintf("%s %s", longString, uuid.NewString())
 }
 
-var _ = Describe("gzip compression middleware", Label("cache-service"), func() {
+var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 	BeforeEach(func() {
 		testCtx = context.Background()
 		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
