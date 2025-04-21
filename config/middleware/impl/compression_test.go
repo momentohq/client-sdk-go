@@ -11,8 +11,6 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
-	"github.com/momentohq/client-sdk-go/config/middleware"
-	"github.com/momentohq/client-sdk-go/config/middleware/impl"
 	impl_test_helpers "github.com/momentohq/client-sdk-go/config/middleware/impl/test_helpers"
 	. "github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
@@ -391,32 +389,36 @@ var _ = Describe("gzip compression middleware", Label("cache-service"), func() {
 
 	Describe("when using json data", func() {
 		It("should successfully set and get and compress a json object", func() {
-			createCacheClient(config.LaptopLatest().WithMiddleware([]middleware.Middleware{
-				impl.NewGzipCompressionMiddleware(impl.GzipCompressionMiddlewareProps{
-					CompressionStrategyProps: compression.CompressionStrategyProps{
-						CompressionLevel: compression.CompressionLevelDefault,
-						Logger:           momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("gzip-test"),
-					},
-				}),
-			}))
-
+			compressedDataChannel := make(chan int, 1)
+			decompressedDataChannel := make(chan int, 1)
+			middleware := impl_test_helpers.NewGzipCompressionTestMiddleware(impl_test_helpers.GzipCompressionTestMiddlewareProps{
+				CompressionLevel:        compression.CompressionLevelDefault,
+				Logger:                  momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.TRACE).GetLogger("gzip-test"),
+				CompressedDataChannel:   compressedDataChannel,
+				DecompressedDataChannel: decompressedDataChannel,
+			})
+			createCacheClient(config.LaptopLatest().AddMiddleware(middleware))
 			// User represents a sample JSON object
 			type User struct {
-				ID    int      `json:"id"`
-				Name  string   `json:"name"`
-				Email string   `json:"email"`
-				Tags  []string `json:"tags"`
+				ID          int      `json:"id"`
+				Name        string   `json:"name"`
+				Email       string   `json:"email"`
+				Tags        []string `json:"tags"`
+				Description string   `json:"description"`
 			}
 
 			sampleUser := User{
-				ID:    1,
-				Name:  "John Doe",
-				Email: "john.doe@example.com",
-				Tags:  []string{"tag1", "tag2"},
+				ID:          1,
+				Name:        "John Doe",
+				Email:       "john.doe@example.com",
+				Tags:        []string{"tag1", "tag2"},
+				Description: getCompressableString(),
 			}
 
 			sampleUserJSON, err := json.Marshal(sampleUser)
 			Expect(err).To(BeNil())
+
+			originalSize := len(sampleUserJSON)
 
 			_, err = cacheClient.Set(testCtx, &SetRequest{
 				CacheName: cacheName,
@@ -435,6 +437,15 @@ var _ = Describe("gzip compression middleware", Label("cache-service"), func() {
 			jsonErr := json.Unmarshal(resp.(*responses.GetHit).ValueByte(), &retrievedUser)
 			Expect(jsonErr).To(BeNil())
 			Expect(retrievedUser).To(Equal(sampleUser))
+
+			// Verify the channels received data
+			compressedSize, ok := <-compressedDataChannel
+			Expect(ok).To(BeTrue())
+			Expect(compressedSize).To(BeNumerically(">", 0))
+			Expect(compressedSize).To(BeNumerically("<", originalSize))
+			decompressedSize, ok := <-decompressedDataChannel
+			Expect(ok).To(BeTrue())
+			Expect(decompressedSize).To(Equal(originalSize))
 		})
 	})
 })
