@@ -11,6 +11,8 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/compression"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
+	"github.com/momentohq/client-sdk-go/config/middleware"
+	"github.com/momentohq/client-sdk-go/config/middleware/impl"
 	impl_test_helpers "github.com/momentohq/client-sdk-go/config/middleware/impl/test_helpers"
 	. "github.com/momentohq/client-sdk-go/momento"
 	"github.com/momentohq/client-sdk-go/responses"
