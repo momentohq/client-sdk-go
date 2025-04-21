@@ -150,6 +150,10 @@ test-retry: install-ginkgo
 	#  so the test suite can know we need a momento-local credential provider
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "retry && momento-local" ${TEST_DIRS}
 
+test-middleware: install-ginkgo
+	@echo "Testing middleware..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --focus "middleware" --label-filter cache-service ${TEST_DIRS}	
+
 test-http-service:
 	@echo "No tests for http service."
 
