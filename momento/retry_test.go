@@ -715,6 +715,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				})
 				Expect(getResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
+				Expect(err.Error()).To(ContainSubstring("TimeoutError"))
 				Expect(err).To(HaveMomentoErrorCode(TimeoutError))
 
 				// Should receive errors after shortDelay ms and retry every RETRY_DELAY_INTERVAL_MILLIS
@@ -763,6 +764,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 				})
 				Expect(getResponse).To(BeNil())
 				Expect(err).To(Not(BeNil()))
+				Expect(err.Error()).To(ContainSubstring("TimeoutError"))
 				Expect(err).To(HaveMomentoErrorCode(TimeoutError))
 
 				// Should receive errors after longDelay ms and retry every RETRY_DELAY_INTERVAL_MILLIS
