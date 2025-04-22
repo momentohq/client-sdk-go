@@ -351,4 +351,57 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 			Fail("Expected topic item to be a string")
 		}
 	})
+
+	Describe("Dynamic transport strategy", func() {
+		It("Publishes and receives when using dynamic transport strategy", func() {
+			publishedValues := []TopicValue{
+				String("aaa"),
+				Bytes([]byte{1, 2, 3}),
+			}
+
+			sub, err := sharedContext.DynamicTopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			if err != nil {
+				panic(err)
+			}
+
+			cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
+			var receivedValues []TopicValue
+			ready := make(chan int, 1)
+			go func() {
+				ready <- 1
+				for {
+					select {
+					case <-cancelContext.Done():
+						return
+					default:
+						value, err := sub.Item(sharedContext.Ctx)
+						if err != nil {
+							panic(err)
+						}
+						receivedValues = append(receivedValues, value)
+					}
+				}
+			}()
+			<-ready
+
+			time.Sleep(time.Millisecond * 100)
+			for _, value := range publishedValues {
+				_, err := sharedContext.DynamicTopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+					CacheName: sharedContext.CacheName,
+					TopicName: topicName,
+					Value:     value,
+				})
+				if err != nil {
+					panic(err)
+				}
+			}
+			time.Sleep(time.Millisecond * 100)
+			cancelFunction()
+
+			Expect(receivedValues).To(Equal(publishedValues))
+		})
+	})
 })

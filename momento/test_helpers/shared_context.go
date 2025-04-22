@@ -36,11 +36,13 @@ type SharedContext struct {
 	ClientWithBalancedReadConcern   momento.CacheClient
 	DefaultCacheName                string
 	TopicClient                     momento.TopicClient
+	DynamicTopicClient              momento.TopicClient
 	CacheName                       string
 	Ctx                             context.Context
 	DefaultTtl                      time.Duration
 	Configuration                   config.Configuration
 	TopicConfiguration              config.TopicsConfiguration
+	DynamicTopicConfiguration       config.TopicsConfiguration
 	CredentialProvider              auth.CredentialProvider
 	AuthClient                      momento.AuthClient
 	AuthConfiguration               config.AuthConfiguration
@@ -82,6 +84,13 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	shared.TopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
+	shared.DynamicTopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory()).WithTransportStrategy(config.NewTopicsDynamicTransportStrategy(&config.TopicsDynamicTransportStrategyProps{
+		GrpcConfiguration: config.NewTopicsDynamicGrpcConfiguration(&config.DynamicTopicsGrpcConfigurationProps{
+			TopicsGrpcConfigurationProps: config.TopicsGrpcConfigurationProps{
+				ClientTimeout: 15 * time.Second,
+			},
+		}),
+	}))
 	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.LeaderboardConfiguration = config.LeaderboardDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second
@@ -126,6 +135,11 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		panic(err)
 	}
 
+	dynamicTopicClient, err := momento.NewTopicClient(shared.DynamicTopicConfiguration, shared.CredentialProvider)
+	if err != nil {
+		panic(err)
+	}
+
 	authClient, err := momento.NewAuthClient(shared.AuthConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
@@ -142,6 +156,7 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	shared.ClientWithBalancedReadConcern = balancedReadConcernClient
 	shared.DefaultCacheName = defaultCacheName
 	shared.TopicClient = topicClient
+	shared.DynamicTopicClient = dynamicTopicClient
 	shared.AuthClient = authClient
 	shared.LeaderboardClient = leaderboardClient
 
