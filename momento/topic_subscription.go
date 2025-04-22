@@ -108,7 +108,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			s.decrementSubscriptionCount()
 			s.log.Debug(
 				"[Event] Context done, number of active streams: %d",
-				s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+				(*(s.momentoTopicClient)).countNumberOfActiveSubscriptions(),
 			)
 			return nil, ctx.Err()
 		case <-s.cancelContext.Done():
@@ -116,7 +116,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			s.decrementSubscriptionCount()
 			s.log.Debug(
 				"[Event] Context cancelled, number of active streams: %d",
-				s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+				(*(s.momentoTopicClient)).countNumberOfActiveSubscriptions(),
 			)
 			return nil, s.cancelContext.Err()
 		default:
@@ -131,7 +131,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					s.decrementSubscriptionCount()
 					s.log.Debug(
 						"[Event RecvMsg] Context done, number of active streams: %d",
-						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+						(*(s.momentoTopicClient)).countNumberOfActiveSubscriptions(),
 					)
 					return nil, ctx.Err()
 				}
@@ -140,7 +140,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					s.decrementSubscriptionCount()
 					s.log.Debug(
 						"[Event RecvMsg] Context cancelled, number of active streams: %d",
-						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+						(*(s.momentoTopicClient)).countNumberOfActiveSubscriptions(),
 					)
 					return nil, s.cancelContext.Err()
 				}
@@ -153,7 +153,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					s.decrementSubscriptionCount()
 					s.log.Debug(
 						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
-						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+						(*(s.momentoTopicClient)).countNumberOfActiveSubscriptions(),
 					)
 
 					err := s.attemptReconnect(ctx, err)
@@ -240,7 +240,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		}
 
 		s.log.Info("Attempting reconnecting to client stream")
-		topicManager, subscribeClient, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		topicManager, subscribeClient, cancelContext, cancelFunction, err := (*(s.momentoTopicClient)).topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
