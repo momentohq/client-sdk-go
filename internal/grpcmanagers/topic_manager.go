@@ -271,7 +271,7 @@ func (list *DynamicStreamManagerList) checkNumConcurrentStreams() momentoerrors.
 	numActiveStreams := list.CountNumberOfActiveSubscriptions()
 	list.logger.Debug("Current number of active subscriptions: %d", numActiveStreams)
 
-	if numActiveStreams >= int64(list.currentMaxConcurrentStreams) && len(list.grpcManagers) == list.maxManagerCount {
+	if numActiveStreams >= int64(list.currentMaxConcurrentStreams) && len(list.grpcManagers) >= list.maxManagerCount {
 		errorMessage := fmt.Sprintf(
 			"Number of grpc streams: %d; number of channels: %d; max concurrent streams: %d; Already at maximum number of concurrent grpc streams, cannot make new subscribe requests\n",
 			numActiveStreams, list.maxManagerCount, list.currentMaxConcurrentStreams,
