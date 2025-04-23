@@ -138,6 +138,12 @@ func (s *topicsConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
 }
 
 func (s *topicsConfiguration) GetMaxSubscriptions() uint32 {
+	switch strategy := s.transportStrategy.(type) {
+	case *TopicsStaticTransportStrategy:
+		return strategy.GetNumStreamGrpcChannels() * MAX_CONCURRENT_STREAMS_PER_CHANNEL
+	case *TopicsDynamicTransportStrategy:
+		return strategy.grpcConfig.GetMaxSubscriptions()
+	}
 	return s.maxSubscriptions
 }
 
