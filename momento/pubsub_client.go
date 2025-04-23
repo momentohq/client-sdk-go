@@ -20,22 +20,13 @@ import (
 const DEFAULT_NUM_STREAM_GRPC_CHANNELS uint32 = 4
 const DEFAULT_NUM_UNARY_GRPC_CHANNELS uint32 = 4
 
-// Internal interface for pubsub client.
-// type pubSubClient interface {
-// 	topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error)
-// 	topicPublish(ctx context.Context, request *TopicPublishRequest) error
-// 	close()
-// 	getMiddlewares() []middleware.TopicMiddleware
-// 	countNumberOfActiveSubscriptions() int64
-// }
-
 type pubSubClient struct {
 	endpoint          string
 	log               logger.MomentoLogger
 	requestTimeout    time.Duration
 	middleware        []middleware.TopicMiddleware
 	unaryManagerList  grpcmanagers.TopicManagerList
-	streamManagerList grpcmanagers.TopicManagerList
+	streamManagerList grpcmanagers.TopicStreamManagerListWithBookkeeping
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
@@ -63,7 +54,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 
 	// Create pool of grpc channels for stream operations depending on static vs dynamic transport strategy
-	var streamManagerList grpcmanagers.TopicManagerList
+	var streamManagerList grpcmanagers.TopicStreamManagerListWithBookkeeping
 	switch request.TopicsConfiguration.GetTransportStrategy().(type) {
 	case *config.TopicsStaticTransportStrategy:
 		numStreamChannels := DEFAULT_NUM_STREAM_GRPC_CHANNELS
@@ -198,11 +189,5 @@ func (client *pubSubClient) close() {
 }
 
 func (client *pubSubClient) countNumberOfActiveSubscriptions() int64 {
-	switch streamManagerList := client.streamManagerList.(type) {
-	case *grpcmanagers.StaticStreamManagerList:
-		return streamManagerList.CountNumberOfActiveSubscriptions()
-	case *grpcmanagers.DynamicStreamManagerList:
-		return streamManagerList.CountNumberOfActiveSubscriptions()
-	}
-	return 0
+	return client.streamManagerList.CountNumberOfActiveSubscriptions()
 }

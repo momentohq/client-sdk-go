@@ -53,10 +53,17 @@ func (topicManager *TopicGrpcManager) Close() momentoerrors.MomentoSvcErr {
 	return momentoerrors.ConvertSvcErr(topicManager.Conn.Close())
 }
 
-// Implemented by StaticUnaryManagerList, StaticStreamManagerList, and DynamicStreamManagerList
+// Implemented by StaticUnaryManagerList
 type TopicManagerList interface {
 	GetNextManager() (*TopicGrpcManager, momentoerrors.MomentoSvcErr)
 	Close()
+}
+
+// Implemented by StaticStreamManagerList and DynamicStreamManagerList
+type TopicStreamManagerListWithBookkeeping interface {
+	TopicManagerList
+	CountNumberOfActiveSubscriptions() int64
+	checkNumConcurrentStreams() momentoerrors.MomentoSvcErr
 }
 
 // Most basic case: static list of unary grpc managers
