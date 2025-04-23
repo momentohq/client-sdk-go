@@ -32,7 +32,7 @@ type TopicClient interface {
 type defaultTopicClient struct {
 	credentialProvider auth.CredentialProvider
 	numChannels        uint32
-	pubSubClient       pubSubClient
+	pubSubClient       *pubSubClient
 	log                logger.MomentoLogger
 	requestTimeout     time.Duration
 	retryStrategy      retry.Strategy
@@ -57,30 +57,16 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 		retryStrategy:      topicsConfiguration.GetRetryStrategy(),
 	}
 
-	transportStrategy := topicsConfiguration.GetTransportStrategy()
-
-	switch transportStrategy.(type) {
-	case *config.TopicsStaticTransportStrategy:
-		pubSubClient, err := newStaticPubSubClient(&models.PubSubClientRequest{
-			CredentialProvider:  credentialProvider,
-			TopicsConfiguration: topicsConfiguration,
-			Log:                 client.log,
-		})
-		if err != nil {
-			return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
-		}
-		client.pubSubClient = pubSubClient
-	case *config.TopicsDynamicTransportStrategy:
-		pubSubClient, err := newDynamicPubSubClient(&models.PubSubClientRequest{
-			CredentialProvider:  credentialProvider,
-			TopicsConfiguration: topicsConfiguration,
-			Log:                 client.log,
-		})
-		if err != nil {
-			return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
-		}
-		client.pubSubClient = pubSubClient
+	pubSubClient, err := newPubSubClient(&models.PubSubClientRequest{
+		CredentialProvider:  credentialProvider,
+		TopicsConfiguration: topicsConfiguration,
+		Log:                 client.log,
+	})
+	if err != nil {
+		return nil, convertMomentoSvcErrorToCustomerError(momentoerrors.ConvertSvcErr(err))
 	}
+
+	client.pubSubClient = pubSubClient
 
 	return client, nil
 }
@@ -176,7 +162,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 	}
 
 	var topicEventCallback func(cacheName string, requestName string, event middleware.TopicSubscriptionEventType)
-	for _, mw := range c.pubSubClient.getMiddlewares() {
+	for _, mw := range c.pubSubClient.middleware {
 		if rmw, ok := mw.(middleware.TopicEventCallbackMiddleware); ok {
 			// currently this is exclusively used for resubscribe metrics in the MomentoLocalMiddleware,
 			// so we break after we find the first one.
@@ -188,7 +174,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		topicManager:       topicManager,
 		topicEventCallback: topicEventCallback,
 		subscribeClient:    subscribeClient,
-		momentoTopicClient: &c.pubSubClient,
+		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
 		log:                c.log,

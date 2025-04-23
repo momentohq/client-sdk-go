@@ -73,9 +73,9 @@ type StaticUnaryManagerList struct {
 // the number of concurrent requests exceeds numUnaryChannels*100, but will eventually complete.
 // Therefore we can just round-robin the unaryTopicManagers, no need to keep track of how many
 // publish requests are in flight on each one.
-func (list *StaticUnaryManagerList) GetNextManager() *TopicGrpcManager {
+func (list *StaticUnaryManagerList) GetNextManager() (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	nextManagerIndex := list.managerIndex.Add(1)
-	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))]
+	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))], nil
 }
 
 func (list *StaticUnaryManagerList) Close() {
