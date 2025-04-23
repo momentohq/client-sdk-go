@@ -12,7 +12,6 @@ import (
 // GzipTestCompressorFactory is a wrapper around the GzipCompressorFactory that allows us to test the
 // gzip compression middleware more thoroughly to confirm compression is working as expected.
 type GzipTestCompressorFactory struct {
-	testHelper              gzipTestCompressor
 	CompressedDataChannel   chan int // receive data size in bytes
 	DecompressedDataChannel chan int // receive data size in bytes
 }
@@ -25,10 +24,6 @@ func (f GzipTestCompressorFactory) NewCompressionStrategy(props compression.Comp
 		DecompressedDataChannel: f.DecompressedDataChannel,
 	}
 	return compressionStrategy
-}
-
-func (f GzipTestCompressorFactory) GetTestHelper() gzipTestCompressor {
-	return f.testHelper
 }
 
 type gzipTestCompressor struct {

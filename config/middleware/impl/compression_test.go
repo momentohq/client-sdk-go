@@ -53,6 +53,16 @@ func getCompressableString() string {
 	return fmt.Sprintf("%s %s", longString, uuid.NewString())
 }
 
+func verifyCompressionFromChannels(compressedDataChannel chan int, decompressedDataChannel chan int, originalSize int) {
+	compressedSize, ok := <-compressedDataChannel
+	Expect(ok).To(BeTrue())
+	Expect(compressedSize).To(BeNumerically(">", 0))
+	Expect(compressedSize).To(BeNumerically("<", originalSize))
+	decompressedSize, ok := <-decompressedDataChannel
+	Expect(ok).To(BeTrue())
+	Expect(decompressedSize).To(Equal(originalSize))
+}
+
 var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 	BeforeEach(func() {
 		testCtx = context.Background()
@@ -94,15 +104,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
 			Expect(resp.(*responses.GetHit).ValueString()).To(Equal(value))
-
-			// Verify the channels received data
-			compressedSize, ok := <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok := <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 		})
 
 		It("should successfully setIf and get a value", func() {
@@ -132,15 +134,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
 			Expect(resp.(*responses.GetHit).ValueString()).To(Equal(setIfAbsentValue))
-
-			// Verify the channels received data
-			compressedSize, ok := <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok := <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 
 			setIfPresentValue := getCompressableString()
 			originalSize = len(setIfPresentValue)
@@ -159,15 +153,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(err).To(BeNil())
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetHit{}))
 			Expect(resp.(*responses.GetHit).ValueString()).To(Equal(setIfPresentValue))
-
-			// Verify the channels received data
-			compressedSize, ok = <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok = <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 		})
 
 		It("should successfully setWithHash and getWithHash", func() {
@@ -201,15 +187,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetWithHashHit{}))
 			Expect(resp.(*responses.GetWithHashHit).ValueString()).To(Equal(value))
 			Expect(resp.(*responses.GetWithHashHit).HashByte()).To(Equal(hash))
-
-			// Verify the channels received data
-			compressedSize, ok := <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok := <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 		})
 
 		It("should successfully setIfHash and getWithHash", func() {
@@ -244,15 +222,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetWithHashHit{}))
 			Expect(resp.(*responses.GetWithHashHit).ValueString()).To(Equal(setIfAbsentValue))
 			Expect(resp.(*responses.GetWithHashHit).HashByte()).To(Equal(hash))
-
-			// Verify the channels received data
-			compressedSize, ok := <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok := <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 
 			setIfPresentValue := getCompressableString()
 			originalSize = len(setIfPresentValue)
@@ -275,15 +245,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(resp).To(BeAssignableToTypeOf(&responses.GetWithHashHit{}))
 			Expect(resp.(*responses.GetWithHashHit).ValueString()).To(Equal(setIfPresentValue))
 			Expect(resp.(*responses.GetWithHashHit).HashByte()).To(Equal(hash))
-
-			// Verify the channels received data
-			compressedSize, ok = <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok = <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 		})
 	})
 
@@ -346,15 +308,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			Expect(getResp).To(BeAssignableToTypeOf(&responses.GetWithHashHit{}))
 			Expect(getResp.(*responses.GetWithHashHit).ValueString()).To(Equal(value))
 			Expect(getResp.(*responses.GetWithHashHit).HashByte()).To(Equal(hash))
-
-			// Verify the channels received data
-			compressedSize, ok := <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok := <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 		})
 
 		It("should not decompress when response was not compressed", func() {
@@ -437,15 +391,7 @@ var _ = Describe("gzip-compression-middleware", Label("cache-service"), func() {
 			jsonErr := json.Unmarshal(resp.(*responses.GetHit).ValueByte(), &retrievedUser)
 			Expect(jsonErr).To(BeNil())
 			Expect(retrievedUser).To(Equal(sampleUser))
-
-			// Verify the channels received data
-			compressedSize, ok := <-compressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(compressedSize).To(BeNumerically(">", 0))
-			Expect(compressedSize).To(BeNumerically("<", originalSize))
-			decompressedSize, ok := <-decompressedDataChannel
-			Expect(ok).To(BeTrue())
-			Expect(decompressedSize).To(Equal(originalSize))
+			verifyCompressionFromChannels(compressedDataChannel, decompressedDataChannel, originalSize)
 		})
 	})
 })
