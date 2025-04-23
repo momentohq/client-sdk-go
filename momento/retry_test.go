@@ -1075,4 +1075,200 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 		})
 	})
 
+	Describe("TopicClient using WithMaxSubscriptions vs WithNumStreamGrpcChannels", func() {
+		BeforeEach(func() {
+			testCtx = context.Background()
+			cacheName = uuid.NewString()
+			topicName = uuid.NewString()
+			setupCacheClient(config.LaptopLatest())
+		})
+
+		AfterEach(func() {
+			cleanup()
+		})
+
+		It("Creates one stream grpc channel when given <100 max subscriptions", func() {
+			numSubscriptions := uint32(1)
+			config := config.TopicsDefault().WithMaxSubscriptions(numSubscriptions)
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(numSubscriptions))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(uint32(0)))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(sub).NotTo(BeNil())
+
+			// Publish should work and be unaffected by the stream configs
+			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+				Value:     String("test"),
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("Creates two stream grpc channels when given 101 max subscriptions", func() {
+			numSubscriptions := uint32(101)
+			config := config.TopicsDefault().WithMaxSubscriptions(numSubscriptions)
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(numSubscriptions))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(uint32(0)))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			// Subscribing 200 times should work, indicating there are 2 underlying grpc channels
+			for i := 0; i < 200; i++ {
+				sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+					CacheName: sharedContext.CacheName,
+					TopicName: topicName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(sub).NotTo(BeNil())
+				go func() {
+					// wait for a publish to happen
+					_, err := sub.Item(sharedContext.Ctx)
+					if err != nil {
+						Fail(err.Error())
+					}
+				}()
+			}
+
+			// Subscribing once more should fail, indicating there are no more than 2 grpc channels
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(sub).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(LimitExceededError))
+
+			// Publish should work and be unaffected by the stream configs
+			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+				Value:     String("test"),
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("Creates channels based on WithNumStreamGrpcChannels", func() {
+			numChannels := uint32(2)
+			config := config.TopicsDefault().WithNumStreamGrpcChannels(numChannels)
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(uint32(0)))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(numChannels))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(sub).NotTo(BeNil())
+
+			// Publish should work and be unaffected by the stream configs
+			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+				Value:     String("test"),
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("Creates channels based on max subscriptions when both WithNumStreamGrpcChannels and WithMaxSubscriptions are set", func() {
+			numChannels := uint32(2)
+			numSubscriptions := uint32(50)
+			config := config.TopicsDefault().WithNumStreamGrpcChannels(numChannels).WithMaxSubscriptions(numSubscriptions)
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(numSubscriptions))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(numChannels))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			// Subscribing 100 times should work, indicating there is an underlying grpc channel
+			for i := 0; i < 100; i++ {
+				sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+					CacheName: sharedContext.CacheName,
+					TopicName: topicName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(sub).NotTo(BeNil())
+				go func() {
+					// wait for a publish to happen
+					_, err := sub.Item(sharedContext.Ctx)
+					if err != nil {
+						Fail(err.Error())
+					}
+				}()
+			}
+
+			// Subscribing once more should fail, indicating the single-channel maxSubscriptions limit was hit,
+			// and that the numStreamChannels config was not used.
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(sub).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(LimitExceededError))
+
+			// Publish should work and be unaffected by the stream configs
+			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+				Value:     String("test"),
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("Creates 4 channels by default when neither WithNumStreamGrpcChannels nor WithMaxSubscriptions are set", func() {
+			config := config.TopicsDefault()
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(uint32(0)))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(uint32(0)))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			// Subscribing 400 times should work, indicating there are 4 underlying grpc channels
+			for i := 0; i < 400; i++ {
+				sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+					CacheName: sharedContext.CacheName,
+					TopicName: topicName,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(sub).NotTo(BeNil())
+				go func() {
+					// wait for a publish to happen
+					_, err := sub.Item(sharedContext.Ctx)
+					if err != nil {
+						Fail(err.Error())
+					}
+				}()
+			}
+
+			// Subscribing once more should fail, indicating there are no more than 4 grpc channels
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(sub).To(BeNil())
+			Expect(err).To(HaveMomentoErrorCode(LimitExceededError))
+
+			// Publish should work and be unaffected by the stream configs
+			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+				Value:     String("test"),
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
 })

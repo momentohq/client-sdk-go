@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
 )
 
@@ -354,8 +355,26 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		}
 	})
 
-	Describe("Dynamic transport strategy", func() {
-		It("Publishes and receives when using dynamic transport strategy", func() {
+	Describe("Using WithMaxSubscriptions", func() {
+		It("Creates at least one stream grpc channel when given <100 max subscriptions", func() {
+			numSubscriptions := uint32(1)
+			config := config.TopicsDefault().WithMaxSubscriptions(numSubscriptions)
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(numSubscriptions))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(uint32(0)))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(sub).NotTo(BeNil())
+
+		})
+
+		It("Publishes and receives", func() {
 			publishedValues := []TopicValue{
 				String("aaa"),
 				Bytes([]byte{1, 2, 3}),

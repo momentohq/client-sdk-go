@@ -127,18 +127,16 @@ func (s *topicsConfiguration) GetMaxSubscriptions() uint32 {
 }
 
 func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration {
-	if s.transportStrategy.GetNumStreamGrpcChannels() == 0 {
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: s.transportStrategy,
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-			maxSubscriptions:  maxSubscriptions,
-		}
+	if s.transportStrategy.GetNumStreamGrpcChannels() > 0 {
+		s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions will override NumStreamGrpcChannels. Use only NumStreamGrpcChannels if you want to specify a static number of grpc channels for subscriptions. Use only WithMaxSubscriptions if you want the topic client to dynamically create grpc channels to support the number of subscriptions up to the specified limit.")
 	}
-
-	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions would override NumStreamGrpcChannels and only one may be specified, using WithNumStreamGrpcChannels instead")
-	return s
+	return &topicsConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy,
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
+		maxSubscriptions:  maxSubscriptions,
+	}
 }
 
 func (s *topicsConfiguration) GetNumGrpcChannels() uint32 {
@@ -162,18 +160,16 @@ func (s *topicsConfiguration) GetNumStreamGrpcChannels() uint32 {
 }
 
 func (s *topicsConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsConfiguration {
-	if s.maxSubscriptions == 0 {
-		// numGrpcChannels is deprecated, not included in the override
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-		}
+	if s.maxSubscriptions > 0 {
+		s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions will override NumStreamGrpcChannels. Use only NumStreamGrpcChannels if you want to specify a static number of grpc channels for subscriptions. Use only WithMaxSubscriptions if you want the topic client to dynamically create grpc channels to support the number of subscriptions up to the specified limit.")
 	}
-
-	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithNumStreamGrpcChannels would override MaxSubscriptions and only one may be specified, using WithMaxSubscriptions instead")
-	return s
+	return &topicsConfiguration{
+		loggerFactory:     s.loggerFactory,
+		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
+		middleware:        s.middleware,
+		retryStrategy:     s.retryStrategy,
+		maxSubscriptions:  s.maxSubscriptions,
+	}
 }
 
 func (s *topicsConfiguration) GetNumUnaryGrpcChannels() uint32 {
