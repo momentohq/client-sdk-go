@@ -83,14 +83,10 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	}
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
-	shared.TopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
-	shared.DynamicTopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory()).WithTransportStrategy(config.NewTopicsDynamicTransportStrategy(&config.TopicsDynamicTransportStrategyProps{
-		GrpcConfiguration: config.NewTopicsDynamicGrpcConfiguration(&config.DynamicTopicsGrpcConfigurationProps{
-			TopicsGrpcConfigurationProps: config.TopicsGrpcConfigurationProps{
-				ClientTimeout: 15 * time.Second,
-			},
-		}),
-	}))
+	shared.TopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory()).WithNumStreamGrpcChannels(4)
+	shared.DynamicTopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory()).WithTransportStrategy(config.NewTopicsStaticTransportStrategy(&config.TopicsTransportStrategyProps{
+		GrpcConfiguration: config.NewTopicsStaticGrpcConfiguration(&config.TopicsGrpcConfigurationProps{}).WithClientTimeout(15 * time.Second),
+	})).WithMaxSubscriptions(100)
 	shared.AuthConfiguration = config.AuthDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.LeaderboardConfiguration = config.LeaderboardDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
 	shared.DefaultTtl = 3 * time.Second

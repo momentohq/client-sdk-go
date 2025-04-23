@@ -96,7 +96,9 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 	})
 
 	It("should error on deadline exceeded", func() {
-		newCfg := sharedContext.TopicConfiguration.WithClientTimeout(1)
+		newGrpcConfig := sharedContext.TopicConfiguration.GetTransportStrategy().GetGrpcConfig()
+		newCfg := sharedContext.TopicConfiguration.WithTransportStrategy(
+			sharedContext.TopicConfiguration.GetTransportStrategy().WithGrpcConfig(newGrpcConfig.WithClientTimeout(1)))
 		newTopicClient, err := NewTopicClient(newCfg, sharedContext.CredentialProvider)
 		if err != nil {
 			panic(err)

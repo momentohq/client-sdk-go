@@ -13,7 +13,7 @@ const MAX_CONCURRENT_STREAMS_PER_CHANNEL uint32 = 100
 
 type topicsConfiguration struct {
 	loggerFactory     logger.MomentoLoggerFactory
-	maxSubscriptions  uint32 // DEPRECATED
+	maxSubscriptions  uint32
 	numGrpcChannels   uint32 // DEPRECATED
 	transportStrategy TopicsTransportStrategy
 	retryStrategy     retry.Strategy
@@ -24,7 +24,7 @@ type TopicsConfigurationProps struct {
 	// LoggerFactory represents a type used to configure the Momento logging system.
 	LoggerFactory logger.MomentoLoggerFactory
 
-	// Deprecated: use NumStreamGrpcChannels and NumUnaryGrpcChannels instead.
+	// Un-deprecated
 	MaxSubscriptions uint32
 
 	// Deprecated: use NumStreamGrpcChannels and NumUnaryGrpcChannels instead.
@@ -48,18 +48,9 @@ type TopicsConfiguration interface {
 
 	// GetMaxSubscriptions Returns the configuration option for the maximum number of subscriptions
 	// a client is allowed
-	// Deprecated: Use GetNumGrpcChannels instead.
 	GetMaxSubscriptions() uint32
 
-	// Deprecated: please use the WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels overrides
-	// instead to tune the number of GRPC channels for stream and unary operations, respectively.
-	// Using WithMaxSubscriptions now will default to creating 4 unary channels and as many stream
-	// channels as needed to accommodate the maximum number of subscriptions.
-	//
 	// WithMaxSubscriptions creates one GRPC connection for every 100 subscribers.
-	// Can result in edge cases where subscribers and publishers are in contention
-	// and may bottleneck a large volume of publish requests.
-	// One GRPC connection can multiplex 100 subscribers/publishers.
 	WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration
 
 	// GetNumGrpcChannels Returns the configuration option for the number of GRPC channels
@@ -114,12 +105,6 @@ type TopicsConfiguration interface {
 
 	// AddMiddleware Copy constructor for adding Middleware returns a new Configuration object.
 	AddMiddleware(m middleware.TopicMiddleware) TopicsConfiguration
-
-	WithClientTimeout(clientTimeout time.Duration) TopicsConfiguration
-
-	// GetGrpcConfig Configures the low-level gRPC settings for the Momento client's communication
-	// with the Momento server.
-	GetGrpcConfig() TopicsGrpcConfiguration
 }
 
 func NewTopicConfiguration(props *TopicsConfigurationProps) TopicsConfiguration {
@@ -138,48 +123,22 @@ func (s *topicsConfiguration) GetLoggerFactory() logger.MomentoLoggerFactory {
 }
 
 func (s *topicsConfiguration) GetMaxSubscriptions() uint32 {
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		return strategy.GetNumStreamGrpcChannels() * MAX_CONCURRENT_STREAMS_PER_CHANNEL
-	case *TopicsDynamicTransportStrategy:
-		return strategy.grpcConfig.GetMaxSubscriptions()
-	}
 	return s.maxSubscriptions
 }
 
 func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration {
-	// s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions is deprecated, please use WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels instead")
-	// // If this deprecated method is used, we'll use the default 4 unary channels and set
-	// // the number of stream channels to accommodate the specified number of subscriptions.
-	// numStreamChannels := uint32(math.Ceil(float64(maxSubscriptions) / 100.0))
-	// return &topicsConfiguration{
-	// 	loggerFactory:     s.loggerFactory,
-	// 	transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamChannels),
-	// 	middleware:        s.middleware,
-	// 	retryStrategy:     s.retryStrategy,
-	// }
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
+	if s.transportStrategy.GetNumStreamGrpcChannels() == 0 {
 		return &topicsConfiguration{
 			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithNumStreamGrpcChannels(maxSubscriptions / MAX_CONCURRENT_STREAMS_PER_CHANNEL),
+			transportStrategy: s.transportStrategy,
 			middleware:        s.middleware,
 			retryStrategy:     s.retryStrategy,
-		}
-	case *TopicsDynamicTransportStrategy:
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithMaxSubscriptions(maxSubscriptions),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
+			maxSubscriptions:  maxSubscriptions,
 		}
 	}
-	return &topicsConfiguration{
-		loggerFactory:     s.loggerFactory,
-		transportStrategy: s.transportStrategy,
-		middleware:        s.middleware,
-		retryStrategy:     s.retryStrategy,
-	}
+
+	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions would override NumStreamGrpcChannels and only one may be specified, using WithNumStreamGrpcChannels instead")
+	return s
 }
 
 func (s *topicsConfiguration) GetNumGrpcChannels() uint32 {
@@ -190,97 +149,42 @@ func (s *topicsConfiguration) WithNumGrpcChannels(numGrpcChannels uint32) Topics
 	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithNumGrpcChannels is deprecated, please use WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels instead")
 	// If this deprecated method is used, we'll use the default 4 unary channels
 	// and set the number of stream channels to the specified number.
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithNumStreamGrpcChannels(numGrpcChannels),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-		}
-	case *TopicsDynamicTransportStrategy:
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithMaxSubscriptions(numGrpcChannels * MAX_CONCURRENT_STREAMS_PER_CHANNEL),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-		}
-	}
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		transportStrategy: s.transportStrategy,
+		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numGrpcChannels),
 		middleware:        s.middleware,
 		retryStrategy:     s.retryStrategy,
 	}
 }
 
 func (s *topicsConfiguration) GetNumStreamGrpcChannels() uint32 {
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		return strategy.GetNumStreamGrpcChannels()
-	case *TopicsDynamicTransportStrategy:
-		return strategy.grpcConfig.GetMaxSubscriptions() / MAX_CONCURRENT_STREAMS_PER_CHANNEL
-	}
-	return 0
+	return s.transportStrategy.GetNumStreamGrpcChannels()
 }
 
 func (s *topicsConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsConfiguration {
-	// maxSubscriptions and numGrpcChannels are deprecated, not included in the override
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
+	if s.maxSubscriptions == 0 {
+		// numGrpcChannels is deprecated, not included in the override
 		return &topicsConfiguration{
 			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-		}
-	case *TopicsDynamicTransportStrategy:
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithMaxSubscriptions(numStreamGrpcChannels * MAX_CONCURRENT_STREAMS_PER_CHANNEL),
+			transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
 			middleware:        s.middleware,
 			retryStrategy:     s.retryStrategy,
 		}
 	}
-	return &topicsConfiguration{
-		loggerFactory:     s.loggerFactory,
-		transportStrategy: s.transportStrategy,
-		middleware:        s.middleware,
-		retryStrategy:     s.retryStrategy,
-	}
+
+	s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithNumStreamGrpcChannels would override MaxSubscriptions and only one may be specified, using WithMaxSubscriptions instead")
+	return s
 }
 
 func (s *topicsConfiguration) GetNumUnaryGrpcChannels() uint32 {
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		return strategy.GetNumUnaryGrpcChannels()
-	case *TopicsDynamicTransportStrategy:
-		return strategy.grpcConfig.GetNumUnaryGrpcChannels()
-	}
-	return 0
+	return s.transportStrategy.GetNumUnaryGrpcChannels()
 }
 
 func (s *topicsConfiguration) WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint32) TopicsConfiguration {
 	// maxSubscriptions and numGrpcChannels are deprecated, not included in the override
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithNumUnaryGrpcChannels(numUnaryGrpcChannels),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-		}
-	case *TopicsDynamicTransportStrategy:
-		return &topicsConfiguration{
-			loggerFactory:     s.loggerFactory,
-			transportStrategy: strategy.WithNumUnaryGrpcChannels(numUnaryGrpcChannels),
-			middleware:        s.middleware,
-			retryStrategy:     s.retryStrategy,
-		}
-	}
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		transportStrategy: s.transportStrategy,
+		transportStrategy: s.transportStrategy.WithNumUnaryGrpcChannels(numUnaryGrpcChannels),
 		middleware:        s.middleware,
 		retryStrategy:     s.retryStrategy,
 	}
@@ -302,22 +206,6 @@ func (s *topicsConfiguration) WithTransportStrategy(transportStrategy TopicsTran
 
 func (s *topicsConfiguration) GetClientSideTimeout() time.Duration {
 	return s.transportStrategy.GetClientSideTimeout()
-}
-
-func (s *topicsConfiguration) WithClientTimeout(clientTimeout time.Duration) TopicsConfiguration {
-	var updatedStrategy TopicsTransportStrategy
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		updatedStrategy = strategy.WithClientTimeout(clientTimeout)
-	case *TopicsDynamicTransportStrategy:
-		updatedStrategy = strategy.WithClientTimeout(clientTimeout)
-	}
-	return &topicsConfiguration{
-		loggerFactory:     s.loggerFactory,
-		transportStrategy: updatedStrategy,
-		middleware:        s.middleware,
-		retryStrategy:     s.retryStrategy,
-	}
 }
 
 func (s *topicsConfiguration) GetMiddleware() []middleware.TopicMiddleware {
@@ -353,14 +241,4 @@ func (s *topicsConfiguration) WithRetryStrategy(retryStrategy retry.Strategy) To
 
 func (s *topicsConfiguration) GetRetryStrategy() retry.Strategy {
 	return s.retryStrategy
-}
-
-func (s *topicsConfiguration) GetGrpcConfig() TopicsGrpcConfiguration {
-	switch strategy := s.transportStrategy.(type) {
-	case *TopicsStaticTransportStrategy:
-		return strategy.GetGrpcConfig()
-	case *TopicsDynamicTransportStrategy:
-		return strategy.GetGrpcConfig()
-	}
-	return nil
 }

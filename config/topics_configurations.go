@@ -20,11 +20,9 @@ func TopicsDefaultWithLogger(loggerFactory logger.MomentoLoggerFactory) TopicsCo
 	reconnectMs := 500
 	return NewTopicConfiguration(&TopicsConfigurationProps{
 		LoggerFactory: loggerFactory,
-		TransportStrategy: NewTopicsDynamicTransportStrategy(&TopicsDynamicTransportStrategyProps{
-			GrpcConfiguration: NewTopicsDynamicGrpcConfiguration(&DynamicTopicsGrpcConfigurationProps{
-				TopicsGrpcConfigurationProps: TopicsGrpcConfigurationProps{
-					ClientTimeout: 5 * time.Second,
-				},
+		TransportStrategy: NewTopicsStaticTransportStrategy(&TopicsTransportStrategyProps{
+			GrpcConfiguration: NewTopicsStaticGrpcConfiguration(&TopicsGrpcConfigurationProps{
+				client_timeout: 5 * time.Second,
 			}),
 		}),
 		RetryStrategy: retry.NewLegacyTopicSubscriptionRetryStrategy(retry.LegacyTopicSubscriptionRetryStrategyProps{

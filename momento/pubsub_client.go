@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
@@ -37,7 +36,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		timeout = request.TopicsConfiguration.GetClientSideTimeout()
 	}
 
-	grpcConfig := request.TopicsConfiguration.GetGrpcConfig()
+	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
 	topicManagerProps := &models.TopicStreamGrpcManagerRequest{
 		CredentialProvider: request.CredentialProvider,
 		GrpcConfiguration:  grpcConfig,
@@ -55,25 +54,13 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 
 	// Create pool of grpc channels for stream operations depending on static vs dynamic transport strategy
 	var streamManagerList grpcmanagers.TopicStreamManagerListWithBookkeeping
-	switch request.TopicsConfiguration.GetTransportStrategy().(type) {
-	case *config.TopicsStaticTransportStrategy:
-		numStreamChannels := DEFAULT_NUM_STREAM_GRPC_CHANNELS
-		if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
-			numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
-		}
-		streamManagerList, err = grpcmanagers.NewStaticStreamManagerList(topicManagerProps, numStreamChannels, request.Log)
-		if err != nil {
-			return nil, err
-		}
-	case *config.TopicsDynamicTransportStrategy:
-		maxSubscriptions := DEFAULT_NUM_STREAM_GRPC_CHANNELS * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-		if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
-			maxSubscriptions = request.TopicsConfiguration.GetMaxSubscriptions()
-		}
-		streamManagerList, err = grpcmanagers.NewDynamicStreamManagerList(topicManagerProps, maxSubscriptions, request.Log)
-		if err != nil {
-			return nil, err
-		}
+	if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
+		streamManagerList, err = grpcmanagers.NewDynamicStreamManagerList(topicManagerProps, request.TopicsConfiguration.GetMaxSubscriptions(), request.Log)
+	} else {
+		streamManagerList, err = grpcmanagers.NewStaticStreamManagerList(topicManagerProps, request.TopicsConfiguration.GetNumStreamGrpcChannels(), request.Log)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return &pubSubClient{

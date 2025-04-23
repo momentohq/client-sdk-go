@@ -1000,7 +1000,8 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 
 		It("should pause subscription when admin port is blocked and resume subscription once admin port is unblocked", func() {
 			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{})
-			topicClient := setupTopicClient(clientConfig.WithClientTimeout(time.Duration(5) * time.Minute))
+			topicClient := setupTopicClient(clientConfig.WithTransportStrategy(
+				clientConfig.GetTransportStrategy().WithClientTimeout(time.Duration(5) * time.Minute)))
 			sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
 				CacheName: cacheName,
 				TopicName: topicName,
