@@ -62,7 +62,7 @@ type TopicManagerList interface {
 // Most basic case: static list of unary grpc managers
 type StaticUnaryManagerList struct {
 	grpcManagers []*TopicGrpcManager
-	managerCount atomic.Uint64
+	managerIndex atomic.Uint64
 	logger       logger.MomentoLogger
 }
 
@@ -74,7 +74,7 @@ type StaticUnaryManagerList struct {
 // Therefore we can just round-robin the unaryTopicManagers, no need to keep track of how many
 // publish requests are in flight on each one.
 func (list *StaticUnaryManagerList) GetNextManager() *TopicGrpcManager {
-	nextManagerIndex := list.managerCount.Add(1)
+	nextManagerIndex := list.managerIndex.Add(1)
 	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))]
 }
 
@@ -105,7 +105,7 @@ func NewStaticUnaryManagerList(request *models.TopicStreamGrpcManagerRequest, nu
 // Middle case: static list of stream grpc managers
 type StaticStreamManagerList struct {
 	grpcManagers         []*TopicGrpcManager
-	managerCount         atomic.Uint64
+	managerIndex         atomic.Uint64
 	maxConcurrentStreams uint32
 	logger               logger.MomentoLogger
 }
@@ -127,7 +127,7 @@ func (list *StaticStreamManagerList) GetNextManager() (*TopicGrpcManager, moment
 	// the round-robin system (incrementing nextManagerIndex) but to not cut short the number
 	//  of attempts in case there are many subscriptions starting up at the same time.
 	for i := 0; uint32(i) < list.maxConcurrentStreams; i++ {
-		nextManagerIndex := list.managerCount.Add(1)
+		nextManagerIndex := list.managerIndex.Add(1)
 		topicManager := list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))]
 		newCount := topicManager.NumActiveSubscriptions.Add(1)
 		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
@@ -200,9 +200,9 @@ func NewStaticStreamManagerList(request *models.TopicStreamGrpcManagerRequest, n
 // Most complex case: dynamic list of stream grpc managers
 type DynamicStreamManagerList struct {
 	grpcManagers                []*TopicGrpcManager
-	managerCount                atomic.Uint64
-	maxManagerCount             int
-	currentMaxConcurrentStreams uint32
+	managerIndex                atomic.Uint64
+	maxManagerCount             int    // maximum number of grpc channels that can be created
+	currentMaxConcurrentStreams uint32 // current number of grpc channels * MAX_CONCURRENT_STREAMS_PER_CHANNEL
 	logger                      logger.MomentoLogger
 	rwLock                      sync.RWMutex
 	newTopicManagerProps        *models.TopicStreamGrpcManagerRequest
@@ -216,15 +216,14 @@ func (list *DynamicStreamManagerList) GetNextManager() (*TopicGrpcManager, momen
 		return nil, err
 	}
 
-	// use which type of lock?
-	list.rwLock.Lock()
-	defer list.rwLock.Unlock()
+	list.rwLock.RLock()
+	defer list.rwLock.RUnlock()
 
 	// Max number of attempts is set to the max number of concurrent streams in order to preserve
 	// the round-robin system (incrementing nextManagerIndex) but to not cut short the number
 	//  of attempts in case there are many subscriptions starting up at the same time.
 	for i := 0; uint32(i) < list.currentMaxConcurrentStreams; i++ {
-		nextManagerIndex := list.managerCount.Add(1)
+		nextManagerIndex := list.managerIndex.Add(1)
 		topicManager := list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))]
 		newCount := topicManager.NumActiveSubscriptions.Add(1)
 		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
@@ -248,10 +247,8 @@ func (list *DynamicStreamManagerList) Close() {
 	}
 }
 
-// Helper to count number of active subscriptions on a dynamic stream manager list
+// Called by checkNumConcurrentStreams, which holds a write lock.
 func (list *DynamicStreamManagerList) CountNumberOfActiveSubscriptions() int64 {
-	list.rwLock.RLock()
-	defer list.rwLock.RUnlock()
 	count := int64(0)
 	for _, topicManager := range list.grpcManagers {
 		count += topicManager.NumActiveSubscriptions.Load()
@@ -261,6 +258,9 @@ func (list *DynamicStreamManagerList) CountNumberOfActiveSubscriptions() int64 {
 
 // Helper function to help sanity check number of concurrent streams before starting a new subscription
 func (list *DynamicStreamManagerList) checkNumConcurrentStreams() momentoerrors.MomentoSvcErr {
+	list.rwLock.Lock()
+	defer list.rwLock.Unlock()
+
 	numActiveStreams := list.CountNumberOfActiveSubscriptions()
 	list.logger.Debug("Current number of active subscriptions: %d", numActiveStreams)
 
@@ -270,12 +270,15 @@ func (list *DynamicStreamManagerList) checkNumConcurrentStreams() momentoerrors.
 			numActiveStreams, list.maxManagerCount, list.currentMaxConcurrentStreams,
 		)
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.LimitExceededError, errorMessage, nil)
+	} else if numActiveStreams >= int64(list.currentMaxConcurrentStreams) && len(list.grpcManagers) < list.maxManagerCount {
+		// otherwise we can try to add a new manager
+		err := list.addManager()
+		if err != nil {
+			return err
+		}
+		list.logger.Debug("Added new manager, current number of managers: %d", len(list.grpcManagers))
 	}
-	// otherwise we can try to add a new manager
-	err := list.addManager()
-	if err != nil {
-		return err
-	}
+
 	// If we are approaching the grpc maximum concurrent stream limit, log a warning
 	if len(list.grpcManagers) == list.maxManagerCount {
 		remainingStreams := int64(list.currentMaxConcurrentStreams) - numActiveStreams
@@ -289,14 +292,14 @@ func (list *DynamicStreamManagerList) checkNumConcurrentStreams() momentoerrors.
 	return nil
 }
 
+// called by checkNumConcurrentStreams, which holds a write lock
 func (list *DynamicStreamManagerList) addManager() momentoerrors.MomentoSvcErr {
-	list.rwLock.Lock()
-	defer list.rwLock.Unlock()
 	streamTopicManager, err := NewStreamTopicGrpcManager(list.newTopicManagerProps)
 	if err != nil {
 		return err
 	}
 	list.grpcManagers = append(list.grpcManagers, streamTopicManager)
+	list.currentMaxConcurrentStreams = uint32(len(list.grpcManagers)) * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
 	return nil
 }
 
@@ -308,10 +311,11 @@ func NewDynamicStreamManagerList(request *models.TopicStreamGrpcManagerRequest, 
 		return nil, err
 	}
 	streamTopicManagers = append(streamTopicManagers, streamTopicManager)
+	logger.Debug("Max subscriptions: %d, max manager count: %d", maxSubscriptions, int(math.Ceil(float64(maxSubscriptions)/float64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))))
 	return &DynamicStreamManagerList{
 		grpcManagers:                streamTopicManagers,
 		maxManagerCount:             int(math.Ceil(float64(maxSubscriptions) / float64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))),
-		currentMaxConcurrentStreams: config.MAX_CONCURRENT_STREAMS_PER_CHANNEL,
+		currentMaxConcurrentStreams: config.MAX_CONCURRENT_STREAMS_PER_CHANNEL, // for one channel
 		logger:                      logger,
 		newTopicManagerProps:        request,
 	}, nil

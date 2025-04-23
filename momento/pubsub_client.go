@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
@@ -201,7 +202,7 @@ type dynamicPubSubClient struct {
 func newDynamicPubSubClient(request *models.PubSubClientRequest) (*dynamicPubSubClient, momentoerrors.MomentoSvcErr) {
 	grpcConfig := request.TopicsConfiguration.GetGrpcConfig()
 
-	maxSubscriptions := DEFAULT_NUM_STREAM_GRPC_CHANNELS
+	maxSubscriptions := DEFAULT_NUM_STREAM_GRPC_CHANNELS * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
 	if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
 		maxSubscriptions = request.TopicsConfiguration.GetMaxSubscriptions()
 	}
@@ -279,7 +280,6 @@ func (client *dynamicPubSubClient) topicSubscribe(ctx context.Context, request *
 		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
-	client.log.Debug("Starting new subscription")
 	return topicManager, subscribeClient, cancelContext, cancelFunction, err
 }
 
