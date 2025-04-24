@@ -9,6 +9,8 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 )
 
+// MAX_CONCURRENT_STREAMS_PER_CHANNEL is the maximum number of concurrent streams per channel.
+// The default gRPC setting is 100 streams per channel.
 const MAX_CONCURRENT_STREAMS_PER_CHANNEL uint32 = 100
 
 type topicsConfiguration struct {
@@ -24,14 +26,18 @@ type TopicsConfigurationProps struct {
 	// LoggerFactory represents a type used to configure the Momento logging system.
 	LoggerFactory logger.MomentoLoggerFactory
 
-	// Un-deprecated
+	// MaxSubscriptions is the maximum number of subscriptions the topic client will support.
+	// The topic client will create a dynamic pool of gRPC channels under the hood to support the
+	// specified number of subscriptions.
+	// Using WithMaxSubscriptions will override the NumStreamGrpcChannels setting, which creates a static
+	// pool of gRPC channels.
 	MaxSubscriptions uint32
 
 	// Deprecated: use NumStreamGrpcChannels and NumUnaryGrpcChannels instead.
 	NumGrpcChannels uint32
 
-	// TransportStrategy is responsible for configuring network tunables for the GRPC client,
-	// including the number of stream and unary grpc channels that should be used.
+	// TransportStrategy is responsible for configuring network tunables for the gRPC client,
+	// including the number of stream and unary gRPC channels that should be used.
 	TransportStrategy TopicsTransportStrategy
 
 	// RetryStrategy is responsible for configuring the strategy for reconnecting a subscription to a
@@ -50,47 +56,55 @@ type TopicsConfiguration interface {
 	// a client is allowed
 	GetMaxSubscriptions() uint32
 
-	// WithMaxSubscriptions creates one GRPC connection for every 100 subscribers.
+	// WithMaxSubscriptions sets the maximum number of subscriptions the topic client will support.
+	// The topic client will create a dynamic pool of gRPC channels under the hood to support the
+	// specified number of subscriptions.
+	// Using WithMaxSubscriptions will override the NumStreamGrpcChannels setting, which creates a static
+	// pool of gRPC channels.
 	WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration
 
-	// GetNumGrpcChannels Returns the configuration option for the number of GRPC channels
+	// GetNumGrpcChannels Returns the configuration option for the number of gRPC channels
 	// the topic client should open and work with.
 	GetNumGrpcChannels() uint32
 
-	// Deprecated: please use the WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels overrides
-	// instead to tune the number of GRPC channels for stream and unary operations, respectively.
+	// Deprecated: please use WithMaxSubscriptions to set the maximum number of subscriptions you
+	// expect a topic client to support, or use the WithNumStreamGrpcChannels and WithNumUnaryGrpcChannels
+	// overrides to tune the number of gRPC channels for stream and unary operations, respectively.
 	// Using WithNumGrpcChannels now will default creating 4 unary channels and `numGrpcChannels`
 	// number of stream channels.
 	//
-	// WithNumGrpcChannels creates the specified number of GRPC connections
-	// (each GRPC connection can multiplex 100 subscribers/publishers). Defaults to 1.
+	// WithNumGrpcChannels creates the specified number of gRPC connections
+	// (each gRPC connection can multiplex 100 subscribers/publishers). Defaults to 1.
 	WithNumGrpcChannels(numGrpcChannels uint32) TopicsConfiguration
 
-	// GetNumStreamGrpcChannels Returns the configuration option for the number of GRPC channels
+	// GetNumStreamGrpcChannels Returns the configuration option for the number of gRPC channels
 	// the topic client should open and work with for stream operations (i.e. topic subscriptions).
 	GetNumStreamGrpcChannels() uint32
 
-	// WithNumStreamGrpcChannels is currently implemented to create the specified number of GRPC connections
-	// for stream operations. Each GRPC connection can multiplex 100 concurrent subscriptions.
+	// WithNumStreamGrpcChannels tells the topic client to create a static pool of the specified number
+	// of gRPC connections for stream operations. Each gRPC connection can multiplex 100 concurrent subscriptions.
 	// Defaults to 4.
 	WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsConfiguration
 
-	// GetNumUnaryGrpcChannels Returns the configuration option for the number of GRPC channels
+	// GetNumUnaryGrpcChannels Returns the configuration option for the number of gRPC channels
 	// the topic client should open and work with for unary operations (i.e. topic publishes).
 	GetNumUnaryGrpcChannels() uint32
 
-	// WithNumUnaryGrpcChannels is currently implemented to create the specified number of GRPC connections
-	// for unary operations. Each GRPC connection can multiplex 100 concurrent publish requests.
+	// WithNumUnaryGrpcChannels tells the topic client to create a static pool of the specified number
+	// of gRPC connections for unary operations. Each gRPC connection can multiplex 100 concurrent publish requests.
 	// Defaults to 4.
 	WithNumUnaryGrpcChannels(numUnaryGrpcChannels uint32) TopicsConfiguration
 
+	// GetTransportStrategy returns the current transport strategy
 	GetTransportStrategy() TopicsTransportStrategy
 
+	// WithTransportStrategy updates the configuration to use the specified transport strategy.
 	WithTransportStrategy(transportStrategy TopicsTransportStrategy) TopicsConfiguration
 
 	// GetClientSideTimeout Returns the current configuration options for client side timeout with the Momento service
 	GetClientSideTimeout() time.Duration
 
+	// WithRetryStrategy updates the configuration to use the specified retry strategy.
 	WithRetryStrategy(retryStrategy retry.Strategy) TopicsConfiguration
 
 	// GetRetryStrategy Returns the current strategy for topic subscription reconnection
@@ -128,7 +142,7 @@ func (s *topicsConfiguration) GetMaxSubscriptions() uint32 {
 
 func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration {
 	if s.transportStrategy.GetNumStreamGrpcChannels() > 0 {
-		s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions will override NumStreamGrpcChannels. Use only NumStreamGrpcChannels if you want to specify a static number of grpc channels for subscriptions. Use only WithMaxSubscriptions if you want the topic client to dynamically create grpc channels to support the number of subscriptions up to the specified limit.")
+		s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions will override NumStreamGrpcChannels. Use only NumStreamGrpcChannels if you want to specify a static number of gRPC channels for subscriptions. Use only WithMaxSubscriptions if you want the topic client to dynamically create gRPC channels to support the number of subscriptions up to the specified limit.")
 	}
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
@@ -161,7 +175,7 @@ func (s *topicsConfiguration) GetNumStreamGrpcChannels() uint32 {
 
 func (s *topicsConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels uint32) TopicsConfiguration {
 	if s.maxSubscriptions > 0 {
-		s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions will override NumStreamGrpcChannels. Use only NumStreamGrpcChannels if you want to specify a static number of grpc channels for subscriptions. Use only WithMaxSubscriptions if you want the topic client to dynamically create grpc channels to support the number of subscriptions up to the specified limit.")
+		s.loggerFactory.GetLogger("TopicsConfiguration").Warn("WithMaxSubscriptions will override NumStreamGrpcChannels. Use only NumStreamGrpcChannels if you want to specify a static number of gRPC channels for subscriptions. Use only WithMaxSubscriptions if you want the topic client to dynamically create gRPC channels to support the number of subscriptions up to the specified limit.")
 	}
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
