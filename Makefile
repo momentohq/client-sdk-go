@@ -6,7 +6,7 @@
 	vendor build-examples run-docs-examples
 
 GOFILES_NOT_NODE = $(shell find . -type f -name '*.go' -not -path "./examples/aws-lambda/infrastructure/*")
-TEST_DIRS = momento/ auth/ batchutils/ config/middleware/impl/
+TEST_DIRS = momento/ auth/ batchutils/ config/middleware/impl/ internal/grpcmanagers/
 GINKGO_OPTS = --no-color -v
 
 install-goimport:
@@ -152,6 +152,10 @@ test-retry: install-ginkgo
 
 test-http-service:
 	@echo "No tests for http service."
+
+test-grpcmanagers: install-ginkgo
+	@echo "Testing grpcmanagers..."
+	@ginkgo ${GINKGO_OPTS} --label-filter grpcmanagers ${TEST_DIRS}
 
 vendor:
 	@echo "Vendoring..."
