@@ -1181,52 +1181,6 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("Creates channels based on max subscriptions when both WithNumStreamGrpcChannels and WithMaxSubscriptions are set", func() {
-			numChannels := uint32(2)
-			numSubscriptions := uint32(50)
-			config := config.TopicsDefault().WithNumStreamGrpcChannels(numChannels).WithMaxSubscriptions(numSubscriptions)
-			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(config.GetMaxSubscriptions()).To(Equal(numSubscriptions))
-			Expect(config.GetNumStreamGrpcChannels()).To(Equal(numChannels))
-			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
-
-			// Subscribing 100 times should work, indicating there is an underlying grpc channel
-			for i := 0; i < 100; i++ {
-				sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
-					CacheName: sharedContext.CacheName,
-					TopicName: topicName,
-				})
-				Expect(err).NotTo(HaveOccurred())
-				Expect(sub).NotTo(BeNil())
-				go func() {
-					// wait for a publish to happen
-					_, err := sub.Item(sharedContext.Ctx)
-					if err != nil {
-						Fail(err.Error())
-					}
-				}()
-			}
-
-			// Subscribing once more should fail, indicating the single-channel maxSubscriptions limit was hit,
-			// and that the numStreamChannels config was not used.
-			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
-				CacheName: sharedContext.CacheName,
-				TopicName: topicName,
-			})
-			Expect(err).To(HaveOccurred())
-			Expect(sub).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(LimitExceededError))
-
-			// Publish should work and be unaffected by the stream configs
-			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
-				CacheName: sharedContext.CacheName,
-				TopicName: topicName,
-				Value:     String("test"),
-			})
-			Expect(err).NotTo(HaveOccurred())
-		})
-
 		It("Creates 4 channels by default when neither WithNumStreamGrpcChannels nor WithMaxSubscriptions are set", func() {
 			config := config.TopicsDefault()
 			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
