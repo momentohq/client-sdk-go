@@ -143,6 +143,9 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 			return newMomentoSvcErr(ServerUnavailableError, grpcStatus.Message(), err, ServerUnavailableMessageWrapper)
 		case codes.DataLoss:
 			return newMomentoSvcErr(InternalServerError, grpcStatus.Message(), err, InternalServerErrorMessageWrapper)
+		case codes.OK:
+			// Closing a grpc channel returns an OK status.
+			return nil
 		default:
 			return newMomentoSvcErr(UnknownServiceError, grpcStatus.Message(), err, UnknownServiceErrorMessageWrapper)
 		}

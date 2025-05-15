@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/momentohq/client-sdk-go/config"
 	. "github.com/momentohq/client-sdk-go/momento"
 )
 
@@ -352,5 +353,76 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		case Bytes:
 			Fail("Expected topic item to be a string")
 		}
+	})
+
+	Describe("Using WithMaxSubscriptions", func() {
+		It("Creates at least one stream grpc channel when given <100 max subscriptions", func() {
+			numSubscriptions := uint32(1)
+			config := config.TopicsDefault().WithMaxSubscriptions(numSubscriptions)
+			topicClient, err := NewTopicClient(config, sharedContext.CredentialProvider)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(config.GetMaxSubscriptions()).To(Equal(numSubscriptions))
+			Expect(config.GetNumStreamGrpcChannels()).To(Equal(uint32(0)))
+			Expect(config.GetNumUnaryGrpcChannels()).To(Equal(uint32(0)))
+
+			sub, err := topicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(sub).NotTo(BeNil())
+
+		})
+
+		It("Publishes and receives", func() {
+			publishedValues := []TopicValue{
+				String("aaa"),
+				Bytes([]byte{1, 2, 3}),
+			}
+
+			sub, err := sharedContext.DynamicTopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			if err != nil {
+				panic(err)
+			}
+
+			cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
+			var receivedValues []TopicValue
+			ready := make(chan int, 1)
+			go func() {
+				ready <- 1
+				for {
+					select {
+					case <-cancelContext.Done():
+						return
+					default:
+						value, err := sub.Item(sharedContext.Ctx)
+						if err != nil {
+							panic(err)
+						}
+						receivedValues = append(receivedValues, value)
+					}
+				}
+			}()
+			<-ready
+
+			time.Sleep(time.Millisecond * 100)
+			for _, value := range publishedValues {
+				_, err := sharedContext.DynamicTopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
+					CacheName: sharedContext.CacheName,
+					TopicName: topicName,
+					Value:     value,
+				})
+				if err != nil {
+					panic(err)
+				}
+			}
+			time.Sleep(time.Millisecond * 100)
+			cancelFunction()
+
+			Expect(receivedValues).To(Equal(publishedValues))
+		})
 	})
 })
