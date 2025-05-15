@@ -71,7 +71,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 						case <-ctx.Done():
 							return
 						default:
-							subscribeClient.Recv()
+							_, _ = subscribeClient.Recv()
 							time.Sleep(10 * time.Millisecond)
 						}
 					}
@@ -121,7 +121,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 							case <-testCtx.Done():
 								return
 							default:
-								subscribeClient.Recv()
+								_, _ = subscribeClient.Recv()
 								time.Sleep(1 * time.Second)
 							}
 						}
@@ -167,7 +167,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 							case <-testCtx.Done():
 								return
 							default:
-								subscribeClient.Recv()
+								_, _ = subscribeClient.Recv()
 								time.Sleep(1 * time.Second)
 							}
 						}
@@ -216,7 +216,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 								case <-testCtx.Done():
 									return
 								default:
-									subscribeClient.Recv()
+									_, _ = subscribeClient.Recv()
 									time.Sleep(1 * time.Second)
 								}
 							}
@@ -264,7 +264,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 						case <-testCtx.Done():
 							return
 						default:
-							subscribeClient.Recv()
+							_, _ = subscribeClient.Recv()
 							time.Sleep(1 * time.Second)
 						}
 					}
@@ -318,7 +318,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 							case <-testCtx.Done():
 								return
 							default:
-								subscribeClient.Recv()
+								_, _ = subscribeClient.Recv()
 								time.Sleep(1 * time.Second)
 							}
 						}
@@ -373,7 +373,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 								case <-testCtx.Done():
 									return
 								default:
-									subscribeClient.Recv()
+									_, _ = subscribeClient.Recv()
 									time.Sleep(1 * time.Second)
 								}
 							}
@@ -435,7 +435,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 									case <-testCtx.Done():
 										return
 									default:
-										subscribeClient.Recv()
+										_, _ = subscribeClient.Recv()
 										time.Sleep(1 * time.Second)
 									}
 								}
