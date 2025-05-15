@@ -45,24 +45,36 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Get one new stream at a time until max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
 			// Get one new stream at a time until max concurrent streams reached.
+			ctx, cancel := context.WithCancel(testCtx)
+			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				streamManager, err := staticList.GetNextManager()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(streamManager).NotTo(BeNil())
+				topicManagerRequest := <-streamManagerRequestQueue
+				Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
+				Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
+				streamManager := topicManagerRequest.TopicManager
 
 				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
-				// keep the stream alive using a goroutine
+				// keep the stream alive until end of test using a goroutine
+				waitGroup.Add(1)
 				go func() {
-					subscribeClient.Recv()
-					time.Sleep(1 * time.Second)
+					defer waitGroup.Done()
+					for {
+						select {
+						case <-ctx.Done():
+							return
+						default:
+							subscribeClient.Recv()
+							time.Sleep(10 * time.Millisecond)
+						}
+					}
 				}()
 			}
 
@@ -74,24 +86,29 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("LimitExceededError"))
 			Expect(stream).To(BeNil())
+
+			staticList.Close()
+			cancel()
+			waitGroup.Wait()
 		})
 
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
-			// Start a burst of streams to occupy half the max concurrent stream capacity.
+			// Start a burst of streams to occupy just under half the max concurrent stream capacity.
 			waitGroup := sync.WaitGroup{}
-			for i := 0; i < int(maxConcurrentStreams/2); i++ {
+			for i := 0; i < int(maxConcurrentStreams/2-1); i++ {
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					streamManager, err := staticList.GetNextManager()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(streamManager).NotTo(BeNil())
+					topicManagerRequest := <-streamManagerRequestQueue
+					Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
+					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
+					streamManager := topicManagerRequest.TopicManager
 
 					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
@@ -99,8 +116,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 					// keep the stream alive using a goroutine
 					go func() {
-						subscribeClient.Recv()
-						time.Sleep(1 * time.Second)
+						for {
+							select {
+							case <-testCtx.Done():
+								return
+							default:
+								subscribeClient.Recv()
+								time.Sleep(1 * time.Second)
+							}
+						}
 					}()
 				}()
 			}
@@ -110,12 +134,14 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Verify correct number of streams are active.
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams / 2)))
+
+			staticList.Close()
 		})
 
 		It("Starts a burst of streams == max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -125,9 +151,10 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					streamManager, err := staticList.GetNextManager()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(streamManager).NotTo(BeNil())
+					topicManagerRequest := <-streamManagerRequestQueue
+					Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
+					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
+					streamManager := topicManagerRequest.TopicManager
 
 					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
@@ -135,8 +162,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 					// keep the stream alive using a goroutine
 					go func() {
-						subscribeClient.Recv()
-						time.Sleep(1 * time.Second)
+						for {
+							select {
+							case <-testCtx.Done():
+								return
+							default:
+								subscribeClient.Recv()
+								time.Sleep(1 * time.Second)
+							}
+						}
 					}()
 				}()
 			}
@@ -146,12 +180,14 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Verify correct number of streams are active.
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+
+			staticList.Close()
 		})
 
 		It("Starts a burst of streams > max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -161,11 +197,12 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					streamManager, err := staticList.GetNextManager()
-					// Expecting some errors to occur during the burst
-					if err != nil {
-						Expect(err.Error()).To(ContainSubstring("LimitExceededError"))
+
+					topicManagerRequest := <-streamManagerRequestQueue
+					if topicManagerRequest.Err != nil {
+						Expect(topicManagerRequest.Err.Error()).To(ContainSubstring("LimitExceededError"))
 					} else {
+						streamManager := topicManagerRequest.TopicManager
 						Expect(streamManager).NotTo(BeNil())
 
 						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
@@ -174,8 +211,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 						// keep the stream alive using a goroutine
 						go func() {
-							subscribeClient.Recv()
-							time.Sleep(1 * time.Second)
+							for {
+								select {
+								case <-testCtx.Done():
+									return
+								default:
+									subscribeClient.Recv()
+									time.Sleep(1 * time.Second)
+								}
+							}
 						}()
 					}
 				}()
@@ -186,6 +230,8 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Verify correct number of streams are active.
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+
+			staticList.Close()
 		})
 	})
 
@@ -193,7 +239,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Get one new stream at a timeuntil max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			dynamicList, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+			dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
 
@@ -202,9 +248,10 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Get one new stream at a time until max concurrent streams reached.
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				streamManager, err := dynamicList.GetNextManager()
-				Expect(err).ToNot(HaveOccurred())
-				Expect(streamManager).NotTo(BeNil())
+				topicManagerRequest := <-streamManagerRequestQueue
+				Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
+				Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
+				streamManager := topicManagerRequest.TopicManager
 
 				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
@@ -212,8 +259,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 				// keep the stream alive using a goroutine
 				go func() {
-					subscribeClient.Recv()
-					time.Sleep(1 * time.Second)
+					for {
+						select {
+						case <-testCtx.Done():
+							return
+						default:
+							subscribeClient.Recv()
+							time.Sleep(1 * time.Second)
+						}
+					}
 				}()
 			}
 
@@ -228,27 +282,30 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("LimitExceededError"))
 			Expect(stream).To(BeNil())
+
+			dynamicList.Close()
 		})
 
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			dynamicList, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+			dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
 
 			// Dynamic list always starts with only one grpc manager.
 			Expect(len(dynamicList.grpcManagers)).To(Equal(1))
 
-			// Start a burst of streams to occupy half the max concurrent stream capacity.
+			// Start a burst of streams to occupy just under half the max concurrent stream capacity.
 			waitGroup := sync.WaitGroup{}
-			for i := 0; i < int(maxConcurrentStreams/2); i++ {
+			for i := 0; i < int(maxConcurrentStreams/2-1); i++ {
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					streamManager, err := dynamicList.GetNextManager()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(streamManager).NotTo(BeNil())
+					topicManagerRequest := <-streamManagerRequestQueue
+					Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
+					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
+					streamManager := topicManagerRequest.TopicManager
 
 					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
@@ -256,8 +313,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 					// keep the stream alive using a goroutine
 					go func() {
-						subscribeClient.Recv()
-						time.Sleep(1 * time.Second)
+						for {
+							select {
+							case <-testCtx.Done():
+								return
+							default:
+								subscribeClient.Recv()
+								time.Sleep(1 * time.Second)
+							}
+						}
 					}()
 				}()
 			}
@@ -270,12 +334,14 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Verify correct number of streams are active.
 			Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams / 2)))
+
+			dynamicList.Close()
 		})
 
 		DescribeTable("Starts a burst of streams == max concurrent streams",
 			func(numGrpcChannels uint32) {
 				maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-				dynamicList, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+				dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
 
@@ -288,12 +354,13 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 					waitGroup.Add(1)
 					go func() {
 						defer waitGroup.Done()
-						streamManager, err := dynamicList.GetNextManager()
-						if err != nil {
-							fmt.Println("error: ", err)
+						topicManagerRequest := <-streamManagerRequestQueue
+						if topicManagerRequest.Err != nil {
+							fmt.Println("error: ", topicManagerRequest.Err)
 						}
-						Expect(err).ToNot(HaveOccurred())
-						Expect(streamManager).NotTo(BeNil())
+						Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
+						Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
+						streamManager := topicManagerRequest.TopicManager
 
 						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
@@ -301,8 +368,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 						// keep the stream alive using a goroutine
 						go func() {
-							subscribeClient.Recv()
-							time.Sleep(1 * time.Second)
+							for {
+								select {
+								case <-testCtx.Done():
+									return
+								default:
+									subscribeClient.Recv()
+									time.Sleep(1 * time.Second)
+								}
+							}
 						}()
 					}()
 				}
@@ -315,6 +389,8 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 				// Verify correct number of streams are active.
 				Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+
+				dynamicList.Close()
 			},
 			Entry("using max 2 channels", uint32(2)),
 			Entry("using max 3 channels", uint32(5)),
@@ -327,7 +403,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		DescribeTable("Starts a burst of streams > max concurrent streams",
 			func(numGrpcChannels uint32) {
 				maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-				dynamicList, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+				dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
 
@@ -340,11 +416,12 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 					waitGroup.Add(1)
 					go func() {
 						defer waitGroup.Done()
-						streamManager, err := dynamicList.GetNextManager()
-						// Expecting some errors to occur during the burst
-						if err != nil {
-							Expect(err.Error()).To(ContainSubstring("LimitExceededError"))
+
+						topicManagerRequest := <-streamManagerRequestQueue
+						if topicManagerRequest.Err != nil {
+							Expect(topicManagerRequest.Err.Error()).To(ContainSubstring("LimitExceededError"))
 						} else {
+							streamManager := topicManagerRequest.TopicManager
 							Expect(streamManager).NotTo(BeNil())
 
 							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
@@ -353,8 +430,15 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 							// keep the stream alive using a goroutine
 							go func() {
-								subscribeClient.Recv()
-								time.Sleep(1 * time.Second)
+								for {
+									select {
+									case <-testCtx.Done():
+										return
+									default:
+										subscribeClient.Recv()
+										time.Sleep(1 * time.Second)
+									}
+								}
 							}()
 						}
 					}()
@@ -368,6 +452,8 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 				// Verify correct number of streams are active.
 				Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+
+				dynamicList.Close()
 			},
 			Entry("using max 2 channels", uint32(2)),
 			Entry("using max 3 channels", uint32(5)),

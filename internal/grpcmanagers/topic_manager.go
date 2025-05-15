@@ -1,9 +1,9 @@
 package grpcmanagers
 
 import (
+	"context"
 	"fmt"
 	"math"
-	"sync"
 	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config"
@@ -66,6 +66,11 @@ type TopicStreamManagerListWithBookkeeping interface {
 	checkNumConcurrentStreams() momentoerrors.MomentoSvcErr
 }
 
+type StreamManagerRequest struct {
+	TopicManager *TopicGrpcManager
+	Err          error
+}
+
 // Most basic case: static list of unary grpc managers
 type StaticUnaryManagerList struct {
 	grpcManagers []*TopicGrpcManager
@@ -115,6 +120,11 @@ type StaticStreamManagerList struct {
 	managerIndex         atomic.Uint64
 	maxConcurrentStreams uint32
 	logger               logger.MomentoLogger
+	// The StaticStreamManagerList will continually place the next available stream manager
+	// (or an error if no available managers) on this channel for pubsub client to pull from.
+	streamManagerRequestQueue chan *StreamManagerRequest
+	ctx                       context.Context
+	cancel                    context.CancelFunc
 }
 
 // Must check that there is a stream available to return, otherwise return an error.
@@ -150,6 +160,8 @@ func (list *StaticStreamManagerList) GetNextManager() (*TopicGrpcManager, moment
 }
 
 func (list *StaticStreamManagerList) Close() {
+	list.cancel() // Cancel context first to stop goroutines
+	close(list.streamManagerRequestQueue)
 	for _, topicManager := range list.grpcManagers {
 		err := topicManager.Close()
 		if err != nil {
@@ -188,20 +200,52 @@ func (list *StaticStreamManagerList) checkNumConcurrentStreams() momentoerrors.M
 	return nil
 }
 
-func NewStaticStreamManagerList(request *models.TopicStreamGrpcManagerRequest, numStreamChannels uint32, logger logger.MomentoLogger) (*StaticStreamManagerList, momentoerrors.MomentoSvcErr) {
+func NewStaticStreamManagerList(request *models.TopicStreamGrpcManagerRequest, numStreamChannels uint32, logger logger.MomentoLogger) (*StaticStreamManagerList, chan *StreamManagerRequest, momentoerrors.MomentoSvcErr) {
 	streamTopicManagers := make([]*TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numStreamChannels; i++ {
 		streamTopicManager, err := NewStreamTopicGrpcManager(request)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	}
-	return &StaticStreamManagerList{
-		grpcManagers:         streamTopicManagers,
-		maxConcurrentStreams: numStreamChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL,
-		logger:               logger,
-	}, nil
+
+	// Unbuffered channel so the stream manager list will block on sending the next
+	// available stream manager until the most recent request is processed.
+	streamManagerRequestQueue := make(chan *StreamManagerRequest)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	list := &StaticStreamManagerList{
+		grpcManagers:              streamTopicManagers,
+		maxConcurrentStreams:      numStreamChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL,
+		logger:                    logger,
+		streamManagerRequestQueue: streamManagerRequestQueue,
+		ctx:                       ctx,
+		cancel:                    cancel,
+	}
+
+	// Start goroutine to continually make the next available stream manager
+	// available on the streamManagerRequestQueue
+	go func() {
+		for {
+			select {
+			case <-list.ctx.Done():
+				return
+			default:
+				topicManager, err := list.GetNextManager()
+				select {
+				case <-list.ctx.Done():
+					return
+				case streamManagerRequestQueue <- &StreamManagerRequest{
+					TopicManager: topicManager,
+					Err:          err,
+				}:
+				}
+			}
+		}
+	}()
+
+	return list, streamManagerRequestQueue, nil
 }
 
 // Most complex case: dynamic list of stream grpc managers
@@ -211,8 +255,14 @@ type DynamicStreamManagerList struct {
 	maxManagerCount             int    // maximum number of grpc channels that can be created
 	currentMaxConcurrentStreams uint32 // current number of grpc channels * MAX_CONCURRENT_STREAMS_PER_CHANNEL
 	logger                      logger.MomentoLogger
-	rwLock                      sync.RWMutex
 	newTopicManagerProps        *models.TopicStreamGrpcManagerRequest
+	// The DynamicStreamManagerList will continually place the next available stream manager
+	// (or an error if no available managers) on this channel for pubsub client to pull from.
+	// Without this channel gatekeeping operations, a mutex and additional logic would be needed
+	// to protect the dynamic list of grpc managers from concurrent access.
+	streamManagerRequestQueue chan *StreamManagerRequest
+	ctx                       context.Context
+	cancel                    context.CancelFunc
 }
 
 // If current max streams is reached, check if we can add a new channel and return a stream, else error.
@@ -222,9 +272,6 @@ func (list *DynamicStreamManagerList) GetNextManager() (*TopicGrpcManager, momen
 	if err != nil {
 		return nil, err
 	}
-
-	list.rwLock.RLock()
-	defer list.rwLock.RUnlock()
 
 	// Max number of attempts is set to the max number of concurrent streams in order to preserve
 	// the round-robin system (incrementing nextManagerIndex) but to not cut short the number
@@ -246,15 +293,17 @@ func (list *DynamicStreamManagerList) GetNextManager() (*TopicGrpcManager, momen
 }
 
 func (list *DynamicStreamManagerList) Close() {
+	list.cancel() // Cancel context first to stop goroutines
+	close(list.streamManagerRequestQueue)
 	for _, topicManager := range list.grpcManagers {
 		err := topicManager.Close()
 		if err != nil {
-			list.logger.Error("Error closing topic manager: %v", err)
+			list.logger.Error("Error closing topic manager: %s", err.Error())
 		}
 	}
 }
 
-// Called by checkNumConcurrentStreams, which holds a write lock.
+// Called by checkNumConcurrentStreams.
 func (list *DynamicStreamManagerList) CountNumberOfActiveSubscriptions() int64 {
 	count := int64(0)
 	for _, topicManager := range list.grpcManagers {
@@ -265,9 +314,6 @@ func (list *DynamicStreamManagerList) CountNumberOfActiveSubscriptions() int64 {
 
 // Helper function to help sanity check number of concurrent streams before starting a new subscription
 func (list *DynamicStreamManagerList) checkNumConcurrentStreams() momentoerrors.MomentoSvcErr {
-	list.rwLock.Lock()
-	defer list.rwLock.Unlock()
-
 	numActiveStreams := list.CountNumberOfActiveSubscriptions()
 	list.logger.Debug("Current number of active subscriptions: %d", numActiveStreams)
 
@@ -301,7 +347,7 @@ func (list *DynamicStreamManagerList) checkNumConcurrentStreams() momentoerrors.
 	return nil
 }
 
-// called by checkNumConcurrentStreams, which holds a write lock
+// Called by checkNumConcurrentStreams to add more stream capacity if needed.
 func (list *DynamicStreamManagerList) addManager() momentoerrors.MomentoSvcErr {
 	streamTopicManager, err := NewStreamTopicGrpcManager(list.newTopicManagerProps)
 	if err != nil {
@@ -312,20 +358,52 @@ func (list *DynamicStreamManagerList) addManager() momentoerrors.MomentoSvcErr {
 	return nil
 }
 
-func NewDynamicStreamManagerList(request *models.TopicStreamGrpcManagerRequest, maxSubscriptions uint32, logger logger.MomentoLogger) (*DynamicStreamManagerList, momentoerrors.MomentoSvcErr) {
+func NewDynamicStreamManagerList(request *models.TopicStreamGrpcManagerRequest, maxSubscriptions uint32, logger logger.MomentoLogger) (*DynamicStreamManagerList, chan *StreamManagerRequest, momentoerrors.MomentoSvcErr) {
 	// make just one manager to start with
 	streamTopicManagers := make([]*TopicGrpcManager, 0)
 	streamTopicManager, err := NewStreamTopicGrpcManager(request)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	streamTopicManagers = append(streamTopicManagers, streamTopicManager)
 	logger.Debug("Max subscriptions: %d, max manager count: %d", maxSubscriptions, int(math.Ceil(float64(maxSubscriptions)/float64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))))
-	return &DynamicStreamManagerList{
+
+	// Unbuffered channel so the stream manager list will block on sending the next
+	// available stream manager until the most recent request is processed.
+	streamManagerRequestQueue := make(chan *StreamManagerRequest)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	list := &DynamicStreamManagerList{
 		grpcManagers:                streamTopicManagers,
 		maxManagerCount:             int(math.Ceil(float64(maxSubscriptions) / float64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))),
 		currentMaxConcurrentStreams: config.MAX_CONCURRENT_STREAMS_PER_CHANNEL, // for one channel
 		logger:                      logger,
 		newTopicManagerProps:        request,
-	}, nil
+		streamManagerRequestQueue:   streamManagerRequestQueue,
+		ctx:                         ctx,
+		cancel:                      cancel,
+	}
+
+	// Start goroutine to continually make the next available stream manager
+	// available on the streamManagerRequestQueue
+	go func() {
+		for {
+			select {
+			case <-list.ctx.Done():
+				return
+			default:
+				topicManager, err := list.GetNextManager()
+				select {
+				case <-list.ctx.Done():
+					return
+				case streamManagerRequestQueue <- &StreamManagerRequest{
+					TopicManager: topicManager,
+					Err:          err,
+				}:
+				}
+			}
+		}
+	}()
+
+	return list, streamManagerRequestQueue, nil
 }
