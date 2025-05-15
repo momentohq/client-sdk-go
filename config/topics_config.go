@@ -63,6 +63,7 @@ type TopicsConfiguration interface {
 	// pool of gRPC channels.
 	WithMaxSubscriptions(maxSubscriptions uint32) TopicsConfiguration
 
+	// Deprecated: use GetNumStreamGrpcChannels and GetNumUnaryGrpcChannels instead.
 	// GetNumGrpcChannels Returns the configuration option for the number of gRPC channels
 	// the topic client should open and work with.
 	GetNumGrpcChannels() uint32
@@ -146,7 +147,7 @@ func (s *topicsConfiguration) WithMaxSubscriptions(maxSubscriptions uint32) Topi
 	}
 	return &topicsConfiguration{
 		loggerFactory:     s.loggerFactory,
-		transportStrategy: s.transportStrategy,
+		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(0),
 		middleware:        s.middleware,
 		retryStrategy:     s.retryStrategy,
 		maxSubscriptions:  maxSubscriptions,
@@ -182,7 +183,7 @@ func (s *topicsConfiguration) WithNumStreamGrpcChannels(numStreamGrpcChannels ui
 		transportStrategy: s.transportStrategy.WithNumStreamGrpcChannels(numStreamGrpcChannels),
 		middleware:        s.middleware,
 		retryStrategy:     s.retryStrategy,
-		maxSubscriptions:  s.maxSubscriptions,
+		maxSubscriptions:  0,
 	}
 }
 
