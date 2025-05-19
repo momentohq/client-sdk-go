@@ -166,6 +166,9 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			// Wait for the burst to complete.
 			waitGroup.Wait()
 
+			// Allow time for all streams to be established
+			time.Sleep(500 * time.Millisecond)
+
 			// Verify correct number of streams are active.
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams / 2)))
 
@@ -223,6 +226,9 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Wait for the burst to complete.
 			waitGroup.Wait()
+
+			// Allow time for all streams to be established
+			time.Sleep(500 * time.Millisecond)
 
 			// Verify correct number of streams are active.
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
@@ -285,6 +291,9 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 			// Wait for the burst to complete.
 			waitGroup.Wait()
+
+			// Allow time for all streams to be established
+			time.Sleep(500 * time.Millisecond)
 
 			// Verify correct number of streams are active.
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
@@ -419,6 +428,9 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			// Wait for the burst to complete.
 			waitGroup.Wait()
 
+			// Allow time for all streams to be established
+			time.Sleep(500 * time.Millisecond)
+
 			// No new manager should have been added as we did not exceed a single channel's stream capacity.
 			Expect(len(dynamicList.grpcManagers)).To(Equal(1))
 
@@ -485,6 +497,9 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 				// Wait for the burst to complete.
 				waitGroup.Wait()
+
+				// Allow time for all streams to be established
+				time.Sleep(500 * time.Millisecond)
 
 				// New managers should have been added as needed to support the max number of concurrent streams.
 				Expect(len(dynamicList.grpcManagers)).To(Equal(int(numGrpcChannels)))
@@ -560,6 +575,9 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 
 				// Wait for the burst to complete.
 				waitGroup.Wait()
+
+				// Allow time for all streams to be established
+				time.Sleep(500 * time.Millisecond)
 
 				// New managers should have been added as needed to support the max number of concurrent streams.
 				Expect(len(dynamicList.grpcManagers)).To(Equal(int(numGrpcChannels)))
