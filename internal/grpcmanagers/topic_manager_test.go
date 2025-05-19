@@ -3,9 +3,12 @@ package grpcmanagers
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -26,10 +29,15 @@ var (
 
 var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 	BeforeEach(func() {
+		cacheName := os.Getenv("TEST_CACHE_NAME")
+		if cacheName == "" {
+			Fail("TEST_CACHE_NAME environment variable must be set for grpcmanagers tests")
+		}
+
 		testCtx = context.Background()
 		subscriptionRequest = &pb.XSubscriptionRequest{
-			CacheName: "cache",
-			Topic:     "topic",
+			CacheName: cacheName,
+			Topic:     uuid.New().String(),
 		}
 		grpcConfig = config.NewTopicsStaticGrpcConfiguration(&config.TopicsGrpcConfigurationProps{})
 		credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
@@ -58,7 +66,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
 				streamManager := topicManagerRequest.TopicManager
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -71,12 +79,26 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 						case <-ctx.Done():
 							return
 						default:
-							_, _ = subscribeClient.Recv()
-							time.Sleep(10 * time.Millisecond)
+							item, err := subscribeClient.Recv()
+
+							if err != nil {
+								// Test is ending if we get canceled error
+								if strings.Contains(err.Error(), "the client connection is closing") {
+									return
+								}
+								// Otherwise fail the test
+								Expect(err).ToNot(HaveOccurred())
+							}
+
+							// Otherwise we expect to receive heartbeats
+							Expect(item).NotTo(BeNil())
+							time.Sleep(100 * time.Millisecond)
 						}
 					}
 				}()
 			}
+			// Allow time for all streams to be established
+			time.Sleep(500 * time.Millisecond)
 
 			// Verify all managers are full of active subscriptions
 			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
@@ -121,8 +143,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 							case <-testCtx.Done():
 								return
 							default:
-								_, _ = subscribeClient.Recv()
-								time.Sleep(1 * time.Second)
+								item, err := subscribeClient.Recv()
+
+								if err != nil {
+									// Test is ending if we get canceled error
+									if strings.Contains(err.Error(), "the client connection is closing") {
+										return
+									}
+									// Otherwise fail the test
+									Expect(err).ToNot(HaveOccurred())
+								}
+
+								// Otherwise we expect to receive heartbeats
+								Expect(item).NotTo(BeNil())
+								time.Sleep(100 * time.Millisecond)
 							}
 						}
 					}()
@@ -167,8 +201,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 							case <-testCtx.Done():
 								return
 							default:
-								_, _ = subscribeClient.Recv()
-								time.Sleep(1 * time.Second)
+								item, err := subscribeClient.Recv()
+
+								if err != nil {
+									// Test is ending if we get canceled error
+									if strings.Contains(err.Error(), "the client connection is closing") {
+										return
+									}
+									// Otherwise fail the test
+									Expect(err).ToNot(HaveOccurred())
+								}
+
+								// Otherwise we expect to receive heartbeats
+								Expect(item).NotTo(BeNil())
+								time.Sleep(100 * time.Millisecond)
 							}
 						}
 					}()
@@ -216,8 +262,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 								case <-testCtx.Done():
 									return
 								default:
-									_, _ = subscribeClient.Recv()
-									time.Sleep(1 * time.Second)
+									item, err := subscribeClient.Recv()
+
+									if err != nil {
+										// Test is ending if we get canceled error
+										if strings.Contains(err.Error(), "the client connection is closing") {
+											return
+										}
+										// Otherwise fail the test
+										Expect(err).ToNot(HaveOccurred())
+									}
+
+									// Otherwise we expect to receive heartbeats
+									Expect(item).NotTo(BeNil())
+									time.Sleep(100 * time.Millisecond)
 								}
 							}
 						}()
@@ -247,29 +305,47 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			Expect(len(dynamicList.grpcManagers)).To(Equal(1))
 
 			// Get one new stream at a time until max concurrent streams reached.
+			ctx, cancel := context.WithCancel(testCtx)
+			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
 				topicManagerRequest := <-streamManagerRequestQueue
 				Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
 				Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
 				streamManager := topicManagerRequest.TopicManager
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
 				// keep the stream alive using a goroutine
+				waitGroup.Add(1)
 				go func() {
+					defer waitGroup.Done()
 					for {
 						select {
-						case <-testCtx.Done():
+						case <-ctx.Done():
 							return
 						default:
-							_, _ = subscribeClient.Recv()
-							time.Sleep(1 * time.Second)
+							item, err := subscribeClient.Recv()
+
+							if err != nil {
+								// Test is ending if we get canceled error
+								if strings.Contains(err.Error(), "the client connection is closing") {
+									return
+								}
+								// Otherwise fail the test
+								Expect(err).ToNot(HaveOccurred())
+							}
+
+							// Otherwise we expect to receive heartbeats
+							Expect(item).NotTo(BeNil())
+							time.Sleep(100 * time.Millisecond)
 						}
 					}
 				}()
 			}
+			// Allow time for all streams to be established
+			time.Sleep(500 * time.Millisecond)
 
 			// New managers should have been added as needed to support the max number of concurrent streams.
 			Expect(len(dynamicList.grpcManagers)).To(Equal(int(numGrpcChannels)))
@@ -284,6 +360,8 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			Expect(stream).To(BeNil())
 
 			dynamicList.Close()
+			cancel()
+			waitGroup.Wait()
 		})
 
 		It("Starts a burst of streams < max concurrent streams", func() {
@@ -318,8 +396,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 							case <-testCtx.Done():
 								return
 							default:
-								_, _ = subscribeClient.Recv()
-								time.Sleep(1 * time.Second)
+								item, err := subscribeClient.Recv()
+
+								if err != nil {
+									// Test is ending if we get canceled error
+									if strings.Contains(err.Error(), "the client connection is closing") {
+										return
+									}
+									// Otherwise fail the test
+									Expect(err).ToNot(HaveOccurred())
+								}
+
+								// Otherwise we expect to receive heartbeats
+								Expect(item).NotTo(BeNil())
+								time.Sleep(100 * time.Millisecond)
 							}
 						}
 					}()
@@ -373,8 +463,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 								case <-testCtx.Done():
 									return
 								default:
-									_, _ = subscribeClient.Recv()
-									time.Sleep(1 * time.Second)
+									item, err := subscribeClient.Recv()
+
+									if err != nil {
+										// Test is ending if we get canceled error
+										if strings.Contains(err.Error(), "the client connection is closing") {
+											return
+										}
+										// Otherwise fail the test
+										Expect(err).ToNot(HaveOccurred())
+									}
+
+									// Otherwise we expect to receive heartbeats
+									Expect(item).NotTo(BeNil())
+									time.Sleep(100 * time.Millisecond)
 								}
 							}
 						}()
@@ -435,8 +537,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 									case <-testCtx.Done():
 										return
 									default:
-										_, _ = subscribeClient.Recv()
-										time.Sleep(1 * time.Second)
+										item, err := subscribeClient.Recv()
+
+										if err != nil {
+											// Test is ending if we get canceled error
+											if strings.Contains(err.Error(), "the client connection is closing") {
+												return
+											}
+											// Otherwise fail the test
+											Expect(err).ToNot(HaveOccurred())
+										}
+
+										// Otherwise we expect to receive heartbeats
+										Expect(item).NotTo(BeNil())
+										time.Sleep(100 * time.Millisecond)
 									}
 								}
 							}()
