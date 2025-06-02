@@ -265,6 +265,10 @@ type DynamicStreamManagerList struct {
 	cancel                    context.CancelFunc
 }
 
+func (list *DynamicStreamManagerList) GetCurrentNumberOfGrpcManagers() int {
+	return len(list.grpcManagers)
+}
+
 // If current max streams is reached, check if we can add a new channel and return a stream, else error.
 func (list *DynamicStreamManagerList) GetNextManager() (*TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	// First check if there is enough grpc stream capacity to make a new subscription

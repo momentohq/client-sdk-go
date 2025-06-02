@@ -155,7 +155,7 @@ test-http-service:
 
 test-grpcmanagers: install-ginkgo
 	@echo "Testing grpcmanagers..."
-	@ginkgo ${GINKGO_OPTS} --label-filter grpcmanagers internal/grpcmanagers/
+	@ginkgo ${GINKGO_OPTS} --label-filter "grpcmanagers && momento-local" ${TEST_DIRS}
 
 vendor:
 	@echo "Vendoring..."

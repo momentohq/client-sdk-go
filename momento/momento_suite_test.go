@@ -20,6 +20,7 @@ var LEADERBOARD_SERVICE_LABEL = "leaderboard-service"
 var TOPICS_SERVICE_LABEL = "topics-service"
 var MOMENTO_LOCAL_LABEL = "momento-local"
 var RETRY_LABEL = "retry"
+var GRPCMANAGERS_LABEL = "grpcmanagers"
 
 func TestMomento(t *testing.T) {
 	RegisterFailHandler(Fail)

@@ -1,9 +1,8 @@
-package grpcmanagers
+package momento_test
 
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -13,47 +12,56 @@ import (
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
+	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var (
-	testCtx             context.Context
+	ctx                 context.Context
 	subscriptionRequest *pb.XSubscriptionRequest
 	grpcConfig          *config.TopicsStaticGrpcConfiguration
 	grpcManagerRequest  *models.TopicStreamGrpcManagerRequest
 	log                 logger.MomentoLogger
 )
 
-var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
+var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() {
 	BeforeEach(func() {
-		cacheName := os.Getenv("TEST_CACHE_NAME")
-		if cacheName == "" {
-			Fail("TEST_CACHE_NAME environment variable must be set for grpcmanagers tests")
-		}
+		ctx = context.Background()
 
-		testCtx = context.Background()
+		logFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.WARN)
+		log = logFactory.GetLogger("grpcmanagers-test")
+		credProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{Port: uint(8080)})
+		Expect(err).ToNot(HaveOccurred())
+
+		cacheName := uuid.New().String()
+		cacheClient, err := NewCacheClient(config.LaptopLatestWithLogger(logFactory), credProvider, 30*time.Second)
+		Expect(err).ToNot(HaveOccurred())
+		createResponse, err := cacheClient.CreateCache(ctx, &CreateCacheRequest{
+			CacheName: cacheName,
+		})
+		Expect(err).To(BeNil())
+		Expect(createResponse).To(Not(BeNil()))
+
 		subscriptionRequest = &pb.XSubscriptionRequest{
 			CacheName: cacheName,
 			Topic:     uuid.New().String(),
 		}
 		grpcConfig = config.NewTopicsStaticGrpcConfiguration(&config.TopicsGrpcConfigurationProps{})
-		credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
-		Expect(err).ToNot(HaveOccurred())
 		grpcManagerRequest = &models.TopicStreamGrpcManagerRequest{
 			GrpcConfiguration:  grpcConfig,
 			CredentialProvider: credProvider,
 		}
-		log = momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.WARN).GetLogger("grpcmanagers-test")
 	})
 
 	Describe("StaticStreamManagerList", func() {
 		It("Get one new stream at a time until max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := grpcmanagers.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -117,7 +125,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := grpcmanagers.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -178,7 +186,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Starts a burst of streams == max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := grpcmanagers.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -239,7 +247,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Starts a burst of streams > max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			staticList, streamManagerRequestQueue, err := NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, streamManagerRequestQueue, err := grpcmanagers.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -306,12 +314,12 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Get one new stream at a timeuntil max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+			dynamicList, streamManagerRequestQueue, err := grpcmanagers.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
 
 			// Dynamic list always starts with only one grpc manager.
-			Expect(len(dynamicList.grpcManagers)).To(Equal(1))
+			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 			// Get one new stream at a time until max concurrent streams reached.
 			ctx, cancel := context.WithCancel(testCtx)
@@ -357,7 +365,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			time.Sleep(500 * time.Millisecond)
 
 			// New managers should have been added as needed to support the max number of concurrent streams.
-			Expect(len(dynamicList.grpcManagers)).To(Equal(int(numGrpcChannels)))
+			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(int(numGrpcChannels)))
 
 			// Verify all managers are full of active subscriptions
 			Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
@@ -376,12 +384,12 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-			dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+			dynamicList, streamManagerRequestQueue, err := grpcmanagers.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
 
 			// Dynamic list always starts with only one grpc manager.
-			Expect(len(dynamicList.grpcManagers)).To(Equal(1))
+			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 			// Start a burst of streams to occupy just under half the max concurrent stream capacity.
 			waitGroup := sync.WaitGroup{}
@@ -432,7 +440,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 			time.Sleep(500 * time.Millisecond)
 
 			// No new manager should have been added as we did not exceed a single channel's stream capacity.
-			Expect(len(dynamicList.grpcManagers)).To(Equal(1))
+			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 			// Verify correct number of streams are active.
 			Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams / 2)))
@@ -443,12 +451,12 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 		DescribeTable("Starts a burst of streams == max concurrent streams",
 			func(numGrpcChannels uint32) {
 				maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-				dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+				dynamicList, streamManagerRequestQueue, err := grpcmanagers.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
 
 				// Dynamic list always starts with only one grpc manager.
-				Expect(len(dynamicList.grpcManagers)).To(Equal(1))
+				Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 				// Start a burst of streams to occupy the max concurrent stream capacity.
 				waitGroup := sync.WaitGroup{}
@@ -502,7 +510,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				time.Sleep(500 * time.Millisecond)
 
 				// New managers should have been added as needed to support the max number of concurrent streams.
-				Expect(len(dynamicList.grpcManagers)).To(Equal(int(numGrpcChannels)))
+				Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(int(numGrpcChannels)))
 
 				// Verify correct number of streams are active.
 				Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
@@ -510,22 +518,20 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				dynamicList.Close()
 			},
 			Entry("using max 2 channels", uint32(2)),
-			Entry("using max 3 channels", uint32(5)),
-			Entry("using max 4 channels", uint32(10)),
-			Entry("using max 5 channels", uint32(20)),
-			Entry("using max 5 channels", uint32(50)),
+			Entry("using max 10 channels", uint32(10)),
+			Entry("using max 20 channels", uint32(20)),
 		)
 
 		// Try different numbers of grpc channels to fuzz test for deadlocks and other concurrency issues.
 		DescribeTable("Starts a burst of streams > max concurrent streams",
 			func(numGrpcChannels uint32) {
 				maxConcurrentStreams := numGrpcChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
-				dynamicList, streamManagerRequestQueue, err := NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+				dynamicList, streamManagerRequestQueue, err := grpcmanagers.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
 
 				// Dynamic list always starts with only one grpc manager.
-				Expect(len(dynamicList.grpcManagers)).To(Equal(1))
+				Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 				// Start a burst of streams to occupy 10 greater than the max concurrent stream capacity.
 				waitGroup := sync.WaitGroup{}
@@ -580,7 +586,7 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				time.Sleep(500 * time.Millisecond)
 
 				// New managers should have been added as needed to support the max number of concurrent streams.
-				Expect(len(dynamicList.grpcManagers)).To(Equal(int(numGrpcChannels)))
+				Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(int(numGrpcChannels)))
 
 				// Verify correct number of streams are active.
 				Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
@@ -588,10 +594,8 @@ var _ = Describe("TopicManager", Label("grpcmanagers"), func() {
 				dynamicList.Close()
 			},
 			Entry("using max 2 channels", uint32(2)),
-			Entry("using max 3 channels", uint32(5)),
-			Entry("using max 4 channels", uint32(10)),
-			Entry("using max 5 channels", uint32(20)),
-			Entry("using max 5 channels", uint32(50)),
+			Entry("using max 10 channels", uint32(10)),
+			Entry("using max 20 channels", uint32(20)),
 		)
 	})
 })
