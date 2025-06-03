@@ -153,10 +153,6 @@ test-retry: install-ginkgo
 test-http-service:
 	@echo "No tests for http service."
 
-test-grpcmanagers: install-ginkgo
-	@echo "Testing grpcmanagers..."
-	@ginkgo ${GINKGO_OPTS} --label-filter "grpcmanagers && momento-local" ${TEST_DIRS}
-
 vendor:
 	@echo "Vendoring..."
 	go mod vendor

@@ -28,7 +28,7 @@ var (
 	log                 logger.MomentoLogger
 )
 
-var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() {
+var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, GRPCMANAGERS_LABEL, MOMENTO_LOCAL_LABEL), func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 
@@ -66,7 +66,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 			Expect(staticList).NotTo(BeNil())
 
 			// Get one new stream at a time until max concurrent streams reached.
-			ctx, cancel := context.WithCancel(testCtx)
+			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
 				topicManagerRequest := <-streamManagerRequestQueue
@@ -140,7 +140,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
 					streamManager := topicManagerRequest.TopicManager
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -148,7 +148,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 					go func() {
 						for {
 							select {
-							case <-testCtx.Done():
+							case <-ctx.Done():
 								return
 							default:
 								item, err := subscribeClient.Recv()
@@ -201,7 +201,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
 					streamManager := topicManagerRequest.TopicManager
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -209,7 +209,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 					go func() {
 						for {
 							select {
-							case <-testCtx.Done():
+							case <-ctx.Done():
 								return
 							default:
 								item, err := subscribeClient.Recv()
@@ -265,7 +265,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 						streamManager := topicManagerRequest.TopicManager
 						Expect(streamManager).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -273,7 +273,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 						go func() {
 							for {
 								select {
-								case <-testCtx.Done():
+								case <-ctx.Done():
 									return
 								default:
 									item, err := subscribeClient.Recv()
@@ -322,7 +322,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 			// Get one new stream at a time until max concurrent streams reached.
-			ctx, cancel := context.WithCancel(testCtx)
+			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
 				topicManagerRequest := <-streamManagerRequestQueue
@@ -402,7 +402,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
 					streamManager := topicManagerRequest.TopicManager
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -410,7 +410,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 					go func() {
 						for {
 							select {
-							case <-testCtx.Done():
+							case <-ctx.Done():
 								return
 							default:
 								item, err := subscribeClient.Recv()
@@ -472,7 +472,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 						Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
 						streamManager := topicManagerRequest.TopicManager
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -480,7 +480,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 						go func() {
 							for {
 								select {
-								case <-testCtx.Done():
+								case <-ctx.Done():
 									return
 								default:
 									item, err := subscribeClient.Recv()
@@ -547,7 +547,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 							streamManager := topicManagerRequest.TopicManager
 							Expect(streamManager).NotTo(BeNil())
 
-							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(testCtx, subscriptionRequest)
+							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 							Expect(subscribeErr).ToNot(HaveOccurred())
 							Expect(subscribeClient).NotTo(BeNil())
 
@@ -555,7 +555,7 @@ var _ = Describe("TopicManager", Label(RETRY_LABEL, GRPCMANAGERS_LABEL), func() 
 							go func() {
 								for {
 									select {
-									case <-testCtx.Done():
+									case <-ctx.Done():
 										return
 									default:
 										item, err := subscribeClient.Recv()
