@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/momento"
 )
 
 // TopicStreamManagerListWithBookkeeping extends the TopicManagerList interface to
@@ -64,7 +64,7 @@ func (list *StaticStreamManagerList) GetNextManager() (*grpcmanagers.TopicGrpcMa
 		nextManagerIndex := list.managerIndex.Add(1)
 		topicManager := list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))]
 		newCount := topicManager.NumActiveSubscriptions.Add(1)
-		if newCount <= int64(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
+		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
 			list.logger.Debug("Starting new subscription on grpc channel %d which now has %d streams", nextManagerIndex%uint64(len(list.grpcManagers)), newCount)
 			return topicManager, nil
 		}
@@ -138,7 +138,7 @@ func NewStaticStreamManagerList(
 
 	list := &StaticStreamManagerList{
 		grpcManagers:              streamTopicManagers,
-		maxConcurrentStreams:      numStreamChannels * uint32(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL),
+		maxConcurrentStreams:      numStreamChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL),
 		logger:                    logger,
 		streamManagerRequestQueue: streamManagerRequestQueue,
 		ctx:                       ctx,

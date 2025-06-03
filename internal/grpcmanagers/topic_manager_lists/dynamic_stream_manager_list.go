@@ -6,11 +6,11 @@ import (
 	"math"
 	"sync/atomic"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
-	"github.com/momentohq/client-sdk-go/momento"
 )
 
 // DynamicStreamManagerList manages a dynamic pool of gRPC channels for stream pubsub requests.
@@ -58,7 +58,7 @@ func (list *DynamicStreamManagerList) GetNextManager() (*grpcmanagers.TopicGrpcM
 		nextManagerIndex := list.managerIndex.Add(1)
 		topicManager := list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))]
 		newCount := topicManager.NumActiveSubscriptions.Add(1)
-		if newCount <= int64(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
+		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
 			list.logger.Debug("Starting new subscription on grpc channel %d which now has %d streams", nextManagerIndex%uint64(len(list.grpcManagers)), newCount)
 			return topicManager, nil
 		}
@@ -132,7 +132,7 @@ func (list *DynamicStreamManagerList) addManager() momentoerrors.MomentoSvcErr {
 		return err
 	}
 	list.grpcManagers = append(list.grpcManagers, streamTopicManager)
-	list.currentMaxConcurrentStreams = uint32(len(list.grpcManagers)) * uint32(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+	list.currentMaxConcurrentStreams = uint32(len(list.grpcManagers)) * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 	return nil
 }
 
@@ -144,7 +144,7 @@ func NewDynamicStreamManagerList(request *models.TopicStreamGrpcManagerRequest, 
 		return nil, nil, err
 	}
 	streamTopicManagers = append(streamTopicManagers, streamTopicManager)
-	logger.Debug("Max subscriptions: %d, max manager count: %d", maxSubscriptions, int(math.Ceil(float64(maxSubscriptions)/float64(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL))))
+	logger.Debug("Max subscriptions: %d, max manager count: %d", maxSubscriptions, int(math.Ceil(float64(maxSubscriptions)/float64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))))
 
 	// Unbuffered channel so the stream manager list will block on sending the next
 	// available stream manager until the most recent request is processed.
@@ -153,8 +153,8 @@ func NewDynamicStreamManagerList(request *models.TopicStreamGrpcManagerRequest, 
 
 	list := &DynamicStreamManagerList{
 		grpcManagers:                streamTopicManagers,
-		maxManagerCount:             int(math.Ceil(float64(maxSubscriptions) / float64(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL))),
-		currentMaxConcurrentStreams: uint32(momento.MAX_CONCURRENT_STREAMS_PER_CHANNEL), // for one channel
+		maxManagerCount:             int(math.Ceil(float64(maxSubscriptions) / float64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))),
+		currentMaxConcurrentStreams: uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL), // for one channel
 		logger:                      logger,
 		newTopicManagerProps:        request,
 		streamManagerRequestQueue:   streamManagerRequestQueue,

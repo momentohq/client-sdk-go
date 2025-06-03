@@ -60,7 +60,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 	Describe("StaticStreamManagerList", func() {
 		It("Get one new stream at a time until max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
@@ -124,7 +124,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
@@ -185,7 +185,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		It("Starts a burst of streams == max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
@@ -246,7 +246,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		It("Starts a burst of streams > max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
@@ -313,7 +313,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 	Describe("DynamicStreamManagerList", func() {
 		It("Get one new stream at a timeuntil max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 			dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
@@ -383,7 +383,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 			dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
@@ -450,7 +450,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		DescribeTable("Starts a burst of streams == max concurrent streams",
 			func(numGrpcChannels uint32) {
-				maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+				maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 				dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
@@ -525,7 +525,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		// Try different numbers of grpc channels to fuzz test for deadlocks and other concurrency issues.
 		DescribeTable("Starts a burst of streams > max concurrent streams",
 			func(numGrpcChannels uint32) {
-				maxConcurrentStreams := numGrpcChannels * uint32(MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+				maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 				dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
