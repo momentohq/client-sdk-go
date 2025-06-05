@@ -20,6 +20,9 @@ import (
 const DEFAULT_NUM_STREAM_GRPC_CHANNELS uint32 = 4
 const DEFAULT_NUM_UNARY_GRPC_CHANNELS uint32 = 4
 
+// Deprecated: use config.MAX_CONCURRENT_STREAMS_PER_CHANNEL instead
+const MAX_CONCURRENT_STREAMS_PER_CHANNEL int = 100
+
 type pubSubClient struct {
 	endpoint                  string
 	log                       logger.MomentoLogger
