@@ -16,16 +16,18 @@ type staticUnaryGrpcManagerPool struct {
 	logger       logger.MomentoLogger
 }
 
-// Each grpc connection can multiplex 100 subscribe/publish requests.
-// Publish requests will queue up on client while waiting for in-flight requests to complete if
-// the number of concurrent requests exceeds numUnaryChannels*100, but will eventually complete.
-// Therefore we can just round-robin the unaryTopicManagers, no need to keep track of how many
-// publish requests are in flight on each one.
+// GetNextTopicGrpcManager returns the next available TopicGrpcManager from the pool
+// using a round-robin approach.
+//
+// Publish requests can queue up if there are >100 concurrent requests on a grpc connection,
+// but unary requests will eventually complete so no need for the same level of bookkeeping
+// as for the stream grpc manager pools.
 func (list *staticUnaryGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	nextManagerIndex := list.managerIndex.Add(1)
 	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))], nil
 }
 
+// Close shuts down all the grpc connections in the pool.
 func (list *staticUnaryGrpcManagerPool) Close() {
 	for _, topicManager := range list.grpcManagers {
 		err := topicManager.Close()
@@ -35,6 +37,7 @@ func (list *staticUnaryGrpcManagerPool) Close() {
 	}
 }
 
+// NewStaticUnaryGrpcManagerPool creates a new pool with a fixed number of grpc managers for unary pubsub requests.
 func NewStaticUnaryGrpcManagerPool(request *models.TopicStreamGrpcManagerRequest, numUnaryChannels uint32, logger logger.MomentoLogger) (*staticUnaryGrpcManagerPool, momentoerrors.MomentoSvcErr) {
 	unaryTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numUnaryChannels; i++ {

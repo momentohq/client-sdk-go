@@ -14,12 +14,6 @@ import (
 )
 
 // dynamicStreamGrpcManagerPool manages a dynamic pool of gRPC channels for stream pubsub requests.
-//
-// The dynamicStreamGrpcManagerPool will continually place the next available stream manager
-// (or an error if no TopicGrpcManagers are available) on the streamManagerRequestQueue channel
-// for the pubSubClient to pull from.
-// Without this channel, a mutex and additional logic would be needed to protect the dynamic list
-// of grpc managers from race conditions due to concurrent access.
 type dynamicStreamGrpcManagerPool struct {
 	grpcManagers                    []*grpcmanagers.TopicGrpcManager
 	managerIndex                    atomic.Uint64
@@ -33,6 +27,12 @@ type dynamicStreamGrpcManagerPool struct {
 	cancel                          context.CancelFunc
 }
 
+// GetNextTopicGrpcManager returns the next available TopicGrpcManager from the pool
+// by pulling from the nextAvailableGrpcManagerChannel.
+//
+// Only the makeNextManagerAvailable goroutine started in NewDynamicStreamGrpcManagerPool
+// places the next available stream manager on the channel (or an error if no stream manager
+// is available).
 func (d *dynamicStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	topicManagerRequest := <-d.nextAvailableGrpcManagerChannel
 	if topicManagerRequest.Err != nil {
@@ -41,6 +41,7 @@ func (d *dynamicStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.
 	return topicManagerRequest.TopicManager, nil
 }
 
+// Close shuts down all the grpc connections in the pool.
 func (d *dynamicStreamGrpcManagerPool) Close() {
 	d.cancel() // Cancel context first to stop goroutines
 	close(d.nextAvailableGrpcManagerChannel)
@@ -52,14 +53,20 @@ func (d *dynamicStreamGrpcManagerPool) Close() {
 	}
 }
 
+// GetCurrentActiveStreamsCount returns the current number of active streams in the pool.
 func (d *dynamicStreamGrpcManagerPool) GetCurrentActiveStreamsCount() uint64 {
 	return d.currentActiveStreamsCount.Load()
 }
 
+// GetCurrentNumberOfGrpcManagers returns the current number of grpc managers in the pool.
 func (d *dynamicStreamGrpcManagerPool) GetCurrentNumberOfGrpcManagers() int {
 	return len(d.grpcManagers)
 }
 
+// NewDynamicStreamGrpcManagerPool creates a new pool with a dynamic number of grpc managers for stream pubsub requests.
+//
+// Defaults to one grpc manager to start with and will dynamically add more as needed up until a max of maxSubscriptions/100
+// since each grpc manager can handle 100 concurrent streams.
 func NewDynamicStreamGrpcManagerPool(request *models.TopicStreamGrpcManagerRequest, maxSubscriptions uint32, logger logger.MomentoLogger) (*dynamicStreamGrpcManagerPool, momentoerrors.MomentoSvcErr) {
 	// make just one manager to start with
 	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
@@ -93,6 +100,15 @@ func NewDynamicStreamGrpcManagerPool(request *models.TopicStreamGrpcManagerReque
 	return pool, nil
 }
 
+// makeNextManagerAvailable continually places the next available stream manager
+// on the nextAvailableGrpcManagerChannel.
+//
+// The nextAvailableGrpcManagerChannel is unbuffered, so the dynamicStreamGrpcManagerPool
+// will block on sending the next available stream manager until the most recent request
+// is processed.
+// So even if there is a burst of concurrent subscribe requests, the pubsub client should
+// only be able to pull one topic grpc manager from the channel at a time to allocate
+// to each subscribe request.
 func (d *dynamicStreamGrpcManagerPool) makeNextManagerAvailable() {
 	for {
 		select {
@@ -112,6 +128,7 @@ func (d *dynamicStreamGrpcManagerPool) makeNextManagerAvailable() {
 	}
 }
 
+// getNextManager is used by makeNextManagerAvailable to return the next available stream manager from the pool.
 func (d *dynamicStreamGrpcManagerPool) getNextManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	// First check if there is enough grpc stream capacity to make a new subscription
 	err := d.checkNumConcurrentStreams()
@@ -139,7 +156,10 @@ func (d *dynamicStreamGrpcManagerPool) getNextManager() (*grpcmanagers.TopicGrpc
 	return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientResourceExhaustedError, errorMessage, nil)
 }
 
-// Helper function to help sanity check number of concurrent streams before starting a new subscription
+// checkNumConcurrentStreams checks the number of concurrent streams before starting a new subscription.
+// If the current maximum number of concurrent streams is reached but the maximum number of grpc managers
+// has not been reached, it will add a new grpc manager to the pool.
+// If both maximums have been reached, it will return a ClientResourceExhaustedError.
 func (d *dynamicStreamGrpcManagerPool) checkNumConcurrentStreams() momentoerrors.MomentoSvcErr {
 	numActiveStreams := d.currentActiveStreamsCount.Load()
 	d.logger.Debug("Current number of active subscriptions: %d", d.currentActiveStreamsCount.Load())
@@ -174,7 +194,8 @@ func (d *dynamicStreamGrpcManagerPool) checkNumConcurrentStreams() momentoerrors
 	return nil
 }
 
-// Called by checkNumConcurrentStreams to add more stream capacity if needed.
+// addManager is called by checkNumConcurrentStreams to add more stream capacity by
+// adding a new grpc manager to the pool.
 func (d *dynamicStreamGrpcManagerPool) addManager() momentoerrors.MomentoSvcErr {
 	streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(d.newTopicManagerProps)
 	if err != nil {
