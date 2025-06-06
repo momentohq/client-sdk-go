@@ -1067,6 +1067,7 @@ func (c defaultScsClient) Ping(ctx context.Context) (responses.PingResponse, err
 }
 
 func (c defaultScsClient) Close() {
+	defer c.pingClient.Close()
 	defer c.controlClient.Close()
 	defer c.getNextDataClient().Close()
 	for _, client := range c.dataClients {
