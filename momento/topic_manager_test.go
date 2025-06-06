@@ -2,7 +2,6 @@ package momento_test
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -61,7 +60,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		It("Get one new stream at a time until max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -69,10 +68,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				topicManagerRequest := <-streamManagerRequestQueue
-				Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
-				Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
-				streamManager := topicManagerRequest.TopicManager
+				streamManager, err := staticList.GetNextTopicGrpcManager()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(streamManager).NotTo(BeNil())
 
 				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
@@ -109,12 +107,12 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			time.Sleep(500 * time.Millisecond)
 
 			// Verify all managers are full of active subscriptions
-			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+			Expect(staticList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
 
 			// Get one more stream and expect an error.
-			stream, err := staticList.GetNextManager()
+			stream, err := staticList.GetNextTopicGrpcManager()
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("LimitExceededError"))
+			Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 			Expect(stream).To(BeNil())
 
 			staticList.Close()
@@ -125,7 +123,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -135,10 +133,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					topicManagerRequest := <-streamManagerRequestQueue
-					Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
-					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
-					streamManager := topicManagerRequest.TopicManager
+					streamManager, err := staticList.GetNextTopicGrpcManager()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(streamManager).NotTo(BeNil())
 
 					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
@@ -178,7 +175,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			time.Sleep(500 * time.Millisecond)
 
 			// Verify correct number of streams are active.
-			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams / 2)))
+			Expect(staticList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams / 2)))
 
 			staticList.Close()
 		})
@@ -186,7 +183,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		It("Starts a burst of streams == max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -196,10 +193,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					topicManagerRequest := <-streamManagerRequestQueue
-					Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
-					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
-					streamManager := topicManagerRequest.TopicManager
+					streamManager, err := staticList.GetNextTopicGrpcManager()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(streamManager).NotTo(BeNil())
 
 					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
@@ -239,7 +235,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			time.Sleep(500 * time.Millisecond)
 
 			// Verify correct number of streams are active.
-			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+			Expect(staticList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
 
 			staticList.Close()
 		})
@@ -247,7 +243,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		It("Starts a burst of streams > max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticList, streamManagerRequestQueue, err := topic_manager_lists.NewStaticStreamManagerList(grpcManagerRequest, numGrpcChannels, log)
+			staticList, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(staticList).NotTo(BeNil())
 
@@ -258,11 +254,10 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				go func() {
 					defer waitGroup.Done()
 
-					topicManagerRequest := <-streamManagerRequestQueue
-					if topicManagerRequest.Err != nil {
-						Expect(topicManagerRequest.Err.Error()).To(ContainSubstring("LimitExceededError"))
+					streamManager, err := staticList.GetNextTopicGrpcManager()
+					if err != nil {
+						Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 					} else {
-						streamManager := topicManagerRequest.TopicManager
 						Expect(streamManager).NotTo(BeNil())
 
 						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
@@ -304,7 +299,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			time.Sleep(500 * time.Millisecond)
 
 			// Verify correct number of streams are active.
-			Expect(staticList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+			Expect(staticList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
 
 			staticList.Close()
 		})
@@ -314,7 +309,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		It("Get one new stream at a timeuntil max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+			dynamicList, err := topic_manager_lists.NewDynamicStreamGrpcManagerPool(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
 
@@ -325,10 +320,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				topicManagerRequest := <-streamManagerRequestQueue
-				Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
-				Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
-				streamManager := topicManagerRequest.TopicManager
+				streamManager, err := dynamicList.GetNextTopicGrpcManager()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(streamManager).NotTo(BeNil())
 
 				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
@@ -368,12 +362,12 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(int(numGrpcChannels)))
 
 			// Verify all managers are full of active subscriptions
-			Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+			Expect(dynamicList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
 
 			// Get one more stream and expect an error.
-			stream, err := dynamicList.GetNextManager()
+			stream, err := dynamicList.GetNextTopicGrpcManager()
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("LimitExceededError"))
+			Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 			Expect(stream).To(BeNil())
 
 			dynamicList.Close()
@@ -384,7 +378,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		It("Starts a burst of streams < max concurrent streams", func() {
 			numGrpcChannels := uint32(2)
 			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+			dynamicList, err := topic_manager_lists.NewDynamicStreamGrpcManagerPool(grpcManagerRequest, maxConcurrentStreams, log)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(dynamicList).NotTo(BeNil())
 
@@ -397,10 +391,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				waitGroup.Add(1)
 				go func() {
 					defer waitGroup.Done()
-					topicManagerRequest := <-streamManagerRequestQueue
-					Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
-					Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
-					streamManager := topicManagerRequest.TopicManager
+					streamManager, err := dynamicList.GetNextTopicGrpcManager()
+					Expect(err).ToNot(HaveOccurred())
+					Expect(streamManager).NotTo(BeNil())
 
 					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
@@ -443,7 +436,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 			// Verify correct number of streams are active.
-			Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams / 2)))
+			Expect(dynamicList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams / 2)))
 
 			dynamicList.Close()
 		})
@@ -451,7 +444,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		DescribeTable("Starts a burst of streams == max concurrent streams",
 			func(numGrpcChannels uint32) {
 				maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-				dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+				dynamicList, err := topic_manager_lists.NewDynamicStreamGrpcManagerPool(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
 
@@ -464,13 +457,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					waitGroup.Add(1)
 					go func() {
 						defer waitGroup.Done()
-						topicManagerRequest := <-streamManagerRequestQueue
-						if topicManagerRequest.Err != nil {
-							fmt.Println("error: ", topicManagerRequest.Err)
-						}
-						Expect(topicManagerRequest.Err).ToNot(HaveOccurred())
-						Expect(topicManagerRequest.TopicManager).NotTo(BeNil())
-						streamManager := topicManagerRequest.TopicManager
+						streamManager, err := dynamicList.GetNextTopicGrpcManager()
+						Expect(err).ToNot(HaveOccurred())
+						Expect(streamManager).NotTo(BeNil())
 
 						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
@@ -513,7 +502,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(int(numGrpcChannels)))
 
 				// Verify correct number of streams are active.
-				Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+				Expect(dynamicList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
 
 				dynamicList.Close()
 			},
@@ -526,7 +515,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		DescribeTable("Starts a burst of streams > max concurrent streams",
 			func(numGrpcChannels uint32) {
 				maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-				dynamicList, streamManagerRequestQueue, err := topic_manager_lists.NewDynamicStreamManagerList(grpcManagerRequest, maxConcurrentStreams, log)
+				dynamicList, err := topic_manager_lists.NewDynamicStreamGrpcManagerPool(grpcManagerRequest, maxConcurrentStreams, log)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(dynamicList).NotTo(BeNil())
 
@@ -540,11 +529,10 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					go func() {
 						defer waitGroup.Done()
 
-						topicManagerRequest := <-streamManagerRequestQueue
-						if topicManagerRequest.Err != nil {
-							Expect(topicManagerRequest.Err.Error()).To(ContainSubstring("LimitExceededError"))
+						streamManager, err := dynamicList.GetNextTopicGrpcManager()
+						if err != nil {
+							Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 						} else {
-							streamManager := topicManagerRequest.TopicManager
 							Expect(streamManager).NotTo(BeNil())
 
 							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
@@ -589,7 +577,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(int(numGrpcChannels)))
 
 				// Verify correct number of streams are active.
-				Expect(dynamicList.CountNumberOfActiveSubscriptions()).To(Equal(int64(maxConcurrentStreams)))
+				Expect(dynamicList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
 
 				dynamicList.Close()
 			},

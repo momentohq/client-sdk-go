@@ -24,13 +24,12 @@ const DEFAULT_NUM_UNARY_GRPC_CHANNELS uint32 = 4
 const MAX_CONCURRENT_STREAMS_PER_CHANNEL int = 100
 
 type pubSubClient struct {
-	endpoint                  string
-	log                       logger.MomentoLogger
-	requestTimeout            time.Duration
-	middleware                []middleware.TopicMiddleware
-	unaryManagerList          topic_manager_lists.TopicManagerList
-	streamManagerList         topic_manager_lists.TopicStreamManagerListWithBookkeeping
-	streamManagerRequestQueue chan *topic_manager_lists.StreamManagerRequest
+	endpoint                 string
+	log                      logger.MomentoLogger
+	requestTimeout           time.Duration
+	middleware               []middleware.TopicMiddleware
+	unaryGrpcConnectionPool  topic_manager_lists.TopicGrpcConnectionPool
+	streamGrpcConnectionPool topic_manager_lists.TopicGrpcConnectionPool
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
@@ -52,17 +51,20 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
 		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
 	}
-	unaryManagerList, err := topic_manager_lists.NewStaticUnaryManagerList(topicManagerProps, numUnaryChannels, request.Log)
+	unaryPool, err := topic_manager_lists.NewStaticUnaryGrpcManagerPool(
+		topicManagerProps,
+		numUnaryChannels,
+		request.Log,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create pool of grpc channels for stream operations depending on static vs dynamic transport strategy
-	var streamManagerList topic_manager_lists.TopicStreamManagerListWithBookkeeping
-	var streamManagerRequestQueue chan *topic_manager_lists.StreamManagerRequest
+	var streamPool topic_manager_lists.TopicGrpcConnectionPool
 	if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
 		request.Log.Debug("Creating dynamic stream manager list with max subscriptions: %d", request.TopicsConfiguration.GetMaxSubscriptions())
-		streamManagerList, streamManagerRequestQueue, err = topic_manager_lists.NewDynamicStreamManagerList(
+		streamPool, err = topic_manager_lists.NewDynamicStreamGrpcManagerPool(
 			topicManagerProps,
 			request.TopicsConfiguration.GetMaxSubscriptions(),
 			request.Log,
@@ -73,7 +75,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 			numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
 		}
 		request.Log.Debug("Creating static stream manager list with num stream channels: %d", numStreamChannels)
-		streamManagerList, streamManagerRequestQueue, err = topic_manager_lists.NewStaticStreamManagerList(
+		streamPool, err = topic_manager_lists.NewStaticStreamGrpcManagerPool(
 			topicManagerProps,
 			numStreamChannels,
 			request.Log,
@@ -84,23 +86,21 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}
 
 	return &pubSubClient{
-		endpoint:                  request.CredentialProvider.GetCacheEndpoint(),
-		log:                       request.Log,
-		requestTimeout:            timeout,
-		middleware:                request.TopicsConfiguration.GetMiddleware(),
-		unaryManagerList:          unaryManagerList,
-		streamManagerList:         streamManagerList,
-		streamManagerRequestQueue: streamManagerRequestQueue,
+		endpoint:                 request.CredentialProvider.GetCacheEndpoint(),
+		log:                      request.Log,
+		requestTimeout:           timeout,
+		middleware:               request.TopicsConfiguration.GetMiddleware(),
+		unaryGrpcConnectionPool:  unaryPool,
+		streamGrpcConnectionPool: streamPool,
 	}, nil
 }
 
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
-	// Pull the next available stream manager from the channel.
-	topicManagerRequest := <-client.streamManagerRequestQueue
-	if topicManagerRequest.Err != nil {
-		return nil, nil, nil, nil, topicManagerRequest.Err
+	// Get the next available grpc manager
+	topicManager, topicManagerErr := client.streamGrpcConnectionPool.GetNextTopicGrpcManager()
+	if topicManagerErr != nil {
+		return nil, nil, nil, nil, topicManagerErr
 	}
-	topicManager := topicManagerRequest.TopicManager
 
 	subscriptionRequest := &pb.XSubscriptionRequest{
 		CacheName:                   request.CacheName,
@@ -150,7 +150,7 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	}
 
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(ctx, request.CacheName, requestMetadata)
-	topicManager, err := client.unaryManagerList.GetNextManager()
+	topicManager, err := client.unaryGrpcConnectionPool.GetNextTopicGrpcManager()
 	if err != nil {
 		return err
 	}
@@ -193,11 +193,6 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 }
 
 func (client *pubSubClient) close() {
-	client.streamManagerList.Close()
-	client.unaryManagerList.Close()
-}
-
-// Helper function used by the Event() method in topic_subscription.go
-func (client *pubSubClient) countNumberOfActiveSubscriptions() int64 {
-	return client.streamManagerList.CountNumberOfActiveSubscriptions()
+	client.streamGrpcConnectionPool.Close()
+	client.unaryGrpcConnectionPool.Close()
 }
