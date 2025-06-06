@@ -44,6 +44,8 @@ const (
 	FailedPreconditionError = "FailedPreconditionError"
 	// ConnectionError occurs when there is an error connecting to Momento servers.
 	ConnectionError = "ConnectionError"
+	// ClientResourceExhausted occurs when a client resource (such as memory or number of concurrent grpc streams) is exhausted.
+	ClientResourceExhaustedError = "ClientResourceExhaustedError"
 )
 
 type MomentoError interface {

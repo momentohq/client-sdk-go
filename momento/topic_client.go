@@ -31,7 +31,6 @@ type TopicClient interface {
 // defaultTopicClient represents all information needed for momento client to enable publish and subscribe operations.
 type defaultTopicClient struct {
 	credentialProvider auth.CredentialProvider
-	numChannels        uint32
 	pubSubClient       *pubSubClient
 	log                logger.MomentoLogger
 	requestTimeout     time.Duration
@@ -40,8 +39,6 @@ type defaultTopicClient struct {
 
 // NewTopicClient returns a new TopicClient with provided configuration and credential provider arguments.
 func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialProvider auth.CredentialProvider) (TopicClient, error) {
-	numChannels := topicsConfiguration.GetNumGrpcChannels()
-
 	var timeout time.Duration
 	if topicsConfiguration.GetClientSideTimeout() < 1 {
 		timeout = defaultRequestTimeout
@@ -51,7 +48,6 @@ func NewTopicClient(topicsConfiguration config.TopicsConfiguration, credentialPr
 
 	client := &defaultTopicClient{
 		credentialProvider: credentialProvider,
-		numChannels:        numChannels,
 		log:                topicsConfiguration.GetLoggerFactory().GetLogger("topic-client"),
 		requestTimeout:     timeout,
 		retryStrategy:      topicsConfiguration.GetRetryStrategy(),
