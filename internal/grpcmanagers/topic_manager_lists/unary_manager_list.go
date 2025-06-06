@@ -9,8 +9,8 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
 
-// StaticUnaryGrpcManagerPool manages a static pool of gRPC channels for unary pubsub requests.
-type StaticUnaryGrpcManagerPool struct {
+// staticUnaryGrpcManagerPool manages a static pool of gRPC channels for unary pubsub requests.
+type staticUnaryGrpcManagerPool struct {
 	grpcManagers []*grpcmanagers.TopicGrpcManager
 	managerIndex atomic.Uint64
 	logger       logger.MomentoLogger
@@ -21,12 +21,12 @@ type StaticUnaryGrpcManagerPool struct {
 // the number of concurrent requests exceeds numUnaryChannels*100, but will eventually complete.
 // Therefore we can just round-robin the unaryTopicManagers, no need to keep track of how many
 // publish requests are in flight on each one.
-func (list *StaticUnaryGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
+func (list *staticUnaryGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	nextManagerIndex := list.managerIndex.Add(1)
 	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))], nil
 }
 
-func (list *StaticUnaryGrpcManagerPool) Close() {
+func (list *staticUnaryGrpcManagerPool) Close() {
 	for _, topicManager := range list.grpcManagers {
 		err := topicManager.Close()
 		if err != nil {
@@ -35,7 +35,7 @@ func (list *StaticUnaryGrpcManagerPool) Close() {
 	}
 }
 
-func NewStaticUnaryGrpcManagerPool(request *models.TopicStreamGrpcManagerRequest, numUnaryChannels uint32, logger logger.MomentoLogger) (*StaticUnaryGrpcManagerPool, momentoerrors.MomentoSvcErr) {
+func NewStaticUnaryGrpcManagerPool(request *models.TopicStreamGrpcManagerRequest, numUnaryChannels uint32, logger logger.MomentoLogger) (*staticUnaryGrpcManagerPool, momentoerrors.MomentoSvcErr) {
 	unaryTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
 	for i := 0; uint32(i) < numUnaryChannels; i++ {
 		unaryTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(request)
@@ -44,7 +44,7 @@ func NewStaticUnaryGrpcManagerPool(request *models.TopicStreamGrpcManagerRequest
 		}
 		unaryTopicManagers = append(unaryTopicManagers, unaryTopicManager)
 	}
-	return &StaticUnaryGrpcManagerPool{
+	return &staticUnaryGrpcManagerPool{
 		grpcManagers: unaryTopicManagers,
 		logger:       logger,
 	}, nil
