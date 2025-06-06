@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.37.1](https://github.com/momentohq/client-sdk-go/compare/v1.37.0...v1.37.1) (2025-06-06)
+
+
+### Bug Fixes
+
+* clean up topics stream bookkeeping using a channel and new structs ([#644](https://github.com/momentohq/client-sdk-go/issues/644)) ([1ef78af](https://github.com/momentohq/client-sdk-go/commit/1ef78afdc5df93bb92830555d19294f5596ab152))
+* make sure cache client closes all underlying clients upon close ([#646](https://github.com/momentohq/client-sdk-go/issues/646)) ([a06e803](https://github.com/momentohq/client-sdk-go/commit/a06e803a0e02ca9cba78c1ee2edbd4dd5579b49d))
+
+
+### Miscellaneous
+
+* add example for using momento-local metadata middleware ([#636](https://github.com/momentohq/client-sdk-go/issues/636)) ([2ab2323](https://github.com/momentohq/client-sdk-go/commit/2ab232340b48471fddb37f58e028a7922118fa33))
+* add integration tests for new get/set if hash methods ([#612](https://github.com/momentohq/client-sdk-go/issues/612)) ([3c0cd5d](https://github.com/momentohq/client-sdk-go/commit/3c0cd5dcfe0bcc8510a2543b7eab3981a8ea5da9))
+* clean up gzip compression tests ([#643](https://github.com/momentohq/client-sdk-go/issues/643)) ([8a3b486](https://github.com/momentohq/client-sdk-go/commit/8a3b486e12d788c80cd942d617df1508b0fe07d8))
+* improved gzip compression tests ([#641](https://github.com/momentohq/client-sdk-go/issues/641)) ([c377165](https://github.com/momentohq/client-sdk-go/commit/c377165fb803dc264cc58fbdf4d784a8c6aa36f3))
+* reuse cache client in aws lambda example and update deps ([#639](https://github.com/momentohq/client-sdk-go/issues/639)) ([3d9771d](https://github.com/momentohq/client-sdk-go/commit/3d9771d04315002d95bf10c64743a003e23f17a4))
+
 ## [1.37.0](https://github.com/momentohq/client-sdk-go/compare/v1.36.1...v1.37.0) (2025-04-16)
 
 
