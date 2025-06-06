@@ -1145,7 +1145,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			})
 			Expect(err).To(HaveOccurred())
 			Expect(sub).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(LimitExceededError))
+			Expect(err).To(HaveMomentoErrorCode(ClientResourceExhaustedError))
 
 			// Publish should work and be unaffected by the stream configs
 			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
@@ -1213,7 +1213,7 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			})
 			Expect(err).To(HaveOccurred())
 			Expect(sub).To(BeNil())
-			Expect(err).To(HaveMomentoErrorCode(LimitExceededError))
+			Expect(err).To(HaveMomentoErrorCode(ClientResourceExhaustedError))
 
 			// Publish should work and be unaffected by the stream configs
 			_, err = topicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{
