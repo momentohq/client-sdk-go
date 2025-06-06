@@ -107,7 +107,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			// Context has been canceled, return an error
 			decremented := s.decrementSubscriptionCount()
 			s.log.Debug(
-				"[Event] Context done, number of active streams: %d",
+				"[Event] Context done, number of active streams on current grpc channel: %d",
 				decremented,
 			)
 			return nil, ctx.Err()
@@ -115,7 +115,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			// Context has been canceled, return an error
 			decremented := s.decrementSubscriptionCount()
 			s.log.Debug(
-				"[Event] Context cancelled, number of active streams: %d",
+				"[Event] Context cancelled, number of active streams on current grpc channel: %d",
 				decremented,
 			)
 			return nil, s.cancelContext.Err()
@@ -130,7 +130,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 				{
 					decremented := s.decrementSubscriptionCount()
 					s.log.Debug(
-						"[Event RecvMsg] Context done, number of active streams: %d",
+						"[Event RecvMsg] Context done, number of active streams on current grpc channel: %d",
 						decremented,
 					)
 					return nil, ctx.Err()
@@ -139,7 +139,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 				{
 					decremented := s.decrementSubscriptionCount()
 					s.log.Debug(
-						"[Event RecvMsg] Context cancelled, number of active streams: %d",
+						"[Event RecvMsg] Context cancelled, number of active streams on current grpc channel: %d",
 						decremented,
 					)
 					return nil, s.cancelContext.Err()
@@ -152,7 +152,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					s.cancelFunction()
 					decremented := s.decrementSubscriptionCount()
 					s.log.Debug(
-						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
+						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams on current grpc channel: %d",
 						decremented,
 					)
 
