@@ -74,6 +74,8 @@ const (
 	ClientSdkErrorMessage = "SDK Failed to process the request."
 	// ConnectionError occurs when there is an error connecting to Momento servers.
 	ConnectionError = "ConnectionError"
+	// ClientResourceExhausted occurs when a client resource (such as memory or number of concurrent grpc streams) is exhausted.
+	ClientResourceExhaustedError = "ClientResourceExhaustedError"
 )
 
 // ConvertSvcErr converts gRPC error to MomentoSvcErr.
@@ -143,6 +145,9 @@ func ConvertSvcErr(err error, metadata ...metadata.MD) MomentoSvcErr {
 			return newMomentoSvcErr(ServerUnavailableError, grpcStatus.Message(), err, ServerUnavailableMessageWrapper)
 		case codes.DataLoss:
 			return newMomentoSvcErr(InternalServerError, grpcStatus.Message(), err, InternalServerErrorMessageWrapper)
+		case codes.OK:
+			// Closing a grpc channel returns an OK status.
+			return nil
 		default:
 			return newMomentoSvcErr(UnknownServiceError, grpcStatus.Message(), err, UnknownServiceErrorMessageWrapper)
 		}

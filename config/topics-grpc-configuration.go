@@ -2,6 +2,9 @@ package config
 
 import "time"
 
+// The maximum number of concurrent streams that can be created on a single gRPC channel.
+const MAX_CONCURRENT_STREAMS_PER_CHANNEL int = 100
+
 type TopicsGrpcConfigurationProps struct {
 	// The number of milliseconds the client is willing to wait for an RPC to complete before it is terminated
 	// with a DeadlineExceeded error.

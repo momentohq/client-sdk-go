@@ -2,14 +2,13 @@ package momento
 
 import (
 	"context"
-	"fmt"
-	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers/topic_manager_lists"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
@@ -20,57 +19,20 @@ import (
 
 const DEFAULT_NUM_STREAM_GRPC_CHANNELS uint32 = 4
 const DEFAULT_NUM_UNARY_GRPC_CHANNELS uint32 = 4
+
+// Deprecated: use config.MAX_CONCURRENT_STREAMS_PER_CHANNEL instead
 const MAX_CONCURRENT_STREAMS_PER_CHANNEL int = 100
 
 type pubSubClient struct {
-	numUnaryChannels        uint32
-	unaryTopicManagers      []*grpcmanagers.TopicGrpcManager
-	unaryTopicManagerCount  atomic.Uint64
-	numStreamChannels       uint32
-	streamTopicManagers     []*grpcmanagers.TopicGrpcManager
-	streamTopicManagerCount atomic.Uint64
-	endpoint                string
-	log                     logger.MomentoLogger
-	requestTimeout          time.Duration
-	maxConcurrentStreams    int
-	middleware              []middleware.TopicMiddleware
+	endpoint                 string
+	log                      logger.MomentoLogger
+	requestTimeout           time.Duration
+	middleware               []middleware.TopicMiddleware
+	unaryGrpcConnectionPool  topic_manager_lists.TopicGrpcConnectionPool
+	streamGrpcConnectionPool topic_manager_lists.TopicGrpcConnectionPool
 }
 
 func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, momentoerrors.MomentoSvcErr) {
-	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
-
-	numStreamChannels := DEFAULT_NUM_STREAM_GRPC_CHANNELS
-	if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
-		numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
-	}
-	streamTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
-	for i := 0; uint32(i) < numStreamChannels; i++ {
-		streamTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
-			CredentialProvider: request.CredentialProvider,
-			GrpcConfiguration:  grpcConfig,
-		})
-		if err != nil {
-			return nil, err
-		}
-		streamTopicManagers = append(streamTopicManagers, streamTopicManager)
-	}
-
-	numUnaryChannels := DEFAULT_NUM_UNARY_GRPC_CHANNELS
-	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
-		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
-	}
-	unaryTopicManagers := make([]*grpcmanagers.TopicGrpcManager, 0)
-	for i := 0; uint32(i) < numUnaryChannels; i++ {
-		unaryTopicManager, err := grpcmanagers.NewStreamTopicGrpcManager(&models.TopicStreamGrpcManagerRequest{
-			CredentialProvider: request.CredentialProvider,
-			GrpcConfiguration:  grpcConfig,
-		})
-		if err != nil {
-			return nil, err
-		}
-		unaryTopicManagers = append(unaryTopicManagers, unaryTopicManager)
-	}
-
 	var timeout time.Duration
 	if request.TopicsConfiguration.GetClientSideTimeout() < 1 {
 		timeout = defaultRequestTimeout
@@ -78,86 +40,66 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 		timeout = request.TopicsConfiguration.GetClientSideTimeout()
 	}
 
+	grpcConfig := request.TopicsConfiguration.GetTransportStrategy().GetGrpcConfig()
+	topicManagerProps := &models.TopicStreamGrpcManagerRequest{
+		CredentialProvider: request.CredentialProvider,
+		GrpcConfiguration:  grpcConfig,
+	}
+
+	// Create pool of grpc channels for unary operations
+	numUnaryChannels := DEFAULT_NUM_UNARY_GRPC_CHANNELS
+	if request.TopicsConfiguration.GetNumUnaryGrpcChannels() > 0 {
+		numUnaryChannels = request.TopicsConfiguration.GetNumUnaryGrpcChannels()
+	}
+	unaryPool, err := topic_manager_lists.NewStaticUnaryGrpcManagerPool(
+		topicManagerProps,
+		numUnaryChannels,
+		request.Log,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create pool of grpc channels for stream operations depending on static vs dynamic transport strategy
+	var streamPool topic_manager_lists.TopicGrpcConnectionPool
+	if request.TopicsConfiguration.GetMaxSubscriptions() > 0 {
+		request.Log.Debug("Creating dynamic stream manager list with max subscriptions: %d", request.TopicsConfiguration.GetMaxSubscriptions())
+		streamPool, err = topic_manager_lists.NewDynamicStreamGrpcManagerPool(
+			topicManagerProps,
+			request.TopicsConfiguration.GetMaxSubscriptions(),
+			request.Log,
+		)
+	} else {
+		numStreamChannels := DEFAULT_NUM_STREAM_GRPC_CHANNELS
+		if request.TopicsConfiguration.GetNumStreamGrpcChannels() > 0 {
+			numStreamChannels = request.TopicsConfiguration.GetNumStreamGrpcChannels()
+		}
+		request.Log.Debug("Creating static stream manager list with num stream channels: %d", numStreamChannels)
+		streamPool, err = topic_manager_lists.NewStaticStreamGrpcManagerPool(
+			topicManagerProps,
+			numStreamChannels,
+			request.Log,
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	return &pubSubClient{
-		numUnaryChannels:     numUnaryChannels,
-		unaryTopicManagers:   unaryTopicManagers,
-		numStreamChannels:    numStreamChannels,
-		streamTopicManagers:  streamTopicManagers,
-		endpoint:             request.CredentialProvider.GetCacheEndpoint(),
-		log:                  request.Log,
-		requestTimeout:       timeout,
-		maxConcurrentStreams: int(numStreamChannels) * MAX_CONCURRENT_STREAMS_PER_CHANNEL,
-		middleware:           request.TopicsConfiguration.GetMiddleware(),
+		endpoint:                 request.CredentialProvider.GetCacheEndpoint(),
+		log:                      request.Log,
+		requestTimeout:           timeout,
+		middleware:               request.TopicsConfiguration.GetMiddleware(),
+		unaryGrpcConnectionPool:  unaryPool,
+		streamGrpcConnectionPool: streamPool,
 	}, nil
 }
 
-// Each grpc connection can multiplex 100 subscribe/publish requests.
-// Grpc channels that already have 100 subscriptions will silently queue up subsequent requests.
-// We must prevent subscription requests from queuing up if there are already numStreamChannels*100
-// concurrent streams as it causes the program to hang indefinitely with no error.
-func (client *pubSubClient) getNextStreamTopicManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
-	// Max number of attempts is set to the max number of concurrent streams in order to preserve
-	// the round-robin system (incrementing nextManagerIndex) but to not cut short the number
-	//  of attempts in case there are many subscriptions starting up at the same time.
-	for i := 0; i < client.maxConcurrentStreams; i++ {
-		nextManagerIndex := client.streamTopicManagerCount.Add(1)
-		topicManager := client.streamTopicManagers[nextManagerIndex%uint64(len(client.streamTopicManagers))]
-		newCount := topicManager.NumActiveSubscriptions.Add(1)
-		if newCount <= int64(MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
-			client.log.Debug("Starting new subscription on grpc channel %d which now has %d streams", nextManagerIndex%uint64(len(client.streamTopicManagers)), newCount)
-			return topicManager, nil
-		}
-		topicManager.NumActiveSubscriptions.Add(-1)
-	}
-
-	// If there are no more streams available, return an error
-	errorMessage := fmt.Sprintf("Cannot start new subscription, all grpc channels may be at maximum capacity. There are %d total subscriptions allowed across %d grpc channels. Please use the WithNumStreamGrpcChannels configuration if you wish to start more subscriptions.\n", client.maxConcurrentStreams, client.numStreamChannels)
-	return nil, momentoerrors.NewMomentoSvcErr(LimitExceededError, errorMessage, nil)
-}
-
-// Each grpc connection can multiplex 100 subscribe/publish requests.
-// Publish requests will queue up on client while waiting for in-flight requests to complete if
-// the number of concurrent requests exceeds numUnaryChannels*100, but will eventually complete.
-// Therefore we can just round-robin the unaryTopicManagers, no need to keep track of how many
-// publish requests are in flight on each one.
-func (client *pubSubClient) getNextUnaryTopicManager() *grpcmanagers.TopicGrpcManager {
-	nextManagerIndex := client.unaryTopicManagerCount.Add(1)
-	topicManager := client.unaryTopicManagers[nextManagerIndex%uint64(client.numUnaryChannels)]
-	return topicManager
-}
-
-func (client *pubSubClient) countNumberOfActiveSubscriptions() int64 {
-	count := int64(0)
-	for _, topicManager := range client.streamTopicManagers {
-		count += topicManager.NumActiveSubscriptions.Load()
-	}
-	return count
-}
-
-// Helper function to help sanity check number of concurrent streams before starting a new subscription
-func (client *pubSubClient) checkNumConcurrentStreams() error {
-	numActiveStreams := client.countNumberOfActiveSubscriptions()
-	if numActiveStreams >= int64(client.maxConcurrentStreams) {
-		errorMessage := fmt.Sprintf(
-			"Number of grpc streams: %d; number of channels: %d; max concurrent streams: %d; Already at maximum number of concurrent grpc streams, cannot make new subscribe requests\n",
-			numActiveStreams, client.numStreamChannels, client.maxConcurrentStreams,
-		)
-		return momentoerrors.NewMomentoSvcErr(LimitExceededError, errorMessage, nil)
-	}
-	return nil
-}
-
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
-	// First check if there is enough grpc stream capacity to make a new subscription
-	err := client.checkNumConcurrentStreams()
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	// Then actually attempt to get a topic manager
-	topicManager, err := client.getNextStreamTopicManager()
-	if err != nil {
-		return nil, nil, nil, nil, err
+	// Get the next available grpc manager
+	topicManager, topicManagerErr := client.streamGrpcConnectionPool.GetNextTopicGrpcManager()
+	if topicManagerErr != nil {
+		return nil, nil, nil, nil, topicManagerErr
 	}
 
 	subscriptionRequest := &pb.XSubscriptionRequest{
@@ -192,16 +134,6 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
-	// If we are approaching the grpc maximum concurrent stream limit, log a warning
-	numActiveStreams := client.countNumberOfActiveSubscriptions()
-	remainingStreams := int64(client.maxConcurrentStreams) - numActiveStreams
-	if remainingStreams < 10 {
-		client.log.Warn(
-			"WARNING: approaching grpc maximum concurrent stream limit, %d remaining of total %d streams\n",
-			remainingStreams, client.maxConcurrentStreams,
-		)
-	}
-	client.log.Debug("Starting new subscription, total number of streams now: %d", numActiveStreams)
 	return topicManager, subscribeClient, cancelContext, cancelFunction, err
 }
 
@@ -218,7 +150,10 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	}
 
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(ctx, request.CacheName, requestMetadata)
-	topicManager := client.getNextUnaryTopicManager()
+	topicManager, err := client.unaryGrpcConnectionPool.GetNextTopicGrpcManager()
+	if err != nil {
+		return err
+	}
 	var header, trailer metadata.MD
 	switch value := request.Value.(type) {
 	case String:
@@ -258,17 +193,6 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 }
 
 func (client *pubSubClient) close() {
-	// Close all stream grpc channels
-	client.numStreamChannels = 0
-	for clientIndex := range client.streamTopicManagers {
-		// TODO: could we be leaking connections here?
-		defer client.streamTopicManagers[clientIndex].Close()
-	}
-
-	// Close all unary grpc channels
-	client.numUnaryChannels = 0
-	for clientIndex := range client.unaryTopicManagers {
-		// TODO: could we be leaking connections here?
-		defer client.unaryTopicManagers[clientIndex].Close()
-	}
+	client.streamGrpcConnectionPool.Close()
+	client.unaryGrpcConnectionPool.Close()
 }

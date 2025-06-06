@@ -105,18 +105,18 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		select {
 		case <-ctx.Done():
 			// Context has been canceled, return an error
-			s.decrementSubscriptionCount()
+			decremented := s.decrementSubscriptionCount()
 			s.log.Debug(
-				"[Event] Context done, number of active streams: %d",
-				s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+				"[Event] Context done, number of active streams on current grpc channel: %d",
+				decremented,
 			)
 			return nil, ctx.Err()
 		case <-s.cancelContext.Done():
 			// Context has been canceled, return an error
-			s.decrementSubscriptionCount()
+			decremented := s.decrementSubscriptionCount()
 			s.log.Debug(
-				"[Event] Context cancelled, number of active streams: %d",
-				s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+				"[Event] Context cancelled, number of active streams on current grpc channel: %d",
+				decremented,
 			)
 			return nil, s.cancelContext.Err()
 		default:
@@ -128,19 +128,19 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			select {
 			case <-ctx.Done():
 				{
-					s.decrementSubscriptionCount()
+					decremented := s.decrementSubscriptionCount()
 					s.log.Debug(
-						"[Event RecvMsg] Context done, number of active streams: %d",
-						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+						"[Event RecvMsg] Context done, number of active streams on current grpc channel: %d",
+						decremented,
 					)
 					return nil, ctx.Err()
 				}
 			case <-s.cancelContext.Done():
 				{
-					s.decrementSubscriptionCount()
+					decremented := s.decrementSubscriptionCount()
 					s.log.Debug(
-						"[Event RecvMsg] Context cancelled, number of active streams: %d",
-						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+						"[Event RecvMsg] Context cancelled, number of active streams on current grpc channel: %d",
+						decremented,
 					)
 					return nil, s.cancelContext.Err()
 				}
@@ -150,10 +150,10 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 					// Disconnected, decrement and explicitly close the stream, then attempt to reconnect
 					s.log.Error("Stream disconnected due to error: %s", err.Error())
 					s.cancelFunction()
-					s.decrementSubscriptionCount()
+					decremented := s.decrementSubscriptionCount()
 					s.log.Debug(
-						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams: %d",
-						s.momentoTopicClient.countNumberOfActiveSubscriptions(),
+						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams on current grpc channel: %d",
+						decremented,
 					)
 
 					err := s.attemptReconnect(ctx, err)
@@ -210,8 +210,8 @@ func (s *topicSubscription) onTopicEvent(method string, event middleware.TopicSu
 	}
 }
 
-func (s *topicSubscription) decrementSubscriptionCount() {
-	s.topicManager.NumActiveSubscriptions.Add(-1)
+func (s *topicSubscription) decrementSubscriptionCount() int64 {
+	return s.topicManager.NumActiveSubscriptions.Add(-1)
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
