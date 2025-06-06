@@ -97,13 +97,6 @@ func (s *staticStreamGrpcManagerPool) makeNextManagerAvailable() {
 	}
 }
 
-// StreamGrpcManagerRequest is used for putting the next available stream manager on a channel for the
-// pubSubClient to pull from, or an error that specifies why no stream manager is available.
-type StreamGrpcManagerRequest struct {
-	TopicManager *grpcmanagers.TopicGrpcManager
-	Err          momentoerrors.MomentoSvcErr
-}
-
 // Helper function to help sanity check number of concurrent streams before starting a new subscription
 func (s *staticStreamGrpcManagerPool) checkNumConcurrentStreams() momentoerrors.MomentoSvcErr {
 	if s.currentActiveStreamsCount.Load() >= uint64(s.maxConcurrentStreams) {

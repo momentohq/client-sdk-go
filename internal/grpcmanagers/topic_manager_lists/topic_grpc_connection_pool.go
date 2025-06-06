@@ -15,3 +15,10 @@ type TopicGrpcConnectionPool interface {
 	// Close shuts down all the grpc connections in the pool.
 	Close()
 }
+
+// StreamGrpcManagerRequest is used for putting the next available stream manager on a channel for the
+// pubSubClient to pull from, or an error that specifies why no stream manager is available.
+type StreamGrpcManagerRequest struct {
+	TopicManager *grpcmanagers.TopicGrpcManager
+	Err          momentoerrors.MomentoSvcErr
+}
