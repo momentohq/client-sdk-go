@@ -35,6 +35,9 @@ type dynamicStreamGrpcManagerPool struct {
 // is available).
 func (d *dynamicStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
 	topicManagerRequest := <-d.nextAvailableGrpcManagerChannel
+	if topicManagerRequest == nil {
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, "Received nil from nextAvailableGrpcManagerChannel", nil)
+	}
 	if topicManagerRequest.Err != nil {
 		return nil, topicManagerRequest.Err
 	}
