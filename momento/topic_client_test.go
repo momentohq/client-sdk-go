@@ -68,8 +68,11 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					value, err := sub.Item(sharedContext.Ctx)
+					value, err := sub.Item(cancelContext)
 					if err != nil {
+						if err.Error() == "context canceled" {
+							return
+						}
 						panic(err)
 					}
 					receivedValues = append(receivedValues, value)
@@ -142,8 +145,11 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 				case <-cancelContext.Done():
 					return
 				default:
-					item, err := sub.Event(sharedContext.Ctx)
+					item, err := sub.Event(cancelContext)
 					if err != nil {
+						if err.Error() == "context canceled" {
+							return
+						}
 						panic(err)
 					}
 					receivedItems = append(receivedItems, item)
