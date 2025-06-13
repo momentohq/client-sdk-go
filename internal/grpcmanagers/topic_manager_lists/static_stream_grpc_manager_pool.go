@@ -31,14 +31,19 @@ type staticStreamGrpcManagerPool struct {
 // places the next available stream manager on the channel (or an error if no stream manager
 // is available).
 func (s *staticStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
-	topicManagerRequest := <-s.nextAvailableGrpcManagerChannel
-	if topicManagerRequest == nil {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, "Received nil from nextAvailableGrpcManagerChannel", nil)
+	select {
+	case <-s.ctx.Done():
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "Context cancelled", nil)
+	default:
+		topicManagerRequest := <-s.nextAvailableGrpcManagerChannel
+		if topicManagerRequest == nil {
+			return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.ClientSdkError, "Received nil from nextAvailableGrpcManagerChannel", nil)
+		}
+		if topicManagerRequest.Err != nil {
+			return nil, topicManagerRequest.Err
+		}
+		return topicManagerRequest.TopicManager, nil
 	}
-	if topicManagerRequest.Err != nil {
-		return nil, topicManagerRequest.Err
-	}
-	return topicManagerRequest.TopicManager, nil
 }
 
 // Close shuts down all the grpc connections in the pool.
