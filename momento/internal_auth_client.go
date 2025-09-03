@@ -49,9 +49,22 @@ func (client *authClient) RefreshApiKey(ctx context.Context, request *RefreshApi
 	if err != nil {
 		return nil, momentoerrors.ConvertSvcErr(err)
 	}
+	jsonObject := map[string]string{
+		"api_key":  resp.ApiKey,
+		"endpoint": resp.Endpoint,
+	}
+	jsonString, err := json.Marshal(jsonObject)
+	if err != nil {
+		return nil, NewMomentoError(
+			momentoerrors.ClientSdkError,
+			"Unable to map API key to necessary form",
+			err,
+		)
+	}
+	b64Encoded := b64.StdEncoding.EncodeToString([]byte(jsonString))
 
 	return &auth_responses.RefreshApiKeySuccess{
-		ApiKey:       resp.ApiKey,
+		ApiKey:       b64Encoded,
 		RefreshToken: resp.RefreshToken,
 		Endpoint:     resp.Endpoint,
 		ExpiresAt:    utils.ExpiresAtFromEpoch(int64(resp.ValidUntil)),
