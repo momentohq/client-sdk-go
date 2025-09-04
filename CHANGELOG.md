@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.38.1](https://github.com/momentohq/client-sdk-go/compare/v1.38.0...v1.38.1) (2025-09-04)
+
+
+### Bug Fixes
+
+* changed refreshApiKey type to make compatible with credential provider ([#652](https://github.com/momentohq/client-sdk-go/issues/652)) ([1b68520](https://github.com/momentohq/client-sdk-go/commit/1b685203f61e301a16372f8cd8b496c05d79113f))
+
+
+### Miscellaneous
+
+* Adding Debug Logs ([#654](https://github.com/momentohq/client-sdk-go/issues/654)) ([fe06917](https://github.com/momentohq/client-sdk-go/commit/fe069177d98ba018ad4c690414260656e9e3a2dc))
+
 ## [1.38.0](https://github.com/momentohq/client-sdk-go/compare/v1.37.0...v1.38.0) (2025-08-20)
 
 
