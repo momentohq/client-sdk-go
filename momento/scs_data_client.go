@@ -143,7 +143,10 @@ func (client scsDataClient) applyMiddlewareResponseHandlers(
 }
 
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) (interface{}, error) {
+	logger := client.loggerFactory.GetLogger("data-client")
+	logger.Debug("%v request made on cache %v", r.requestName(), r.cacheName())
 	if _, err := prepareCacheName(r); err != nil {
+		logger.Error("failed to prepare cache name due to error", err)
 		return nil, err
 	}
 
@@ -152,33 +155,44 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 	var err error
 	middlewareRequestHandlers, r, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, requestMetadata)
 	if err != nil {
+		logger.Error("failed to apply middleware request handlers: %v", err)
 		return nil, err
 	}
-
+	logger.Debug("applied middleware request handlers, metadata=%v", requestMetadata)
 	req, err := r.initGrpcRequest(client)
 	if err != nil {
+		logger.Error("failed to init gRPC request: %v", err)
 		return nil, err
 	}
+	logger.Debug("gRPC request initialized")
 
 	ctx, cancel := context.WithTimeout(ctx, client.requestTimeout)
 	defer cancel()
+	logger.Debug("context created with timeout=%s", client.requestTimeout)
 
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
 	resp, responseMetadata, err := r.makeGrpcRequest(req, requestContext, client)
 	if err != nil {
+		logger.Error("gRPC request failed: %v, responseMetadata=%v", err, responseMetadata)
 		return nil, momentoerrors.ConvertSvcErr(err, responseMetadata...)
 	}
+	logger.Debug("gRPC request succeeded, responseMetadata=%v", responseMetadata)
 
 	momentoResp, err := r.interpretGrpcResponse(resp)
 	if err != nil {
+		logger.Error("failed to interpret gRPC response: %v", err)
 		return nil, err
 	}
+	logger.Debug("interpreted gRPC response")
 
 	momentoResp, err = client.applyMiddlewareResponseHandlers(middlewareRequestHandlers, momentoResp, responseMetadata)
 	if err != nil {
+		logger.Error("failed to apply middleware response handlers: %v", err)
 		return nil, err
 	}
+	logger.Debug("applied middleware response handlers successfully")
 
+	logger.Debug("%v request succeeded with response=%v", r.requestName(), momentoResp)
 	return momentoResp, nil
 }
 
