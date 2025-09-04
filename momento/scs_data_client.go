@@ -28,6 +28,7 @@ type scsDataClient struct {
 	endpoint            string
 	eagerConnectTimeout time.Duration
 	loggerFactory       logger.MomentoLoggerFactory
+	logger              logger.MomentoLogger
 	middleware          []middleware.Middleware
 }
 
@@ -48,6 +49,10 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 	} else {
 		timeout = request.Configuration.GetClientSideTimeout()
 	}
+	lf := request.Configuration.GetLoggerFactory()
+
+	var lg = lf.GetLogger("data-client")
+
 	return &scsDataClient{
 		grpcManager:         dataManager,
 		grpcClient:          pb.NewScsClient(dataManager.Conn),
@@ -55,7 +60,8 @@ func newScsDataClient(request *models.DataClientRequest, eagerConnectTimeout tim
 		requestTimeout:      timeout,
 		endpoint:            request.CredentialProvider.GetCacheEndpoint(),
 		eagerConnectTimeout: eagerConnectTimeout,
-		loggerFactory:       request.Configuration.GetLoggerFactory(),
+		loggerFactory:       lf,
+		logger:              lg,
 		middleware:          request.Configuration.GetMiddleware(),
 	}, nil
 }
@@ -143,6 +149,7 @@ func (client scsDataClient) applyMiddlewareResponseHandlers(
 }
 
 func (client scsDataClient) makeRequest(ctx context.Context, r requester) (interface{}, error) {
+	client.logger.Debug("%v request made on cache %v", r.requestName(), r.cacheName())
 	if _, err := prepareCacheName(r); err != nil {
 		return nil, err
 	}
@@ -152,11 +159,12 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 	var err error
 	middlewareRequestHandlers, r, requestMetadata, err = client.applyMiddlewareRequestHandlers(r, requestMetadata)
 	if err != nil {
+		client.logger.Error("failed to apply middleware request handlers: %v", err)
 		return nil, err
 	}
-
 	req, err := r.initGrpcRequest(client)
 	if err != nil {
+		client.logger.Error("failed to init gRPC request: %v", err)
 		return nil, err
 	}
 
@@ -166,19 +174,21 @@ func (client scsDataClient) makeRequest(ctx context.Context, r requester) (inter
 	requestContext := internal.CreateCacheRequestContextFromMetadataMap(ctx, r.cacheName(), requestMetadata)
 	resp, responseMetadata, err := r.makeGrpcRequest(req, requestContext, client)
 	if err != nil {
+		client.logger.Error("gRPC request failed: %v, responseMetadata=%v", err, responseMetadata)
 		return nil, momentoerrors.ConvertSvcErr(err, responseMetadata...)
 	}
 
 	momentoResp, err := r.interpretGrpcResponse(resp)
 	if err != nil {
+		client.logger.Error("failed to interpret gRPC response: %v", err)
 		return nil, err
 	}
 
 	momentoResp, err = client.applyMiddlewareResponseHandlers(middlewareRequestHandlers, momentoResp, responseMetadata)
 	if err != nil {
+		client.logger.Error("failed to apply middleware response handlers: %v", err)
 		return nil, err
 	}
-
 	return momentoResp, nil
 }
 
