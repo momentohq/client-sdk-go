@@ -1734,9 +1734,13 @@ var _ = Describe("auth auth-client", Label(AUTH_SERVICE_LABEL), func() {
 				Expect(refreshResp).To(BeAssignableToTypeOf(&auth_responses.RefreshApiKeySuccess{}))
 
 				refreshSuccess := refreshResp.(*auth_responses.RefreshApiKeySuccess)
-
 				expiresAtDelta := refreshSuccess.ExpiresAt.Epoch() - success.ExpiresAt.Epoch()
 				Expect(expiresAtDelta).To(BeNumerically("~", delaySecondsBeforeRefresh.Seconds(), delaySecondsBeforeRefresh.Seconds()+10))
+				refreshAuthClient := authClientFromApiKey(sharedContext, refreshSuccess.ApiKey)
+				_, err = refreshAuthClient.RefreshApiKey(sharedContext.Ctx, &RefreshApiKeyRequest{
+					RefreshToken: refreshSuccess.RefreshToken,
+				})
+				Expect(err).To(BeNil())
 			})
 
 			It("should fail to refresh api key with expired refresh token", func() {
