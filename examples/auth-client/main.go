@@ -14,15 +14,16 @@ import (
 )
 
 const (
-	cacheName           = "go-perf-test"
+	cacheName           = "go-auth-example"
 	defaultTtl          = 60 * time.Second
 	eagerConnectTimeout = 30 * time.Second
+	timeUntilExpiry     = 10 * time.Second
 )
 
 func generateRefreshApiKey(authClient momento.AuthClient, ctx context.Context) {
 	//generate an api key
 	resp, err := authClient.GenerateApiKey(ctx, &momento.GenerateApiKeyRequest{
-		ExpiresIn: utils.ExpiresInSeconds(7),
+		ExpiresIn: utils.ExpiresInSeconds(10),
 		Scope:     momento.AllDataReadWrite,
 	})
 	if err != nil {
@@ -58,7 +59,6 @@ func generateRefreshApiKey(authClient momento.AuthClient, ctx context.Context) {
 
 	// refresh the api key before it expires
 	time.Sleep(2 * time.Second)
-
 	refreshAuthClient, err := momento.NewAuthClient(config.AuthDefault(), credentialProvider)
 	if err != nil {
 		panic(err)
@@ -73,16 +73,17 @@ func generateRefreshApiKey(authClient momento.AuthClient, ctx context.Context) {
 	refreshSuccess := refreshResp.(*auth_responses.RefreshApiKeySuccess)
 	credentialProvider, err = auth.FromString(refreshSuccess.ApiKey)
 
-	//create a new cache client from the new key, show that using the old key won't work after its expiration, but the new key returned by refreshApiKey will work
-	time.Sleep(7 * time.Second)
+	//using the old key won't work after its expiration, but creating a new cache client using the new key returned by refreshApiKey will work
+	time.Sleep(timeUntilExpiry)
 	_, err = client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
 		Key:       momento.String(key),
 	})
 	if err == nil {
 		fmt.Println("\nAPI Key has not expired.")
+	} else {
+		fmt.Println("\nFailed to get due to expired API key")
 	}
-	fmt.Println("\nFailed to get due to expired API key")
 	refreshClient, err := momento.NewCacheClientWithEagerConnectTimeout(
 		config.LaptopLatest(),
 		credentialProvider,
@@ -103,7 +104,7 @@ func generateDisposableToken(authClient momento.AuthClient, ctx context.Context)
 	//generate disposable token
 	tokenId := "a token id"
 	tokenResp, err := authClient.GenerateDisposableToken(ctx, &momento.GenerateDisposableTokenRequest{
-		ExpiresIn: utils.ExpiresInSeconds(5),
+		ExpiresIn: utils.ExpiresInSeconds(9),
 		Scope:     momento.AllDataReadWrite,
 		Props: momento.DisposableTokenProps{
 			TokenId: &tokenId,
@@ -142,10 +143,9 @@ func generateDisposableToken(authClient momento.AuthClient, ctx context.Context)
 	}
 
 	//generate new disposable ticket before the first expires
-	time.Sleep(2 * time.Second)
 	tokenId = "a token id"
 	tokenResp, err = authClient.GenerateDisposableToken(ctx, &momento.GenerateDisposableTokenRequest{
-		ExpiresIn: utils.ExpiresInSeconds(10),
+		ExpiresIn: utils.ExpiresInSeconds(20),
 		Scope:     momento.AllDataReadWrite,
 		Props: momento.DisposableTokenProps{
 			TokenId: &tokenId,
@@ -158,16 +158,17 @@ func generateDisposableToken(authClient momento.AuthClient, ctx context.Context)
 		panic(err)
 	}
 
-	//create a new cache client from the new token, show that using the old token won't work after its expiration, but the new token will work
-	time.Sleep(5 * time.Second)
+	//using the old token won't work after its expiration, but the new token will work
+	time.Sleep(timeUntilExpiry)
 	_, err = client.Get(ctx, &momento.GetRequest{
 		CacheName: cacheName,
 		Key:       momento.String(key),
 	})
 	if err == nil {
 		fmt.Println("\nAPI Key has not expired.")
+	} else {
+		fmt.Println("\nFailed to get due to expired token")
 	}
-	fmt.Println("\nFailed to get due to expired API key")
 	refreshClient, err := momento.NewCacheClientWithEagerConnectTimeout(
 		config.LaptopLatest(),
 		credentialProvider,
@@ -181,7 +182,7 @@ func generateDisposableToken(authClient momento.AuthClient, ctx context.Context)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("\nGet Request succeeded with new API key")
+	fmt.Println("\nGet Request succeeded with new token")
 }
 
 func main() {
