@@ -27,7 +27,13 @@ install-ginkgo:
 		go install github.com/onsi/ginkgo/v2/ginkgo@v2.8.1; \
 	fi
 
-install-devtools: install-goimport install-staticcheck install-ginkgo
+install-golangci-lint:
+	@if ! command -v golangci-lint &> /dev/null; then \
+		echo "golangci-lint not found, installing..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.0; \
+	fi
+
+install-devtools: install-goimport install-staticcheck install-ginkgo install-golangci-lint
 
 format:
 	@echo "Formatting code..."
@@ -53,8 +59,12 @@ staticcheck: install-staticcheck
 	@echo "Running staticcheck..."
 	staticcheck ./...
 
+golangci-lint: install-golangci-lint
+	@echo "Running golangci-lint..."	
+	@golangci-lint run ./...
 
-lint: format imports tidy vet staticcheck
+lint: format imports tidy vet staticcheck golangci-lint
+
 
 install-protos-devtools:
 	@if ! command -v protoc-gen-go &> /dev/null; then \
