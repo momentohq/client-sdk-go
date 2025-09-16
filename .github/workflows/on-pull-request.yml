@@ -63,6 +63,9 @@ jobs:
           only-new-issues: true
           skip-pkg-cache: true
 
+      - name: Check for forbidden replace directives
+        run: make check-no-replace
+
       # If there are any diffs from goimports or go mod tidy, fail.
       - name: Verify no changes from goimports and go mod tidy
         run: |
