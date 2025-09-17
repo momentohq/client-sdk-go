@@ -180,3 +180,22 @@ build-examples:
 run-docs-examples:
 	@echo "Running docs examples..."
 	cd examples && go run docs-examples/main.go
+
+check-no-replace:
+	@echo "🔎 Checking for forbidden 'replace' directives in go.mod files..."
+	@FILES="$$(find . -name go.mod)"; \
+	FOUND=0; \
+	for f in $$FILES; do \
+		if grep -nE '^[[:space:]]*replace[[:space:]]' "$$f" >/dev/null; then \
+			echo "Found 'replace' in: $$f"; \
+			grep -nE '^[[:space:]]*replace[[:space:]]' "$$f" | sed 's/^/   /'; \
+			FOUND=1; \
+		fi; \
+	done; \
+	if [ $$FOUND -ne 0 ]; then \
+		echo ""; \
+		echo "ERROR: 'replace' directives are not allowed in released modules. Remove them or move them to a local-only workflow."; \
+		exit 1; \
+	else \
+		echo "No forbidden 'replace' directives found."; \
+	fi
