@@ -15,14 +15,14 @@ echo "LATEST_VERSION: $LATEST_VERSION"
 if [[ "$PLATFORM" == "Darwin" && "$ARCH" == "x86_64" ]]; then
     echo "Downloading momento-protosocket-ffi.tar.gz for Darwin x86_64"
     curl -L -o momento-protosocket-ffi.tar.gz https://github.com/momentohq/momento-protosocket-ffi/releases/download/v$LATEST_VERSION/momento_protosocket_ffi-$LATEST_VERSION.x86_64-macos.tar.gz
-elif [[ "$PLATFORM" == "Darwin" && "$ARCH" == "arm64" ]]; then
+elif [[ "$PLATFORM" == "Darwin" && ("$ARCH" == "arm64" || "$ARCH" == "aarch64") ]]; then
     echo "Downloading momento-protosocket-ffi.tar.gz for Darwin arm64"
     curl -L -o momento-protosocket-ffi.tar.gz https://github.com/momentohq/momento-protosocket-ffi/releases/download/v$LATEST_VERSION/momento_protosocket_ffi-$LATEST_VERSION.arm64-macos.tar.gz
 
 elif [[ "$PLATFORM" == "Linux" && "$ARCH" == "x86_64" ]]; then
     echo "Downloading momento-protosocket-ffi.tar.gz for Linux x86_64"
     curl -L -o momento-protosocket-ffi.tar.gz https://github.com/momentohq/momento-protosocket-ffi/releases/download/v$LATEST_VERSION/momento_protosocket_ffi-$LATEST_VERSION.x86_64-linux.tar.gz
-elif [[ "$PLATFORM" == "Linux" && "$ARCH" == "arm64" ]]; then
+elif [[ "$PLATFORM" == "Linux" && ("$ARCH" == "arm64" || "$ARCH" == "aarch64") ]]; then
     echo "Downloading momento-protosocket-ffi.tar.gz for Linux arm64"
     curl -L -o momento-protosocket-ffi.tar.gz https://github.com/momentohq/momento-protosocket-ffi/releases/download/v$LATEST_VERSION/momento_protosocket_ffi-$LATEST_VERSION.arm64-linux.tar.gz
 else
