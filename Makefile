@@ -57,7 +57,7 @@ vet:
 
 staticcheck: install-staticcheck
 	@echo "Running staticcheck..."
-	staticcheck ./...
+	CGO_ENABLED=0 staticcheck ./...
 
 golangci-lint: install-golangci-lint
 	@echo "Running golangci-lint..."	
