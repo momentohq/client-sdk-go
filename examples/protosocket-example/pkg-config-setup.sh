@@ -43,7 +43,7 @@ sed -i '' "1s|.*|libdir=$CURRENT_DIR|g" ./momento_protosocket_ffi.pc
 
 # # 5. Update PKG_CONFIG_PATH
 export PKG_CONFIG_PATH=$CURRENT_DIR
-echo "updated PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+echo "[REQUIRED] Make sure you set the environment variable PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
 
 # # 6. Verify that pkg-config picks up on the library
 FOUND=$(pkg-config --list-package-names | grep momento_protosocket_ffi)
