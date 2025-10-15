@@ -1,0 +1,72 @@
+name: On pull request
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  MOMENTO_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+
+jobs:
+  build-and-test-ubuntu-x64:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Build and test protosocket-example with pkg-config linked ffi static library
+        run: |
+          cd examples/protosocket-example
+          ./pkg-config-setup.sh
+          go run main.go
+        
+  build-and-test-ubuntu-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Build and test protosocket-example with pkg-config linked ffi static library
+        run: |
+          cd examples/protosocket-example
+          ./pkg-config-setup.sh
+          go run main.go
+
+  build-and-test-macos-x64:
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Build and test protosocket-example with pkg-config linked ffi static library
+        run: |
+          cd examples/protosocket-example
+          ./pkg-config-setup.sh
+          go run main.go
+
+  build-and-test-macos-arm64:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+
+      - name: Build and test protosocket-example with pkg-config linked ffi static library
+        run: |
+          cd examples/protosocket-example
+          ./pkg-config-setup.sh
+          go run main.go
