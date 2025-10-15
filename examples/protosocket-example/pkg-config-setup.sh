@@ -39,7 +39,11 @@ CURRENT_DIR=$(pwd)
 echo "CURRENT_DIR: $CURRENT_DIR"
 
 # 4. Update the first line to use the correct path in the pkg-config file
-sed -i '' "1s|.*|libdir=$CURRENT_DIR|g" ./momento_protosocket_ffi.pc
+if [[ "$PLATFORM" == "Darwin" ]]; then
+    sed -i '' "1s|.*|libdir=$CURRENT_DIR|g" ./momento_protosocket_ffi.pc
+else
+    sed -i "1s|.*|libdir=$CURRENT_DIR|g" ./momento_protosocket_ffi.pc
+fi
 
 # # 5. Update PKG_CONFIG_PATH
 export PKG_CONFIG_PATH=$CURRENT_DIR
