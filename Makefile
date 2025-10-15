@@ -52,7 +52,7 @@ tidy:
 
 vet:
 	@echo "Running go vet..."
-	go vet ./...
+	CGO_ENABLED=0 go vet ./...
 
 
 staticcheck: install-staticcheck
