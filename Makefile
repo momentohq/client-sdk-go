@@ -114,7 +114,7 @@ update-and-build-protos: update-protos build-protos
 
 build:
 	@echo "Building..."
-	go build ./...
+	CGO_ENABLED=0 go build ./...
 
 
 precommit: lint test
@@ -174,7 +174,7 @@ vendor:
 
 build-examples:
 	@echo "Building examples..."
-	cd examples && go build ./...
+	CGO_ENABLED=0 cd examples && go build ./...
 
 
 run-docs-examples:
