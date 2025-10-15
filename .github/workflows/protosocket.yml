@@ -20,7 +20,9 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
+          ls
           ./pkg-config-setup.sh
+          ls
           go run main.go
         
   build-and-test-ubuntu-arm64:
@@ -36,7 +38,9 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
+          ls
           ./pkg-config-setup.sh
+          ls
           go run main.go
 
   build-and-test-macos-x64:
@@ -52,7 +56,9 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
+          ls
           ./pkg-config-setup.sh
+          ls
           go run main.go
 
   build-and-test-macos-arm64:
@@ -68,5 +74,7 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
+          ls
           ./pkg-config-setup.sh
+          ls
           go run main.go
