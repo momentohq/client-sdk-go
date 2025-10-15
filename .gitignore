@@ -4,3 +4,4 @@ vendor
 .env
 .vscode
 client-sdk-go.iml
+examples/protosocket-example/protosocket-ffi*
