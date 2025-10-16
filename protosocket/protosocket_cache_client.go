@@ -2,7 +2,7 @@ package protosocket
 
 /*
 #cgo pkg-config: --static momento_protosocket_ffi
-#cgo !darwin LDFLAGS: -lgcc_s -lutil -lrt -lpthread -ldl -lm -lc
+#cgo !darwin LDFLAGS: -Wl,--no-as-needed -lgcc_s -lutil -lrt -lpthread -ldl -lm -lc
 #cgo darwin LDFLAGS: -framework Security -framework CoreFoundation -lc++ -liconv -ldl -lm -lc
 #include <momento_protosocket_ffi.h>
 #include <string.h>
