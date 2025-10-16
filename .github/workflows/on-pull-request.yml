@@ -54,7 +54,7 @@ jobs:
         run: make install-devtools
 
       - name: Lint
-        run: make lint
+        run: CGO_ENABLED=0 make lint
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -75,10 +75,10 @@ jobs:
           fi
 
       - name: Build
-        run: make build
+        run: CGO_ENABLED=0 make build
 
       - name: Build examples
-        run: make build-examples
+        run: CGO_ENABLED=0 make build-examples
 
   test:
     needs: build

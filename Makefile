@@ -52,12 +52,12 @@ tidy:
 
 vet:
 	@echo "Running go vet..."
-	CGO_ENABLED=0 go vet ./...
+	go vet ./...
 
 
 staticcheck: install-staticcheck
 	@echo "Running staticcheck..."
-	CGO_ENABLED=0 staticcheck ./...
+	staticcheck ./...
 
 golangci-lint: install-golangci-lint
 	@echo "Running golangci-lint..."	
@@ -114,7 +114,7 @@ update-and-build-protos: update-protos build-protos
 
 build:
 	@echo "Building..."
-	CGO_ENABLED=0 go build ./...
+	go build ./...
 
 
 precommit: lint test
@@ -174,7 +174,7 @@ vendor:
 
 build-examples:
 	@echo "Building examples..."
-	CGO_ENABLED=0 cd examples && go build ./...
+	cd examples && go build ./...
 
 
 run-docs-examples:
