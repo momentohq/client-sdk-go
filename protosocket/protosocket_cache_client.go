@@ -7,6 +7,7 @@ package protosocket
 #cgo darwin LDFLAGS: -framework Security -framework CoreFoundation -lc++ -liconv
 #include <momento_protosocket_ffi.h>
 #include <string.h>
+#include <math.h>
 
 extern void setCallback(ProtosocketResult* result, void* user_data);
 extern void getCallback(ProtosocketResult* result, void* user_data);
