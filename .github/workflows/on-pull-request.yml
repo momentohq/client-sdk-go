@@ -3,6 +3,11 @@ on:
   pull_request:
     branches: [main]
 
+# We disable CGO for regular builds and tests unless we are explicitly testing 
+# the protosocket cache client, which is the only thing that needs CGO.
+env:
+  CGO_ENABLED: 0
+
 jobs:
   commitlint:
     runs-on: ubuntu-24.04
@@ -54,7 +59,7 @@ jobs:
         run: make install-devtools
 
       - name: Lint
-        run: CGO_ENABLED=0 make lint
+        run: make lint
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -75,10 +80,10 @@ jobs:
           fi
 
       - name: Build
-        run: CGO_ENABLED=0 make build
+        run: make build
 
       - name: Build examples
-        run: CGO_ENABLED=0 make build-examples
+        run: make build-examples
 
   test:
     needs: build
