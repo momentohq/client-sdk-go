@@ -20,11 +20,8 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
-          ls
           ./pkg-config-setup.sh
-          ls
-          gcc --version
-          PKG_CONFIG_PATH=$(pwd)/protosocket-ffi:$PKG_CONFIG_PATH go run main.go
+          PKG_CONFIG_PATH=$(pwd)/protosocket-ffi go run main.go
         
   build-and-test-ubuntu-arm64:
     runs-on: ubuntu-24.04-arm
@@ -39,11 +36,8 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
-          ls
           ./pkg-config-setup.sh
-          ls
-          gcc --version
-          PKG_CONFIG_PATH=$(pwd)/protosocket-ffi:$PKG_CONFIG_PATH go run main.go
+          PKG_CONFIG_PATH=$(pwd)/protosocket-ffi go run main.go
 
   build-and-test-macos-x64:
     runs-on: macos-15-intel
@@ -58,9 +52,7 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
-          ls
           ./pkg-config-setup.sh
-          ls
           PKG_CONFIG_PATH=$(pwd)/protosocket-ffi go run main.go
 
   build-and-test-macos-arm64:
@@ -76,7 +68,5 @@ jobs:
       - name: Build and test protosocket-example with pkg-config linked ffi static library
         run: |
           cd examples/protosocket-example
-          ls
           ./pkg-config-setup.sh
-          ls
           PKG_CONFIG_PATH=$(pwd)/protosocket-ffi go run main.go
