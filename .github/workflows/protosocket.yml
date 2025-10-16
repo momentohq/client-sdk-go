@@ -23,6 +23,7 @@ jobs:
           ls
           ./pkg-config-setup.sh
           ls
+          gcc --version
           PKG_CONFIG_PATH=$(pwd)/protosocket-ffi go run main.go
         
   build-and-test-ubuntu-arm64:
@@ -41,6 +42,7 @@ jobs:
           ls
           ./pkg-config-setup.sh
           ls
+          gcc --version
           PKG_CONFIG_PATH=$(pwd)/protosocket-ffi go run main.go
 
   build-and-test-macos-x64:
