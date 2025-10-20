@@ -3,6 +3,11 @@ on:
   pull_request:
     branches: [main]
 
+# We disable CGO for regular builds and tests unless we are explicitly testing 
+# the protosocket cache client, which is the only thing that needs CGO.
+env:
+  CGO_ENABLED: 0
+
 jobs:
   commitlint:
     runs-on: ubuntu-24.04

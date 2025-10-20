@@ -43,6 +43,7 @@ type tokenAndEndpoints struct {
 }
 
 type CredentialProvider interface {
+	GetRawApiKey() string
 	GetAuthToken() string
 	GetControlEndpoint() string
 	IsControlEndpointSecure() bool
@@ -57,10 +58,16 @@ type CredentialProvider interface {
 
 type defaultCredentialProvider struct {
 	authToken       string
+	rawApiKey       string
 	controlEndpoint Endpoint
 	cacheEndpoint   Endpoint
 	tokenEndpoint   Endpoint
 	storageEndpoint Endpoint
+}
+
+// GetRawApiKey returns user's raw (not yet decoded and parsed) auth token.
+func (credentialProvider defaultCredentialProvider) GetRawApiKey() string {
+	return credentialProvider.rawApiKey
 }
 
 // GetAuthToken returns user's auth token.
@@ -186,6 +193,7 @@ func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error)
 	}
 	port := 443
 	provider := defaultCredentialProvider{
+		rawApiKey: authToken,
 		authToken: tokenAndEndpoints.AuthToken,
 		controlEndpoint: Endpoint{
 			Endpoint: fmt.Sprintf("%s:%d", tokenAndEndpoints.Endpoints.ControlEndpoint.Endpoint, port),
