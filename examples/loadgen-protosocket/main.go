@@ -16,11 +16,12 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/logger/momento_default_logger"
 	"github.com/momentohq/client-sdk-go/momento"
+	"github.com/momentohq/client-sdk-go/protosocket"
 )
 
 const (
 	CacheItemTtlSeconds = 60
-	CacheName           = "momento-loadgen"
+	CacheName           = "protosocket-loadgen"
 )
 
 type loadGeneratorOptions struct {
@@ -62,17 +63,25 @@ func newLoadGenerator(config config.Configuration, options loadGeneratorOptions)
 	}
 }
 
-func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Duration) {
+func (r *loadGenerator) init(ctx context.Context) time.Duration {
 	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
-	client, err := momento.NewCacheClientWithEagerConnectTimeout(r.momentoClientConfig, credentialProvider, time.Second*CacheItemTtlSeconds, 30*time.Second)
+
+	err = protosocket.NewProtosocketCacheClient(
+		config.LaptopLatest(),
+		credentialProvider,
+		CacheItemTtlSeconds*time.Second,
+	)
 	if err != nil {
 		panic(err)
 	}
-	if _, err := client.CreateCache(ctx, &momento.CreateCacheRequest{CacheName: CacheName}); err != nil {
-		panic(err)
+
+	// run a test command to verify the valkey cache exists, else do not run load test
+	testSetErr := protosocket.ProtosocketSet(CacheName, "test-key", "test-value")
+	if testSetErr != nil {
+		panic(testSetErr)
 	}
 
 	workerDelayBetweenRequests := int32(math.Floor(
@@ -94,23 +103,7 @@ func (r *loadGenerator) init(ctx context.Context) (momento.CacheClient, time.Dur
 			int(r.options.howLongToRun.Seconds())),
 	)
 
-	return client, delay
-}
-
-func processError(err error, errChan chan string) {
-	switch mErr := err.(type) {
-	case momento.MomentoError:
-		if mErr.Code() == momento.ServerUnavailableError ||
-			mErr.Code() == momento.TimeoutError ||
-			mErr.Code() == momento.LimitExceededError ||
-			mErr.Code() == momento.CanceledError {
-			errChan <- mErr.Code()
-		} else {
-			panic(fmt.Sprintf("unrecognized result: %T", mErr))
-		}
-	default:
-		panic(fmt.Sprintf("unknown error type %T", err))
-	}
+	return delay
 }
 
 func worker(
@@ -119,7 +112,6 @@ func worker(
 	getChan chan int64,
 	setChan chan int64,
 	errChan chan string,
-	client momento.CacheClient,
 	workerDelayBetweenRequests time.Duration,
 	cacheValue string,
 ) {
@@ -134,13 +126,9 @@ func worker(
 			elapsed = 0
 			cacheKey := fmt.Sprintf("worker%doperation%d", id, i)
 			setStart := hrtime.Now()
-			_, err := client.Set(ctx, &momento.SetRequest{
-				CacheName: CacheName,
-				Key:       momento.String(cacheKey),
-				Value:     momento.String(cacheValue),
-			})
+			err := protosocket.ProtosocketSet(CacheName, cacheKey, cacheValue)
 			if err != nil {
-				processError(err, errChan)
+				errChan <- err.Error()
 			} else {
 				elapsed = hrtime.Since(setStart)
 				setChan <- elapsed.Milliseconds()
@@ -152,12 +140,9 @@ func worker(
 
 			elapsed = 0
 			getStart := hrtime.Now()
-			_, err = client.Get(ctx, &momento.GetRequest{
-				CacheName: CacheName,
-				Key:       momento.String(cacheKey),
-			})
+			err = protosocket.ProtosocketGet(CacheName, cacheKey)
 			if err != nil {
-				processError(err, errChan)
+				errChan <- err.Error()
 			} else {
 				elapsed = hrtime.Since(getStart)
 				getChan <- elapsed.Milliseconds()
@@ -274,7 +259,7 @@ func timer(ctx context.Context, getChan chan int64, setChan chan int64, errChan 
 	}
 }
 
-func (r *loadGenerator) run(ctx context.Context, client momento.CacheClient, workerDelayBetweenRequests time.Duration) {
+func (r *loadGenerator) run(ctx context.Context, workerDelayBetweenRequests time.Duration) {
 	cancelCtx, cancelFunction := context.WithTimeout(ctx, r.options.howLongToRun)
 	defer cancelFunction()
 
@@ -301,7 +286,7 @@ func (r *loadGenerator) run(ctx context.Context, client momento.CacheClient, wor
 
 		go func() {
 			defer wg.Done()
-			worker(cancelCtx, i, getChan, setChan, errChan, client, workerDelayBetweenRequests, r.cacheValue)
+			worker(cancelCtx, i, getChan, setChan, errChan, workerDelayBetweenRequests, r.cacheValue)
 		}()
 	}
 
@@ -325,10 +310,10 @@ func main() {
 
 	momentoConfig := config.LaptopLatestWithLogger(momento_default_logger.NewDefaultMomentoLoggerFactory(opts.logLevel))
 	loadGenerator := newLoadGenerator(momentoConfig, opts)
-	client, workerDelayBetweenRequests := loadGenerator.init(ctx)
+	workerDelayBetweenRequests := loadGenerator.init(ctx)
 
 	runStart := time.Now()
-	loadGenerator.run(ctx, client, workerDelayBetweenRequests)
+	loadGenerator.run(ctx, workerDelayBetweenRequests)
 	runTotal := time.Since(runStart)
 
 	fmt.Printf("completed in %f seconds\n", runTotal.Seconds())
