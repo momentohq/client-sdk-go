@@ -47,7 +47,7 @@ func NewProtosocketCacheClient(config config.Configuration, credentialProvider a
 		connection_count: C.ulong(1),
 	}
 	protosocketCredentialProvider := C.ProtosocketCredentialProvider{
-		env_var_name: C.CString("MOMENTO_API_KEY"),
+		api_key: C.CString(credentialProvider.GetRawApiKey()),
 	}
 	defaultTtlMillis := C.ulonglong(defaultTtl.Milliseconds())
 	C.init_protosocket_cache_client(defaultTtlMillis, protosocketConfig, protosocketCredentialProvider)
@@ -135,7 +135,7 @@ func getCallback(result *C.ProtosocketResult, userData unsafe.Pointer) {
 	C.free_response(result)
 }
 
-func ProtosocketSet(cacheName string, key string, value string) {
+func ProtosocketSet(cacheName string, key string, value string) error {
 	// Generate FFI-compatible versions of the variables and set them up to be freed
 	cacheNameC := C.CString(cacheName)
 	defer C.free(unsafe.Pointer(cacheNameC))
@@ -164,17 +164,28 @@ func ProtosocketSet(cacheName string, key string, value string) {
 	case response := <-responseCh:
 		if response.Success {
 			fmt.Printf("[INFO] set success\n")
+			return nil
 		} else {
 			fmt.Printf("[ERROR] set error: %v\n", response.Error)
+			return &ProtosocketError{errorMessage: response.Error}
 		}
 	case <-time.After(30 * time.Second):
 		fmt.Printf("[ERROR] set timeout after 30 seconds\n")
 		// Clean up the stored channel
 		getContexts.Delete(id)
+		return &ProtosocketError{errorMessage: "set operation timed out"}
 	}
 }
 
-func ProtosocketGet(cacheName string, key string) {
+type ProtosocketError struct {
+	errorMessage string
+}
+
+func (e *ProtosocketError) Error() string {
+	return e.errorMessage
+}
+
+func ProtosocketGet(cacheName string, key string) error {
 	// Generate FFI-compatible versions of the variables and set them up to be freed
 	cacheNameC := C.CString(cacheName)
 	defer C.free(unsafe.Pointer(cacheNameC))
@@ -200,14 +211,18 @@ func ProtosocketGet(cacheName string, key string) {
 	case response := <-responseCh:
 		if response.Hit {
 			fmt.Printf("[INFO] get hit | raw value: %v | string value: %s\n", response.Value, string(response.Value))
+			return nil
 		} else if response.Error != "" {
 			fmt.Printf("[ERROR] get error: %v\n", response.Error)
+			return &ProtosocketError{errorMessage: response.Error}
 		} else {
 			fmt.Printf("[INFO] get miss\n")
+			return nil
 		}
 	case <-time.After(30 * time.Second):
 		fmt.Printf("[ERROR] get timeout after 30 seconds\n")
 		// Clean up the stored channel
 		getContexts.Delete(id)
+		return &ProtosocketError{errorMessage: "get operation timed out"}
 	}
 }

@@ -13,16 +13,16 @@ import (
 	"github.com/google/uuid"
 )
 
-func main() {
+const (
+	cacheName             = "protosocket-loadgen"
+	itemDefaultTTLSeconds = 60
+)
+
+func initProtosocket() {
 	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
 	if err != nil {
 		panic(err)
 	}
-
-	const (
-		cacheName             = "my-test-cache"
-		itemDefaultTTLSeconds = 60
-	)
 
 	// Initializes Momento protosocket client
 	err = protosocket.NewProtosocketCacheClient(
@@ -33,6 +33,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+	initProtosocket()
 
 	key := uuid.NewString()
 	value := uuid.NewString()
@@ -42,6 +46,6 @@ func main() {
 	log.Printf("Getting key: %s\n", key)
 	protosocket.ProtosocketGet(cacheName, key)
 
-	// close the client
+	// Make sure to close the client
 	protosocket.CloseProtosocketCacheClient()
 }
