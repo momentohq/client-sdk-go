@@ -151,6 +151,16 @@ func ProtosocketSet(cacheName string, key string, value string) error {
 	id := atomic.AddUint64(&nextID, 1)
 	setContexts.Store(id, responseCh)
 
+	//Perform Get operation
+	if err := CProtosocketSet(cacheNameC, keyC, valueC, id); err != nil {
+		return err
+	}
+
+	// Wait for the callback to send the response
+	return handleSetResponse(responseCh, id)
+}
+
+func CProtosocketSet(cacheNameC *C.char, keyC *C.bytes, valueC *C.bytes, id uint64) error {
 	C.protosocket_cache_client_set(
 		cacheNameC,
 		keyC,
@@ -158,8 +168,10 @@ func ProtosocketSet(cacheName string, key string, value string) error {
 		C.ProtosocketCallback(C.setCallback),
 		unsafe.Pointer(uintptr(id)),
 	)
+	return nil
+}
 
-	// Wait for the callback to send the response
+func handleSetResponse(responseCh chan SetResponse, id uint64) error {
 	select {
 	case response := <-responseCh:
 		if response.Success {
@@ -199,14 +211,26 @@ func ProtosocketGet(cacheName string, key string) error {
 	id := atomic.AddUint64(&nextID, 1)
 	getContexts.Store(id, responseCh)
 
+	//Perform Get operation
+	if err := CProtosocketGet(cacheNameC, keyC, id); err != nil {
+		return err
+	}
+
+	// Wait for the callback to send the response
+	return handleGetResponse(responseCh, id)
+}
+
+func CProtosocketGet(cacheName *C.char, keyC *C.bytes, id uint64) error {
 	C.protosocket_cache_client_get(
 		cacheNameC,
 		keyC,
 		C.ProtosocketCallback(C.getCallback),
 		unsafe.Pointer(uintptr(id)),
 	)
+	return nil
+}
 
-	// Wait for the callback to send the response
+func handleGetResponse(responseCh chan GetResponse, id uint64) error {
 	select {
 	case response := <-responseCh:
 		if response.Hit {
