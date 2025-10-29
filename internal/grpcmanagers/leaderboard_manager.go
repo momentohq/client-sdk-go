@@ -25,6 +25,7 @@ func NewLeaderboardGrpcManager(request *models.LeaderboardGrpcManagerRequest) (*
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsCacheEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

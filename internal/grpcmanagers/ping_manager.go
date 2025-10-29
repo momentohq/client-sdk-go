@@ -25,6 +25,7 @@ func NewPingGrpcManager(request *models.PingGrpcManagerRequest) (*PingGrpcManage
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsCacheEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

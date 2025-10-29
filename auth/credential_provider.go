@@ -44,6 +44,7 @@ type tokenAndEndpoints struct {
 
 type CredentialProvider interface {
 	GetAuthToken() string
+	GetCacheTlsHostname() string
 	GetControlEndpoint() string
 	IsControlEndpointSecure() bool
 	GetCacheEndpoint() string
@@ -61,11 +62,18 @@ type defaultCredentialProvider struct {
 	cacheEndpoint   Endpoint
 	tokenEndpoint   Endpoint
 	storageEndpoint Endpoint
+	// TLS hostname we want to preserve even if we override the cache endpoint
+	cacheTlsHostname string
 }
 
 // GetAuthToken returns user's auth token.
 func (credentialProvider defaultCredentialProvider) GetAuthToken() string {
 	return credentialProvider.authToken
+}
+
+// GetCacheTlsHostname returns the TLS hostname for the cache endpoint.
+func (credentialProvider defaultCredentialProvider) GetCacheTlsHostname() string {
+	return credentialProvider.cacheTlsHostname
 }
 
 // GetControlEndpoint returns AllEndpoints.ControlEndpoint.Endpoint.
@@ -186,7 +194,8 @@ func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error)
 	}
 	port := 443
 	provider := defaultCredentialProvider{
-		authToken: tokenAndEndpoints.AuthToken,
+		authToken:        tokenAndEndpoints.AuthToken,
+		cacheTlsHostname: tokenAndEndpoints.Endpoints.CacheEndpoint.Endpoint,
 		controlEndpoint: Endpoint{
 			Endpoint: fmt.Sprintf("%s:%d", tokenAndEndpoints.Endpoints.ControlEndpoint.Endpoint, port),
 		},

@@ -46,6 +46,7 @@ func NewUnaryDataGrpcManager(request *models.DataGrpcManagerRequest) (*DataGrpcM
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsCacheEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 			grpc.WithChainStreamInterceptor(interceptor.AddStreamHeaderInterceptor(authToken)),
 		)...,
