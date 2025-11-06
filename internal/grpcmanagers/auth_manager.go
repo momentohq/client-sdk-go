@@ -25,6 +25,7 @@ func NewAuthGrpcManager(request *models.AuthGrpcManagerRequest) (*AuthGrpcManage
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsControlEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

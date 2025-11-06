@@ -26,6 +26,7 @@ func NewTokenGrpcManager(request *models.TokenGrpcManagerRequest) (*TokenGrpcMan
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsTokenEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

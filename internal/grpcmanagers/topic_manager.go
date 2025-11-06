@@ -29,6 +29,7 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsCacheEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainStreamInterceptor(headerInterceptors...),
 			grpc.WithChainUnaryInterceptor(interceptor.AddAuthHeadersInterceptor(authToken)),
 		)...,

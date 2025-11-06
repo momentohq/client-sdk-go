@@ -24,6 +24,7 @@ func NewStoreGrpcManager(request *models.StoreGrpcManagerRequest) (*StoreGrpcMan
 		AllDialOptions(
 			request.GrpcConfiguration,
 			request.CredentialProvider.IsStorageEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)

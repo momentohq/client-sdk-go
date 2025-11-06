@@ -29,6 +29,7 @@ func NewScsControlGrpcManager(request *models.ControlGrpcManagerRequest) (*ScsCo
 		AllDialOptions(
 			controlConfig,
 			request.CredentialProvider.IsControlEndpointSecure(),
+			request.CredentialProvider,
 			grpc.WithChainUnaryInterceptor(headerInterceptors...),
 		)...,
 	)
