@@ -72,6 +72,7 @@ var retryableRequestMethods = map[string]bool{
 	"/cache_client.pubsub.Pubsub/Subscribe": true,
 }
 
+// DefaultEligibilityStrategy is the default strategy for determining if a request is eligible for retry.
 type DefaultEligibilityStrategy struct{}
 
 func (s DefaultEligibilityStrategy) IsEligibleForRetry(props StrategyProps) bool {
@@ -83,4 +84,26 @@ func (s DefaultEligibilityStrategy) IsEligibleForRetry(props StrategyProps) bool
 		return false
 	}
 	return true
+}
+
+// TimeoutAwareEligibilityStrategy is an eligibility strategy that treats DeadlineExceeded as retryable.
+// It is used in conjunction with the TimeoutAwareFixedCountRetryStrategy.
+//
+// Typically, a DeadlineExceeded would indicate that the overall client timeout has been reached and no further
+// retries should be attempted. However, there are some cases where timeouts may occur due to the client being
+// overloaded or experiencing transient network issues. In these cases, it may be beneficial to retry the request
+// even if the overall timeout has been reached.
+type TimeoutAwareEligibilityStrategy struct{}
+
+var timeoutAwareRetryableStatusCodes = map[codes.Code]bool{
+	codes.Internal:         true,
+	codes.Unavailable:      true,
+	codes.DeadlineExceeded: true,
+	// this code is retryable in other SDKs, but because the client can generate this error code
+	// by cancelling the context, we do not retry it here.
+	codes.Canceled: false,
+}
+
+func (s TimeoutAwareEligibilityStrategy) IsEligibleForRetry(props StrategyProps) bool {
+	return timeoutAwareRetryableStatusCodes[props.GrpcStatusCode] && retryableRequestMethods[props.GrpcMethod]
 }

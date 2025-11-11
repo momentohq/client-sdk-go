@@ -7,6 +7,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/retry"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -41,6 +42,22 @@ func AddUnaryRetryInterceptor(s retry.Strategy, onRequest func(context.Context, 
 					defer cancel()
 					retryCtx = ctxWithRetryDeadline
 				}
+			}
+
+			// Apply the OverrideDeadlineRetryStrategy if applicable. This strategy does not exclude the first request.
+			if overrideDeadlineStrategy, ok := s.(retry.OverrideDeadlineRetryStrategy); ok {
+				newOverallDeadline := overrideDeadlineStrategy.CalculateNewOverallDeadline()
+
+				// Extract grpc metadata from the original context
+				md, _ := metadata.FromOutgoingContext(ctx)
+
+				// Create a new context with the new deadline. Make sure not to reuse retryCtx since it
+				// will not set a new deadline later than the one on the parent context.
+				ctxWithRetryDeadline, cancel := context.WithDeadline(context.Background(), newOverallDeadline)
+				defer cancel()
+
+				// Preserve the grpc metadata by attaching it to the new context
+				retryCtx = metadata.NewOutgoingContext(ctxWithRetryDeadline, md)
 			}
 
 			// Execute api call
