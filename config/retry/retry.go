@@ -32,3 +32,11 @@ type DeadlineAwareRetryStrategy interface {
 	// Returns nil if there is no adjustment to the deadline.
 	CalculateRetryDeadline(overallDeadline time.Time) time.Time
 }
+
+type OverrideDeadlineRetryStrategy interface {
+	Strategy
+
+	// CalculateNewOverallDeadline calculates the deadline for a retry attempt and uses it to override the overall deadline.
+	// Returns nil if there is no adjustment to the deadline.
+	CalculateNewOverallDeadline() time.Time
+}
