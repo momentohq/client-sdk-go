@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.39.0](https://github.com/momentohq/client-sdk-go/compare/v1.38.1...v1.39.0) (2025-11-13)
+
+
+### Features
+
+* add ability to override cache endpoint with tls ([#662](https://github.com/momentohq/client-sdk-go/issues/662)) ([7019821](https://github.com/momentohq/client-sdk-go/commit/7019821fb09d008605c8895d7d6dc88e7c4e9fab))
+* add config option for retrying on DeadlineExceeded errors ([#663](https://github.com/momentohq/client-sdk-go/issues/663)) ([5d969f3](https://github.com/momentohq/client-sdk-go/commit/5d969f33372dda8451df922f4508a7a3f634f9b6))
+* added auth-client examples ([#656](https://github.com/momentohq/client-sdk-go/issues/656)) ([995142d](https://github.com/momentohq/client-sdk-go/commit/995142d4772a7648a2ce783e3ba8e3ab5189c2bc))
+
+
+### Bug Fixes
+
+* added check for replace directives ([#659](https://github.com/momentohq/client-sdk-go/issues/659)) ([6066287](https://github.com/momentohq/client-sdk-go/commit/6066287139c1ac63bc27957835cb744cdafda190))
+
+
+### Miscellaneous
+
+* add golangci-lint to make lint ([#658](https://github.com/momentohq/client-sdk-go/issues/658)) ([1449949](https://github.com/momentohq/client-sdk-go/commit/144994979dc3b61b7854c2b982b182ae167f341b))
+
 ## [1.38.1](https://github.com/momentohq/client-sdk-go/compare/v1.38.0...v1.38.1) (2025-09-04)
 
 
