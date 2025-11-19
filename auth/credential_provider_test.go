@@ -157,7 +157,10 @@ var _ = Describe("auth credential-provider", func() {
 
 		It("returns a credential provider from an environment variable via constructor", func() {
 			os.Setenv(testEnvVar, testApiKey)
-			credentialProvider, err := auth.NewGlobalEnvMomentoTokenProvider(testEnvVar, testEndpoint)
+			credentialProvider, err := auth.NewGlobalEnvMomentoTokenProvider(auth.GlobalKeyFromEnvVarProps{
+				EnvVarName: testEnvVar,
+				Endpoint:   testEndpoint,
+			})
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
@@ -166,7 +169,10 @@ var _ = Describe("auth credential-provider", func() {
 		})
 
 		It("returns a credential provider from a string via constructor", func() {
-			credentialProvider, err := auth.NewGlobalStringMomentoTokenProvider(testApiKey, testEndpoint)
+			credentialProvider, err := auth.NewGlobalStringMomentoTokenProvider(auth.GlobalKeyFromStringProps{
+				ApiKey:  testApiKey,
+				Endpoint: testEndpoint,
+			})
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
@@ -175,7 +181,10 @@ var _ = Describe("auth credential-provider", func() {
 		})
 
 		It("returns a credential provider from an environment variable via method", func() {
-			credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(testEnvVar, testEndpoint)
+			credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(auth.GlobalKeyFromEnvVarProps{
+				EnvVarName: testEnvVar,
+				Endpoint:   testEndpoint,
+			})
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
@@ -184,7 +193,10 @@ var _ = Describe("auth credential-provider", func() {
 		})
 
 		It("returns a credential provider from a string via method", func() {
-			credentialProvider, err := auth.GlobalKeyFromString(testApiKey, testEndpoint)
+			credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
+				ApiKey:  testApiKey,
+				Endpoint: testEndpoint,
+			})
 			Expect(err).To(BeNil())
 			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
@@ -194,7 +206,10 @@ var _ = Describe("auth credential-provider", func() {
 
 		DescribeTable("string method errors when missing data",
 			func(apiKey string, endpoint string, expectedError string) {
-				credentialProvider, err := auth.GlobalKeyFromString(apiKey, endpoint)
+				credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
+					ApiKey:  apiKey,
+					Endpoint: endpoint,
+				})
 				Expect(credentialProvider).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				var momentoErr momentoerrors.MomentoSvcErr
@@ -211,7 +226,10 @@ var _ = Describe("auth credential-provider", func() {
 
 		DescribeTable("env var method errors when missing data",
 			func(envVarName string, endpoint string, expectedError string) {
-				credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(envVarName, endpoint)
+				credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(auth.GlobalKeyFromEnvVarProps{
+					EnvVarName: envVarName,
+					Endpoint:   endpoint,
+				})
 				Expect(credentialProvider).To(BeNil())
 				Expect(err).To(Not(BeNil()))
 				var momentoErr momentoerrors.MomentoSvcErr

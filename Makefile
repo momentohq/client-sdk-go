@@ -167,6 +167,10 @@ test-middleware: install-ginkgo
 test-http-service:
 	@echo "No tests for http service."
 
+test-credential-provider:
+	@echo "Running unit tests..."
+	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --focus "credential-provider" ${TEST_DIRS}
+
 vendor:
 	@echo "Vendoring..."
 	go mod vendor

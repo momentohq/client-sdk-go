@@ -316,38 +316,51 @@ func NewMomentoLocalProvider(config *MomentoLocalConfig) (CredentialProvider, er
 	return provider, nil
 }
 
+type GlobalKeyFromStringProps struct {
+	ApiKey string
+	Endpoint  string
+}
+
+type GlobalKeyFromEnvVarProps struct {
+	EnvVarName string
+	Endpoint   string
+}
+
 // NewGlobalEnvMomentoTokenProvider constructor for a CredentialProvider using an endpoint and an environment
 // variable to store a global api key.
-func NewGlobalEnvMomentoTokenProvider(envVariableName string, endpoint string) (CredentialProvider, error) {
-	if envVariableName == "" {
+func NewGlobalEnvMomentoTokenProvider(props GlobalKeyFromEnvVarProps) (CredentialProvider, error) {
+	if props.EnvVarName == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Environment variable name is empty",
 			errors.New("invalid argument"),
 		)
 	}
-	var authToken = os.Getenv(envVariableName)
+	var authToken = os.Getenv(props.EnvVarName)
 	if authToken == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			fmt.Sprintf("Missing required environment variable %s", envVariableName),
+			fmt.Sprintf("Missing required environment variable %s", props.EnvVarName),
 			errors.New("invalid argument"),
 		)
 	}
-	return NewGlobalStringMomentoTokenProvider(authToken, endpoint)
+	return NewGlobalStringMomentoTokenProvider(GlobalKeyFromStringProps{
+		ApiKey:  authToken,
+		Endpoint: props.Endpoint,
+	})
 }
 
 // NewGlobalStringMomentoTokenProvider constructor for a CredentialProvider using an endpoint and a string
 // containing a global api key.
-func NewGlobalStringMomentoTokenProvider(authToken string, endpoint string) (CredentialProvider, error) {
-	if authToken == "" {
+func NewGlobalStringMomentoTokenProvider(props GlobalKeyFromStringProps) (CredentialProvider, error) {
+	if props.ApiKey == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Auth token is an empty string",
 			errors.New("invalid argument"),
 		)
 	}
-	if endpoint == "" {
+	if props.Endpoint == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Endpoint is an empty string",
@@ -356,19 +369,19 @@ func NewGlobalStringMomentoTokenProvider(authToken string, endpoint string) (Cre
 	}
 	port := 443
 	provider := defaultCredentialProvider{
-		authToken:        authToken,
-		cacheTlsHostname: endpoint,
+		authToken:        props.ApiKey,
+		cacheTlsHostname: props.Endpoint,
 		controlEndpoint: Endpoint{
-			Endpoint: fmt.Sprintf("control.%s:%d", endpoint, port),
+			Endpoint: fmt.Sprintf("control.%s:%d", props.Endpoint, port),
 		},
 		cacheEndpoint: Endpoint{
-			Endpoint: fmt.Sprintf("cache.%s:%d", endpoint, port),
+			Endpoint: fmt.Sprintf("cache.%s:%d", props.Endpoint, port),
 		},
 		tokenEndpoint: Endpoint{
-			Endpoint: fmt.Sprintf("token.%s:%d", endpoint, port),
+			Endpoint: fmt.Sprintf("token.%s:%d", props.Endpoint, port),
 		},
 		storageEndpoint: Endpoint{
-			Endpoint: fmt.Sprintf("storage.%s:%d", endpoint, port),
+			Endpoint: fmt.Sprintf("storage.%s:%d", props.Endpoint, port),
 		},
 	}
 	return provider, nil
@@ -376,8 +389,8 @@ func NewGlobalStringMomentoTokenProvider(authToken string, endpoint string) (Cre
 
 // GlobalKeyFromEnvironmentVariable returns a new CredentialProvider using a global api key stored
 // in the provided environment variable, as well as an endpoint.
-func GlobalKeyFromEnvironmentVariable(envVar string, endpoint string) (CredentialProvider, error) {
-	credentialProvider, err := NewGlobalEnvMomentoTokenProvider(envVar, endpoint)
+func GlobalKeyFromEnvironmentVariable(props GlobalKeyFromEnvVarProps) (CredentialProvider, error) {
+	credentialProvider, err := NewGlobalEnvMomentoTokenProvider(props)
 	if err != nil {
 		return nil, err
 	}
@@ -385,8 +398,8 @@ func GlobalKeyFromEnvironmentVariable(envVar string, endpoint string) (Credentia
 }
 
 // GlobalKeyFromString returns a new CredentialProvider with the provided global api key and endpoint.
-func GlobalKeyFromString(authToken string, endpoint string) (CredentialProvider, error) {
-	credentialProvider, err := NewGlobalStringMomentoTokenProvider(authToken, endpoint)
+func GlobalKeyFromString(props GlobalKeyFromStringProps) (CredentialProvider, error) {
+	credentialProvider, err := NewGlobalStringMomentoTokenProvider(props)
 	if err != nil {
 		return nil, err
 	}
