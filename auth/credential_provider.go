@@ -152,6 +152,24 @@ func FromString(authToken string) (CredentialProvider, error) {
 	return credentialProvider, nil
 }
 
+// FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
+func GlobalKeyFromEnvironmentVariable(envVar string, endpoint string) (CredentialProvider, error) {
+	credentialProvider, err := NewGlobalEnvMomentoTokenProvider(envVar, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	return credentialProvider, nil
+}
+
+// FromString returns a new CredentialProvider with the provided user auth token.
+func GlobalKeyFromString(authToken string, endpoint string) (CredentialProvider, error) {
+	credentialProvider, err := NewGlobalStringMomentoTokenProvider(authToken, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	return credentialProvider, nil
+}
+
 // WithEndpoints overrides the cache and control endpoint URIs with those provided by the supplied Endpoints struct
 // and returns a CredentialProvider with the new endpoint values. An endpoint supplied as an empty string is ignored
 // and the existing value for that endpoint is retained.
@@ -169,6 +187,60 @@ func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints AllE
 		credentialProvider.storageEndpoint = endpoints.StorageEndpoint
 	}
 	return credentialProvider, nil
+}
+
+func NewGlobalEnvMomentoTokenProvider(envVariableName string, endpoint string) (CredentialProvider, error) {
+	if envVariableName == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Environment variable name is empty",
+			errors.New("invalid argument"),
+		)
+	}
+	var authToken = os.Getenv(envVariableName)
+	if authToken == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			fmt.Sprintf("Missing required environment variable %s", envVariableName),
+			errors.New("invalid argument"),
+		)
+	}
+	return NewGlobalStringMomentoTokenProvider(authToken, endpoint)
+}
+
+func NewGlobalStringMomentoTokenProvider(authToken string, endpoint string) (CredentialProvider, error) {
+	if authToken == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Auth token is an empty string",
+			errors.New("invalid argument"),
+		)
+	}
+	if endpoint == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Endpoint is an empty string",
+			errors.New("invalid argument"),
+		)
+	}
+	port := 443
+	provider := defaultCredentialProvider{
+		authToken:        authToken,
+		cacheTlsHostname: endpoint,
+		controlEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("control.%s:%d", endpoint, port),
+		},
+		cacheEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("cache.%s:%d", endpoint, port),
+		},
+		tokenEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("token.%s:%d", endpoint, port),
+		},
+		storageEndpoint: Endpoint{
+			Endpoint: fmt.Sprintf("storage.%s:%d", endpoint, port),
+		},
+	}
+	return provider, nil
 }
 
 // NewEnvMomentoTokenProvider constructor for a CredentialProvider using an environment variable to store an

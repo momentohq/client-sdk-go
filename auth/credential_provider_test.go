@@ -150,4 +150,82 @@ var _ = Describe("auth credential-provider", func() {
 		})
 	})
 
+	Context("Global api keys", func() {
+		testEnvVar := "MOMENTO_TEST_GLOBAL_API_KEY"
+		testApiKey := "testToken"
+		testEndpoint := "testEndpoint"
+
+		It("returns a credential provider from an environment variable via constructor", func() {
+			os.Setenv(testEnvVar, testApiKey)
+			credentialProvider, err := auth.NewGlobalEnvMomentoTokenProvider(testEnvVar, testEndpoint)
+			Expect(err).To(BeNil())
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
+		})
+
+		It("returns a credential provider from a string via constructor", func() {
+			credentialProvider, err := auth.NewGlobalStringMomentoTokenProvider(testApiKey, testEndpoint)
+			Expect(err).To(BeNil())
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
+		})
+
+		It("returns a credential provider from an environment variable via method", func() {
+			credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(testEnvVar, testEndpoint)
+			Expect(err).To(BeNil())
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
+		})
+
+		It("returns a credential provider from a string via method", func() {
+			credentialProvider, err := auth.GlobalKeyFromString(testApiKey, testEndpoint)
+			Expect(err).To(BeNil())
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
+			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
+		})
+
+		DescribeTable("string method errors when missing data",
+			func(apiKey string, endpoint string, expectedError string) {
+				credentialProvider, err := auth.GlobalKeyFromString(apiKey, endpoint)
+				Expect(credentialProvider).To(BeNil())
+				Expect(err).To(Not(BeNil()))
+				var momentoErr momentoerrors.MomentoSvcErr
+				if errors.As(err, &momentoErr) {
+					Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+					Expect(momentoErr.Error()).To(ContainSubstring(expectedError))
+				} else {
+					Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+				}
+			},
+			Entry("empty key", "", testEndpoint, "Auth token is an empty string"),
+			Entry("empty endpoint", testApiKey, "", "Endpoint is an empty string"),
+		)
+
+		DescribeTable("env var method errors when missing data",
+			func(envVarName string, endpoint string, expectedError string) {
+				credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(envVarName, endpoint)
+				Expect(credentialProvider).To(BeNil())
+				Expect(err).To(Not(BeNil()))
+				var momentoErr momentoerrors.MomentoSvcErr
+				if errors.As(err, &momentoErr) {
+					Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+					Expect(momentoErr.Error()).To(ContainSubstring(expectedError))
+				} else {
+					Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+				}
+			},
+			Entry("empty env var name", "", testEndpoint, "Environment variable name is empty"),
+			Entry("env var not set", "NON_EXISTENT_ENV_VAR", testEndpoint, "Missing required environment variable NON_EXISTENT_ENV_VAR"),
+			Entry("empty endpoint", testEnvVar, "", "Endpoint is an empty string"),
+		)
+	})
+
 })
