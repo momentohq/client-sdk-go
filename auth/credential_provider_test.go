@@ -170,7 +170,7 @@ var _ = Describe("auth credential-provider", func() {
 
 		It("returns a credential provider from a string via constructor", func() {
 			credentialProvider, err := auth.NewGlobalStringMomentoTokenProvider(auth.GlobalKeyFromStringProps{
-				ApiKey:  testApiKey,
+				ApiKey:   testApiKey,
 				Endpoint: testEndpoint,
 			})
 			Expect(err).To(BeNil())
@@ -194,7 +194,7 @@ var _ = Describe("auth credential-provider", func() {
 
 		It("returns a credential provider from a string via method", func() {
 			credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
-				ApiKey:  testApiKey,
+				ApiKey:   testApiKey,
 				Endpoint: testEndpoint,
 			})
 			Expect(err).To(BeNil())
@@ -207,7 +207,7 @@ var _ = Describe("auth credential-provider", func() {
 		DescribeTable("string method errors when missing data",
 			func(apiKey string, endpoint string, expectedError string) {
 				credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
-					ApiKey:  apiKey,
+					ApiKey:   apiKey,
 					Endpoint: endpoint,
 				})
 				Expect(credentialProvider).To(BeNil())

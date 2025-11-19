@@ -317,8 +317,8 @@ func NewMomentoLocalProvider(config *MomentoLocalConfig) (CredentialProvider, er
 }
 
 type GlobalKeyFromStringProps struct {
-	ApiKey string
-	Endpoint  string
+	ApiKey   string
+	Endpoint string
 }
 
 type GlobalKeyFromEnvVarProps struct {
@@ -345,7 +345,7 @@ func NewGlobalEnvMomentoTokenProvider(props GlobalKeyFromEnvVarProps) (Credentia
 		)
 	}
 	return NewGlobalStringMomentoTokenProvider(GlobalKeyFromStringProps{
-		ApiKey:  authToken,
+		ApiKey:   authToken,
 		Endpoint: props.Endpoint,
 	})
 }
