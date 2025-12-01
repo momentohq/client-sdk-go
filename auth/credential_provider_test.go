@@ -16,6 +16,10 @@ const (
 	testV1ApiKey          = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2NzgzMDU4MTIsImV4cCI6NDg2NTUxNTQxMiwiYXVkIjoiIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSJ9.8Iy8q84Lsr-D3YCo_HP4d-xjHdT8UCIuvAYcxhFMyz8"
 	testV1MissingEndpoint = "eyJhcGlfa2V5IjogImV5SmxibVJ3YjJsdWRDSTZJbU5sYkd3dE5DMTFjeTEzWlhOMExUSXRNUzV3Y205a0xtRXViVzl0Wlc1MGIyaHhMbU52YlNJc0ltRndhVjlyWlhraU9pSmxlVXBvWWtkamFVOXBTa2xWZWtreFRtbEtPUzVsZVVwNlpGZEphVTlwU25kYVdGSnNURzFrYUdSWVVuQmFXRXBCV2pJeGFHRlhkM1ZaTWpsMFNXbDNhV1J0Vm5sSmFtOTRabEV1VW5OMk9GazVkRE5KVEMwd1RHRjZiQzE0ZDNaSVZESmZZalJRZEhGTlVVMDVRV3hhVlVsVGFrbENieUo5In0="
 	testV1MissingApiKey   = "eyJlbmRwb2ludCI6ICJhLmIuY29tIn0="
+	testEnvVar            = "MOMENTO_TEST_GLOBAL_API_KEY"
+	testGlobalApiKey      = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0IjoiZyJ9.LloWc3qLRkBm_djlOjXE8wNSENqOay17xHLJR5XIr0cwkyhhh8w_oBaiQDktBkOvh-wKLQGUKavSQuOwXEb2_g"
+	testEndpoint          = "testEndpoint"
+	testPreV1ApiKey       = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyQHRlc3QuY29tIiwiY3AiOiJjb250cm9sLnRlc3QuY29tIiwiYyI6ImNhY2hlLnRlc3QuY29tIn0.c0Z8Ipetl6raCNHSHs7Mpq3qtWkFy4aLvGhIFR4CoR0OnBdGbdjN-4E58bAabrSGhRA8-B2PHzgDd4JF4clAzg"
 )
 
 var _ = Describe("auth credential-provider", func() {
@@ -151,18 +155,14 @@ var _ = Describe("auth credential-provider", func() {
 	})
 
 	Context("Global api keys", func() {
-		testEnvVar := "MOMENTO_TEST_GLOBAL_API_KEY"
-		testApiKey := "testToken"
-		testEndpoint := "testEndpoint"
-
 		It("returns a credential provider from an environment variable via constructor", func() {
-			os.Setenv(testEnvVar, testApiKey)
+			os.Setenv(testEnvVar, testGlobalApiKey)
 			credentialProvider, err := auth.NewGlobalEnvMomentoTokenProvider(auth.GlobalKeyFromEnvVarProps{
 				EnvVarName: testEnvVar,
 				Endpoint:   testEndpoint,
 			})
 			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testGlobalApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
@@ -170,11 +170,11 @@ var _ = Describe("auth credential-provider", func() {
 
 		It("returns a credential provider from a string via constructor", func() {
 			credentialProvider, err := auth.NewGlobalStringMomentoTokenProvider(auth.GlobalKeyFromStringProps{
-				ApiKey:   testApiKey,
+				ApiKey:   testGlobalApiKey,
 				Endpoint: testEndpoint,
 			})
 			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testGlobalApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
@@ -186,7 +186,7 @@ var _ = Describe("auth credential-provider", func() {
 				Endpoint:   testEndpoint,
 			})
 			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testGlobalApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
@@ -194,11 +194,11 @@ var _ = Describe("auth credential-provider", func() {
 
 		It("returns a credential provider from a string via method", func() {
 			credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
-				ApiKey:   testApiKey,
+				ApiKey:   testGlobalApiKey,
 				Endpoint: testEndpoint,
 			})
 			Expect(err).To(BeNil())
-			Expect(credentialProvider.GetAuthToken()).To(Equal(testApiKey))
+			Expect(credentialProvider.GetAuthToken()).To(Equal(testGlobalApiKey))
 			Expect(credentialProvider.GetCacheEndpoint()).To(Equal(fmt.Sprintf("cache.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetControlEndpoint()).To(Equal(fmt.Sprintf("control.%s:443", testEndpoint)))
 			Expect(credentialProvider.GetTokenEndpoint()).To(Equal(fmt.Sprintf("token.%s:443", testEndpoint)))
@@ -221,7 +221,7 @@ var _ = Describe("auth credential-provider", func() {
 				}
 			},
 			Entry("empty key", "", testEndpoint, "Auth token is an empty string"),
-			Entry("empty endpoint", testApiKey, "", "Endpoint is an empty string"),
+			Entry("empty endpoint", testGlobalApiKey, "", "Endpoint is an empty string"),
 		)
 
 		DescribeTable("env var method errors when missing data",
@@ -244,6 +244,92 @@ var _ = Describe("auth credential-provider", func() {
 			Entry("env var not set", "NON_EXISTENT_ENV_VAR", testEndpoint, "Missing required environment variable NON_EXISTENT_ENV_VAR"),
 			Entry("empty endpoint", testEnvVar, "", "Endpoint is an empty string"),
 		)
+
+		It("errors when global api key is provided to FromString", func() {
+			credentialProvider, err := auth.FromString(testGlobalApiKey)
+			Expect(credentialProvider).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			var momentoErr momentoerrors.MomentoSvcErr
+			if errors.As(err, &momentoErr) {
+				Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			} else {
+				Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+			}
+		})
+
+		It("errors when global api key is provided to FromEnvironmentVariable", func() {
+			os.Setenv(testEnvVar, testGlobalApiKey)
+			credentialProvider, err := auth.FromEnvironmentVariable(testEnvVar)
+			Expect(credentialProvider).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			var momentoErr momentoerrors.MomentoSvcErr
+			if errors.As(err, &momentoErr) {
+				Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			} else {
+				Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+			}
+		})
+
+		It("errors when v1 api key is provided to GlobalKeyFromString", func() {
+			credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
+				ApiKey:   testV1ApiKey,
+				Endpoint: testEndpoint,
+			})
+			Expect(credentialProvider).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			var momentoErr momentoerrors.MomentoSvcErr
+			if errors.As(err, &momentoErr) {
+				Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			} else {
+				Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+			}
+		})
+
+		It("errors when v1 api key is provided to GlobalKeyFromEnvironmentVariable", func() {
+			credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(auth.GlobalKeyFromEnvVarProps{
+				EnvVarName: envVar,
+				Endpoint:   testEndpoint,
+			})
+			Expect(credentialProvider).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			var momentoErr momentoerrors.MomentoSvcErr
+			if errors.As(err, &momentoErr) {
+				Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			} else {
+				Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+			}
+		})
+
+		It("errors when pre-v1 api key is provided to GlobalKeyFromString", func() {
+			credentialProvider, err := auth.GlobalKeyFromString(auth.GlobalKeyFromStringProps{
+				ApiKey:   testPreV1ApiKey,
+				Endpoint: testEndpoint,
+			})
+			Expect(credentialProvider).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			var momentoErr momentoerrors.MomentoSvcErr
+			if errors.As(err, &momentoErr) {
+				Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			} else {
+				Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+			}
+		})
+
+		It("errors when pre-v1 api key is provided to GlobalKeyFromEnvironmentVariable", func() {
+			os.Setenv(testEnvVar, testPreV1ApiKey)
+			credentialProvider, err := auth.GlobalKeyFromEnvironmentVariable(auth.GlobalKeyFromEnvVarProps{
+				EnvVarName: testEnvVar,
+				Endpoint:   testEndpoint,
+			})
+			Expect(credentialProvider).To(BeNil())
+			Expect(err).To(Not(BeNil()))
+			var momentoErr momentoerrors.MomentoSvcErr
+			if errors.As(err, &momentoErr) {
+				Expect(momentoErr.Code()).To(Equal(momentoerrors.InvalidArgumentError))
+			} else {
+				Fail(fmt.Sprintf("unknown error: %s", err.Error()))
+			}
+		})
 	})
 
 })

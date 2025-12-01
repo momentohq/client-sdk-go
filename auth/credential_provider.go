@@ -259,6 +259,14 @@ func processJwtToken(authToken string) (*tokenAndEndpoints, momentoerrors.Moment
 		)
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if reflect.ValueOf(claims["t"]).String() == "g" {
+			return nil, momentoerrors.NewMomentoSvcErr(
+				momentoerrors.InvalidArgumentError,
+				"Received a global API key. Are you using the correct key? Or did you mean to use `GlobalKeyFromString()` or `GlobalKeyFromEnvironmentVariable()` instead?",
+				nil,
+			)
+		}
+
 		controlEndpoint := reflect.ValueOf(claims["cp"]).String()
 		cacheEndpoint := reflect.ValueOf(claims["c"]).String()
 		return &tokenAndEndpoints{
@@ -333,7 +341,7 @@ func NewGlobalEnvMomentoTokenProvider(props GlobalKeyFromEnvVarProps) (Credentia
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Environment variable name is empty",
-			errors.New("invalid argument"),
+			nil,
 		)
 	}
 	var authToken = os.Getenv(props.EnvVarName)
@@ -341,7 +349,23 @@ func NewGlobalEnvMomentoTokenProvider(props GlobalKeyFromEnvVarProps) (Credentia
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			fmt.Sprintf("Missing required environment variable %s", props.EnvVarName),
-			errors.New("invalid argument"),
+			nil,
+		)
+	}
+	if isBase64Encoded(authToken) {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Did not expect global API key to be base64 encoded. Are you using the correct key? Or did you mean to use `FromEnvironmentVariable()` instead?",
+			nil,
+		)
+	}
+	if isGlobal, err := isGlobalApiKey(authToken); err != nil {
+		return nil, err
+	} else if !isGlobal {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Provided API key is not a global API key. Are you using the correct key? Or did you mean to use `FromEnvironmentVariable()` instead?",
+			nil,
 		)
 	}
 	return NewGlobalStringMomentoTokenProvider(GlobalKeyFromStringProps{
@@ -353,18 +377,34 @@ func NewGlobalEnvMomentoTokenProvider(props GlobalKeyFromEnvVarProps) (Credentia
 // NewGlobalStringMomentoTokenProvider constructor for a CredentialProvider using an endpoint and a string
 // containing a global api key.
 func NewGlobalStringMomentoTokenProvider(props GlobalKeyFromStringProps) (CredentialProvider, error) {
-	if props.ApiKey == "" {
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"Auth token is an empty string",
-			errors.New("invalid argument"),
-		)
-	}
 	if props.Endpoint == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
 			"Endpoint is an empty string",
-			errors.New("invalid argument"),
+			nil,
+		)
+	}
+	if props.ApiKey == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Auth token is an empty string",
+			nil,
+		)
+	}
+	if isBase64Encoded(props.ApiKey) {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Did not expect global API key to be base64 encoded. Are you using the correct key? Or did you mean to use `FromString()` instead?",
+			nil,
+		)
+	}
+	if isGlobal, err := isGlobalApiKey(props.ApiKey); err != nil {
+		return nil, err
+	} else if !isGlobal {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Provided API key is not a global API key. Are you using the correct key? Or did you mean to use `FromString()` instead?",
+			nil,
 		)
 	}
 	port := 443
@@ -404,4 +444,25 @@ func GlobalKeyFromString(props GlobalKeyFromStringProps) (CredentialProvider, er
 		return nil, err
 	}
 	return credentialProvider, nil
+}
+
+func isBase64Encoded(authToken string) bool {
+	_, err := b64.StdEncoding.DecodeString(authToken)
+	return err == nil
+}
+
+func isGlobalApiKey(authToken string) (bool, error) {
+	token, _, err := new(jwt.Parser).ParseUnverified(authToken, jwt.MapClaims{})
+	if err != nil {
+		return false, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Could not parse auth token.",
+			err,
+		)
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		keyType := reflect.ValueOf(claims["t"]).String()
+		return keyType == "g", nil
+	}
+	return false, nil
 }
