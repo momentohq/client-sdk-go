@@ -134,6 +134,8 @@ func (credentialProvider defaultCredentialProvider) String() string {
 	)
 }
 
+// Deprecated: use NewEnvVarV2TokenProvider or FromEnvVarV2 instead
+//
 // FromEnvironmentVariable returns a new CredentialProvider using an auth token stored in the provided environment variable.
 func FromEnvironmentVariable(envVar string) (CredentialProvider, error) {
 	credentialProvider, err := NewEnvMomentoTokenProvider(envVar)
@@ -143,6 +145,8 @@ func FromEnvironmentVariable(envVar string) (CredentialProvider, error) {
 	return credentialProvider, nil
 }
 
+// Deprecated: use NewApiKKeyV2TokenProvider or FromApiKeyV2 instead
+//
 // FromString returns a new CredentialProvider with the provided user auth token.
 func FromString(authToken string) (CredentialProvider, error) {
 	credentialProvider, err := NewStringMomentoTokenProvider(authToken)
@@ -171,6 +175,8 @@ func (credentialProvider defaultCredentialProvider) WithEndpoints(endpoints AllE
 	return credentialProvider, nil
 }
 
+// Deprecated: use NewEnvVarV2TokenProvider or FromEnvVarV2 instead
+//
 // NewEnvMomentoTokenProvider constructor for a CredentialProvider using an environment variable to store an
 // authentication token
 func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, error) {
@@ -185,9 +191,19 @@ func NewEnvMomentoTokenProvider(envVariableName string) (CredentialProvider, err
 	return NewStringMomentoTokenProvider(authToken)
 }
 
+// Deprecated: use NewApiKeyV2TokenProvider or FromApiKeyV2 instead
+//
 // NewStringMomentoTokenProvider constructor for a CredentialProvider using a string containing an
 // authentication token
 func NewStringMomentoTokenProvider(authToken string) (CredentialProvider, error) {
+	if isV2, _ := isV2ApiKey(authToken); isV2 {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			"Received a v2 API key. Are you using the correct key? Or did you mean to use `FromApiKeyV2()` or `FromEnvVarV2()` instead?",
+			nil,
+		)
+	}
+
 	tokenAndEndpoints, err := decodeAuthToken(authToken)
 	if err != nil {
 		return nil, err
@@ -262,7 +278,7 @@ func processJwtToken(authToken string) (*tokenAndEndpoints, momentoerrors.Moment
 		if reflect.ValueOf(claims["t"]).String() == "g" {
 			return nil, momentoerrors.NewMomentoSvcErr(
 				momentoerrors.InvalidArgumentError,
-				"Received a global API key. Are you using the correct key? Or did you mean to use `GlobalKeyFromString()` or `GlobalKeyFromEnvironmentVariable()` instead?",
+				"Received a v2 API key. Are you using the correct key? Or did you mean to use `FromApiKeyV2()` or `FromEnvVarV2()` instead?",
 				nil,
 			)
 		}
@@ -324,59 +340,69 @@ func NewMomentoLocalProvider(config *MomentoLocalConfig) (CredentialProvider, er
 	return provider, nil
 }
 
-type GlobalKeyFromStringProps struct {
+type FromApiKeyV2Props struct {
 	ApiKey   string
 	Endpoint string
 }
 
-type GlobalKeyFromEnvVarProps struct {
-	EnvVarName string
-	Endpoint   string
+type FromEnvVarV2Props struct {
+	ApiKeyEnvVar   string
+	EndpointEnvVar string
 }
 
-// NewGlobalEnvMomentoTokenProvider constructor for a CredentialProvider using an endpoint and an environment
-// variable to store a global api key.
-func NewGlobalEnvMomentoTokenProvider(props GlobalKeyFromEnvVarProps) (CredentialProvider, error) {
-	if props.EnvVarName == "" {
+// NewEnvVarV2TokenProvider constructor for a CredentialProvider using an endpoint
+// and v2 api key stored in environment variables.
+func NewEnvVarV2TokenProvider(props FromEnvVarV2Props) (CredentialProvider, error) {
+	if props.ApiKeyEnvVar == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"Environment variable name is empty",
+			"API key environment variable name is empty",
 			nil,
 		)
 	}
-	var authToken = os.Getenv(props.EnvVarName)
-	if authToken == "" {
+	var apiKey = os.Getenv(props.ApiKeyEnvVar)
+	if apiKey == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			fmt.Sprintf("Missing required environment variable %s", props.EnvVarName),
+			fmt.Sprintf("Missing required environment variable %s", props.ApiKeyEnvVar),
 			nil,
 		)
 	}
-	if isBase64Encoded(authToken) {
+
+	if props.EndpointEnvVar == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"Did not expect global API key to be base64 encoded. Are you using the correct key? Or did you mean to use `FromEnvironmentVariable()` instead?",
+			"Endpoint environment variable name is empty",
 			nil,
 		)
 	}
-	if isGlobal, err := isGlobalApiKey(authToken); err != nil {
+	var endpoint = os.Getenv(props.EndpointEnvVar)
+	if endpoint == "" {
+		return nil, momentoerrors.NewMomentoSvcErr(
+			momentoerrors.InvalidArgumentError,
+			fmt.Sprintf("Missing required environment variable %s", props.EndpointEnvVar),
+			nil,
+		)
+	}
+
+	if isV2, err := isV2ApiKey(apiKey); err != nil {
 		return nil, err
-	} else if !isGlobal {
+	} else if !isV2 {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"Provided API key is not a global API key. Are you using the correct key? Or did you mean to use `FromEnvironmentVariable()` instead?",
+			"Received an invalid v2 API key. Are you using the correct key? Or did you mean to use `FromEnvironmentVariable()` with a legacy key instead?",
 			nil,
 		)
 	}
-	return NewGlobalStringMomentoTokenProvider(GlobalKeyFromStringProps{
-		ApiKey:   authToken,
-		Endpoint: props.Endpoint,
+	return NewApiKeyV2TokenProvider(FromApiKeyV2Props{
+		ApiKey:   apiKey,
+		Endpoint: endpoint,
 	})
 }
 
-// NewGlobalStringMomentoTokenProvider constructor for a CredentialProvider using an endpoint and a string
-// containing a global api key.
-func NewGlobalStringMomentoTokenProvider(props GlobalKeyFromStringProps) (CredentialProvider, error) {
+// NewApiKeyV2TokenProvider constructor for a CredentialProvider using a v2
+// api key and Momento service endpoint.
+func NewApiKeyV2TokenProvider(props FromApiKeyV2Props) (CredentialProvider, error) {
 	if props.Endpoint == "" {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
@@ -391,19 +417,12 @@ func NewGlobalStringMomentoTokenProvider(props GlobalKeyFromStringProps) (Creden
 			nil,
 		)
 	}
-	if isBase64Encoded(props.ApiKey) {
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"Did not expect global API key to be base64 encoded. Are you using the correct key? Or did you mean to use `FromString()` instead?",
-			nil,
-		)
-	}
-	if isGlobal, err := isGlobalApiKey(props.ApiKey); err != nil {
+	if isV2, err := isV2ApiKey(props.ApiKey); err != nil {
 		return nil, err
-	} else if !isGlobal {
+	} else if !isV2 {
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
-			"Provided API key is not a global API key. Are you using the correct key? Or did you mean to use `FromString()` instead?",
+			"Received an invalid v2 API key. Are you using the correct key? Or did you mean to use `FromString()` with a legacy key instead?",
 			nil,
 		)
 	}
@@ -427,32 +446,44 @@ func NewGlobalStringMomentoTokenProvider(props GlobalKeyFromStringProps) (Creden
 	return provider, nil
 }
 
-// GlobalKeyFromEnvironmentVariable returns a new CredentialProvider using a global api key stored
-// in the provided environment variable, as well as an endpoint.
-func GlobalKeyFromEnvironmentVariable(props GlobalKeyFromEnvVarProps) (CredentialProvider, error) {
-	credentialProvider, err := NewGlobalEnvMomentoTokenProvider(props)
+// FromEnvVarV2 returns a new CredentialProvider using a v2 api key and Momento
+// service endpoint stored in environment variables.
+func FromEnvVarV2(props FromEnvVarV2Props) (CredentialProvider, error) {
+	credentialProvider, err := NewEnvVarV2TokenProvider(props)
 	if err != nil {
 		return nil, err
 	}
 	return credentialProvider, nil
 }
 
-// GlobalKeyFromString returns a new CredentialProvider with the provided global api key and endpoint.
-func GlobalKeyFromString(props GlobalKeyFromStringProps) (CredentialProvider, error) {
-	credentialProvider, err := NewGlobalStringMomentoTokenProvider(props)
+// FromApiKeyV2 returns a new CredentialProvider with the provided v2 api key
+// and Momento service endpoint.
+func FromApiKeyV2(props FromApiKeyV2Props) (CredentialProvider, error) {
+	credentialProvider, err := NewApiKeyV2TokenProvider(props)
 	if err != nil {
 		return nil, err
 	}
 	return credentialProvider, nil
 }
 
-func isBase64Encoded(authToken string) bool {
-	_, err := b64.StdEncoding.DecodeString(authToken)
+func FromDisposableToken(disposableToken string) (CredentialProvider, error) {
+	credentialProvider, err := NewStringMomentoTokenProvider(disposableToken)
+	if err != nil {
+		return nil, err
+	}
+	return credentialProvider, nil
+}
+
+func isBase64Encoded(s string) bool {
+	_, err := b64.StdEncoding.DecodeString(s)
 	return err == nil
 }
 
-func isGlobalApiKey(authToken string) (bool, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(authToken, jwt.MapClaims{})
+func isV2ApiKey(apiKey string) (bool, error) {
+	if isBase64Encoded(apiKey) {
+		return false, nil
+	}
+	token, _, err := new(jwt.Parser).ParseUnverified(apiKey, jwt.MapClaims{})
 	if err != nil {
 		return false, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InvalidArgumentError,
