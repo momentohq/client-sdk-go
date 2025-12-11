@@ -429,7 +429,7 @@ func NewApiKeyV2TokenProvider(props FromApiKeyV2Props) (CredentialProvider, erro
 	port := 443
 	provider := defaultCredentialProvider{
 		authToken:        props.ApiKey,
-		cacheTlsHostname: props.Endpoint,
+		cacheTlsHostname: fmt.Sprintf("cache.%s", props.Endpoint),
 		controlEndpoint: Endpoint{
 			Endpoint: fmt.Sprintf("control.%s:%d", props.Endpoint, port),
 		},
