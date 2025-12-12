@@ -448,7 +448,8 @@ func NewApiKeyV2TokenProvider(props ApiKeyV2Props) (CredentialProvider, error) {
 }
 
 // FromEnvironmentVariablesV2 returns a new CredentialProvider using a v2 api key and Momento
-// service endpoint stored in environment variables.
+// service endpoint stored in the environment variables MOMENTO_API_KEY and MOMENTO_ENDPOINT.
+// Optionally provide different environment variable names via EnvVarV2Props.
 func FromEnvironmentVariablesV2(props ...EnvVarV2Props) (CredentialProvider, error) {
 	credentialProvider, err := NewEnvMomentoV2TokenProvider(props...)
 	if err != nil {
