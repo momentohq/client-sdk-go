@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.0](https://github.com/momentohq/client-sdk-go/compare/v1.39.0...v1.40.0) (2025-12-15)
+
+
+### Features
+
+* new credential provider methods for accepting v2 api keys ([#665](https://github.com/momentohq/client-sdk-go/issues/665)) ([4fd43f8](https://github.com/momentohq/client-sdk-go/commit/4fd43f8f9fc2fc8fb32ba59166bbad8493abc9b5))
+
 ## [1.39.0](https://github.com/momentohq/client-sdk-go/compare/v1.38.1...v1.39.0) (2025-11-13)
 
 
