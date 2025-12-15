@@ -20,6 +20,7 @@ import (
 )
 
 func authClientFromApiKey(ctx SharedContext, apiKey string) AuthClient {
+	//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
 	credProvider, err := auth.FromString(apiKey)
 	if err != nil {
 		panic(err)
@@ -33,6 +34,7 @@ func authClientFromApiKey(ctx SharedContext, apiKey string) AuthClient {
 }
 
 func credentialProviderFromString(apiKey string) auth.CredentialProvider {
+	//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
 	credProvider, err := auth.FromString(apiKey)
 	if err != nil {
 		panic(err)
@@ -42,6 +44,7 @@ func credentialProviderFromString(apiKey string) auth.CredentialProvider {
 
 func credProviderFromDisposableToken(resp auth_responses.GenerateDisposableTokenResponse) auth.CredentialProvider {
 	success := resp.(*auth_responses.GenerateDisposableTokenSuccess)
+	//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
 	credProvider, err := auth.FromString(success.ApiKey)
 	if err != nil {
 		panic(err)

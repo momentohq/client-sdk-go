@@ -1,0 +1,6 @@
+# Ignore SA1019 warnings in test files until v2 api keys are fully rolled out and used everywhere
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019:"
