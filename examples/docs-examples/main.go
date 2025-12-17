@@ -49,6 +49,23 @@ func example_API_CredentialProviderFromEnvVar() {
 	}
 }
 
+func example_API_CredentialProviderFromEnvVarV2() {
+	credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromApiKeyV2() {
+	apiKey := RetrieveApiKeyFromYourSecretsManager()
+	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
+	props := auth.ApiKeyV2Props{ApiKey: apiKey, Endpoint: endpoint}
+	credentialProvider, err = auth.NewApiKeyV2TokenProvider(props)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func example_API_InstantiateCacheClient() {
 	credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
@@ -965,6 +982,8 @@ func main() {
 
 	example_API_CredentialProviderFromString()
 	example_API_CredentialProviderFromEnvVar()
+	example_API_CredentialProviderFromEnvVarV2()
+	example_API_CredentialProviderFromApiKeyV2()
 	example_API_InstantiateCacheClientWithReadConcern()
 	example_API_InstantiateCacheClient()
 
