@@ -97,8 +97,9 @@ func getCacheClient() (momento.CacheClient, error) {
 	if secretErr != nil {
 		panic(secretErr)
 	}
-
-	credentialProvider, err := auth.NewStringMomentoTokenProvider(authToken)
+	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
+	props := auth.ApiKeyV2Props{ApiKey: authToken, Endpoint: endpoint}
+	credentialProvider, err := auth.NewApiKeyV2TokenProvider(props)
 	if err != nil {
 		panic(err)
 	}

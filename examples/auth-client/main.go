@@ -188,7 +188,7 @@ func generateDisposableToken(authClient momento.AuthClient, ctx context.Context)
 func main() {
 	ctx := context.Background()
 	// must be a super user API Key
-	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	var credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}

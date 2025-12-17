@@ -1,6 +1,6 @@
 module github.com/momentohq/go-example
 
-go 1.19
+go 1.21
 
 require (
 	// the hrtime and hdrhistogram-go modules are not required to use momento, but
@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/golang-jwt/jwt/v4 v4.3.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
@@ -29,3 +29,5 @@ require (
 	google.golang.org/grpc v1.63.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
+
+replace github.com/momentohq/client-sdk-go => ../

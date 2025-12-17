@@ -50,7 +50,7 @@ func example_API_CredentialProviderFromEnvVar() {
 }
 
 func example_API_InstantiateCacheClient() {
-	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +71,7 @@ func example_API_InstantiateCacheClient() {
 }
 
 func example_API_InstantiateCacheClientWithReadConcern() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -173,7 +173,7 @@ func example_API_Delete() {
 }
 
 func example_API_InstantiateTopicClient() {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -252,7 +252,7 @@ func example_API_TopicSubscribe() {
 }
 
 func example_API_InstantiateAuthClient() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -783,7 +783,7 @@ func example_API_SetBatch() {
 }
 
 func example_API_InstantiateLeaderboardClient() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}

@@ -34,8 +34,7 @@ func cleanup() {
 
 // Each test may use a different compression middleware in the config
 func createCacheClient(config config.Configuration) {
-	//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
-	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
+	credentialProvider, err := auth.FromEnvironmentVariablesV2()
 	Expect(err).To(BeNil())
 
 	cacheClient, err = NewCacheClient(
