@@ -31,7 +31,8 @@ var (
 )
 
 func RetrieveApiKeyFromYourSecretsManager() string {
-	return "your-api-key"
+	// this is not a valid API key but conforms to the syntax requirements.
+	return "eyJhcGlfa2V5IjogImV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSlBibXhwYm1VZ1NsZFVJRUoxYVd4a1pYSWlMQ0pwWVhRaU9qRTJOemd6TURVNE1USXNJbVY0Y0NJNk5EZzJOVFV4TlRReE1pd2lZWFZrSWpvaUlpd2ljM1ZpSWpvaWFuSnZZMnRsZEVCbGVHRnRjR3hsTG1OdmJTSjkuOEl5OHE4NExzci1EM1lDb19IUDRkLXhqSGRUOFVDSXV2QVljeGhGTXl6OCIsICJlbmRwb2ludCI6ICJ0ZXN0Lm1vbWVudG9ocS5jb20ifQo="
 }
 func retrieveApiKeyV2FromYourSecretsManager() string {
 	// this is not a valid API key but conforms to the syntax requirements.
@@ -53,7 +54,7 @@ func example_API_CredentialProviderFromEnvVar() {
 }
 
 func example_API_CredentialProviderFromEnvVarV2() {
-	credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
+	credentialProvider, err = auth.FromEnvironmentVariablesV2()
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +64,15 @@ func example_API_CredentialProviderFromApiKeyV2() {
 	apiKey := retrieveApiKeyV2FromYourSecretsManager()
 	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
 	props := auth.ApiKeyV2Props{ApiKey: apiKey, Endpoint: endpoint}
-	credentialProvider, err = auth.NewApiKeyV2TokenProvider(props)
+	credentialProvider, err = auth.FromApiKeyV2(props)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromDisposableToken() {
+	authToken := RetrieveApiKeyFromYourSecretsManager()
+	credentialProvider, err = auth.FromDisposableToken(authToken)
 	if err != nil {
 		panic(err)
 	}
@@ -987,6 +996,7 @@ func main() {
 	example_API_CredentialProviderFromEnvVar()
 	example_API_CredentialProviderFromEnvVarV2()
 	example_API_CredentialProviderFromApiKeyV2()
+	example_API_CredentialProviderFromDisposableToken()
 	example_API_InstantiateCacheClientWithReadConcern()
 	example_API_InstantiateCacheClient()
 

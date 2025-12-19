@@ -33,9 +33,7 @@ func generateRefreshApiKey(authClient momento.AuthClient, ctx context.Context) {
 
 	//use it to create cache client and make some cache calls
 	success := resp.(*auth_responses.GenerateApiKeySuccess)
-	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
-	props := auth.ApiKeyV2Props{ApiKey: success.ApiKey, Endpoint: endpoint}
-	credentialProvider, err := auth.FromApiKeyV2(props)
+	credentialProvider, err := auth.FromString(success.ApiKey)
 	if err != nil {
 		panic(err)
 	}
@@ -73,8 +71,10 @@ func generateRefreshApiKey(authClient momento.AuthClient, ctx context.Context) {
 	}
 	fmt.Println("\nrefreshed API Key")
 	refreshSuccess := refreshResp.(*auth_responses.RefreshApiKeySuccess)
-	props = auth.ApiKeyV2Props{ApiKey: refreshSuccess.ApiKey, Endpoint: endpoint}
-	credentialProvider, err = auth.FromApiKeyV2(props)
+	credentialProvider, err = auth.FromString(refreshSuccess.ApiKey)
+	if err != nil {
+		panic(err)
+	}
 
 	//using the old key won't work after its expiration, but creating a new cache client using the new key returned by refreshApiKey will work
 	time.Sleep(timeUntilExpiry)
@@ -191,7 +191,7 @@ func generateDisposableToken(authClient momento.AuthClient, ctx context.Context)
 func main() {
 	ctx := context.Background()
 	// must be a super user API Key
-	var credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
+	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
 	if err != nil {
 		panic(err)
 	}
