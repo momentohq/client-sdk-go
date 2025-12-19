@@ -19,6 +19,7 @@ var CACHE_SERVICE_LABEL = "cache-service"
 var LEADERBOARD_SERVICE_LABEL = "leaderboard-service"
 var TOPICS_SERVICE_LABEL = "topics-service"
 var MOMENTO_LOCAL_LABEL = "momento-local"
+var V2_API_LABEL = "v2-api-key"
 var RETRY_LABEL = "retry"
 
 func TestMomento(t *testing.T) {
@@ -28,7 +29,7 @@ func TestMomento(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	sharedContext = helpers.NewSharedContext(
-		helpers.SharedContextProps{IsMomentoLocal: includesMomentoLocalTests()})
+		helpers.SharedContextProps{IsMomentoLocal: includesMomentoLocalTests(), IsV2ApiKey: includesV2ApiKeyTests()})
 	sharedContext.CreateDefaultCaches()
 })
 
@@ -44,6 +45,16 @@ var _ = AfterSuite(func() {
 func includesMomentoLocalTests() bool {
 	labelFilter := GinkgoLabelFilter()
 	r := regexp.MustCompile(`(!?)` + MOMENTO_LOCAL_LABEL)
+	matches := r.FindStringSubmatch(labelFilter)
+	if len(matches) == 0 || (len(matches) == 2 && matches[1] == "!") {
+		// the momento local label is not present, or it is present but is negated
+		return false
+	}
+	return true
+}
+func includesV2ApiKeyTests() bool {
+	labelFilter := GinkgoLabelFilter()
+	r := regexp.MustCompile(`(!?)` + V2_API_LABEL)
 	matches := r.FindStringSubmatch(labelFilter)
 	if len(matches) == 0 || (len(matches) == 2 && matches[1] == "!") {
 		// the momento local label is not present, or it is present but is negated

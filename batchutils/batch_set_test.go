@@ -27,7 +27,7 @@ var _ = Describe("batch-utils", Label("cache-service"), func() {
 	BeforeEach(func() {
 		ctx = context.Background()
 		cacheName = fmt.Sprintf("golang-%s", uuid.NewString())
-		credentialProvider, err := auth.FromEnvironmentVariablesV2()
+		credentialProvider, err := auth.FromEnvironmentVariable("V1_API_KEY")
 		if err != nil {
 			panic(err)
 		}

@@ -50,6 +50,7 @@ type SharedContext struct {
 
 type SharedContextProps struct {
 	IsMomentoLocal bool
+	IsV2ApiKey     bool
 }
 
 func NewSharedContext(props SharedContextProps) SharedContext {
@@ -74,9 +75,16 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 			panic(err)
 		}
 	} else {
-		credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
-		if err != nil {
-			panic(err)
+		if props.IsV2ApiKey {
+			credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 	shared.CredentialProvider = credentialProvider

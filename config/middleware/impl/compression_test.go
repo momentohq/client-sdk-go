@@ -34,7 +34,7 @@ func cleanup() {
 
 // Each test may use a different compression middleware in the config
 func createCacheClient(config config.Configuration) {
-	credentialProvider, err := auth.FromEnvironmentVariablesV2()
+	credentialProvider, err := auth.FromEnvironmentVariable("V1_API_KEY")
 	Expect(err).To(BeNil())
 
 	cacheClient, err = NewCacheClient(
