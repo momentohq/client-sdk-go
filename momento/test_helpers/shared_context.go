@@ -81,6 +81,7 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 				panic(err)
 			}
 		} else {
+			//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
 			credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
 			if err != nil {
 				panic(err)
