@@ -40,12 +40,14 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
-    needs: [ readme ]
+    needs: [readme]
     permissions:
       contents: read
       pull-requests: read
     env:
-      MOMENTO_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
+      MOMENTO_API_KEY: ${{ secrets.ALPHA_API_KEYS_V2 }}
+      MOMENTO_ENDPOINT: "cell-alpha-dev.preprod.a.momentohq.com"
+      V1_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
     steps:
       - name: Setup repo
         uses: actions/checkout@v3
@@ -87,7 +89,7 @@ jobs:
 
   release-please:
     runs-on: ubuntu-latest
-    needs: [ test ]
+    needs: [test]
     name: Release Please
     steps:
       - uses: google-github-actions/release-please-action@v3
