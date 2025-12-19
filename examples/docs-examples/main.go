@@ -33,7 +33,10 @@ var (
 func RetrieveApiKeyFromYourSecretsManager() string {
 	return "your-api-key"
 }
-
+func retrieveApiKeyV2FromYourSecretsManager() string {
+	// this is not a valid API key but conforms to the syntax requirements.
+	return "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0IjoiZyIsImp0aSI6InNvbWUtaWQifQ.GMr9nA6HE0ttB6llXct_2Sg5-fOKGFbJCdACZFgNbN1fhT6OPg_hVc8ThGzBrWC_RlsBpLA1nzqK3SOJDXYxAw"
+}
 func example_API_CredentialProviderFromString() {
 	apiKey := RetrieveApiKeyFromYourSecretsManager()
 	credentialProvider, err = auth.NewStringMomentoTokenProvider(apiKey)
@@ -43,7 +46,7 @@ func example_API_CredentialProviderFromString() {
 }
 
 func example_API_CredentialProviderFromEnvVar() {
-	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +60,7 @@ func example_API_CredentialProviderFromEnvVarV2() {
 }
 
 func example_API_CredentialProviderFromApiKeyV2() {
-	apiKey := RetrieveApiKeyFromYourSecretsManager()
+	apiKey := retrieveApiKeyV2FromYourSecretsManager()
 	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
 	props := auth.ApiKeyV2Props{ApiKey: apiKey, Endpoint: endpoint}
 	credentialProvider, err = auth.NewApiKeyV2TokenProvider(props)
