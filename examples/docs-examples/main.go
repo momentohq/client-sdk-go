@@ -272,7 +272,7 @@ func example_API_TopicSubscribe() {
 }
 
 func example_API_InstantiateAuthClient() {
-	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("V1_API_KEY")
 	if err != nil {
 		panic(err)
 	}
