@@ -7,7 +7,6 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/momentohq/client-sdk-go/momento/test_helpers"
 	. "github.com/momentohq/client-sdk-go/responses"
-	responses "github.com/momentohq/client-sdk-go/responses"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,11 +29,11 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.CacheClientApiKeyV2.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&responses.CreateCacheSuccess{}))
+				).To(BeAssignableToTypeOf(CreateCacheSuccess{}))
 
 				Expect(
 					sharedContext.CacheClientApiKeyV2.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&responses.CreateCacheAlreadyExists{}))
+				).To(BeAssignableToTypeOf(CreateCacheAlreadyExists{}))
 			}
 
 			resp, err := sharedContext.CacheClientApiKeyV2.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
@@ -42,7 +41,7 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 
 			var listedCaches []string
 			switch r := resp.(type) {
-			case *responses.ListCachesSuccess:
+			case *ListCachesSuccess:
 				for _, info := range r.Caches() {
 					listedCaches = append(listedCaches, info.Name())
 				}
@@ -54,13 +53,13 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.CacheClientApiKeyV2.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(&responses.DeleteCacheSuccess{}))
+				).To(BeAssignableToTypeOf(DeleteCacheSuccess{}))
 			}
 			resp, err = sharedContext.CacheClientApiKeyV2.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
-			Expect(resp).To(BeAssignableToTypeOf(&responses.ListCachesSuccess{}))
+			Expect(resp).To(BeAssignableToTypeOf(ListCachesSuccess{}))
 			switch r := resp.(type) {
-			case *responses.ListCachesSuccess:
+			case *ListCachesSuccess:
 				Expect(r.Caches()).To(Not(ContainElements(cacheNames)))
 			default:
 				Fail("Unexpected response type")
@@ -144,11 +143,11 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 				Ttl:       10 * time.Second,
 			})
 			Expect(setBatchErr).To(BeNil())
-			Expect(setBatchResp).To(BeAssignableToTypeOf(responses.SetBatchSuccess{}))
-			setResponses := setBatchResp.(responses.SetBatchSuccess).Results()
+			Expect(setBatchResp).To(BeAssignableToTypeOf(SetBatchSuccess{}))
+			setResponses := setBatchResp.(SetBatchSuccess).Results()
 			Expect(len(setResponses)).To(Equal(len(items)))
 			for _, setResp := range setResponses {
-				Expect(setResp).To(BeAssignableToTypeOf(&responses.SetSuccess{}))
+				Expect(setResp).To(BeAssignableToTypeOf(SetSuccess{}))
 			}
 
 			getBatchResp, getBatchErr := sharedContext.CacheClientApiKeyV2.GetBatch(sharedContext.Ctx, &GetBatchRequest{
@@ -156,19 +155,19 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 				Keys:      batchSetKeys,
 			})
 			Expect(getBatchErr).To(BeNil())
-			Expect(getBatchResp).To(BeAssignableToTypeOf(responses.GetBatchSuccess{}))
-			getResponses := getBatchResp.(responses.GetBatchSuccess).Results()
+			Expect(getBatchResp).To(BeAssignableToTypeOf(GetBatchSuccess{}))
+			getResponses := getBatchResp.(GetBatchSuccess).Results()
 			Expect(len(getResponses)).To(Equal(len(batchSetKeys)))
 			for i, getResp := range getResponses {
 				if i < 5 {
-					Expect(getResp).To(BeAssignableToTypeOf(&responses.GetHit{}))
-					Expect(getResp.(*responses.GetHit).ValueString()).To(Equal(fmt.Sprintf("Some-hits-%d", i)))
+					Expect(getResp).To(BeAssignableToTypeOf(GetHit{}))
+					Expect(getResp.(*GetHit).ValueString()).To(Equal(fmt.Sprintf("Some-hits-%d", i)))
 				} else {
-					Expect(getResp).To(BeAssignableToTypeOf(&responses.GetMiss{}))
+					Expect(getResp).To(BeAssignableToTypeOf(GetMiss{}))
 				}
 			}
 
-			getValuesMap := getBatchResp.(responses.GetBatchSuccess).ValueMap()
+			getValuesMap := getBatchResp.(GetBatchSuccess).ValueMap()
 			// for each key, check if the value is as expected
 			for i, key := range batchSetKeysString {
 				value, ok := getValuesMap[key]
