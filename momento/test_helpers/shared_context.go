@@ -111,11 +111,6 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		panic(err)
 	}
 
-	cacheClientApiKeyV2, err := momento.NewCacheClient(clientConfig, shared.CredentialProviderApiKeyV2, shared.DefaultTtl)
-	if err != nil {
-		panic(err)
-	}
-
 	defaultCacheName := fmt.Sprintf("golang-default-%s", uuid.NewString())
 	clientDefaultCacheName, err := momento.NewCacheClientWithDefaultCache(
 		clientConfig, shared.CredentialProvider, shared.DefaultTtl, defaultCacheName,
@@ -143,11 +138,6 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		panic(err)
 	}
 
-	topicClientApiKeyV2, err := momento.NewTopicClient(shared.TopicConfiguration, shared.CredentialProviderApiKeyV2)
-	if err != nil {
-		panic(err)
-	}
-
 	authClient, err := momento.NewAuthClient(shared.AuthConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
@@ -158,9 +148,24 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		panic(err)
 	}
 
-	leaderboardClientApiKeyV2, err := momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProviderApiKeyV2)
-	if err != nil {
-		panic(err)
+	var cacheClientApiKeyV2 momento.CacheClient
+	var topicClientApiKeyV2 momento.TopicClient
+	var leaderboardClientApiKeyV2 momento.PreviewLeaderboardClient
+	if shared.CredentialProviderApiKeyV2 != nil {
+		cacheClientApiKeyV2, err = momento.NewCacheClient(clientConfig, shared.CredentialProviderApiKeyV2, shared.DefaultTtl)
+		if err != nil {
+			panic(err)
+		}
+
+		leaderboardClientApiKeyV2, err = momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProviderApiKeyV2)
+		if err != nil {
+			panic(err)
+		}
+
+		topicClientApiKeyV2, err = momento.NewTopicClient(shared.TopicConfiguration, shared.CredentialProviderApiKeyV2)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	shared.Client = client
