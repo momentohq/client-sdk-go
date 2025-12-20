@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.1](https://github.com/momentohq/client-sdk-go/compare/v1.40.0...v1.40.1) (2025-12-20)
+
+
+### Miscellaneous
+
+* update examples, tests, ci/cd env vars ([#668](https://github.com/momentohq/client-sdk-go/issues/668)) ([b200088](https://github.com/momentohq/client-sdk-go/commit/b200088dced6160ce3fc06ebe26627c240b89a4f))
+
 ## [1.40.0](https://github.com/momentohq/client-sdk-go/compare/v1.39.0...v1.40.0) (2025-12-15)
 
 
