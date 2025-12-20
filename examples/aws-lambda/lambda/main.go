@@ -20,6 +20,8 @@ const (
 	CACHE_NAME  = "cache"
 	CACHE_KEY   = "key"
 	CACHE_VALUE = "value"
+	// Or other desired Momento endpoint: https://docs.momentohq.com/platform/regions
+	MOMENTO_ENDPOINT = "cell-4-us-west-2-1.prod.a.momentohq.com"
 )
 
 var (
@@ -97,9 +99,7 @@ func getCacheClient() (momento.CacheClient, error) {
 	if secretErr != nil {
 		panic(secretErr)
 	}
-	// Or other desired Momento endpoint: https://docs.momentohq.com/platform/regions
-	endpoint := "cell-4-us-west-2-1.prod.a.momentohq.com"
-	props := auth.ApiKeyV2Props{ApiKey: authToken, Endpoint: endpoint}
+	props := auth.ApiKeyV2Props{ApiKey: authToken, Endpoint: MOMENTO_ENDPOINT}
 	credentialProvider, err := auth.NewApiKeyV2TokenProvider(props)
 	if err != nil {
 		panic(err)
