@@ -46,6 +46,7 @@ Running `make precommit` will run all formatters, linters, and the tests. Run th
 We use [Ginkgo](https://onsi.github.io/ginkgo/) and [Gomega](https://onsi.github.io/gomega/) to write our tests.
 
 Integration tests require:
+
 - env var `MOMENTO_API_KEY` set to a v2 api key
 - env var `MOMENTO_ENDPOINT` set to desired testing endpoint
 - env var `V1_API_KEY` set to v1 api key (at least until v1 keys are fully deprecated and v1 tests are removed from the sdk)
