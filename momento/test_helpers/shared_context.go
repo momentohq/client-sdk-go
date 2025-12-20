@@ -46,11 +46,14 @@ type SharedContext struct {
 	AuthConfiguration               config.AuthConfiguration
 	LeaderboardClient               momento.PreviewLeaderboardClient
 	LeaderboardConfiguration        config.LeaderboardConfiguration
+	CredentialProviderApiKeyV2      auth.CredentialProvider
+	CacheClientApiKeyV2             momento.CacheClient
+	TopicClientApiKeyV2             momento.TopicClient
+	LeaderboardClientApiKeyV2       momento.PreviewLeaderboardClient
 }
 
 type SharedContextProps struct {
 	IsMomentoLocal bool
-	IsV2ApiKey     bool
 }
 
 func NewSharedContext(props SharedContextProps) SharedContext {
@@ -75,19 +78,18 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 			panic(err)
 		}
 	} else {
-		if props.IsV2ApiKey {
-			credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
-			credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
-			if err != nil {
-				panic(err)
-			}
+		//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
+		credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
+		if err != nil {
+			panic(err)
 		}
 	}
+	credentialProviderApiKeyV2, err := auth.NewEnvMomentoV2TokenProvider()
+	if err != nil {
+		panic(err)
+	}
+
+	shared.CredentialProviderApiKeyV2 = credentialProviderApiKeyV2
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	shared.TopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
@@ -103,7 +105,11 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	}
 
 	client, err := momento.NewCacheClient(clientConfig, shared.CredentialProvider, shared.DefaultTtl)
+	if err != nil {
+		panic(err)
+	}
 
+	cacheClientApiKeyV2, err := momento.NewCacheClient(clientConfig, shared.CredentialProviderApiKeyV2, shared.DefaultTtl)
 	if err != nil {
 		panic(err)
 	}
@@ -135,12 +141,22 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		panic(err)
 	}
 
+	topicClientApiKeyV2, err := momento.NewTopicClient(shared.TopicConfiguration, shared.CredentialProviderApiKeyV2)
+	if err != nil {
+		panic(err)
+	}
+
 	authClient, err := momento.NewAuthClient(shared.AuthConfiguration, shared.CredentialProvider)
 	if err != nil {
 		panic(err)
 	}
 
 	leaderboardClient, err := momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProvider)
+	if err != nil {
+		panic(err)
+	}
+
+	leaderboardClientApiKeyV2, err := momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProviderApiKeyV2)
 	if err != nil {
 		panic(err)
 	}
@@ -153,6 +169,9 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
 	shared.LeaderboardClient = leaderboardClient
+	shared.CacheClientApiKeyV2 = cacheClientApiKeyV2
+	shared.TopicClientApiKeyV2 = topicClientApiKeyV2
+	shared.LeaderboardClientApiKeyV2 = leaderboardClientApiKeyV2
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 
