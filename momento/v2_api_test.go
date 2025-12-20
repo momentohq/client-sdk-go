@@ -29,11 +29,11 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.CacheClientApiKeyV2.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(CreateCacheSuccess{}))
+				).To(BeAssignableToTypeOf(&CreateCacheSuccess{}))
 
 				Expect(
 					sharedContext.CacheClientApiKeyV2.CreateCache(sharedContext.Ctx, &CreateCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(CreateCacheAlreadyExists{}))
+				).To(BeAssignableToTypeOf(&CreateCacheAlreadyExists{}))
 			}
 
 			resp, err := sharedContext.CacheClientApiKeyV2.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
@@ -53,11 +53,11 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 			for _, cacheName := range cacheNames {
 				Expect(
 					sharedContext.CacheClientApiKeyV2.DeleteCache(sharedContext.Ctx, &DeleteCacheRequest{CacheName: cacheName}),
-				).To(BeAssignableToTypeOf(DeleteCacheSuccess{}))
+				).To(BeAssignableToTypeOf(&DeleteCacheSuccess{}))
 			}
 			resp, err = sharedContext.CacheClientApiKeyV2.ListCaches(sharedContext.Ctx, &ListCachesRequest{})
 			Expect(err).To(Succeed())
-			Expect(resp).To(BeAssignableToTypeOf(ListCachesSuccess{}))
+			Expect(resp).To(BeAssignableToTypeOf(&ListCachesSuccess{}))
 			switch r := resp.(type) {
 			case *ListCachesSuccess:
 				Expect(r.Caches()).To(Not(ContainElements(cacheNames)))
@@ -147,7 +147,7 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 			setResponses := setBatchResp.(SetBatchSuccess).Results()
 			Expect(len(setResponses)).To(Equal(len(items)))
 			for _, setResp := range setResponses {
-				Expect(setResp).To(BeAssignableToTypeOf(SetSuccess{}))
+				Expect(setResp).To(BeAssignableToTypeOf(&SetSuccess{}))
 			}
 
 			getBatchResp, getBatchErr := sharedContext.CacheClientApiKeyV2.GetBatch(sharedContext.Ctx, &GetBatchRequest{
@@ -160,10 +160,10 @@ var _ = Describe("cache-client v2 api key tests", Label(CACHE_SERVICE_LABEL), fu
 			Expect(len(getResponses)).To(Equal(len(batchSetKeys)))
 			for i, getResp := range getResponses {
 				if i < 5 {
-					Expect(getResp).To(BeAssignableToTypeOf(GetHit{}))
+					Expect(getResp).To(BeAssignableToTypeOf(&GetHit{}))
 					Expect(getResp.(*GetHit).ValueString()).To(Equal(fmt.Sprintf("Some-hits-%d", i)))
 				} else {
-					Expect(getResp).To(BeAssignableToTypeOf(GetMiss{}))
+					Expect(getResp).To(BeAssignableToTypeOf(&GetMiss{}))
 				}
 			}
 
