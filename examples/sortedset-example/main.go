@@ -85,7 +85,7 @@ func main() {
 }
 
 func getClient() momento.CacheClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}

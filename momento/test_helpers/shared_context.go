@@ -46,6 +46,10 @@ type SharedContext struct {
 	AuthConfiguration               config.AuthConfiguration
 	LeaderboardClient               momento.PreviewLeaderboardClient
 	LeaderboardConfiguration        config.LeaderboardConfiguration
+	CredentialProviderApiKeyV2      auth.CredentialProvider
+	CacheClientApiKeyV2             momento.CacheClient
+	TopicClientApiKeyV2             momento.TopicClient
+	LeaderboardClientApiKeyV2       momento.PreviewLeaderboardClient
 }
 
 type SharedContextProps struct {
@@ -56,6 +60,7 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	shared := SharedContext{}
 	shared.Ctx = context.Background()
 	var credentialProvider auth.CredentialProvider
+	var credentialProviderApiKeyV2 auth.CredentialProvider
 	var err error
 	if props.IsMomentoLocal {
 		port := os.Getenv("MOMENTO_LOCAL_PORT")
@@ -75,11 +80,18 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		}
 	} else {
 		//lint:ignore SA1019 // Still supporting FromEnvironmentVariable for backwards compatibility
-		credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+		credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
+		if err != nil {
+			panic(err)
+		}
+
+		credentialProviderApiKeyV2, err = auth.NewEnvMomentoV2TokenProvider()
 		if err != nil {
 			panic(err)
 		}
 	}
+
+	shared.CredentialProviderApiKeyV2 = credentialProviderApiKeyV2
 	shared.CredentialProvider = credentialProvider
 	shared.Configuration = config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
 	shared.TopicConfiguration = config.TopicsDefaultWithLogger(logger.NewNoopMomentoLoggerFactory())
@@ -95,7 +107,6 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	}
 
 	client, err := momento.NewCacheClient(clientConfig, shared.CredentialProvider, shared.DefaultTtl)
-
 	if err != nil {
 		panic(err)
 	}
@@ -137,6 +148,26 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		panic(err)
 	}
 
+	var cacheClientApiKeyV2 momento.CacheClient
+	var topicClientApiKeyV2 momento.TopicClient
+	var leaderboardClientApiKeyV2 momento.PreviewLeaderboardClient
+	if shared.CredentialProviderApiKeyV2 != nil {
+		cacheClientApiKeyV2, err = momento.NewCacheClient(clientConfig, shared.CredentialProviderApiKeyV2, shared.DefaultTtl)
+		if err != nil {
+			panic(err)
+		}
+
+		leaderboardClientApiKeyV2, err = momento.NewPreviewLeaderboardClient(shared.LeaderboardConfiguration, shared.CredentialProviderApiKeyV2)
+		if err != nil {
+			panic(err)
+		}
+
+		topicClientApiKeyV2, err = momento.NewTopicClient(shared.TopicConfiguration, shared.CredentialProviderApiKeyV2)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	shared.Client = client
 	shared.ClientWithDefaultCacheName = clientDefaultCacheName
 	shared.ClientWithConsistentReadConcern = consistentReadConcernClient
@@ -145,6 +176,9 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	shared.TopicClient = topicClient
 	shared.AuthClient = authClient
 	shared.LeaderboardClient = leaderboardClient
+	shared.CacheClientApiKeyV2 = cacheClientApiKeyV2
+	shared.TopicClientApiKeyV2 = topicClientApiKeyV2
+	shared.LeaderboardClientApiKeyV2 = leaderboardClientApiKeyV2
 
 	shared.CacheName = fmt.Sprintf("golang-%s", uuid.NewString())
 
@@ -184,7 +218,9 @@ func (shared SharedContext) CreateDefaultCaches() {
 
 func (shared SharedContext) Close() {
 	// close topic client before deleting the cache in which it is subscribed
-	shared.TopicClient.Close()
+	if shared.TopicClient != nil {
+		shared.TopicClient.Close()
+	}
 
 	_, err := shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.CacheName})
 	if err != nil {
@@ -195,7 +231,31 @@ func (shared SharedContext) Close() {
 		panic(err)
 	}
 
-	shared.Client.Close()
-	shared.AuthClient.Close()
-	shared.LeaderboardClient.Close()
+	if shared.Client != nil {
+		shared.Client.Close()
+	}
+	if shared.ClientWithDefaultCacheName != nil {
+		shared.ClientWithDefaultCacheName.Close()
+	}
+	if shared.ClientWithConsistentReadConcern != nil {
+		shared.ClientWithConsistentReadConcern.Close()
+	}
+	if shared.ClientWithBalancedReadConcern != nil {
+		shared.ClientWithBalancedReadConcern.Close()
+	}
+	if shared.AuthClient != nil {
+		shared.AuthClient.Close()
+	}
+	if shared.LeaderboardClient != nil {
+		shared.LeaderboardClient.Close()
+	}
+	if shared.CacheClientApiKeyV2 != nil {
+		shared.CacheClientApiKeyV2.Close()
+	}
+	if shared.TopicClientApiKeyV2 != nil {
+		shared.TopicClientApiKeyV2.Close()
+	}
+	if shared.LeaderboardClientApiKeyV2 != nil {
+		shared.LeaderboardClientApiKeyV2.Close()
+	}
 }

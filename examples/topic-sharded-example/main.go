@@ -77,7 +77,7 @@ func pollForMessages(ctx context.Context, sub momento.TopicSubscription, log log
 }
 
 func getShardedTopicClient(loggerFactory logger.MomentoLoggerFactory, numShardsPerTopic int) momento.TopicClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -96,7 +96,7 @@ func getShardedTopicClient(loggerFactory logger.MomentoLoggerFactory, numShardsP
 }
 
 func getCacheClient() momento.CacheClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}

@@ -108,7 +108,7 @@ func pollForEvents(ctx context.Context, sub momento.TopicSubscription) {
 }
 
 func getTopicClient() momento.TopicClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -123,7 +123,7 @@ func getTopicClient() momento.TopicClient {
 }
 
 func getCacheClient() momento.CacheClient {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}

@@ -16,7 +16,7 @@ import (
 func main() {
 	context := context.Background()
 	configuration := config.LaptopLatestWithLogger(logger.NewNoopMomentoLoggerFactory()).WithClientTimeout(15 * time.Second)
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}

@@ -1,11 +1,11 @@
 module github.com/momentohq/client-sdk-go/examples/lambda-examples/simple-get/lambda
 
-go 1.18
+go 1.19
 
 require (
 	github.com/aws/aws-lambda-go v1.43.0
 	github.com/aws/aws-secretsmanager-caching-go v1.1.3
-	github.com/momentohq/client-sdk-go v1.14.1
+	github.com/momentohq/client-sdk-go v1.40.0
 )
 
 require (

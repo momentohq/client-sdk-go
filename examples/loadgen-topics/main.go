@@ -70,7 +70,7 @@ func newLoadGenerator(config config.TopicsConfiguration, options topicsLoadGener
 
 func (r *loadGenerator) init(ctx context.Context) (momento.TopicClient, momento.CacheClient) {
 	CacheName := r.options.cacheName
-	credentialProvider, err := auth.FromEnvironmentVariable("MOMENTO_API_KEY")
+	credentialProvider, err := auth.FromEnvironmentVariablesV2()
 	if err != nil {
 		panic(err)
 	}

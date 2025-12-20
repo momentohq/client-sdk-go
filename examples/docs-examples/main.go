@@ -31,9 +31,13 @@ var (
 )
 
 func RetrieveApiKeyFromYourSecretsManager() string {
-	return "your-api-key"
+	// this is not a valid API key but conforms to the syntax requirements.
+	return "eyJhcGlfa2V5IjogImV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSlBibXhwYm1VZ1NsZFVJRUoxYVd4a1pYSWlMQ0pwWVhRaU9qRTJOemd6TURVNE1USXNJbVY0Y0NJNk5EZzJOVFV4TlRReE1pd2lZWFZrSWpvaUlpd2ljM1ZpSWpvaWFuSnZZMnRsZEVCbGVHRnRjR3hsTG1OdmJTSjkuOEl5OHE4NExzci1EM1lDb19IUDRkLXhqSGRUOFVDSXV2QVljeGhGTXl6OCIsICJlbmRwb2ludCI6ICJ0ZXN0Lm1vbWVudG9ocS5jb20ifQo="
 }
-
+func retrieveApiKeyV2FromYourSecretsManager() string {
+	// this is not a valid API key but conforms to the syntax requirements.
+	return "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0IjoiZyIsImp0aSI6InNvbWUtaWQifQ.GMr9nA6HE0ttB6llXct_2Sg5-fOKGFbJCdACZFgNbN1fhT6OPg_hVc8ThGzBrWC_RlsBpLA1nzqK3SOJDXYxAw"
+}
 func example_API_CredentialProviderFromString() {
 	apiKey := RetrieveApiKeyFromYourSecretsManager()
 	credentialProvider, err = auth.NewStringMomentoTokenProvider(apiKey)
@@ -43,14 +47,39 @@ func example_API_CredentialProviderFromString() {
 }
 
 func example_API_CredentialProviderFromEnvVar() {
-	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err = auth.NewEnvMomentoTokenProvider("V1_API_KEY")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromEnvVarV2() {
+	credentialProvider, err = auth.FromEnvironmentVariablesV2()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromApiKeyV2() {
+	apiKey := retrieveApiKeyV2FromYourSecretsManager()
+	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
+	props := auth.ApiKeyV2Props{ApiKey: apiKey, Endpoint: endpoint}
+	credentialProvider, err = auth.FromApiKeyV2(props)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromDisposableToken() {
+	authToken := RetrieveApiKeyFromYourSecretsManager()
+	credentialProvider, err = auth.FromDisposableToken(authToken)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func example_API_InstantiateCacheClient() {
-	credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +100,7 @@ func example_API_InstantiateCacheClient() {
 }
 
 func example_API_InstantiateCacheClientWithReadConcern() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -173,7 +202,7 @@ func example_API_Delete() {
 }
 
 func example_API_InstantiateTopicClient() {
-	credProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -252,7 +281,7 @@ func example_API_TopicSubscribe() {
 }
 
 func example_API_InstantiateAuthClient() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoTokenProvider("V1_API_KEY")
 	if err != nil {
 		panic(err)
 	}
@@ -783,7 +812,7 @@ func example_API_SetBatch() {
 }
 
 func example_API_InstantiateLeaderboardClient() {
-	credentialProvider, err := auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	credentialProvider, err := auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -965,6 +994,9 @@ func main() {
 
 	example_API_CredentialProviderFromString()
 	example_API_CredentialProviderFromEnvVar()
+	example_API_CredentialProviderFromEnvVarV2()
+	example_API_CredentialProviderFromApiKeyV2()
+	example_API_CredentialProviderFromDisposableToken()
 	example_API_InstantiateCacheClientWithReadConcern()
 	example_API_InstantiateCacheClient()
 

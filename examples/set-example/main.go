@@ -25,7 +25,7 @@ var (
 
 func setup() {
 	ctx = context.Background()
-	var credentialProvider, err = auth.NewEnvMomentoTokenProvider("MOMENTO_API_KEY")
+	var credentialProvider, err = auth.NewEnvMomentoV2TokenProvider()
 	if err != nil {
 		panic(err)
 	}
