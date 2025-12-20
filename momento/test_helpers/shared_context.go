@@ -60,6 +60,7 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 	shared := SharedContext{}
 	shared.Ctx = context.Background()
 	var credentialProvider auth.CredentialProvider
+	var credentialProviderApiKeyV2 auth.CredentialProvider
 	var err error
 	if props.IsMomentoLocal {
 		port := os.Getenv("MOMENTO_LOCAL_PORT")
@@ -83,10 +84,11 @@ func NewSharedContext(props SharedContextProps) SharedContext {
 		if err != nil {
 			panic(err)
 		}
-	}
-	credentialProviderApiKeyV2, err := auth.NewEnvMomentoV2TokenProvider()
-	if err != nil {
-		panic(err)
+
+		credentialProviderApiKeyV2, err = auth.NewEnvMomentoV2TokenProvider()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	shared.CredentialProviderApiKeyV2 = credentialProviderApiKeyV2
