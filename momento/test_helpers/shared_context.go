@@ -213,7 +213,9 @@ func (shared SharedContext) CreateDefaultCaches() {
 
 func (shared SharedContext) Close() {
 	// close topic client before deleting the cache in which it is subscribed
-	shared.TopicClient.Close()
+	if shared.TopicClient != nil {
+		shared.TopicClient.Close()
+	}
 
 	_, err := shared.Client.DeleteCache(shared.Ctx, &momento.DeleteCacheRequest{CacheName: shared.CacheName})
 	if err != nil {
@@ -224,7 +226,31 @@ func (shared SharedContext) Close() {
 		panic(err)
 	}
 
-	shared.Client.Close()
-	shared.AuthClient.Close()
-	shared.LeaderboardClient.Close()
+	if shared.Client != nil {
+		shared.Client.Close()
+	}
+	if shared.ClientWithDefaultCacheName != nil {
+		shared.ClientWithDefaultCacheName.Close()
+	}
+	if shared.ClientWithConsistentReadConcern != nil {
+		shared.ClientWithConsistentReadConcern.Close()
+	}
+	if shared.ClientWithBalancedReadConcern != nil {
+		shared.ClientWithBalancedReadConcern.Close()
+	}
+	if shared.AuthClient != nil {
+		shared.AuthClient.Close()
+	}
+	if shared.LeaderboardClient != nil {
+		shared.LeaderboardClient.Close()
+	}
+	if shared.CacheClientApiKeyV2 != nil {
+		shared.CacheClientApiKeyV2.Close()
+	}
+	if shared.TopicClientApiKeyV2 != nil {
+		shared.TopicClientApiKeyV2.Close()
+	}
+	if shared.LeaderboardClientApiKeyV2 != nil {
+		shared.LeaderboardClientApiKeyV2.Close()
+	}
 }
