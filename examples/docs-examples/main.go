@@ -62,7 +62,7 @@ func example_API_CredentialProviderFromEnvVarV2() {
 
 func example_API_CredentialProviderFromApiKeyV2() {
 	apiKey := retrieveApiKeyV2FromYourSecretsManager()
-	endpoint := "https://api.cache.cell-4-us-west-2-1.prod.a.momentohq.com"
+	endpoint := "cell-4-us-west-2-1.prod.a.momentohq.com"
 	props := auth.ApiKeyV2Props{ApiKey: apiKey, Endpoint: endpoint}
 	credentialProvider, err = auth.FromApiKeyV2(props)
 	if err != nil {
