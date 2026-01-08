@@ -36,13 +36,14 @@ Caveats:
 ## Requirements.
 
 - [Go](https://go.dev/dl/)
-- A Momento Auth Token; you can generate one using the [Momento CLI](https://github.com/momentohq/momento-cli).
+- A Momento API key is required, you can generate one using the [Momento Console](https://console.gomomento.com/api-keys)
+- A Momento service endpoint is required. You can find a [list of them here](https://docs.momentohq.com/platform/regions)
 - Run `go mod vendor` to install dependencies.
 
 ## Running the example
 
 ```
-MOMENTO_API_KEY=<YOUR_TOKEN> go run topic-sharded-example/*.go
+MOMENTO_API_KEY=<YOUR_TOKEN> MOMENTO_ENDPOINT=<endpoint> go run topic-sharded-example/*.go
 ```
 
 If you compare the code in this [main.go](./main.go) to the code in the basic topic example's [main.go](../topic-example/main.go),

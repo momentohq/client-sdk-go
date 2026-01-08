@@ -54,6 +54,16 @@ func example_API_CredentialProviderFromEnvVar() {
 }
 
 func example_API_CredentialProviderFromEnvVarV2() {
+	credentialProvider, err = auth.FromEnvironmentVariablesV2(auth.EnvVarV2Props{
+		ApiKeyEnvVar:   "MOMENTO_API_KEY",
+		EndpointEnvVar: "MOMENTO_ENDPOINT",
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func example_API_CredentialProviderFromEnvVarV2Default() {
 	credentialProvider, err = auth.FromEnvironmentVariablesV2()
 	if err != nil {
 		panic(err)
@@ -995,6 +1005,7 @@ func main() {
 	example_API_CredentialProviderFromString()
 	example_API_CredentialProviderFromEnvVar()
 	example_API_CredentialProviderFromEnvVarV2()
+	example_API_CredentialProviderFromEnvVarV2Default()
 	example_API_CredentialProviderFromApiKeyV2()
 	example_API_CredentialProviderFromDisposableToken()
 	example_API_InstantiateCacheClientWithReadConcern()

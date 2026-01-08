@@ -20,12 +20,11 @@ const (
 	CACHE_NAME  = "cache"
 	CACHE_KEY   = "key"
 	CACHE_VALUE = "value"
-	// Or other desired Momento endpoint: https://docs.momentohq.com/platform/regions
-	MOMENTO_ENDPOINT = "cell-4-us-west-2-1.prod.a.momentohq.com"
 )
 
 var (
 	cachedAuthToken    string = ""
+	cachedEndpoint     string = ""
 	secretsClient, _          = secretcache.New()
 	momentoCacheClient momento.CacheClient
 )
@@ -71,7 +70,7 @@ func handler() (string, error) {
 	return "Success", nil
 }
 
-func getSecret(secretName string) (string, error) {
+func getApiKeySecret(secretName string) (string, error) {
 	if cachedAuthToken == "" {
 		getSecretName, ok := os.LookupEnv(secretName)
 		if !ok {
@@ -89,24 +88,48 @@ func getSecret(secretName string) (string, error) {
 	return cachedAuthToken, nil
 }
 
+func getEndpointSecret(secretName string) (string, error) {
+	if cachedEndpoint == "" {
+		getSecretName, ok := os.LookupEnv(secretName)
+		if !ok {
+			fmt.Printf("Missing required env var '%s'\n", secretName)
+			return "Missing required env var", nil
+		}
+		secret, err := secretsClient.GetSecretString(getSecretName)
+		if err != nil {
+			fmt.Printf("Unable to get secret '%s'\n", getSecretName)
+			return "Error", err
+		}
+		cachedEndpoint = secret
+	}
+
+	return cachedEndpoint, nil
+}
+
 func getCacheClient() (momento.CacheClient, error) {
 	if momentoCacheClient != nil {
 		fmt.Println("Using cached Momento cache client")
 		return momentoCacheClient, nil
 	}
 
-	authToken, secretErr := getSecret("MOMENTO_API_KEY_SECRET_NAME")
+	authToken, secretErr := getApiKeySecret("MOMENTO_API_KEY_SECRET_NAME")
 	if secretErr != nil {
 		panic(secretErr)
 	}
-	props := auth.ApiKeyV2Props{ApiKey: authToken, Endpoint: MOMENTO_ENDPOINT}
+
+	endpoint, secretErr := getEndpointSecret("MOMENTO_ENDPOINT_SECRET_NAME")
+	if secretErr != nil {
+		panic(secretErr)
+	}
+
+	props := auth.ApiKeyV2Props{ApiKey: authToken, Endpoint: endpoint}
 	credentialProvider, err := auth.NewApiKeyV2TokenProvider(props)
 	if err != nil {
 		panic(err)
 	}
 
 	newCacheClient, initErr := momento.NewCacheClientWithEagerConnectTimeout(
-		config.Lambda(),
+		config.LambdaLatest(),
 		credentialProvider,
 		60*time.Second,
 		30*time.Second,

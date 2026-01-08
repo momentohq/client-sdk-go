@@ -16,6 +16,7 @@ This directory contains an example Lambda function, built using AWS CDK, that se
 
 - Node version 20 or higher is required for deploying the CDK app.
 - To get started with Momento you will need a Momento API key. You can get one from the [Momento Console](https://console.gomomento.com). Check out the [getting started](https://docs.momentohq.com/getting-started) guide for more information on obtaining an auth token.
+- A Momento service endpoint is required. You can find a [list of them here](https://docs.momentohq.com/platform/regions).
 
 ## Deploying the Simple Get Lambda
 
@@ -40,7 +41,7 @@ You will also need a superuser token generated from the [Momento Console](https:
 Then run:
 
 ```
-npm run cdk -- deploy --parameters MomentoAuthToken=<YOUR_MOMENTO_API_KEY>
+npm run cdk -- deploy --parameters MomentoApiKey=<YOUR_MOMENTO_API_KEY> --parameters MomentoEndpoint=<YOUR_ENDPOINT>
 ```
 
 The lambda does not set up a way to access itself externally, so to run it, you will have to go to MomentoSimpleGet in AWS Lambda and run a test.
