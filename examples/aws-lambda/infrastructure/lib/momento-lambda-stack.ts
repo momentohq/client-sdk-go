@@ -9,15 +9,26 @@ export class MomentoLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const momentoAuthTokenParam = new cdk.CfnParameter(this, 'MomentoAuthToken', {
+    const momentoAuthTokenParam = new cdk.CfnParameter(this, 'MomentoApiKey', {
       type: 'String',
-      description: 'The Momento Auth Token that will be used to read from the cache.',
+      description: 'The Momento API key that will be used to read from the cache.',
       noEcho: true,
     });
 
-    const authTokenSecret = new secrets.Secret(this, 'MomentoSimpleGetAuthToken', {
-      secretName: 'MomentoSimpleGetAuthToken',
+    const authTokenSecret = new secrets.Secret(this, 'MomentoSimpleGetApiKey', {
+      secretName: 'MomentoSimpleGetApiKey',
       secretStringValue: new cdk.SecretValue(momentoAuthTokenParam.valueAsString),
+    });
+
+    const momentoEndpointParam = new cdk.CfnParameter(this, 'MomentoEndpoint', {
+      type: 'String',
+      description: 'The Momento service endpoint to connect to.',
+      noEcho: true,
+    });
+
+    const endpointSecret = new secrets.Secret(this, 'MomentoSimpleGetEndpoint', {
+      secretName: 'MomentoSimpleGetEndpoint',
+      secretStringValue: new cdk.SecretValue(momentoEndpointParam.valueAsString),
     });
 
     const getLambda = new go.GoFunction(this, 'MomentoLambdaExample', {
@@ -28,9 +39,11 @@ export class MomentoLambdaStack extends cdk.Stack {
       memorySize: 128,
       environment: {
         MOMENTO_API_KEY_SECRET_NAME: authTokenSecret.secretName,
+        MOMENTO_ENDPOINT_SECRET_NAME: endpointSecret.secretName,
       },
     });
 
     authTokenSecret.grantRead(getLambda);
+    endpointSecret.grantRead(getLambda);
   }
 }
