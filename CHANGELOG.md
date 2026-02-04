@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.40.1](https://github.com/momentohq/client-sdk-go/compare/v1.40.0...v1.40.1) (2026-02-04)
+
+
+### Bug Fixes
+
+* remove client-side expiry check on disposable tokens ([#672](https://github.com/momentohq/client-sdk-go/issues/672)) ([ebdb114](https://github.com/momentohq/client-sdk-go/commit/ebdb114169411f018d6895b4b945ee7377d17ec3))
+
+
+### Miscellaneous
+
+* fix endpoint in docs snippet ([#670](https://github.com/momentohq/client-sdk-go/issues/670)) ([f2fa44b](https://github.com/momentohq/client-sdk-go/commit/f2fa44b1bb86befdb030a726fd37bc19a119114d))
+* more examples and readme updates ([#671](https://github.com/momentohq/client-sdk-go/issues/671)) ([12caf92](https://github.com/momentohq/client-sdk-go/commit/12caf92d5fc980f754549b22b49a088d6d78fcdd))
+* update examples, tests, ci/cd env vars ([#668](https://github.com/momentohq/client-sdk-go/issues/668)) ([b200088](https://github.com/momentohq/client-sdk-go/commit/b200088dced6160ce3fc06ebe26627c240b89a4f))
+
 ## [1.40.0](https://github.com/momentohq/client-sdk-go/compare/v1.39.0...v1.40.0) (2025-12-15)
 
 
