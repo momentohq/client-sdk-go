@@ -15,13 +15,6 @@ func ValidateDisposableTokenExpiry(in ExpiresIn) momentoerrors.MomentoSvcErr {
 			nil,
 		)
 	}
-	if in.Seconds() > 60*60 {
-		return momentoerrors.NewMomentoSvcErr(
-			momentoerrors.InvalidArgumentError,
-			"disposable tokens must expire within 1 hour",
-			nil,
-		)
-	}
 	return nil
 }
 
