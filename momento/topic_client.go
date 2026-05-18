@@ -140,6 +140,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			}
 		}
 		cancelFunction()
+		c.pubSubClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
 		errChan <- momentoerrors.ConvertSvcErr(err)
 		return
 	}
@@ -149,6 +150,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		// The first message to a new subscription will always be a heartbeat.
 	default:
 		cancelFunction()
+		c.pubSubClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
 		errChan <- momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
 			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
