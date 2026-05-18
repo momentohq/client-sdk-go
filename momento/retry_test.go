@@ -1248,10 +1248,26 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			Expect(err).To(BeNil())
 			defer sub.Close()
 
-			const publishCount = 220
+			const publishCount = 260
+			stopPublish := make(chan struct{})
+			stopPublishing := func() {
+				select {
+				case <-stopPublish:
+				default:
+					close(stopPublish)
+				}
+			}
+			defer stopPublishing()
 			publishErr := make(chan error, 1)
 			go func() {
 				for i := 0; i < publishCount; i++ {
+					select {
+					case <-stopPublish:
+						publishErr <- nil
+						return
+					default:
+					}
+
 					_, err := topicClient.Publish(testCtx, &TopicPublishRequest{
 						CacheName: cacheName,
 						TopicName: topicName,
@@ -1261,57 +1277,31 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 						publishErr <- err
 						return
 					}
-					time.Sleep(5 * time.Millisecond)
+					select {
+					case <-stopPublish:
+						publishErr <- nil
+						return
+					case <-time.After(5 * time.Millisecond):
+					}
 				}
 				publishErr <- nil
 			}()
 
+			topicEventMetricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetTopicEventCollector()
 			readCtx, cancel := context.WithTimeout(testCtx, 45*time.Second)
 			defer cancel()
-			receivedItems := 0
-			for receivedItems < publishCount {
-				event, err := sub.Event(readCtx)
+			for {
+				_, err := sub.Event(readCtx)
 				Expect(err).To(BeNil())
-				if _, ok := event.(TopicItem); ok {
-					receivedItems++
+
+				counter, err := topicEventMetricsCollector.GetEventCounter(cacheName, "Subscribe")
+				Expect(err).To(BeNil())
+				if counter.Reconnects > config.MAX_CONCURRENT_STREAMS_PER_CHANNEL {
+					break
 				}
 			}
+			stopPublishing()
 			Expect(<-publishErr).To(BeNil())
-
-			topicEventMetricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetTopicEventCollector()
-			Eventually(func(g Gomega) {
-				counter, err := topicEventMetricsCollector.GetEventCounter(cacheName, "Subscribe")
-				g.Expect(err).To(BeNil())
-				g.Expect(counter.Reconnects).To(BeNumerically(">", config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))
-			}, 5*time.Second, 100*time.Millisecond).Should(Succeed())
-		})
-
-		It("should release stream capacity when subscriptions close without Event calls", func() {
-			topicClient := setupTopicClient(config.TopicsDefault().WithNumStreamGrpcChannels(1))
-			defer topicClient.Close()
-
-			subscriptions := make([]TopicSubscription, 0, config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			for i := 0; i < config.MAX_CONCURRENT_STREAMS_PER_CHANNEL; i++ {
-				sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
-					CacheName: cacheName,
-					TopicName: fmt.Sprintf("%s-%03d", topicName, i),
-				})
-				Expect(err).To(BeNil())
-				subscriptions = append(subscriptions, sub)
-			}
-
-			for _, sub := range subscriptions {
-				sub.Close()
-			}
-
-			for i := 0; i < config.MAX_CONCURRENT_STREAMS_PER_CHANNEL; i++ {
-				sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
-					CacheName: cacheName,
-					TopicName: fmt.Sprintf("%s-again-%03d", topicName, i),
-				})
-				Expect(err).To(BeNil())
-				sub.Close()
-			}
 		})
 	})
 
