@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.2](https://github.com/momentohq/client-sdk-go/compare/v1.40.1...v1.40.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* topic reconnect bug never actually attempted a reconnect, ensure we actually increment our attempt counter ([#674](https://github.com/momentohq/client-sdk-go/issues/674)) ([20f4363](https://github.com/momentohq/client-sdk-go/commit/20f4363f6c441465962809bb3b599abecca70818))
+
 ## [1.40.1](https://github.com/momentohq/client-sdk-go/compare/v1.40.0...v1.40.1) (2026-02-04)
 
 
