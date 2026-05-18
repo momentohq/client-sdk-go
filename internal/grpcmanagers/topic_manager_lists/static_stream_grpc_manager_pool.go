@@ -68,6 +68,23 @@ func (s *staticStreamGrpcManagerPool) GetCurrentActiveStreamsCount() uint64 {
 	return s.currentActiveStreamsCount.Load()
 }
 
+// ReleaseTopicGrpcManager decrements both the per-channel NumActiveSubscriptions counter
+// on the given manager and the pool-wide currentActiveStreamsCount, freeing up the slot
+// so future GetNextTopicGrpcManager calls see capacity. Returns the new per-channel count.
+func (s *staticStreamGrpcManagerPool) ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64 {
+	newCount := manager.NumActiveSubscriptions.Add(-1)
+	for {
+		current := s.currentActiveStreamsCount.Load()
+		if current == 0 {
+			break
+		}
+		if s.currentActiveStreamsCount.CompareAndSwap(current, current-1) {
+			break
+		}
+	}
+	return newCount
+}
+
 // NewStaticStreamGrpcManagerPool creates a new pool with a fixed number of grpc managers for stream pubsub requests.
 func NewStaticStreamGrpcManagerPool(
 	request *models.TopicStreamGrpcManagerRequest,

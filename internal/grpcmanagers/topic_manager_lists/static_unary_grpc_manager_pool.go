@@ -27,6 +27,13 @@ func (list *staticUnaryGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers
 	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))], nil
 }
 
+// ReleaseTopicGrpcManager is a no-op for the unary pool because unary requests
+// don't hold long-lived stream slots and the pool doesn't track per-channel
+// subscription counts.
+func (list *staticUnaryGrpcManagerPool) ReleaseTopicGrpcManager(_ *grpcmanagers.TopicGrpcManager) int64 {
+	return 0
+}
+
 // Close shuts down all the grpc connections in the pool.
 func (list *staticUnaryGrpcManagerPool) Close() {
 	for _, topicManager := range list.grpcManagers {

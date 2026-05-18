@@ -3,6 +3,7 @@ package momento
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -76,6 +77,14 @@ type topicSubscription struct {
 	cancelContext           context.Context
 	cancelFunction          context.CancelFunc
 	retryStrategy           retry.Strategy
+	// released gates the per-stream release so it runs exactly once between
+	// successive allocations. It is set to true when the current stream's slot
+	// is released and reset to false on successful reconnect.
+	released atomic.Bool
+	// closed is set permanently to true by Close(). attemptReconnect checks it
+	// to bail out if Close races in while a reconnect is in flight, so a freshly
+	// allocated stream doesn't leak past Close.
+	closed atomic.Bool
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -211,7 +220,10 @@ func (s *topicSubscription) onTopicEvent(method string, event middleware.TopicSu
 }
 
 func (s *topicSubscription) decrementSubscriptionCount() int64 {
-	return s.topicManager.NumActiveSubscriptions.Add(-1)
+	if !s.released.CompareAndSwap(false, true) {
+		return s.topicManager.NumActiveSubscriptions.Load()
+	}
+	return s.momentoTopicClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(s.topicManager)
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
@@ -221,6 +233,11 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 	}
 	attempt := 1
 	for {
+		if s.closed.Load() {
+			s.log.Info("Subscription closed during reconnect; aborting retry loop")
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+		}
+
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
 			GrpcStatusCode: status.Code(err),
 			GrpcMethod:     "/cache_client.pubsub.Pubsub/Subscribe",
@@ -240,29 +257,52 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		}
 
 		s.log.Info("Attempting reconnecting to client stream")
-		topicManager, subscribeClient, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		topicManager, subscribeClient, cancelContext, cancelFunction, reconnectErr := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
 			SequencePage:                s.lastKnownSequencePage,
 		})
 
-		if err != nil {
+		if reconnectErr != nil {
 			s.log.Warn("Failed to reconnect to stream")
-		} else {
-			s.log.Info("Successfully reconnected to subscription stream")
-			s.topicManager = topicManager
-			s.subscribeClient = subscribeClient
-			s.cancelContext = cancelContext
-			s.cancelFunction = cancelFunction
-			return nil
+			err = reconnectErr
+			attempt++
+			continue
 		}
+
+		s.log.Info("Successfully reconnected to subscription stream")
+		s.topicManager = topicManager
+		s.subscribeClient = subscribeClient
+		s.cancelContext = cancelContext
+		s.cancelFunction = cancelFunction
+		// The new stream has its own release lifecycle; allow the next disconnect
+		// to perform its own decrement.
+		s.released.Store(false)
+
+		// If Close() ran while we were reconnecting, the cancelFunction it called
+		// targeted the *old* (already-cancelled) cancelFunction, and the decrement
+		// it issued was a no-op against the still-true `released` flag. The new
+		// stream we just installed would otherwise leak past Close — tear it down
+		// here.
+		if s.closed.Load() {
+			s.log.Info("Subscription closed during reconnect; tearing down newly established stream")
+			cancelFunction()
+			s.decrementSubscriptionCount()
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+		}
+		return nil
 	}
 }
 
-// Note: number of active subscriptions is decremented in the `Event` method
-// for each of the cases when a stream is closed. We do not decrement here
-// to avoid double counting.
+// Close cancels the stream context and releases the per-channel and pool-wide
+// subscription slots. decrementSubscriptionCount is idempotent (guarded by the
+// `released` flag), so if an in-flight Event() loop also observes the cancel
+// and decrements, the counters stay correct. The `closed` flag is set first so
+// that an in-flight attemptReconnect notices and tears down any new stream it
+// allocates instead of leaking it past Close.
 func (s *topicSubscription) Close() {
+	s.closed.Store(true)
 	s.cancelFunction()
+	s.decrementSubscriptionCount()
 }

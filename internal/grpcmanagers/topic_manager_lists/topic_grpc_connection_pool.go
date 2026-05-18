@@ -12,6 +12,12 @@ type TopicGrpcConnectionPool interface {
 	// GetNextTopicGrpcManager returns the next available TopicGrpcManager from the pool.
 	GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr)
 
+	// ReleaseTopicGrpcManager decrements the per-channel and pool-wide subscription
+	// counters for a manager that is no longer in use, returning the new per-channel
+	// subscription count for logging. For unary pools that do not track these counters,
+	// this is a no-op that returns 0.
+	ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64
+
 	// Close shuts down all the grpc connections in the pool.
 	Close()
 }
