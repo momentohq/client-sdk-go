@@ -125,7 +125,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	subscribeClient, err := topicManager.StreamClient.Subscribe(requestContext, subscriptionRequest)
 
 	if err != nil {
-		topicManager.NumActiveSubscriptions.Add(-1)
+		client.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
 		cancelFunction()
 		if subscribeClient != nil {
 			header, _ = subscribeClient.Header()

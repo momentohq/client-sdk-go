@@ -3,12 +3,15 @@ package momento
 import (
 	"context"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/config/retry"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -64,18 +67,50 @@ type TopicSubscription interface {
 }
 
 type topicSubscription struct {
-	topicManager            *grpcmanagers.TopicGrpcManager
+	// mu guards topicManager, subscribeClient, cancelContext, and cancelFunction
+	// against cross-goroutine reads from Close while attemptReconnect (running
+	// in the Event goroutine) installs a new stream. Within the Event goroutine
+	// these fields are read without mu since reads and writes there are already
+	// sequenced by program order.
+	mu              sync.Mutex
+	topicManager    *grpcmanagers.TopicGrpcManager
+	subscribeClient pb.Pubsub_SubscribeClient
+	cancelContext   context.Context
+	cancelFunction  context.CancelFunc
+
 	topicEventCallback      func(cacheName string, requestName string, event middleware.TopicSubscriptionEventType)
-	subscribeClient         pb.Pubsub_SubscribeClient
 	momentoTopicClient      *pubSubClient
 	cacheName               string
 	topicName               string
 	log                     logger.MomentoLogger
 	lastKnownSequenceNumber uint64
 	lastKnownSequencePage   uint64
-	cancelContext           context.Context
-	cancelFunction          context.CancelFunc
 	retryStrategy           retry.Strategy
+	// released gates the per-stream release so it runs exactly once between
+	// successive allocations. It is set to true when the current stream's slot
+	// is released and reset to false on successful reconnect.
+	released atomic.Bool
+	// closed is set permanently to true by Close(). attemptReconnect checks it
+	// to bail out if Close races in while a reconnect is in flight, so a freshly
+	// allocated stream doesn't leak past Close.
+	closed atomic.Bool
+}
+
+// grpcStatusCode returns the gRPC status code embedded in err, unwrapping a
+// MomentoSvcErr if needed. The first call to attemptReconnect receives a raw
+// gRPC error from Recv(); subsequent retries get a MomentoSvcErr back from
+// topicSubscribe — both need to produce the same code for the retry strategy.
+func grpcStatusCode(err error) codes.Code {
+	if err == nil {
+		return codes.OK
+	}
+	if svcErr, ok := err.(momentoerrors.MomentoSvcErr); ok {
+		if original := svcErr.OriginalErr(); original != nil {
+			return status.Code(original)
+		}
+		return codes.Unknown
+	}
+	return status.Code(err)
 }
 
 func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
@@ -211,7 +246,13 @@ func (s *topicSubscription) onTopicEvent(method string, event middleware.TopicSu
 }
 
 func (s *topicSubscription) decrementSubscriptionCount() int64 {
-	return s.topicManager.NumActiveSubscriptions.Add(-1)
+	s.mu.Lock()
+	mgr := s.topicManager
+	s.mu.Unlock()
+	if !s.released.CompareAndSwap(false, true) {
+		return mgr.NumActiveSubscriptions.Load()
+	}
+	return s.momentoTopicClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(mgr)
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
@@ -221,8 +262,13 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 	}
 	attempt := 1
 	for {
+		if s.closed.Load() {
+			s.log.Info("Subscription closed during reconnect; aborting retry loop")
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+		}
+
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
-			GrpcStatusCode: status.Code(err),
+			GrpcStatusCode: grpcStatusCode(err),
 			GrpcMethod:     "/cache_client.pubsub.Pubsub/Subscribe",
 			AttemptNumber:  attempt,
 		})
@@ -240,29 +286,64 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		}
 
 		s.log.Info("Attempting reconnecting to client stream")
-		topicManager, subscribeClient, cancelContext, cancelFunction, err := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		topicManager, subscribeClient, cancelContext, cancelFunction, reconnectErr := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
 			SequencePage:                s.lastKnownSequencePage,
 		})
 
-		if err != nil {
-			s.log.Warn("Failed to reconnect to stream")
-		} else {
-			s.log.Info("Successfully reconnected to subscription stream")
-			s.topicManager = topicManager
-			s.subscribeClient = subscribeClient
-			s.cancelContext = cancelContext
-			s.cancelFunction = cancelFunction
-			return nil
+		if reconnectErr != nil {
+			s.log.Warn("Failed to reconnect to stream: %s", reconnectErr.Error())
+			err = reconnectErr
+			attempt++
+			continue
 		}
+
+		s.log.Info("Successfully reconnected to subscription stream")
+		// Install the new stream under the mutex so that a concurrent Close
+		// observes either the old state or the new state, never a torn mix.
+		// Capture the closed flag under the same critical section so that any
+		// Close that ran before we unlock is guaranteed to be seen here.
+		s.mu.Lock()
+		s.topicManager = topicManager
+		s.subscribeClient = subscribeClient
+		s.cancelContext = cancelContext
+		s.cancelFunction = cancelFunction
+		// The new stream has its own release lifecycle; allow the next disconnect
+		// to perform its own decrement.
+		s.released.Store(false)
+		wasClosed := s.closed.Load()
+		s.mu.Unlock()
+
+		// If Close() ran while we were reconnecting, the cancelFunction it called
+		// targeted the *old* (already-cancelled) cancelFunction, and the decrement
+		// it issued was a no-op against the still-true `released` flag. The new
+		// stream we just installed would otherwise leak past Close — tear it down
+		// here.
+		if wasClosed {
+			s.log.Info("Subscription closed during reconnect; tearing down newly established stream")
+			cancelFunction()
+			s.decrementSubscriptionCount()
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+		}
+		return nil
 	}
 }
 
-// Note: number of active subscriptions is decremented in the `Event` method
-// for each of the cases when a stream is closed. We do not decrement here
-// to avoid double counting.
+// Close cancels the stream context and releases the per-channel and pool-wide
+// subscription slots. decrementSubscriptionCount is idempotent (guarded by the
+// `released` flag), so if an in-flight Event() loop also observes the cancel
+// and decrements, the counters stay correct. The `closed` flag is set first so
+// that an in-flight attemptReconnect notices and tears down any new stream it
+// allocates instead of leaking it past Close. The cancel function is snapshotted
+// under mu so a concurrent attemptReconnect can't reassign the field while we
+// read it.
 func (s *topicSubscription) Close() {
-	s.cancelFunction()
+	s.closed.Store(true)
+	s.mu.Lock()
+	cancel := s.cancelFunction
+	s.mu.Unlock()
+	cancel()
+	s.decrementSubscriptionCount()
 }

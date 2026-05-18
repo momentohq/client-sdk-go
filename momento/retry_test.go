@@ -1229,6 +1229,80 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			err := doPubSub(topicClient, publishedValues)
 			Expect(err).To(HaveMomentoErrorCode(TimeoutError))
 		})
+
+		It("should keep reconnecting after more reconnects than one stream channel capacity", func() {
+			msgLimit := 2
+			status := helpers.MomentoErrorCodeToMomentoLocalMetadataValue(momentoerrors.ServerUnavailableError)
+			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{
+				status:                  &status,
+				streamErrorMessageLimit: &msgLimit,
+				streamErrorRpcList:      &[]string{"topic-subscribe"},
+			})
+			topicClient := setupTopicClient(clientConfig.WithNumStreamGrpcChannels(1))
+			defer topicClient.Close()
+
+			sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
+				CacheName: cacheName,
+				TopicName: topicName,
+			})
+			Expect(err).To(BeNil())
+			defer sub.Close()
+
+			const publishCount = 260
+			stopPublish := make(chan struct{})
+			stopPublishing := func() {
+				select {
+				case <-stopPublish:
+				default:
+					close(stopPublish)
+				}
+			}
+			defer stopPublishing()
+			publishErr := make(chan error, 1)
+			go func() {
+				for i := 0; i < publishCount; i++ {
+					select {
+					case <-stopPublish:
+						publishErr <- nil
+						return
+					default:
+					}
+
+					_, err := topicClient.Publish(testCtx, &TopicPublishRequest{
+						CacheName: cacheName,
+						TopicName: topicName,
+						Value:     String(fmt.Sprintf("value-%03d", i)),
+					})
+					if err != nil {
+						publishErr <- err
+						return
+					}
+					select {
+					case <-stopPublish:
+						publishErr <- nil
+						return
+					case <-time.After(5 * time.Millisecond):
+					}
+				}
+				publishErr <- nil
+			}()
+
+			topicEventMetricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetTopicEventCollector()
+			readCtx, cancel := context.WithTimeout(testCtx, 45*time.Second)
+			defer cancel()
+			for {
+				_, err := sub.Event(readCtx)
+				Expect(err).To(BeNil())
+
+				counter, err := topicEventMetricsCollector.GetEventCounter(cacheName, "Subscribe")
+				Expect(err).To(BeNil())
+				if counter.Reconnects > config.MAX_CONCURRENT_STREAMS_PER_CHANNEL {
+					break
+				}
+			}
+			stopPublishing()
+			Expect(<-publishErr).To(BeNil())
+		})
 	})
 
 	Describe("Network Outage", func() {

@@ -80,7 +80,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	// If the first message is not received within this time, we will cancel the subscription.
 	firstMessageCtx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
-	subChan := make(chan topicSubscription, 1)
+	subChan := make(chan *topicSubscription, 1)
 	errChan := make(chan error, 1)
 
 	// Send the subscribe request in a separate goroutine to avoid blocking the main thread.
@@ -100,13 +100,13 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 			nil,
 		)
 	case subscription := <-subChan:
-		return &subscription, nil
+		return subscription, nil
 	case err := <-errChan:
 		return nil, err
 	}
 }
 
-func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan topicSubscription, errChan chan error) {
+func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
 	var firstMsg *pb.XSubscriptionItem
 	topicManager, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
 		CacheName:                   request.CacheName,
@@ -140,6 +140,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			}
 		}
 		cancelFunction()
+		c.pubSubClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
 		errChan <- momentoerrors.ConvertSvcErr(err)
 		return
 	}
@@ -149,6 +150,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		// The first message to a new subscription will always be a heartbeat.
 	default:
 		cancelFunction()
+		c.pubSubClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
 		errChan <- momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
 			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
@@ -166,7 +168,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			break
 		}
 	}
-	subChan <- topicSubscription{
+	subChan <- &topicSubscription{
 		topicManager:       topicManager,
 		topicEventCallback: topicEventCallback,
 		subscribeClient:    subscribeClient,

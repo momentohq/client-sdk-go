@@ -71,6 +71,23 @@ func (d *dynamicStreamGrpcManagerPool) GetCurrentActiveStreamsCount() uint64 {
 	return d.currentActiveStreamsCount.Load()
 }
 
+// ReleaseTopicGrpcManager decrements both the per-channel NumActiveSubscriptions counter
+// on the given manager and the pool-wide currentActiveStreamsCount, freeing up the slot
+// so future GetNextTopicGrpcManager calls see capacity. Returns the new per-channel count.
+func (d *dynamicStreamGrpcManagerPool) ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64 {
+	newCount := manager.NumActiveSubscriptions.Add(-1)
+	for {
+		current := d.currentActiveStreamsCount.Load()
+		if current == 0 {
+			break
+		}
+		if d.currentActiveStreamsCount.CompareAndSwap(current, current-1) {
+			break
+		}
+	}
+	return newCount
+}
+
 // GetCurrentNumberOfGrpcManagers returns the current number of grpc managers in the pool.
 func (d *dynamicStreamGrpcManagerPool) GetCurrentNumberOfGrpcManagers() int {
 	return len(d.grpcManagers)
