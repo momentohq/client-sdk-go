@@ -265,7 +265,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		})
 
 		if reconnectErr != nil {
-			s.log.Warn("Failed to reconnect to stream")
+			s.log.Warn("Failed to reconnect to stream: %s", reconnectErr.Error())
 			err = reconnectErr
 			attempt++
 			continue
