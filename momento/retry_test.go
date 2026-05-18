@@ -1229,6 +1229,90 @@ var _ = Describe("retry eligibility-strategy", Label(RETRY_LABEL, MOMENTO_LOCAL_
 			err := doPubSub(topicClient, publishedValues)
 			Expect(err).To(HaveMomentoErrorCode(TimeoutError))
 		})
+
+		It("should keep reconnecting after more reconnects than one stream channel capacity", func() {
+			msgLimit := 2
+			status := helpers.MomentoErrorCodeToMomentoLocalMetadataValue(momentoerrors.ServerUnavailableError)
+			clientConfig, retryMiddleware := getClientConfig(&clientConfigProps{
+				status:                  &status,
+				streamErrorMessageLimit: &msgLimit,
+				streamErrorRpcList:      &[]string{"topic-subscribe"},
+			})
+			topicClient := setupTopicClient(clientConfig.WithNumStreamGrpcChannels(1))
+			defer topicClient.Close()
+
+			sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
+				CacheName: cacheName,
+				TopicName: topicName,
+			})
+			Expect(err).To(BeNil())
+			defer sub.Close()
+
+			const publishCount = 220
+			publishErr := make(chan error, 1)
+			go func() {
+				for i := 0; i < publishCount; i++ {
+					_, err := topicClient.Publish(testCtx, &TopicPublishRequest{
+						CacheName: cacheName,
+						TopicName: topicName,
+						Value:     String(fmt.Sprintf("value-%03d", i)),
+					})
+					if err != nil {
+						publishErr <- err
+						return
+					}
+					time.Sleep(5 * time.Millisecond)
+				}
+				publishErr <- nil
+			}()
+
+			readCtx, cancel := context.WithTimeout(testCtx, 45*time.Second)
+			defer cancel()
+			receivedItems := 0
+			for receivedItems < publishCount {
+				event, err := sub.Event(readCtx)
+				Expect(err).To(BeNil())
+				if _, ok := event.(TopicItem); ok {
+					receivedItems++
+				}
+			}
+			Expect(<-publishErr).To(BeNil())
+
+			topicEventMetricsCollector := *retryMiddleware.(helpers.MomentoLocalMiddleware).GetTopicEventCollector()
+			Eventually(func(g Gomega) {
+				counter, err := topicEventMetricsCollector.GetEventCounter(cacheName, "Subscribe")
+				g.Expect(err).To(BeNil())
+				g.Expect(counter.Reconnects).To(BeNumerically(">", config.MAX_CONCURRENT_STREAMS_PER_CHANNEL))
+			}, 5*time.Second, 100*time.Millisecond).Should(Succeed())
+		})
+
+		It("should release stream capacity when subscriptions close without Event calls", func() {
+			topicClient := setupTopicClient(config.TopicsDefault().WithNumStreamGrpcChannels(1))
+			defer topicClient.Close()
+
+			subscriptions := make([]TopicSubscription, 0, config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+			for i := 0; i < config.MAX_CONCURRENT_STREAMS_PER_CHANNEL; i++ {
+				sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
+					CacheName: cacheName,
+					TopicName: fmt.Sprintf("%s-%03d", topicName, i),
+				})
+				Expect(err).To(BeNil())
+				subscriptions = append(subscriptions, sub)
+			}
+
+			for _, sub := range subscriptions {
+				sub.Close()
+			}
+
+			for i := 0; i < config.MAX_CONCURRENT_STREAMS_PER_CHANNEL; i++ {
+				sub, err := topicClient.Subscribe(testCtx, &TopicSubscribeRequest{
+					CacheName: cacheName,
+					TopicName: fmt.Sprintf("%s-again-%03d", topicName, i),
+				})
+				Expect(err).To(BeNil())
+				sub.Close()
+			}
+		})
 	})
 
 	Describe("Network Outage", func() {
