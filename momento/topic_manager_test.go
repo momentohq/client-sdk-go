@@ -56,6 +56,8 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 		}
 	})
 
+	// These specs leak reservations on purpose: they fill the pool to assert
+	// its accounting. The pool is torn down via Close() at the end of each spec.
 	Describe("StaticStreamManagerList", func() {
 		It("Get one new stream at a time until max concurrent streams reached", func() {
 			numGrpcChannels := uint32(2)
@@ -72,7 +74,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				Expect(err).ToNot(HaveOccurred())
 				Expect(streamManager).NotTo(BeNil())
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+				subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -137,7 +139,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					Expect(err).ToNot(HaveOccurred())
 					Expect(streamManager).NotTo(BeNil())
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+					subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -197,7 +199,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					Expect(err).ToNot(HaveOccurred())
 					Expect(streamManager).NotTo(BeNil())
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+					subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -260,7 +262,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					} else {
 						Expect(streamManager).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+						subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -324,7 +326,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				Expect(err).ToNot(HaveOccurred())
 				Expect(streamManager).NotTo(BeNil())
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+				subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -395,7 +397,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					Expect(err).ToNot(HaveOccurred())
 					Expect(streamManager).NotTo(BeNil())
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+					subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -461,7 +463,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 						Expect(err).ToNot(HaveOccurred())
 						Expect(streamManager).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+						subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -535,7 +537,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 						} else {
 							Expect(streamManager).NotTo(BeNil())
 
-							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+							subscribeClient, subscribeErr := streamManager.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 							Expect(subscribeErr).ToNot(HaveOccurred())
 							Expect(subscribeClient).NotTo(BeNil())
 

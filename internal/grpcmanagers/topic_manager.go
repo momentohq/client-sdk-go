@@ -45,6 +45,8 @@ func NewStreamTopicGrpcManager(request *models.TopicStreamGrpcManagerRequest) (*
 }
 
 func (topicManager *TopicGrpcManager) Close() momentoerrors.MomentoSvcErr {
-	topicManager.NumActiveSubscriptions.Store(0)
+	// Don't reset NumActiveSubscriptions: outstanding Reservation.Release
+	// calls may still decrement it after Close, and a reset would race with
+	// them and push the counter negative.
 	return momentoerrors.ConvertSvcErr(topicManager.Conn.Close())
 }

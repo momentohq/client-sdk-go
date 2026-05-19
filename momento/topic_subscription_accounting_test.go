@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/retry"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers/topic_manager_lists"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"google.golang.org/grpc"
@@ -30,13 +32,14 @@ func newTestTopicGrpcConnectionPool(streamClient pb.PubsubClient) *testTopicGrpc
 	}
 }
 
-func (p *testTopicGrpcConnectionPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
+func (p *testTopicGrpcConnectionPool) GetNextTopicGrpcManager() (*topic_manager_lists.Reservation, momentoerrors.MomentoSvcErr) {
 	p.manager.NumActiveSubscriptions.Add(1)
 	p.activeCount.Add(1)
-	return p.manager, nil
+	return topic_manager_lists.NewReservation(p.manager, p.releaseManager), nil
 }
 
-func (p *testTopicGrpcConnectionPool) ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64 {
+// releaseManager mirrors the real stream pool's release for accounting.
+func (p *testTopicGrpcConnectionPool) releaseManager(manager *grpcmanagers.TopicGrpcManager) int64 {
 	p.releaseCount.Add(1)
 	p.activeCount.Add(-1)
 	return manager.NumActiveSubscriptions.Add(-1)
@@ -86,7 +89,29 @@ func (alwaysRetryStrategy) DetermineWhenToRetry(retry.StrategyProps) *int {
 	return &delay
 }
 
+// giveUpAfterRetryStrategy retries up to `attempts` times, then returns nil
+// to signal give-up.
+type giveUpAfterRetryStrategy struct {
+	attempts int
+}
+
+func (g giveUpAfterRetryStrategy) DetermineWhenToRetry(props retry.StrategyProps) *int {
+	if props.AttemptNumber > g.attempts {
+		return nil
+	}
+	delay := 0
+	return &delay
+}
+
 func newAccountingTestClient(streamClient pb.PubsubClient, timeout time.Duration) (defaultTopicClient, *testTopicGrpcConnectionPool) {
+	return newAccountingTestClientWithStrategy(streamClient, timeout, alwaysRetryStrategy{})
+}
+
+func newAccountingTestClientWithStrategy(
+	streamClient pb.PubsubClient,
+	timeout time.Duration,
+	strategy retry.Strategy,
+) (defaultTopicClient, *testTopicGrpcConnectionPool) {
 	pool := newTestTopicGrpcConnectionPool(streamClient)
 	client := defaultTopicClient{
 		pubSubClient: &pubSubClient{
@@ -94,7 +119,7 @@ func newAccountingTestClient(streamClient pb.PubsubClient, timeout time.Duration
 		},
 		log:            logger.NewNoopMomentoLoggerFactory().GetLogger("topic-subscription-accounting-test"),
 		requestTimeout: timeout,
-		retryStrategy:  alwaysRetryStrategy{},
+		retryStrategy:  strategy,
 	}
 	return client, pool
 }
@@ -147,7 +172,7 @@ func TestTopicSubscribeReleasesPoolCountersWhenStreamOpenFails(t *testing.T) {
 	_, pool := newAccountingTestClient(streamClient, time.Second)
 	client := &pubSubClient{streamGrpcConnectionPool: pool}
 
-	_, _, _, _, err := client.topicSubscribe(context.Background(), testSubscribeRequest())
+	_, err := client.topicSubscribe(context.Background(), testSubscribeRequest())
 	if err == nil {
 		t.Fatal("expected topicSubscribe to return an error")
 	}
@@ -217,6 +242,155 @@ func TestTopicSubscriptionCloseReleasesPoolCountersWithoutEvent(t *testing.T) {
 	assertAccounting(t, pool, 0)
 }
 
+// TestTopicSubscriptionCloseDuringReconnectTearsDownNewStream covers the
+// close-during-reconnect race: Close sets closed=true while attemptReconnect
+// holds a new Reservation. The post-Store check must release that new
+// Reservation rather than leaking it. The subscribe function is gated so
+// Close runs deterministically inside the race window.
+func TestTopicSubscriptionCloseDuringReconnectTearsDownNewStream(t *testing.T) {
+	reconnectEntered := make(chan struct{})
+	unblockReconnect := make(chan struct{})
+	var subscribeCalls atomic.Uint64
+
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			call := subscribeCalls.Add(1)
+			switch call {
+			case 1:
+				// Handshake heartbeat, then a disconnect to drive Event into
+				// attemptReconnect.
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: status.Error(codes.Unavailable, "disconnected")},
+					},
+				}, nil
+			case 2:
+				// Reconnect: signal the test that a new Reservation is held,
+				// then block so Close can race with this in-flight reconnect.
+				close(reconnectEntered)
+				<-unblockReconnect
+				return &testSubscribeClient{
+					results: []recvResult{{item: heartbeatItem()}},
+				}, nil
+			default:
+				return nil, status.Error(codes.Canceled, "test: subscribe should not be called after Close")
+			}
+		},
+	}
+
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, err := sub.Event(context.Background())
+		eventDone <- err
+	}()
+
+	<-reconnectEntered
+
+	// Close while reconnect is mid-flight. Sets closed=true; the old
+	// Reservation was already released by Event before attemptReconnect ran.
+	sub.Close()
+
+	// Let reconnect proceed. The post-Store check observes closed=true and
+	// releases the new Reservation.
+	close(unblockReconnect)
+
+	if eventErr := <-eventDone; eventErr == nil {
+		t.Fatal("expected Event to return an error after close-during-reconnect")
+	}
+	assertAccounting(t, pool, 0)
+}
+
+// TestManyConcurrentSubscriptionsKeepsPoolBalanced stresses the pool counter
+// with parallel Subscribe and Close calls.
+func TestManyConcurrentSubscriptionsKeepsPoolBalanced(t *testing.T) {
+	const numSubs = 100
+
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	subs := make([]TopicSubscription, numSubs)
+	var wg sync.WaitGroup
+	wg.Add(numSubs)
+	for i := 0; i < numSubs; i++ {
+		go func(i int) {
+			defer wg.Done()
+			sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+			if err != nil {
+				t.Errorf("Subscribe %d returned error: %v", i, err)
+				return
+			}
+			subs[i] = sub
+		}(i)
+	}
+	wg.Wait()
+	assertAccounting(t, pool, numSubs)
+
+	wg.Add(numSubs)
+	for i := 0; i < numSubs; i++ {
+		go func(i int) {
+			defer wg.Done()
+			if subs[i] != nil {
+				subs[i].Close()
+			}
+		}(i)
+	}
+	wg.Wait()
+	assertAccounting(t, pool, 0)
+}
+
+// TestConcurrentCloseOnSameSubscription verifies many goroutines calling
+// Close on the same subscription release the pool slot exactly once.
+func TestConcurrentCloseOnSameSubscription(t *testing.T) {
+	const goroutines = 64
+
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			<-start
+			sub.Close()
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	assertAccounting(t, pool, 0)
+	if got := pool.releaseCount.Load(); got != 1 {
+		t.Fatalf("releaseCount = %d, want 1 (concurrent Close should release exactly once)", got)
+	}
+}
+
 func TestTopicSubscriptionReconnectKeepsPoolCountersBalanced(t *testing.T) {
 	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
 	var subscribeCalls atomic.Uint64
@@ -261,3 +435,89 @@ func TestTopicSubscriptionReconnectKeepsPoolCountersBalanced(t *testing.T) {
 	sub.Close()
 	assertAccounting(t, pool, 0)
 }
+
+// TestTopicSubscriptionReconnectGiveUpReleasesPoolCounters drives
+// attemptReconnect to give up after the retry strategy returns nil. Counters
+// must be balanced when Event surfaces the error, and a subsequent Close
+// must be a no-op on the already-released Reservation.
+func TestTopicSubscriptionReconnectGiveUpReleasesPoolCounters(t *testing.T) {
+	const allowedAttempts = 3
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	var subscribeCalls atomic.Uint64
+
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			call := subscribeCalls.Add(1)
+			if call == 1 {
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: disconnectErr},
+					},
+				}, nil
+			}
+			// Every reconnect attempt fails so the retry strategy is exhausted.
+			return nil, disconnectErr
+		},
+	}
+	client, pool := newAccountingTestClientWithStrategy(
+		streamClient,
+		time.Second,
+		giveUpAfterRetryStrategy{attempts: allowedAttempts},
+	)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	_, eventErr := sub.Event(context.Background())
+	if eventErr == nil {
+		t.Fatal("expected Event to surface the give-up error from attemptReconnect")
+	}
+
+	// Original slot released by Event before reconnect; each failed reconnect
+	// attempt released its slot on the early-return path.
+	assertAccounting(t, pool, 0)
+	if got := pool.releaseCount.Load(); got == 0 {
+		t.Fatal("expected at least one release after subscribe + give-up")
+	}
+
+	// Close after give-up must be a no-op and must not panic.
+	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicPublishUnaryReleasesReservationOncePerCall verifies the unary
+// path's defer reservation.Release() runs exactly once per publish.
+func TestTopicPublishUnaryReleasesReservationOncePerCall(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return nil, status.Error(codes.Internal, "Subscribe should not be called from a publish-only test")
+		},
+	}
+	pool := newTestTopicGrpcConnectionPool(streamClient)
+	client := &pubSubClient{
+		unaryGrpcConnectionPool: pool,
+		log:                     logger.NewNoopMomentoLoggerFactory().GetLogger("unary-publish-test"),
+		requestTimeout:          time.Second,
+	}
+
+	const publishCount = 50
+	for i := 0; i < publishCount; i++ {
+		err := client.topicPublish(context.Background(), &TopicPublishRequest{
+			CacheName: "cache",
+			TopicName: "topic",
+			Value:     String("payload"),
+		})
+		if err != nil {
+			t.Fatalf("topicPublish %d returned error: %v", i, err)
+		}
+	}
+
+	if got := pool.releaseCount.Load(); got != publishCount {
+		t.Fatalf("releaseCount = %d, want %d (exactly one Release per publish)", got, publishCount)
+	}
+}
+
