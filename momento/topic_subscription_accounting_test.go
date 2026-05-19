@@ -520,4 +520,3 @@ func TestTopicPublishUnaryReleasesReservationOncePerCall(t *testing.T) {
 		t.Fatalf("releaseCount = %d, want %d (exactly one Release per publish)", got, publishCount)
 	}
 }
-
