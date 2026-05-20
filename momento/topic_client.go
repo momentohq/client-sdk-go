@@ -92,15 +92,25 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	subChan := make(chan *topicSubscription, 1)
 	errChan := make(chan error, 1)
 
-	go c.sendSubscribe(ctx, request, subChan, errChan)
+	// sendSubscribe opens the stream in the background; firstMessageCtx is its
+	// watchdog for the first-heartbeat handshake.
+	go c.sendSubscribe(ctx, firstMessageCtx, request, subChan, errChan)
 	select {
 	case <-ctx.Done():
+		// sendSubscribe's stream context is a child of ctx, so Recv will
+		// unblock and the error path releases the slot. The drainer handles
+		// the case where Recv landed a heartbeat first.
+		go drainAndCloseSubscription(subChan, errChan)
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.CanceledError,
 			"subscribe request context was canceled",
 			ctx.Err(),
 		)
 	case <-firstMessageCtx.Done():
+		// First-heartbeat timeout. The watchdog will cancel the stream; the
+		// drainer closes any subscription built between the cancel and the
+		// watchdog firing.
+		go drainAndCloseSubscription(subChan, errChan)
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.TimeoutError,
 			"subscription did not receive first message within the expected time",
@@ -113,7 +123,21 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	}
 }
 
-func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
+// drainAndCloseSubscription closes a subscription that sendSubscribe delivers
+// on subChan after Subscribe has already returned via the timeout or
+// cancellation path. Without it the slot would leak.
+func drainAndCloseSubscription(subChan chan *topicSubscription, errChan chan error) {
+	select {
+	case sub := <-subChan:
+		if sub != nil {
+			sub.Close()
+		}
+	case <-errChan:
+		// Error path in sendSubscribe already released the slot.
+	}
+}
+
+func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessageCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
 	state, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
 		CacheName:                   request.CacheName,
 		TopicName:                   request.TopicName,
@@ -138,8 +162,28 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		errChan <- err
 	}
 
+	// Watchdog: cancel the stream if firstMessageCtx fires before the first
+	// message arrives. The inner re-check makes the cancel deterministic when
+	// both channels are ready — if firstMessageDone is closed, the message
+	// arrived first and the stream stays live.
+	firstMessageDone := make(chan struct{})
+	go func() {
+		select {
+		case <-firstMessageDone:
+			return
+		case <-firstMessageCtx.Done():
+			select {
+			case <-firstMessageDone:
+				return
+			default:
+				state.cancelFunction()
+			}
+		}
+	}()
+
 	// Ping the stream to surface a nice error if the cache does not exist.
 	firstMsg, err := state.subscribeClient.Recv()
+	close(firstMessageDone)
 	if err != nil {
 		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
 

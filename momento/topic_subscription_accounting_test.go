@@ -1231,3 +1231,100 @@ func TestTopicPublishUnaryReleasesReservationOncePerCall(t *testing.T) {
 type unsupportedTopicValue struct{}
 
 func (unsupportedTopicValue) isTopicValue() {}
+
+// TestSubscribeWatchdogDoesNotCancelLiveSubscription guards the sendSubscribe
+// watchdog race: when both firstMessageDone and firstMessageCtx are ready by
+// the time the watchdog wakes, Go's select picks randomly. Without the inner
+// re-check of firstMessageDone, ~half of those wakeups cancel a subscription
+// that was already handed back to the caller. Concurrent Subscribe calls
+// force the watchdog to be descheduled across the race window.
+func TestSubscribeWatchdogDoesNotCancelLiveSubscription(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	// 50ms gives sendSubscribe time to populate subChan before the timeout
+	// fires, while still leaving defer cancel() racing the watchdog.
+	client, _ := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	const goroutines = 64
+	const perGoroutine = 50
+
+	var wg sync.WaitGroup
+	var successes atomic.Int64
+	var cancelled atomic.Int64
+
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < perGoroutine; i++ {
+				sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+				if err != nil {
+					continue
+				}
+				successes.Add(1)
+				ts := sub.(*topicSubscription)
+				state := ts.state.Load()
+				select {
+				case <-state.cancelContext.Done():
+					cancelled.Add(1)
+				default:
+				}
+				sub.Close()
+			}
+		}()
+	}
+	wg.Wait()
+
+	if cancelled.Load() > 0 {
+		t.Fatalf("watchdog cancelled %d of %d returned subscriptions (race condition)",
+			cancelled.Load(), successes.Load())
+	}
+	if successes.Load() == 0 {
+		t.Fatal("no Subscribe calls succeeded; test is vacuous")
+	}
+}
+
+// TestTopicSubscribeReleasesSlotOnFirstMessageTimeout exercises the
+// firstMessageCtx timeout path. Recv blocks on the stream context (matching
+// production gRPC behavior); the watchdog cancels it after the timeout fires
+// and the error path releases the slot.
+func TestTopicSubscribeReleasesSlotOnFirstMessageTimeout(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				recv: func() (*pb.XSubscriptionItem, error) {
+					<-ctx.Done()
+					return nil, ctx.Err()
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err == nil {
+		t.Fatal("expected Subscribe to return a timeout error")
+	}
+	if sub != nil {
+		t.Fatal("expected Subscribe to return a nil subscription on timeout")
+	}
+
+	// Cleanup runs in sendSubscribe's goroutine after Recv returns; poll until
+	// it lands.
+	deadline := time.Now().Add(200 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		if pool.activeCount.Load() == 0 && pool.manager.NumActiveSubscriptions.Load() == 0 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	assertAccounting(t, pool, 0)
+	if got := pool.releaseCount.Load(); got != 1 {
+		t.Fatalf("releaseCount = %d, want 1 (exactly one Release for the cleanup path)", got)
+	}
+}
