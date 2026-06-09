@@ -174,6 +174,8 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		topicName:          request.TopicName,
 		log:                c.log,
 		retryStrategy:      c.retryStrategy,
+		streamParentCtx:    requestCtx,
+		closedSignal:       make(chan struct{}),
 	}
 	sub.state.Store(state)
 	subChan <- sub

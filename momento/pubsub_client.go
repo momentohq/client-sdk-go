@@ -95,7 +95,7 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 }
 
 // topicSubscribe reserves a stream slot and opens a gRPC subscribe stream
-// against it. Failures release the slot and cancel the request context
+// against it. Failures cancel the request context and release the slot
 // before returning.
 func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*streamState, error) {
 	reservation, reservationErr := client.streamGrpcConnectionPool.GetNextTopicGrpcManager()
@@ -124,8 +124,10 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	var header, trailer metadata.MD
 	subscribeClient, err := reservation.Manager().StreamClient.Subscribe(requestContext, subscriptionRequest)
 	if err != nil {
-		reservation.Release()
+		// Cancel before releasing, like every other cleanup path, so the
+		// stream's resources tear down before the slot is reusable.
 		cancelFunction()
+		reservation.Release()
 		if subscribeClient != nil {
 			header, _ = subscribeClient.Header()
 			trailer = subscribeClient.Trailer()

@@ -557,6 +557,150 @@ func TestTopicSubscriptionReconnectAbortsWhenContextCanceled(t *testing.T) {
 	assertAccounting(t, pool, 0)
 }
 
+// TestTopicSubscriptionEventContextCancelTearsDownStream verifies a ctx error
+// from Event is terminal: the slot is released AND the stream context is
+// canceled, so the pool's freed slot isn't backed by a still-open stream.
+func TestTopicSubscriptionEventContextCancelTearsDownStream(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	canceledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, eventErr := sub.Event(canceledCtx); eventErr == nil {
+		t.Fatal("expected Event to return an error for a canceled context")
+	}
+	assertAccounting(t, pool, 0)
+
+	state := sub.(*topicSubscription).state.Load()
+	if state.cancelContext.Err() == nil {
+		t.Fatal("expected the stream context to be torn down with the released slot")
+	}
+}
+
+// TestTopicSubscriptionCloseInterruptsReconnectBackoff verifies Close wakes a
+// reconnect backoff wait instead of letting it sleep out the full interval.
+func TestTopicSubscriptionCloseInterruptsReconnectBackoff(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	var subscribeCalls atomic.Uint64
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			if subscribeCalls.Add(1) == 1 {
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: disconnectErr},
+					},
+				}, nil
+			}
+			return nil, disconnectErr
+		},
+	}
+	client, pool := newAccountingTestClientWithStrategy(
+		streamClient,
+		time.Second,
+		fixedBackoffRetryStrategy{backoffMs: 10 * 60 * 1000},
+	)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(context.Background())
+		eventDone <- eventErr
+	}()
+
+	// Let Event hit the disconnect and enter the 10-minute backoff, then Close.
+	time.Sleep(50 * time.Millisecond)
+	sub.Close()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after Close")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s of Close (backoff not interrupted)")
+	}
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicSubscriptionReconnectUsesSubscribeContext pins stream-context
+// lineage: reconnected streams are parented to the ctx passed to Subscribe,
+// so canceling the Event ctx that happened to drive the reconnect must not
+// kill the replacement stream.
+func TestTopicSubscriptionReconnectUsesSubscribeContext(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	var subscribeCalls atomic.Uint64
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			if subscribeCalls.Add(1) == 1 {
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: disconnectErr},
+					},
+				}, nil
+			}
+			return &testSubscribeClient{
+				results: []recvResult{
+					{item: topicItem(2)},
+					{item: topicItem(3)},
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	// This Event call drives the disconnect -> reconnect -> item(2) sequence.
+	eventCtx, cancelEventCtx := context.WithCancel(context.Background())
+	event, eventErr := sub.Event(eventCtx)
+	if eventErr != nil {
+		t.Fatalf("Event returned error: %v", eventErr)
+	}
+	if _, ok := event.(TopicItem); !ok {
+		t.Fatalf("Event = %T, want TopicItem after reconnect", event)
+	}
+	assertAccounting(t, pool, 1)
+
+	// Cancel the ctx that drove the reconnect; the reconnected stream must
+	// survive because it is parented to the Subscribe-time ctx.
+	cancelEventCtx()
+
+	event, eventErr = sub.Event(context.Background())
+	if eventErr != nil {
+		t.Fatalf("Event after canceling the reconnect-driving ctx returned error: %v", eventErr)
+	}
+	if _, ok := event.(TopicItem); !ok {
+		t.Fatalf("Event = %T, want TopicItem from the surviving stream", event)
+	}
+	assertAccounting(t, pool, 1)
+
+	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
 // TestTopicPublishUnaryReleasesReservationOncePerCall verifies the unary
 // path's defer reservation.Release() runs exactly once per publish.
 func TestTopicPublishUnaryReleasesReservationOncePerCall(t *testing.T) {
