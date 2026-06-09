@@ -162,6 +162,18 @@ func topicItem(sequenceNumber uint64) *pb.XSubscriptionItem {
 	}
 }
 
+// assertErrorCode fails unless err is a MomentoSvcErr carrying the given code.
+func assertErrorCode(t *testing.T, err error, code string) {
+	t.Helper()
+	svcErr, ok := err.(momentoerrors.MomentoSvcErr)
+	if !ok {
+		t.Fatalf("error %v (%T) is not a MomentoSvcErr", err, err)
+	}
+	if svcErr.Code() != code {
+		t.Fatalf("error code = %s, want %s (err: %v)", svcErr.Code(), code, err)
+	}
+}
+
 func assertAccounting(t *testing.T, pool *testTopicGrpcConnectionPool, activeCount int64) {
 	t.Helper()
 	if got := pool.activeCount.Load(); got != activeCount {
@@ -205,6 +217,7 @@ func TestSubscribeReleasesPoolCountersWhenFirstMessageRecvFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected Subscribe to return an error")
 	}
+	assertErrorCode(t, err, momentoerrors.ServerUnavailableError)
 	if sub != nil {
 		t.Fatal("expected subscription to be nil")
 	}
@@ -225,6 +238,7 @@ func TestSubscribeReleasesPoolCountersWhenFirstMessageIsNotHeartbeat(t *testing.
 	if err == nil {
 		t.Fatal("expected Subscribe to return an error")
 	}
+	assertErrorCode(t, err, momentoerrors.InternalServerError)
 	if sub != nil {
 		t.Fatal("expected subscription to be nil")
 	}
@@ -311,9 +325,11 @@ func TestTopicSubscriptionCloseDuringReconnectTearsDownNewStream(t *testing.T) {
 	// releases the new Reservation.
 	close(unblockReconnect)
 
-	if eventErr := <-eventDone; eventErr == nil {
+	eventErr := <-eventDone
+	if eventErr == nil {
 		t.Fatal("expected Event to return an error after close-during-reconnect")
 	}
+	assertErrorCode(t, eventErr, momentoerrors.CanceledError)
 	assertAccounting(t, pool, 0)
 }
 
@@ -329,7 +345,9 @@ func TestManyConcurrentSubscriptionsKeepsPoolBalanced(t *testing.T) {
 			}, nil
 		},
 	}
-	client, pool := newAccountingTestClient(streamClient, time.Second)
+	// Generous timeout: the fake handshake is synchronous, so the watchdog
+	// must never fire even on an oversubscribed -race CI runner.
+	client, pool := newAccountingTestClient(streamClient, 30*time.Second)
 
 	subs := make([]TopicSubscription, numSubs)
 	var wg sync.WaitGroup
@@ -373,7 +391,7 @@ func TestConcurrentCloseOnSameSubscription(t *testing.T) {
 			}, nil
 		},
 	}
-	client, pool := newAccountingTestClient(streamClient, time.Second)
+	client, pool := newAccountingTestClient(streamClient, 30*time.Second)
 
 	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
 	if err != nil {
@@ -487,10 +505,10 @@ func TestTopicSubscriptionReconnectGiveUpReleasesPoolCounters(t *testing.T) {
 	}
 
 	// Original slot released by Event before reconnect; each failed reconnect
-	// attempt released its slot on the early-return path.
+	// attempt released its slot on the early-return path: 1 + allowedAttempts.
 	assertAccounting(t, pool, 0)
-	if got := pool.releaseCount.Load(); got == 0 {
-		t.Fatal("expected at least one release after subscribe + give-up")
+	if got := pool.releaseCount.Load(); got != int64(1+allowedAttempts) {
+		t.Fatalf("releaseCount = %d, want %d (one per failed attempt plus the original slot)", got, 1+allowedAttempts)
 	}
 
 	// Close after give-up must be a no-op and must not panic.
@@ -634,6 +652,7 @@ func TestTopicSubscriptionCloseInterruptsReconnectBackoff(t *testing.T) {
 		if eventErr == nil {
 			t.Fatal("expected Event to return an error after Close")
 		}
+		assertErrorCode(t, eventErr, momentoerrors.CanceledError)
 	case <-time.After(5 * time.Second):
 		t.Fatal("Event did not return within 5s of Close (backoff not interrupted)")
 	}

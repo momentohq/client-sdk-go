@@ -224,6 +224,9 @@ func TestTopicDynamicStreamPoolGrowsOnDemand(t *testing.T) {
 	if got := pool.GetCurrentNumberOfGrpcManagers(); got != 2 {
 		t.Fatalf("manager count after growth = %d, want 2", got)
 	}
+	if got := pool.GetCurrentActiveStreamsCount(); got != uint64(perChannel+1) {
+		t.Fatalf("active streams count after growth = %d, want %d", got, perChannel+1)
+	}
 
 	for _, r := range reservations {
 		r.Release()
