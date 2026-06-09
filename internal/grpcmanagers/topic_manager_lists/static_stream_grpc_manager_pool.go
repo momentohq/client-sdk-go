@@ -147,6 +147,11 @@ func (s *staticStreamGrpcManagerPool) makeNextManagerAvailable() {
 			topicManager, err := s.getNextManager()
 			select {
 			case <-s.ctx.Done():
+				// Close interrupted a prepared envelope: return the prefetched
+				// slot so the counters stay exact. Error envelopes hold no slot.
+				if topicManager != nil {
+					s.releaseManager(topicManager)
+				}
 				return
 			case s.nextAvailableGrpcManagerChannel <- &StreamGrpcManagerRequest{
 				TopicManager: topicManager,

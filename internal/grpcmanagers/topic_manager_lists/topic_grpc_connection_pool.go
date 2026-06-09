@@ -11,7 +11,8 @@ type TopicGrpcConnectionPool interface {
 	// GetNextTopicGrpcManager reserves a manager from the pool. Callers must
 	// call Reservation.Release when done; Release is idempotent so overlapping
 	// cleanup paths can each call it. Dropping a Reservation without releasing
-	// leaks the slot until Close.
+	// leaks the slot for the lifetime of the pool; Close shuts the pool down
+	// but does not reclaim leaked slots.
 	//
 	// The unary pool's Release is a no-op since unary requests don't hold
 	// long-lived slots; callers invoke it uniformly anyway.

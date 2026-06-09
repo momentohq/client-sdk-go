@@ -168,6 +168,11 @@ func (d *dynamicStreamGrpcManagerPool) makeNextManagerAvailable() {
 			topicManager, err := d.getNextManager()
 			select {
 			case <-d.ctx.Done():
+				// Close interrupted a prepared envelope: return the prefetched
+				// slot so the counters stay exact. Error envelopes hold no slot.
+				if topicManager != nil {
+					d.releaseManager(topicManager)
+				}
 				return
 			case d.nextAvailableGrpcManagerChannel <- &StreamGrpcManagerRequest{
 				TopicManager: topicManager,
