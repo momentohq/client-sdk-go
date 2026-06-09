@@ -146,7 +146,10 @@ jobs:
         with:
           go-version: 1.21.x
 
-      # Excludes the Ginkgo entry point (TestMomento) so this job needs no
-      # Momento credentials.
+      # Skips the Ginkgo entry point (TestMomento) so this job needs no
+      # Momento credentials; every other test in these trees is a plain Go
+      # test with no external dependencies. A -skip denylist (Go 1.20+) is
+      # used instead of a -run allowlist so new tests can't be silently
+      # excluded by not matching a name prefix.
       - name: Run unit tests under -race
-        run: go test -race -count=1 -run '^Test(Topic|Subscribe|Reservation)' ./internal/... ./momento/...
+        run: go test -race -count=1 -skip '^TestMomento$' ./internal/... ./momento/...
