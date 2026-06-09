@@ -22,6 +22,12 @@ import (
 )
 
 type TopicClient interface {
+	// Subscribe starts a subscription on the given topic.
+	//
+	// The ctx bounds the subscription's lifetime, not just the Subscribe call:
+	// the underlying stream — including any stream re-established by the
+	// automatic reconnect logic — is a child of this ctx, so cancelling it
+	// ends the subscription and releases its connection-pool slot.
 	Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
 	Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error)
 
@@ -89,7 +95,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.CanceledError,
 			"subscribe request context was canceled",
-			nil,
+			ctx.Err(),
 		)
 	case <-firstMessageCtx.Done():
 		return nil, momentoerrors.NewMomentoSvcErr(

@@ -18,11 +18,8 @@ import (
 // Pools supply their capacity policy via getNextManager and their connection
 // teardown via closeManagers; both run under the mutex.
 type streamPoolCore struct {
-	mu     sync.Mutex
-	closed bool
-	// closeOnce makes Close idempotent and blocks concurrent callers until
-	// the first Close has finished tearing down connections.
-	closeOnce                 sync.Once
+	mu                        sync.Mutex
+	closed                    bool
 	currentActiveStreamsCount atomic.Uint64
 	// getNextManager reserves a slot on success. Called only under mu.
 	getNextManager func() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr)
@@ -54,14 +51,15 @@ func (c *streamPoolCore) GetNextTopicGrpcManager() (*Reservation, momentoerrors.
 }
 
 // Close shuts down all gRPC connections. Safe to call multiple times;
-// concurrent calls block until the first completes.
+// concurrent calls block on the mutex until the first completes.
 func (c *streamPoolCore) Close() {
-	c.closeOnce.Do(func() {
-		c.mu.Lock()
-		defer c.mu.Unlock()
-		c.closed = true
-		c.closeManagers()
-	})
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed {
+		return
+	}
+	c.closed = true
+	c.closeManagers()
 }
 
 // GetCurrentActiveStreamsCount returns the current number of active streams in the pool.

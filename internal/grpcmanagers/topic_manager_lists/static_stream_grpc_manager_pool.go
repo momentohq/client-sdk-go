@@ -2,7 +2,6 @@ package topic_manager_lists
 
 import (
 	"fmt"
-	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -16,8 +15,9 @@ import (
 // streamPoolCore; this type supplies the fixed-size capacity policy.
 type staticStreamGrpcManagerPool struct {
 	streamPoolCore
-	grpcManagers         []*grpcmanagers.TopicGrpcManager
-	managerIndex         atomic.Uint64
+	grpcManagers []*grpcmanagers.TopicGrpcManager
+	// managerIndex is only touched by getNextManager under the core's mutex.
+	managerIndex         uint64
 	maxConcurrentStreams uint32
 	logger               logger.MomentoLogger
 }
@@ -77,11 +77,12 @@ func (s *staticStreamGrpcManagerPool) getNextManager() (*grpcmanagers.TopicGrpcM
 		return nil, err
 	}
 
-	// Max number of attempts is set to the max number of concurrent streams in order to preserve
-	// the round-robin system (incrementing nextManagerIndex) but to not cut short the number
-	//  of attempts in case there are many subscriptions starting up at the same time.
+	// Round-robin over the channels until one has a free slot. Allocation is
+	// serialized by the core mutex, so one pass over every channel would
+	// suffice; the generous bound is defensive.
 	for i := 0; uint32(i) < s.maxConcurrentStreams; i++ {
-		nextManagerIndex := s.managerIndex.Add(1)
+		s.managerIndex++
+		nextManagerIndex := s.managerIndex
 		topicManager := s.grpcManagers[nextManagerIndex%uint64(len(s.grpcManagers))]
 		newCount := topicManager.NumActiveSubscriptions.Add(1)
 		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {

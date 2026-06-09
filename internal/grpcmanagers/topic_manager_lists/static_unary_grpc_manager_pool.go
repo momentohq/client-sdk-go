@@ -32,12 +32,7 @@ func (list *staticUnaryGrpcManagerPool) releaseManager(_ *grpcmanagers.TopicGrpc
 // Close shuts down all gRPC connections. Safe to call multiple times.
 func (list *staticUnaryGrpcManagerPool) Close() {
 	list.closeOnce.Do(func() {
-		for _, topicManager := range list.grpcManagers {
-			err := topicManager.Close()
-			if err != nil {
-				list.logger.Error("Error closing topic manager: %v", err)
-			}
-		}
+		closeAllManagers(list.grpcManagers, list.logger)
 	})
 }
 

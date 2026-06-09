@@ -220,6 +220,14 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 
 					err := s.attemptReconnect(ctx, err)
 					if err != nil {
+						// attemptReconnect returns typed MomentoSvcErrs (e.g.
+						// CanceledError on Close); ConvertSvcErr would demote
+						// them to ClientSdkError since they carry no gRPC
+						// status, so pass them through unchanged.
+						var svcErr momentoerrors.MomentoSvcErr
+						if errors.As(err, &svcErr) {
+							return nil, svcErr
+						}
 						return nil, momentoerrors.ConvertSvcErr(err)
 					}
 				}
@@ -288,7 +296,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		// instead of retrying forever.
 		if ctx.Err() != nil {
 			s.log.Info("Context canceled during reconnect; aborting retry loop")
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", ctx.Err())
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", ctx.Err())
 		}
 		if s.streamParentCtx.Err() != nil {
 			s.log.Info("Subscribe context canceled during reconnect; aborting retry loop")
@@ -313,7 +321,9 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			select {
 			case <-time.After(time.Duration(*retryBackoffTime) * time.Millisecond):
 			case <-ctx.Done():
-				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", ctx.Err())
+				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", ctx.Err())
+			case <-s.streamParentCtx.Done():
+				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
 			case <-s.closedSignal:
 				s.log.Info("Subscription closed during reconnect backoff; aborting retry loop")
 				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
