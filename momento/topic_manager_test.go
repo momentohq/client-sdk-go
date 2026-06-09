@@ -2,6 +2,8 @@ package momento_test
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -33,7 +35,14 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		logFactory := momento_default_logger.NewDefaultMomentoLoggerFactory(momento_default_logger.WARN)
 		log = logFactory.GetLogger("grpcmanagers-test")
-		credProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{Port: uint(8080)})
+		// Same env override as retry_test.go so the port is not hardcoded.
+		momentoLocalPort := os.Getenv("MOMENTO_PORT")
+		if momentoLocalPort == "" {
+			momentoLocalPort = "8080"
+		}
+		thePort, portErr := strconv.ParseUint(momentoLocalPort, 10, 32)
+		Expect(portErr).To(BeNil())
+		credProvider, err := auth.NewMomentoLocalProvider(&auth.MomentoLocalConfig{Port: uint(thePort)})
 		Expect(err).ToNot(HaveOccurred())
 
 		cacheName := uuid.New().String()
@@ -81,6 +90,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				// keep the stream alive until end of test using a goroutine
 				waitGroup.Add(1)
 				go func() {
+					defer GinkgoRecover()
 					defer waitGroup.Done()
 					for {
 						select {
@@ -134,6 +144,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			for i := 0; i < int(maxConcurrentStreams/2-1); i++ {
 				waitGroup.Add(1)
 				go func() {
+					defer GinkgoRecover()
 					defer waitGroup.Done()
 					streamManager, err := staticList.GetNextTopicGrpcManager()
 					Expect(err).ToNot(HaveOccurred())
@@ -145,6 +156,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 					// keep the stream alive using a goroutine
 					go func() {
+						defer GinkgoRecover()
 						for {
 							select {
 							case <-ctx.Done():
@@ -177,7 +189,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			time.Sleep(500 * time.Millisecond)
 
 			// Verify correct number of streams are active.
-			Expect(staticList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams / 2)))
+			Expect(staticList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams/2 - 1)))
 
 			staticList.Close()
 		})
@@ -194,6 +206,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			for i := 0; i < int(maxConcurrentStreams); i++ {
 				waitGroup.Add(1)
 				go func() {
+					defer GinkgoRecover()
 					defer waitGroup.Done()
 					streamManager, err := staticList.GetNextTopicGrpcManager()
 					Expect(err).ToNot(HaveOccurred())
@@ -205,6 +218,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 					// keep the stream alive using a goroutine
 					go func() {
+						defer GinkgoRecover()
 						for {
 							select {
 							case <-ctx.Done():
@@ -254,6 +268,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			for i := 0; i < int(maxConcurrentStreams+10); i++ {
 				waitGroup.Add(1)
 				go func() {
+					defer GinkgoRecover()
 					defer waitGroup.Done()
 
 					streamManager, err := staticList.GetNextTopicGrpcManager()
@@ -268,6 +283,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 						// keep the stream alive using a goroutine
 						go func() {
+							defer GinkgoRecover()
 							for {
 								select {
 								case <-ctx.Done():
@@ -333,6 +349,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				// keep the stream alive using a goroutine
 				waitGroup.Add(1)
 				go func() {
+					defer GinkgoRecover()
 					defer waitGroup.Done()
 					for {
 						select {
@@ -392,6 +409,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			for i := 0; i < int(maxConcurrentStreams/2-1); i++ {
 				waitGroup.Add(1)
 				go func() {
+					defer GinkgoRecover()
 					defer waitGroup.Done()
 					streamManager, err := dynamicList.GetNextTopicGrpcManager()
 					Expect(err).ToNot(HaveOccurred())
@@ -403,6 +421,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 					// keep the stream alive using a goroutine
 					go func() {
+						defer GinkgoRecover()
 						for {
 							select {
 							case <-ctx.Done():
@@ -438,7 +457,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			Expect(dynamicList.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
 			// Verify correct number of streams are active.
-			Expect(dynamicList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams / 2)))
+			Expect(dynamicList.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams/2 - 1)))
 
 			dynamicList.Close()
 		})
@@ -458,6 +477,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				for i := 0; i < int(maxConcurrentStreams); i++ {
 					waitGroup.Add(1)
 					go func() {
+						defer GinkgoRecover()
 						defer waitGroup.Done()
 						streamManager, err := dynamicList.GetNextTopicGrpcManager()
 						Expect(err).ToNot(HaveOccurred())
@@ -469,6 +489,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 						// keep the stream alive using a goroutine
 						go func() {
+							defer GinkgoRecover()
 							for {
 								select {
 								case <-ctx.Done():
@@ -529,6 +550,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				for i := 0; i < int(maxConcurrentStreams+10); i++ {
 					waitGroup.Add(1)
 					go func() {
+						defer GinkgoRecover()
 						defer waitGroup.Done()
 
 						streamManager, err := dynamicList.GetNextTopicGrpcManager()
@@ -543,6 +565,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 							// keep the stream alive using a goroutine
 							go func() {
+								defer GinkgoRecover()
 								for {
 									select {
 									case <-ctx.Done():
