@@ -4,6 +4,7 @@ package momento
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
@@ -107,10 +108,20 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 			ctx.Err(),
 		)
 	case <-firstMessageCtx.Done():
-		// First-heartbeat timeout. The watchdog will cancel the stream; the
-		// drainer closes any subscription built between the cancel and the
-		// watchdog firing.
+		// First-heartbeat timeout. The watchdog cancels the stream unless the
+		// first message already won the handshake; the drainer closes a live
+		// subscription that lands on subChan after this return.
 		go drainAndCloseSubscription(subChan, errChan)
+		// firstMessageCtx is a child of ctx, so when the caller cancels, both
+		// Done channels fire and select picks between the cases randomly.
+		// Report the caller's cancellation, not a handshake timeout.
+		if ctx.Err() != nil {
+			return nil, momentoerrors.NewMomentoSvcErr(
+				momentoerrors.CanceledError,
+				"subscribe request context was canceled",
+				ctx.Err(),
+			)
+		}
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.TimeoutError,
 			"subscription did not receive first message within the expected time",
@@ -163,19 +174,18 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessa
 	}
 
 	// Watchdog: cancel the stream if firstMessageCtx fires before the first
-	// message arrives. The inner re-check makes the cancel deterministic when
-	// both channels are ready — if firstMessageDone is closed, the message
-	// arrived first and the stream stays live.
+	// message arrives. handshakeDecided is the single arbiter: exactly one of
+	// {first-message outcome, watchdog} wins it, so a stream the watchdog
+	// cancelled is never delivered to the caller, and a stream whose first
+	// message won is never cancelled by the watchdog.
+	var handshakeDecided atomic.Bool
 	firstMessageDone := make(chan struct{})
 	go func() {
 		select {
 		case <-firstMessageDone:
 			return
 		case <-firstMessageCtx.Done():
-			select {
-			case <-firstMessageDone:
-				return
-			default:
+			if handshakeDecided.CompareAndSwap(false, true) {
 				state.cancelFunction()
 			}
 		}
@@ -183,9 +193,21 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessa
 
 	// Ping the stream to surface a nice error if the cache does not exist.
 	firstMsg, err := state.subscribeClient.Recv()
+	messageWon := handshakeDecided.CompareAndSwap(false, true)
 	close(firstMessageDone)
 	if err != nil {
 		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
+
+		if !messageWon && requestCtx.Err() == nil {
+			// The watchdog cancelled the stream at the deadline; report the
+			// handshake timeout rather than the cancellation it induced.
+			fail(momentoerrors.NewMomentoSvcErr(
+				momentoerrors.TimeoutError,
+				"subscription did not receive first message within the expected time",
+				err,
+			))
+			return
+		}
 
 		// topicSubscribe would have errored already if the local pool was
 		// exhausted, so a ResourceExhausted here is a service-side limit.
@@ -196,6 +218,16 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessa
 			}
 		}
 		fail(momentoerrors.ConvertSvcErr(err))
+		return
+	}
+	if !messageWon {
+		// The watchdog fired between Recv returning and the arbiter check; the
+		// stream is already cancelled, so don't hand it to the caller.
+		fail(momentoerrors.NewMomentoSvcErr(
+			momentoerrors.TimeoutError,
+			"subscription did not receive first message within the expected time",
+			nil,
+		))
 		return
 	}
 
