@@ -103,6 +103,15 @@ func (g giveUpAfterRetryStrategy) DetermineWhenToRetry(props retry.StrategyProps
 	return &delay
 }
 
+// fixedBackoffRetryStrategy always retries after a fixed backoff.
+type fixedBackoffRetryStrategy struct {
+	backoffMs int
+}
+
+func (f fixedBackoffRetryStrategy) DetermineWhenToRetry(retry.StrategyProps) *int {
+	return &f.backoffMs
+}
+
 func newAccountingTestClient(streamClient pb.PubsubClient, timeout time.Duration) (defaultTopicClient, *testTopicGrpcConnectionPool) {
 	return newAccountingTestClientWithStrategy(streamClient, timeout, alwaysRetryStrategy{})
 }
@@ -486,6 +495,65 @@ func TestTopicSubscriptionReconnectGiveUpReleasesPoolCounters(t *testing.T) {
 
 	// Close after give-up must be a no-op and must not panic.
 	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicSubscriptionReconnectAbortsWhenContextCanceled pins the retry
+// loop's response to user-context cancellation: Event must return promptly
+// with balanced counters instead of retrying (here, sleeping a 10-minute
+// backoff) against a context that can never produce a live stream again.
+func TestTopicSubscriptionReconnectAbortsWhenContextCanceled(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	var subscribeCalls atomic.Uint64
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			if subscribeCalls.Add(1) == 1 {
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: disconnectErr},
+					},
+				}, nil
+			}
+			// Reconnect attempts keep failing so Event stays in the retry loop
+			// (sleeping the fixed backoff) until the context is canceled.
+			return nil, disconnectErr
+		},
+	}
+	client, pool := newAccountingTestClientWithStrategy(
+		streamClient,
+		time.Second,
+		fixedBackoffRetryStrategy{backoffMs: 10 * 60 * 1000},
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	sub, err := client.Subscribe(ctx, testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(ctx)
+		eventDone <- eventErr
+	}()
+
+	// Give Event a moment to hit the disconnect and enter the backoff sleep,
+	// then cancel. Whichever point the loop has reached, cancellation must
+	// surface promptly; without the ctx checks this would block ~10 minutes.
+	time.Sleep(50 * time.Millisecond)
+	cancel()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after context cancellation")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s of context cancellation")
+	}
 	assertAccounting(t, pool, 0)
 }
 

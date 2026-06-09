@@ -143,8 +143,9 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 	for {
 		// Snapshot state once per iteration so every read in this loop body
 		// references the same Reservation/cancelContext/cancelFunction triple.
-		// A concurrent attemptReconnect Stores a new pointer; we pick it up
-		// on the next iteration.
+		// attemptReconnect (called below, same goroutine) Stores a new state
+		// that the next iteration picks up; the snapshot also keeps a
+		// concurrent Close, which Loads and cancels, from seeing a torn view.
 		state := s.state.Load()
 
 		// Callers can cancel ctx right after subscribing; check before Recv.
@@ -265,6 +266,12 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			s.log.Info("Subscription closed during reconnect; aborting retry loop")
 			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
 		}
+		// A reconnected stream would be a child of ctx, so once ctx is dead a
+		// reconnect can never succeed; stop instead of retrying forever.
+		if ctx.Err() != nil {
+			s.log.Info("Context canceled during reconnect; aborting retry loop")
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", ctx.Err())
+		}
 
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
 			GrpcStatusCode: grpcStatusCode(err),
@@ -281,7 +288,11 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 
 		if *retryBackoffTime > 0 {
 			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(*retryBackoffTime))
-			time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
+			select {
+			case <-time.After(time.Duration(*retryBackoffTime) * time.Millisecond):
+			case <-ctx.Done():
+				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", ctx.Err())
+			}
 		}
 
 		s.log.Info("Attempting reconnecting to client stream")
