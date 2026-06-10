@@ -429,7 +429,8 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		s.log.Info("Attempting reconnecting to client stream")
 		// Parent the replacement stream to the Subscribe-time ctx, not this
 		// Event call's ctx, so the stream's lifetime is stable across Events.
-		newState, reconnectErr := s.momentoTopicClient.topicSubscribe(s.streamParentCtx, &TopicSubscribeRequest{
+		reconnectCtx, reconnectCancel := context.WithCancel(s.streamParentCtx)
+		newState, reconnectErr := s.momentoTopicClient.topicSubscribe(reconnectCtx, reconnectCancel, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,

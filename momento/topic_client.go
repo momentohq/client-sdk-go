@@ -4,6 +4,7 @@ package momento
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/momentohq/client-sdk-go/config/middleware"
@@ -92,15 +93,34 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	subChan := make(chan *topicSubscription, 1)
 	errChan := make(chan error, 1)
 
-	go c.sendSubscribe(ctx, request, subChan, errChan)
+	// sendSubscribe opens the stream in the background; firstMessageCtx is its
+	// watchdog for the first-heartbeat handshake.
+	go c.sendSubscribe(ctx, firstMessageCtx, request, subChan, errChan)
 	select {
-	case <-ctx.Done():
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.CanceledError,
-			"subscribe request context was canceled",
-			ctx.Err(),
-		)
 	case <-firstMessageCtx.Done():
+		// Handshake deadline or caller cancellation (firstMessageCtx is a
+		// child of ctx, so it fires for both). The watchdog cancels the
+		// stream unless the first message already won the handshake; the
+		// drainer closes a live subscription that lands on subChan after this
+		// return, and the error path releases the slot otherwise.
+		if ctx.Err() == nil {
+			// The deadline tied with a successful delivery: prefer the
+			// subscription. Anything on subChan won the handshake arbiter,
+			// so its stream is live.
+			select {
+			case subscription := <-subChan:
+				return subscription, nil
+			default:
+			}
+		}
+		go drainAndCloseSubscription(subChan, errChan)
+		if ctx.Err() != nil {
+			return nil, momentoerrors.NewMomentoSvcErr(
+				momentoerrors.CanceledError,
+				"subscribe request context was canceled",
+				ctx.Err(),
+			)
+		}
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.TimeoutError,
 			"subscription did not receive first message within the expected time",
@@ -113,14 +133,64 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	}
 }
 
-func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
-	state, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
+// drainAndCloseSubscription closes a subscription that sendSubscribe delivers
+// on subChan after Subscribe has already returned via the timeout or
+// cancellation path. Without it the slot would leak.
+func drainAndCloseSubscription(subChan chan *topicSubscription, errChan chan error) {
+	select {
+	case sub := <-subChan:
+		if sub != nil {
+			sub.Close()
+		}
+	case <-errChan:
+		// Error path in sendSubscribe already released the slot.
+	}
+}
+
+func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessageCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
+	// The stream context pair is created before topicSubscribe so the
+	// watchdog bounds stream ESTABLISHMENT as well as the first-message wait;
+	// otherwise a black-holed endpoint would hold the reserved pool slot
+	// until gRPC's connect timeout, long after Subscribe returned.
+	cancelContext, cancelFunction := context.WithCancel(requestCtx)
+
+	// Watchdog: cancel the stream if firstMessageCtx fires before the
+	// handshake completes. handshakeDecided is the single arbiter: exactly
+	// one of {handshake outcome, watchdog} wins it, so a stream the watchdog
+	// cancelled is never delivered to the caller, and a stream whose first
+	// message won is never cancelled by the watchdog.
+	var handshakeDecided atomic.Bool
+	firstMessageDone := make(chan struct{})
+	go func() {
+		select {
+		case <-firstMessageDone:
+			return
+		case <-firstMessageCtx.Done():
+			if handshakeDecided.CompareAndSwap(false, true) {
+				cancelFunction()
+			}
+		}
+	}()
+
+	state, err := c.pubSubClient.topicSubscribe(cancelContext, cancelFunction, &TopicSubscribeRequest{
 		CacheName:                   request.CacheName,
 		TopicName:                   request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 		SequencePage:                request.SequencePage,
 	})
 	if err != nil {
+		establishmentWon := handshakeDecided.CompareAndSwap(false, true)
+		close(firstMessageDone)
+		if !establishmentWon && requestCtx.Err() == nil {
+			// The watchdog cancelled establishment at the deadline; report
+			// the handshake timeout rather than the cancellation it induced.
+			errChan <- momentoerrors.NewMomentoSvcErr(
+				momentoerrors.TimeoutError,
+				"subscription did not receive first message within the expected time",
+				err,
+			)
+			return
+		}
 		errChan <- err
 		return
 	}
@@ -140,8 +210,21 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 
 	// Ping the stream to surface a nice error if the cache does not exist.
 	firstMsg, err := state.subscribeClient.Recv()
+	messageWon := handshakeDecided.CompareAndSwap(false, true)
+	close(firstMessageDone)
 	if err != nil {
 		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
+
+		if !messageWon && requestCtx.Err() == nil {
+			// The watchdog cancelled the stream at the deadline; report the
+			// handshake timeout rather than the cancellation it induced.
+			fail(momentoerrors.NewMomentoSvcErr(
+				momentoerrors.TimeoutError,
+				"subscription did not receive first message within the expected time",
+				err,
+			))
+			return
+		}
 
 		// topicSubscribe would have errored already if the local pool was
 		// exhausted, so a ResourceExhausted here is a service-side limit.
@@ -152,6 +235,16 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			}
 		}
 		fail(momentoerrors.ConvertSvcErr(err))
+		return
+	}
+	if !messageWon {
+		// The watchdog fired between Recv returning and the arbiter check; the
+		// stream is already cancelled, so don't hand it to the caller.
+		fail(momentoerrors.NewMomentoSvcErr(
+			momentoerrors.TimeoutError,
+			"subscription did not receive first message within the expected time",
+			nil,
+		))
 		return
 	}
 

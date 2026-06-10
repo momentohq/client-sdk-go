@@ -237,7 +237,9 @@ func TestTopicSubscribeReleasesPoolCountersWhenStreamOpenFails(t *testing.T) {
 	_, pool := newAccountingTestClient(streamClient, time.Second)
 	client := &pubSubClient{streamGrpcConnectionPool: pool}
 
-	_, err := client.topicSubscribe(context.Background(), testSubscribeRequest())
+	cancelCtx, cancelFn := context.WithCancel(context.Background())
+	defer cancelFn()
+	_, err := client.topicSubscribe(cancelCtx, cancelFn, testSubscribeRequest())
 	if err == nil {
 		t.Fatal("expected topicSubscribe to return an error")
 	}
@@ -1231,3 +1233,303 @@ func TestTopicPublishUnaryReleasesReservationOncePerCall(t *testing.T) {
 type unsupportedTopicValue struct{}
 
 func (unsupportedTopicValue) isTopicValue() {}
+
+// TestSubscribeWatchdogDoesNotCancelLiveSubscription guards the sendSubscribe
+// watchdog race: when both firstMessageDone and firstMessageCtx are ready by
+// the time the watchdog wakes, Go's select picks randomly. Without the
+// handshakeDecided arbiter, ~half of those wakeups would cancel a
+// subscription that was already handed back to the caller. Concurrent Subscribe calls
+// force the watchdog to be descheduled across the race window.
+func TestSubscribeWatchdogDoesNotCancelLiveSubscription(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	// 50ms gives sendSubscribe time to populate subChan before the timeout
+	// fires, while still leaving defer cancel() racing the watchdog.
+	client, _ := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	const goroutines = 64
+	const perGoroutine = 50
+
+	var wg sync.WaitGroup
+	var successes atomic.Int64
+	var cancelled atomic.Int64
+
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < perGoroutine; i++ {
+				sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+				if err != nil {
+					continue
+				}
+				successes.Add(1)
+				ts := sub.(*topicSubscription)
+				state := ts.state.Load()
+				select {
+				case <-state.cancelContext.Done():
+					cancelled.Add(1)
+				default:
+				}
+				sub.Close()
+			}
+		}()
+	}
+	wg.Wait()
+
+	if cancelled.Load() > 0 {
+		t.Fatalf("watchdog cancelled %d of %d returned subscriptions (race condition)",
+			cancelled.Load(), successes.Load())
+	}
+	if successes.Load() == 0 {
+		t.Fatal("no Subscribe calls succeeded; test is vacuous")
+	}
+}
+
+// TestSubscribeDeadlineBoundaryNeverLeaksOrDeliversDeadSubscriptions hammers
+// the handshake-deadline boundary, where an instant heartbeat and a tiny
+// requestTimeout race inside Subscribe's select. Every returned subscription
+// must be live (the deadline tie prefers a delivered subscription), every
+// timeout must leave no slot behind, and the counters must drain to zero.
+func TestSubscribeDeadlineBoundaryNeverLeaksOrDeliversDeadSubscriptions(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	// 1ms keeps the deadline and the instant heartbeat permanently racing.
+	client, pool := newAccountingTestClient(streamClient, time.Millisecond)
+
+	const goroutines = 16
+	const perGoroutine = 100
+
+	var wg sync.WaitGroup
+	var successes, timeouts atomic.Int64
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < perGoroutine; i++ {
+				sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+				if err != nil {
+					timeouts.Add(1)
+					continue
+				}
+				successes.Add(1)
+				state := sub.(*topicSubscription).state.Load()
+				select {
+				case <-state.cancelContext.Done():
+					t.Error("Subscribe returned a subscription with a dead stream")
+				default:
+				}
+				sub.Close()
+			}
+		}()
+	}
+	wg.Wait()
+
+	if successes.Load() == 0 && timeouts.Load() == 0 {
+		t.Fatal("no outcomes recorded; test is vacuous")
+	}
+	// Timed-out handshakes release in sendSubscribe's goroutine; poll for the
+	// stragglers.
+	waitForReleasedAccounting(t, pool)
+}
+
+// TestTopicSubscribeReleasesSlotOnFirstMessageTimeout exercises the
+// firstMessageCtx timeout path. Recv blocks on the stream context (matching
+// production gRPC behavior); the watchdog cancels it after the timeout fires
+// and the error path releases the slot.
+func TestTopicSubscribeReleasesSlotOnFirstMessageTimeout(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				recv: func() (*pb.XSubscriptionItem, error) {
+					<-ctx.Done()
+					return nil, ctx.Err()
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err == nil {
+		t.Fatal("expected Subscribe to return a timeout error")
+	}
+	if sub != nil {
+		t.Fatal("expected Subscribe to return a nil subscription on timeout")
+	}
+	assertErrorCode(t, err, momentoerrors.TimeoutError)
+
+	waitForReleasedAccounting(t, pool)
+	if got := pool.releaseCount.Load(); got != 1 {
+		t.Fatalf("releaseCount = %d, want 1 (exactly one Release for the cleanup path)", got)
+	}
+}
+
+// waitForReleasedAccounting polls until the pool counters drain to zero;
+// cleanup runs in sendSubscribe's goroutine after Subscribe has returned, so
+// the release lands asynchronously. Generous deadline for loaded CI runners.
+func waitForReleasedAccounting(t *testing.T, pool *testTopicGrpcConnectionPool) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if pool.activeCount.Load() == 0 && pool.manager.NumActiveSubscriptions.Load() == 0 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	assertAccounting(t, pool, 0)
+}
+
+// TestSubscribeReleasesSlotWhenStreamEstablishmentHangs pins that the
+// handshake watchdog bounds stream ESTABLISHMENT too: a stream-open call that
+// blocks (black-holed endpoint) must not hold the reserved slot past the
+// handshake deadline, even though Subscribe already returned TimeoutError.
+func TestSubscribeReleasesSlotWhenStreamEstablishmentHangs(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			// Establishment completes only when the stream context is
+			// cancelled, as with a black-holed endpoint.
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err == nil {
+		t.Fatal("expected Subscribe to return a timeout error")
+	}
+	if sub != nil {
+		t.Fatal("expected Subscribe to return a nil subscription on timeout")
+	}
+	assertErrorCode(t, err, momentoerrors.TimeoutError)
+
+	waitForReleasedAccounting(t, pool)
+	if got := pool.releaseCount.Load(); got != 1 {
+		t.Fatalf("releaseCount = %d, want 1 (exactly one Release for the hung establishment)", got)
+	}
+}
+
+// TestSubscribeLateFirstMessageAfterTimeoutReleasesSlot pins the
+// dead-on-arrival guard: the first heartbeat lands only after Subscribe has
+// returned via the timeout path, so the handshake arbiter must refuse to
+// deliver the already-cancelled stream and release its slot instead.
+func TestSubscribeLateFirstMessageAfterTimeoutReleasesSlot(t *testing.T) {
+	releaseHeartbeat := make(chan struct{})
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				recv: func() (*pb.XSubscriptionItem, error) {
+					<-releaseHeartbeat
+					return heartbeatItem(), nil
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err == nil {
+		t.Fatal("expected Subscribe to return a timeout error")
+	}
+	if sub != nil {
+		t.Fatal("expected Subscribe to return a nil subscription on timeout")
+	}
+	assertErrorCode(t, err, momentoerrors.TimeoutError)
+
+	// Deliver the heartbeat only now, after the timeout return. The watchdog
+	// already cancelled the stream, so sendSubscribe must fail the handshake
+	// and release the slot instead of delivering a dead subscription.
+	close(releaseHeartbeat)
+
+	waitForReleasedAccounting(t, pool)
+	if got := pool.releaseCount.Load(); got != 1 {
+		t.Fatalf("releaseCount = %d, want 1 (exactly one Release for the late-message path)", got)
+	}
+}
+
+// TestSubscribeUserContextCancelReturnsCanceledError verifies a caller
+// cancellation is reported as CanceledError — never as a handshake timeout —
+// even though firstMessageCtx (a child of the caller's ctx) fires at the same
+// instant. Repeated because the wrong outcome was a random select pick.
+func TestSubscribeUserContextCancelReturnsCanceledError(t *testing.T) {
+	// One gate per Subscribe call; recv holds the handshake open until the
+	// test closes the gate, keeping errChan empty until Subscribe has returned.
+	gates := make(chan chan struct{}, 16)
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			gate := make(chan struct{})
+			gates <- gate
+			return &testSubscribeClient{
+				recv: func() (*pb.XSubscriptionItem, error) {
+					<-gate
+					return heartbeatItem(), nil
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, 10*time.Second)
+
+	for i := 0; i < 10; i++ {
+		ctx, cancel := context.WithCancel(context.Background())
+		subscribeDone := make(chan error, 1)
+		go func() {
+			_, err := client.Subscribe(ctx, testSubscribeRequest())
+			subscribeDone <- err
+		}()
+
+		gate := <-gates // the stream is open and the handshake is in flight
+		cancel()
+
+		var err error
+		select {
+		case err = <-subscribeDone:
+		case <-time.After(5 * time.Second):
+			t.Fatal("Subscribe did not return after context cancellation")
+		}
+		if err == nil {
+			t.Fatal("expected Subscribe to return an error after context cancellation")
+		}
+		assertErrorCode(t, err, momentoerrors.CanceledError)
+
+		// Let the held-open handshake finish; the drainer must release the slot.
+		close(gate)
+		waitForReleasedAccounting(t, pool)
+	}
+}
+
+// TestDrainerClosesLateDeliveredSubscription pins drainAndCloseSubscription's
+// subscription branch directly: a live subscription that lands on subChan
+// after Subscribe has returned must be closed and its slot released.
+func TestDrainerClosesLateDeliveredSubscription(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	subChan := make(chan *topicSubscription, 1)
+	errChan := make(chan error, 1)
+	subChan <- sub.(*topicSubscription)
+	drainAndCloseSubscription(subChan, errChan)
+	assertAccounting(t, pool, 0)
+}
