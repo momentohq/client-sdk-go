@@ -42,3 +42,9 @@ func (err momentoSvcError) Error() string {
 	}
 	return fmt.Sprintf("%s: %s", err.code, err.message)
 }
+
+// Unwrap exposes the underlying cause to errors.Is/errors.As, e.g. so a
+// caller can match context.Canceled behind a CanceledError.
+func (err momentoSvcError) Unwrap() error {
+	return err.originalErr
+}
