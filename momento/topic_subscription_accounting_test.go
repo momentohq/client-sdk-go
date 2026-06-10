@@ -2,6 +2,7 @@ package momento
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -115,6 +116,24 @@ type signalingBackoffRetryStrategy struct {
 	backoffMs int
 	entered   chan struct{}
 	once      sync.Once
+}
+
+// firstCallBackoffRetryStrategy returns a long backoff on the first retry
+// consultation (closing entered), then zero for all subsequent ones, so a
+// paused reconnect can resume promptly.
+type firstCallBackoffRetryStrategy struct {
+	firstBackoffMs int
+	calls          atomic.Int64
+	entered        chan struct{}
+}
+
+func (s *firstCallBackoffRetryStrategy) DetermineWhenToRetry(retry.StrategyProps) *int {
+	if s.calls.Add(1) == 1 {
+		close(s.entered)
+		return &s.firstBackoffMs
+	}
+	zero := 0
+	return &zero
 }
 
 func newSignalingBackoffRetryStrategy(backoffMs int) *signalingBackoffRetryStrategy {
@@ -533,74 +552,19 @@ func TestTopicSubscriptionReconnectGiveUpReleasesPoolCounters(t *testing.T) {
 	assertAccounting(t, pool, 0)
 }
 
-// TestTopicSubscriptionReconnectAbortsWhenContextCanceled pins the retry
-// loop's response to user-context cancellation: Event must return promptly
-// with balanced counters instead of retrying (here, sleeping a 10-minute
-// backoff) against a context that can never produce a live stream again.
-func TestTopicSubscriptionReconnectAbortsWhenContextCanceled(t *testing.T) {
-	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
-	var subscribeCalls atomic.Uint64
-	streamClient := &testPubsubClient{
-		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
-			if subscribeCalls.Add(1) == 1 {
-				return &testSubscribeClient{
-					results: []recvResult{
-						{item: heartbeatItem()},
-						{err: disconnectErr},
-					},
-				}, nil
-			}
-			// Reconnect attempts keep failing so Event stays in the retry loop
-			// (sleeping the fixed backoff) until the context is canceled.
-			return nil, disconnectErr
-		},
-	}
-	strategy := newSignalingBackoffRetryStrategy(10 * 60 * 1000)
-	client, pool := newAccountingTestClientWithStrategy(
-		streamClient,
-		time.Second,
-		strategy,
-	)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	sub, err := client.Subscribe(ctx, testSubscribeRequest())
-	if err != nil {
-		t.Fatalf("Subscribe returned error: %v", err)
-	}
-	assertAccounting(t, pool, 1)
-
-	eventDone := make(chan error, 1)
-	go func() {
-		_, eventErr := sub.Event(ctx)
-		eventDone <- eventErr
-	}()
-
-	// Wait until the retry loop has committed to the 10-minute backoff, then
-	// cancel. Cancellation must surface promptly; without the ctx-aware wait
-	// this would block ~10 minutes.
-	<-strategy.entered
-	cancel()
-
-	select {
-	case eventErr := <-eventDone:
-		if eventErr == nil {
-			t.Fatal("expected Event to return an error after context cancellation")
-		}
-	case <-time.After(5 * time.Second):
-		t.Fatal("Event did not return within 5s of context cancellation")
-	}
-	assertAccounting(t, pool, 0)
-}
-
-// TestTopicSubscriptionEventContextCancelTearsDownStream verifies a ctx error
-// from Event is terminal: the slot is released AND the stream context is
-// canceled, so the pool's freed slot isn't backed by a still-open stream.
-func TestTopicSubscriptionEventContextCancelTearsDownStream(t *testing.T) {
+// TestTopicSubscriptionEventContextErrorKeepsSubscriptionAlive pins the
+// non-terminal per-call ctx contract: an expired or canceled Event ctx stops
+// only that call. The stream and its pool slot stay intact and a later call
+// with a live ctx receives messages, matching the timeout semantics of
+// comparable clients (NATS NextMsg, Kafka ReadMessage).
+func TestTopicSubscriptionEventContextErrorKeepsSubscriptionAlive(t *testing.T) {
 	streamClient := &testPubsubClient{
 		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
 			return &testSubscribeClient{
-				results: []recvResult{{item: heartbeatItem()}},
+				results: []recvResult{
+					{item: heartbeatItem()},
+					{item: topicItem(2)},
+				},
 			}, nil
 		},
 	}
@@ -617,12 +581,205 @@ func TestTopicSubscriptionEventContextCancelTearsDownStream(t *testing.T) {
 	if _, eventErr := sub.Event(canceledCtx); eventErr == nil {
 		t.Fatal("expected Event to return an error for a canceled context")
 	}
+
+	// The slot stays held and the stream stays alive.
+	assertAccounting(t, pool, 1)
+	state := sub.(*topicSubscription).state.Load()
+	if state.cancelContext.Err() != nil {
+		t.Fatal("a per-call ctx error must not cancel the stream context")
+	}
+
+	// A later call with a live ctx picks up where we left off.
+	event, eventErr := sub.Event(context.Background())
+	if eventErr != nil {
+		t.Fatalf("Event after a per-call ctx error returned error: %v", eventErr)
+	}
+	if _, ok := event.(TopicItem); !ok {
+		t.Fatalf("Event = %T, want TopicItem from the surviving stream", event)
+	}
+	assertAccounting(t, pool, 1)
+
+	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicSubscriptionEventAfterCloseReturnsTypedCanceled pins the terminal
+// error contract: after Close, Event returns a CanceledError that still
+// unwraps to context.Canceled, so callers can distinguish a dead subscription
+// from their own ctx expiring.
+func TestTopicSubscriptionEventAfterCloseReturnsTypedCanceled(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	sub.Close()
 	assertAccounting(t, pool, 0)
 
-	state := sub.(*topicSubscription).state.Load()
-	if state.cancelContext.Err() == nil {
-		t.Fatal("expected the stream context to be torn down with the released slot")
+	_, eventErr := sub.Event(context.Background())
+	if eventErr == nil {
+		t.Fatal("expected Event after Close to return an error")
 	}
+	assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+	if !errors.Is(eventErr, context.Canceled) {
+		t.Fatalf("terminal error should unwrap to context.Canceled, got %v", eventErr)
+	}
+}
+
+// TestTopicSubscriptionReconnectPausesOnContextCancelAndResumes drives the
+// retry loop into a long backoff, cancels the caller's ctx (Event must return
+// promptly), then verifies the next call with a live ctx resumes the
+// interrupted reconnect instead of the subscription dying.
+func TestTopicSubscriptionReconnectPausesOnContextCancelAndResumes(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	var subscribeCalls atomic.Uint64
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			if subscribeCalls.Add(1) == 1 {
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: disconnectErr},
+					},
+				}, nil
+			}
+			return &testSubscribeClient{
+				results: []recvResult{{item: topicItem(2)}},
+			}, nil
+		},
+	}
+	strategy := &firstCallBackoffRetryStrategy{
+		firstBackoffMs: 10 * 60 * 1000,
+		entered:        make(chan struct{}),
+	}
+	client, pool := newAccountingTestClientWithStrategy(streamClient, time.Second, strategy)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventCtx, cancelEventCtx := context.WithCancel(context.Background())
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(eventCtx)
+		eventDone <- eventErr
+	}()
+
+	// Wait until the retry loop has committed to the 10-minute backoff, then
+	// cancel. Event must return promptly; without the ctx-aware wait this
+	// would block ~10 minutes.
+	<-strategy.entered
+	cancelEventCtx()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after context cancellation")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s of context cancellation")
+	}
+	// The failed stream's slot was released; recovery is paused, not dead.
+	assertAccounting(t, pool, 0)
+
+	// A live ctx resumes the reconnect (zero backoff on the second
+	// consultation) and delivers from the new stream.
+	event, eventErr := sub.Event(context.Background())
+	if eventErr != nil {
+		t.Fatalf("Event after paused reconnect returned error: %v", eventErr)
+	}
+	if _, ok := event.(TopicItem); !ok {
+		t.Fatalf("Event = %T, want TopicItem from the resumed stream", event)
+	}
+	assertAccounting(t, pool, 1)
+
+	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicSubscriptionStreamErrorWithDeadContextResumesNextCall covers the
+// other pause entry: the stream fails while the caller's ctx is already dead.
+// The dead stream's slot is released immediately and the next call with a
+// live ctx reconnects.
+func TestTopicSubscriptionStreamErrorWithDeadContextResumesNextCall(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	gate := make(chan struct{})
+	recvBlocked := make(chan struct{})
+	var recvBlockedOnce sync.Once
+	var subscribeCalls atomic.Uint64
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			if subscribeCalls.Add(1) == 1 {
+				heartbeatSent := false
+				return &testSubscribeClient{
+					recv: func() (*pb.XSubscriptionItem, error) {
+						if !heartbeatSent {
+							heartbeatSent = true
+							return heartbeatItem(), nil
+						}
+						recvBlockedOnce.Do(func() { close(recvBlocked) })
+						<-gate
+						return nil, disconnectErr
+					},
+				}, nil
+			}
+			return &testSubscribeClient{
+				results: []recvResult{{item: topicItem(2)}},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventCtx, cancelEventCtx := context.WithCancel(context.Background())
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(eventCtx)
+		eventDone <- eventErr
+	}()
+
+	// Kill the caller's ctx while Event is blocked in Recv, then fail the
+	// stream: Event observes the dead ctx on the error path.
+	<-recvBlocked
+	cancelEventCtx()
+	close(gate)
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s")
+	}
+	assertAccounting(t, pool, 0)
+
+	event, eventErr := sub.Event(context.Background())
+	if eventErr != nil {
+		t.Fatalf("Event after deferred reconnect returned error: %v", eventErr)
+	}
+	if _, ok := event.(TopicItem); !ok {
+		t.Fatalf("Event = %T, want TopicItem from the reconnected stream", event)
+	}
+	assertAccounting(t, pool, 1)
+
+	sub.Close()
+	assertAccounting(t, pool, 0)
 }
 
 // TestTopicSubscriptionCloseInterruptsReconnectBackoff verifies Close wakes a
