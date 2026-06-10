@@ -22,6 +22,8 @@ type testTopicGrpcConnectionPool struct {
 	manager      *grpcmanagers.TopicGrpcManager
 	activeCount  atomic.Int64
 	releaseCount atomic.Int64
+	// closed makes GetNextTopicGrpcManager fail like a real pool after Close.
+	closed atomic.Bool
 }
 
 func newTestTopicGrpcConnectionPool(streamClient pb.PubsubClient) *testTopicGrpcConnectionPool {
@@ -33,6 +35,9 @@ func newTestTopicGrpcConnectionPool(streamClient pb.PubsubClient) *testTopicGrpc
 }
 
 func (p *testTopicGrpcConnectionPool) GetNextTopicGrpcManager() (*topic_manager_lists.Reservation, momentoerrors.MomentoSvcErr) {
+	if p.closed.Load() {
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "connection pool is shutting down", nil)
+	}
 	p.manager.NumActiveSubscriptions.Add(1)
 	p.activeCount.Add(1)
 	return topic_manager_lists.NewReservation(p.manager, p.releaseManager), nil
@@ -103,13 +108,25 @@ func (g giveUpAfterRetryStrategy) DetermineWhenToRetry(props retry.StrategyProps
 	return &delay
 }
 
-// fixedBackoffRetryStrategy always retries after a fixed backoff.
-type fixedBackoffRetryStrategy struct {
+// signalingBackoffRetryStrategy always retries after a fixed backoff and
+// closes entered the first time the retry loop commits to that backoff, so
+// tests can deterministically race Close/cancel against the backoff wait.
+type signalingBackoffRetryStrategy struct {
 	backoffMs int
+	entered   chan struct{}
+	once      sync.Once
 }
 
-func (f fixedBackoffRetryStrategy) DetermineWhenToRetry(retry.StrategyProps) *int {
-	return &f.backoffMs
+func newSignalingBackoffRetryStrategy(backoffMs int) *signalingBackoffRetryStrategy {
+	return &signalingBackoffRetryStrategy{
+		backoffMs: backoffMs,
+		entered:   make(chan struct{}),
+	}
+}
+
+func (s *signalingBackoffRetryStrategy) DetermineWhenToRetry(retry.StrategyProps) *int {
+	s.once.Do(func() { close(s.entered) })
+	return &s.backoffMs
 }
 
 func newAccountingTestClient(streamClient pb.PubsubClient, timeout time.Duration) (defaultTopicClient, *testTopicGrpcConnectionPool) {
@@ -538,10 +555,11 @@ func TestTopicSubscriptionReconnectAbortsWhenContextCanceled(t *testing.T) {
 			return nil, disconnectErr
 		},
 	}
+	strategy := newSignalingBackoffRetryStrategy(10 * 60 * 1000)
 	client, pool := newAccountingTestClientWithStrategy(
 		streamClient,
 		time.Second,
-		fixedBackoffRetryStrategy{backoffMs: 10 * 60 * 1000},
+		strategy,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -558,10 +576,10 @@ func TestTopicSubscriptionReconnectAbortsWhenContextCanceled(t *testing.T) {
 		eventDone <- eventErr
 	}()
 
-	// Give Event a moment to hit the disconnect and enter the backoff sleep,
-	// then cancel. Whichever point the loop has reached, cancellation must
-	// surface promptly; without the ctx checks this would block ~10 minutes.
-	time.Sleep(50 * time.Millisecond)
+	// Wait until the retry loop has committed to the 10-minute backoff, then
+	// cancel. Cancellation must surface promptly; without the ctx-aware wait
+	// this would block ~10 minutes.
+	<-strategy.entered
 	cancel()
 
 	select {
@@ -625,10 +643,11 @@ func TestTopicSubscriptionCloseInterruptsReconnectBackoff(t *testing.T) {
 			return nil, disconnectErr
 		},
 	}
+	strategy := newSignalingBackoffRetryStrategy(10 * 60 * 1000)
 	client, pool := newAccountingTestClientWithStrategy(
 		streamClient,
 		time.Second,
-		fixedBackoffRetryStrategy{backoffMs: 10 * 60 * 1000},
+		strategy,
 	)
 
 	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
@@ -643,8 +662,9 @@ func TestTopicSubscriptionCloseInterruptsReconnectBackoff(t *testing.T) {
 		eventDone <- eventErr
 	}()
 
-	// Let Event hit the disconnect and enter the 10-minute backoff, then Close.
-	time.Sleep(50 * time.Millisecond)
+	// Wait until the retry loop has committed to the 10-minute backoff, then
+	// Close. The closedSignal case must interrupt the wait promptly.
+	<-strategy.entered
 	sub.Close()
 
 	select {
@@ -717,6 +737,52 @@ func TestTopicSubscriptionReconnectUsesSubscribeContext(t *testing.T) {
 	assertAccounting(t, pool, 1)
 
 	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicSubscriptionReconnectStopsWhenPoolIsClosed verifies the retry loop
+// treats the pool's shutdown CanceledError as terminal: even an always-retry
+// strategy must not spin against a closed pool.
+func TestTopicSubscriptionReconnectStopsWhenPoolIsClosed(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{
+					{item: heartbeatItem()},
+					{err: disconnectErr},
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	// Shut the pool down, then drive Event into the disconnect. Every
+	// reconnect attempt now fails with the pool's CanceledError; the
+	// always-retry strategy must not loop on it.
+	pool.closed.Store(true)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(context.Background())
+		eventDone <- eventErr
+	}()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after the pool closed")
+		}
+		assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s; reconnect loop is spinning against a closed pool")
+	}
 	assertAccounting(t, pool, 0)
 }
 
