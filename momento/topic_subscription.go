@@ -2,8 +2,8 @@ package momento
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -19,6 +19,29 @@ import (
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 )
 
+// TopicSubscription is the consumer-side handle for an active topic subscription.
+//
+// Concurrency contract:
+//   - Item and Event must be called from a single goroutine at a time. The
+//     underlying gRPC stream's Recv is not safe for concurrent use, and the
+//     subscription tracks per-stream sequence state without locking on the
+//     hot path.
+//   - Close is safe to call concurrently with an in-flight Item/Event call,
+//     and is safe to call more than once. Close cancels the stream context;
+//     an in-flight Item/Event call returns an error — immediately if blocked
+//     receiving, or at the next retry check if a reconnect is in flight
+//     (Close also interrupts a reconnect backoff wait).
+//   - An error from the ctx passed to Item/Event means only that the call
+//     stopped waiting: the subscription stays active and a later call with
+//     a live ctx resumes it, including resuming an interrupted reconnect.
+//     A call blocked receiving notices the ctx at the next
+//     message/heartbeat boundary or stream event.
+//   - Terminal errors (Close was called, or the ctx passed to Subscribe
+//     ended) carry the CanceledError code and unwrap to the underlying
+//     context error; check your own ctx first to tell the two apart. The
+//     subscription holds a pool slot while it has a live stream; during a
+//     reconnect the slot is released and re-acquired, and an abandoned
+//     subscription holds its slot until Close.
 type TopicSubscription interface {
 	// Item returns only subscription events that contain a string or byte message.
 	// Example:
@@ -66,17 +89,27 @@ type TopicSubscription interface {
 	Close()
 }
 
-type topicSubscription struct {
-	// mu guards reservation, subscribeClient, cancelContext, and cancelFunction
-	// against cross-goroutine reads from Close while attemptReconnect (running
-	// in the Event goroutine) installs a new stream. Within the Event goroutine
-	// these fields are read without mu since reads and writes there are already
-	// sequenced by program order.
-	mu              sync.Mutex
+// subscribeMethodName is the request name reported to middleware for Subscribe
+// events.
+const subscribeMethodName = "Subscribe"
+
+// errEventCtxInterruptedReconnect marks attemptReconnect aborts caused by the
+// caller's per-call ctx dying. Event converts exactly these into a paused
+// recovery that the next call resumes; it wraps context.Canceled so the error
+// stays errors.Is-compatible on the terminal edges where it can escape.
+var errEventCtxInterruptedReconnect = fmt.Errorf("event context canceled during reconnect: %w", context.Canceled)
+
+// streamState bundles the fields swapped together on every (re)connect. Held
+// in an atomic.Pointer so readers see a consistent snapshot.
+type streamState struct {
 	reservation     *topic_manager_lists.Reservation
 	subscribeClient pb.Pubsub_SubscribeClient
 	cancelContext   context.Context
 	cancelFunction  context.CancelFunc
+}
+
+type topicSubscription struct {
+	state atomic.Pointer[streamState]
 
 	topicEventCallback      func(cacheName string, requestName string, event middleware.TopicSubscriptionEventType)
 	momentoTopicClient      *pubSubClient
@@ -86,21 +119,31 @@ type topicSubscription struct {
 	lastKnownSequenceNumber uint64
 	lastKnownSequencePage   uint64
 	retryStrategy           retry.Strategy
-	// closed is set permanently to true by Close(). attemptReconnect checks it
-	// to bail out if Close races in while a reconnect is in flight, so a freshly
-	// allocated stream doesn't leak past Close.
+	// streamParentCtx is the ctx the caller passed to Subscribe. Reconnected
+	// streams are parented to it so their lifetime matches the original
+	// stream's, not the ctx of whichever Event call triggered the reconnect.
+	streamParentCtx context.Context
+	// needsReconnect and lastStreamErr carry an interrupted recovery across
+	// Event calls: when the caller's ctx dies after a stream failure, the
+	// next call resumes the reconnect instead of the subscription dying.
+	// Only the Event goroutine touches them (see the concurrency contract).
+	needsReconnect bool
+	lastStreamErr  error
+	// closed is set by Close. attemptReconnect bails out if it observes this set.
 	closed atomic.Bool
+	// closedSignal wakes a reconnect backoff wait when Close is called. Only
+	// the Close that wins the closed CAS closes it.
+	closedSignal chan struct{}
 }
 
-// grpcStatusCode returns the gRPC status code embedded in err, unwrapping a
-// MomentoSvcErr if needed. The first call to attemptReconnect receives a raw
-// gRPC error from Recv(); subsequent retries get a MomentoSvcErr back from
-// topicSubscribe — both need to produce the same code for the retry strategy.
+// grpcStatusCode returns the gRPC status code for err, unwrapping
+// MomentoSvcErr if the error came back through topicSubscribe.
 func grpcStatusCode(err error) codes.Code {
 	if err == nil {
 		return codes.OK
 	}
-	if svcErr, ok := err.(momentoerrors.MomentoSvcErr); ok {
+	var svcErr momentoerrors.MomentoSvcErr
+	if errors.As(err, &svcErr) {
 		if original := svcErr.OriginalErr(); original != nil {
 			return status.Code(original)
 		}
@@ -128,68 +171,81 @@ func (s *topicSubscription) Item(ctx context.Context) (TopicValue, error) {
 }
 
 func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
-	methodName := "Subscribe"
-
 	for {
-		// Its totally possible a client just calls `cancel` on the `context` immediately after subscribing to an
-		// item, so we should check that here.
-		select {
-		case <-ctx.Done():
-			// Context has been canceled, return an error
-			decremented := s.decrementSubscriptionCount()
-			s.log.Debug(
-				"[Event] Context done, number of active streams on current grpc channel: %d",
-				decremented,
-			)
-			return nil, ctx.Err()
-		case <-s.cancelContext.Done():
-			// Context has been canceled, return an error
-			decremented := s.decrementSubscriptionCount()
-			s.log.Debug(
-				"[Event] Context cancelled, number of active streams on current grpc channel: %d",
-				decremented,
-			)
-			return nil, s.cancelContext.Err()
-		default:
-			// Proceed as is
+		// A previous call's ctx may have died mid-recovery; resume the
+		// reconnect before reading so the subscription survives.
+		if s.needsReconnect {
+			if reconnectErr := s.resumeReconnect(ctx); reconnectErr != nil {
+				return nil, reconnectErr
+			}
+			continue // re-snapshot the freshly stored state
 		}
 
-		rawMsg, err := s.subscribeClient.Recv()
+		// Snapshot state once per iteration so every read in this loop body
+		// references the same Reservation/cancelContext/cancelFunction triple.
+		// attemptReconnect (called below, same goroutine) Stores a new state
+		// that the next iteration picks up; the snapshot also keeps a
+		// concurrent Close, which Loads and cancels, from seeing a torn view.
+		state := s.state.Load()
+
+		// Callers can cancel ctx right after subscribing; check before Recv.
+		select {
+		case <-ctx.Done():
+			// If the stream itself is already dead (Close or the Subscribe
+			// ctx ended), prefer the terminal path so the slot is released
+			// even when both contexts died together.
+			select {
+			case <-state.cancelContext.Done():
+				return nil, s.terminate(state)
+			default:
+			}
+			// The caller stopped waiting; the subscription and its slot stay
+			// intact, and the next Item/Event call picks up where we left off.
+			return nil, ctx.Err()
+		case <-state.cancelContext.Done():
+			return nil, s.terminate(state)
+		default:
+		}
+
+		rawMsg, err := state.subscribeClient.Recv()
 		if err != nil {
 			select {
 			case <-ctx.Done():
 				{
-					decremented := s.decrementSubscriptionCount()
+					// The stream failed while the caller's ctx is dead: tear
+					// the dead stream down now (its slot must not stay
+					// counted), and let the next call resume via reconnect.
+					state.cancelFunction()
+					decremented := state.reservation.Release()
+					s.needsReconnect = true
+					s.lastStreamErr = err
 					s.log.Debug(
-						"[Event RecvMsg] Context done, number of active streams on current grpc channel: %d",
+						"[Event RecvMsg] Context done, reconnect deferred to the next call, number of active streams on current grpc channel: %d",
 						decremented,
 					)
 					return nil, ctx.Err()
 				}
-			case <-s.cancelContext.Done():
+			case <-state.cancelContext.Done():
 				{
-					decremented := s.decrementSubscriptionCount()
-					s.log.Debug(
-						"[Event RecvMsg] Context cancelled, number of active streams on current grpc channel: %d",
-						decremented,
-					)
-					return nil, s.cancelContext.Err()
+					return nil, s.terminate(state)
 				}
 			default:
 				{
-					s.onTopicEvent(methodName, middleware.ERROR)
-					// Disconnected, decrement and explicitly close the stream, then attempt to reconnect
+					s.onTopicEvent(subscribeMethodName, middleware.ERROR)
+					// Cancel the dead stream before releasing the slot so the
+					// server-side resources tear down promptly.
 					s.log.Error("Stream disconnected due to error: %s", err.Error())
-					s.cancelFunction()
-					decremented := s.decrementSubscriptionCount()
+					state.cancelFunction()
+					decremented := state.reservation.Release()
 					s.log.Debug(
 						"[Event RecvMsg] Default case, attempting to reconnect, number of active streams on current grpc channel: %d",
 						decremented,
 					)
 
-					err := s.attemptReconnect(ctx, err)
-					if err != nil {
-						return nil, momentoerrors.ConvertSvcErr(err)
+					streamErr := err
+					reconnectErr := s.attemptReconnect(ctx, streamErr)
+					if reconnectErr != nil {
+						return nil, s.reconnectFailure(ctx, streamErr, reconnectErr)
 					}
 				}
 			}
@@ -200,14 +256,14 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 		switch typedMsg := rawMsg.Kind.(type) {
 		case *pb.XSubscriptionItem_Discontinuity:
 			s.log.Debug("received discontinuity item: %+v", typedMsg.Discontinuity)
-			s.onTopicEvent(methodName, middleware.DISCONTINUITY)
+			s.onTopicEvent(subscribeMethodName, middleware.DISCONTINUITY)
 			return NewTopicDiscontinuity(
 				typedMsg.Discontinuity.LastTopicSequence,
 				typedMsg.Discontinuity.NewTopicSequence,
 				typedMsg.Discontinuity.NewSequencePage,
 			), nil
 		case *pb.XSubscriptionItem_Item:
-			s.onTopicEvent(methodName, middleware.ITEM)
+			s.onTopicEvent(subscribeMethodName, middleware.ITEM)
 			s.lastKnownSequenceNumber = typedMsg.Item.GetTopicSequenceNumber()
 			s.lastKnownSequencePage = typedMsg.Item.GetSequencePage()
 			publisherId := typedMsg.Item.GetPublisherId()
@@ -225,7 +281,7 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 			}
 		case *pb.XSubscriptionItem_Heartbeat:
 			s.log.Trace("received heartbeat item")
-			s.onTopicEvent(methodName, middleware.HEARTBEAT)
+			s.onTopicEvent(subscribeMethodName, middleware.HEARTBEAT)
 			return TopicHeartbeat{}, nil
 		default:
 			s.log.Warn("Unrecognized response detected.",
@@ -235,19 +291,95 @@ func (s *topicSubscription) Event(ctx context.Context) (TopicEvent, error) {
 	}
 }
 
+// terminate releases the slot of a subscription whose stream context has
+// ended (Close, or the Subscribe-time ctx died) and returns the typed
+// terminal error. It wraps the context error so errors.Is still matches,
+// while the CanceledError code lets callers distinguish a dead subscription
+// from their own ctx expiring.
+func (s *topicSubscription) terminate(state *streamState) error {
+	decremented := state.reservation.Release()
+	s.log.Debug(
+		"[Event] Subscription stream context ended, number of active streams on current grpc channel: %d",
+		decremented,
+	)
+	return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription ended", state.cancelContext.Err())
+}
+
+// resumeReconnect re-enters an interrupted recovery at the top of Event.
+// Returns nil when the stream is re-established (needsReconnect cleared).
+func (s *topicSubscription) resumeReconnect(ctx context.Context) error {
+	if ctx.Err() != nil {
+		// Still no live ctx; stay paused.
+		return ctx.Err()
+	}
+	if reconnectErr := s.attemptReconnect(ctx, s.lastStreamErr); reconnectErr != nil {
+		return s.reconnectFailure(ctx, s.lastStreamErr, reconnectErr)
+	}
+	s.needsReconnect = false
+	s.lastStreamErr = nil
+	return nil
+}
+
+// reconnectFailure classifies a failed attemptReconnect: a dead caller ctx
+// pauses the recovery (the next call resumes it), anything else surfaces with
+// its typed code intact.
+func (s *topicSubscription) reconnectFailure(ctx context.Context, streamErr error, reconnectErr error) error {
+	// Pause only when the reconnect was interrupted by the caller's ctx; a
+	// give-up or terminal verdict that merely coincides with a dead ctx must
+	// surface as-is rather than being resurrected by the next call.
+	if errors.Is(reconnectErr, errEventCtxInterruptedReconnect) && !s.closed.Load() && s.streamParentCtx.Err() == nil {
+		s.needsReconnect = true
+		s.lastStreamErr = streamErr
+		return ctx.Err()
+	}
+	// attemptReconnect returns typed MomentoSvcErrs (e.g. CanceledError on
+	// Close); ConvertSvcErr would demote them to ClientSdkError since they
+	// carry no gRPC status, so pass them through unchanged.
+	var svcErr momentoerrors.MomentoSvcErr
+	if errors.As(reconnectErr, &svcErr) {
+		return svcErr
+	}
+	return momentoerrors.ConvertSvcErr(reconnectErr)
+}
+
 func (s *topicSubscription) onTopicEvent(method string, event middleware.TopicSubscriptionEventType) {
 	if s.topicEventCallback != nil {
 		s.topicEventCallback(s.cacheName, method, event)
 	}
 }
 
-func (s *topicSubscription) decrementSubscriptionCount() int64 {
-	s.mu.Lock()
-	reservation := s.reservation
-	s.mu.Unlock()
-	// Reservation.Release is idempotent, so overlapping cleanup paths (an
-	// Event observing a cancel racing a Close) each call it safely.
-	return reservation.Release()
+// waitBackoff sleeps for the retry backoff, waking early when the caller's
+// ctx dies, the Subscribe-time ctx dies, or Close is called. The timer is
+// stopped on early exit so interrupted waits don't leave timers running
+// during reconnect storms with long backoffs.
+func (s *topicSubscription) waitBackoff(ctx context.Context, backoff time.Duration) error {
+	timer := time.NewTimer(backoff)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		// A terminal signal that fired in the same instant wins the tie so
+		// the error carries the terminal cause. (reconnectFailure re-checks
+		// the terminal conditions either way, so classification never
+		// depends on this select.)
+		select {
+		case <-s.streamParentCtx.Done():
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
+		default:
+		}
+		select {
+		case <-s.closedSignal:
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
+		default:
+		}
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
+	case <-s.streamParentCtx.Done():
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
+	case <-s.closedSignal:
+		s.log.Info("Subscription closed during reconnect backoff; aborting retry loop")
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
+	}
 }
 
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
@@ -259,7 +391,19 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 	for {
 		if s.closed.Load() {
 			s.log.Info("Subscription closed during reconnect; aborting retry loop")
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
+		}
+		// A dead streamParentCtx is terminal (a stream parented to it can
+		// never come up) and is checked before the caller's ctx so a tie
+		// carries the terminal cause; a dead caller ctx pauses recovery
+		// (Event resumes it on the next call).
+		if s.streamParentCtx.Err() != nil {
+			s.log.Info("Subscribe context canceled during reconnect; aborting retry loop")
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
+		}
+		if ctx.Err() != nil {
+			s.log.Info("Context canceled during reconnect; aborting retry loop")
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
 		}
 
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
@@ -273,15 +417,19 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			return err
 		}
 
-		s.onTopicEvent("Subscribe", middleware.RECONNECT)
+		s.onTopicEvent(subscribeMethodName, middleware.RECONNECT)
 
 		if *retryBackoffTime > 0 {
 			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(*retryBackoffTime))
-			time.Sleep(time.Duration(*retryBackoffTime) * time.Millisecond)
+			if waitErr := s.waitBackoff(ctx, time.Duration(*retryBackoffTime)*time.Millisecond); waitErr != nil {
+				return waitErr
+			}
 		}
 
 		s.log.Info("Attempting reconnecting to client stream")
-		reservation, subscribeClient, cancelContext, cancelFunction, reconnectErr := s.momentoTopicClient.topicSubscribe(ctx, &TopicSubscribeRequest{
+		// Parent the replacement stream to the Subscribe-time ctx, not this
+		// Event call's ctx, so the stream's lifetime is stable across Events.
+		newState, reconnectErr := s.momentoTopicClient.topicSubscribe(s.streamParentCtx, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
@@ -289,6 +437,14 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		})
 
 		if reconnectErr != nil {
+			// A canceled reconnect can never succeed: the pool is shutting
+			// down or the stream's parent context is dead. Stop instead of
+			// burning retries (the legacy default strategy retries forever).
+			var svcErr momentoerrors.MomentoSvcErr
+			if errors.As(reconnectErr, &svcErr) && svcErr.Code() == momentoerrors.CanceledError {
+				s.log.Info("Reconnect attempt was canceled; aborting retry loop")
+				return reconnectErr
+			}
 			s.log.Warn("Failed to reconnect to stream: %s", reconnectErr.Error())
 			err = reconnectErr
 			attempt++
@@ -296,45 +452,30 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		}
 
 		s.log.Info("Successfully reconnected to subscription stream")
-		// Install the new stream under the mutex so that a concurrent Close
-		// observes either the old state or the new state, never a torn mix.
-		// Capture the closed flag under the same critical section so that any
-		// Close that ran before we unlock is guaranteed to be seen here.
-		s.mu.Lock()
-		s.reservation = reservation
-		s.subscribeClient = subscribeClient
-		s.cancelContext = cancelContext
-		s.cancelFunction = cancelFunction
-		wasClosed := s.closed.Load()
-		s.mu.Unlock()
+		s.state.Store(newState)
 
-		// If Close() ran while we were reconnecting, the cancel and release it
-		// issued targeted the *old* stream's already-released Reservation. The
-		// new stream we just installed would otherwise leak past Close — tear
-		// it down here.
-		if wasClosed {
+		// Store before reading closed; Close stores closed before reading
+		// state. Either side observes the other's write, so a Close racing
+		// this reconnect always tears down the new stream.
+		if s.closed.Load() {
 			s.log.Info("Subscription closed during reconnect; tearing down newly established stream")
-			cancelFunction()
-			s.decrementSubscriptionCount()
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+			newState.cancelFunction()
+			newState.reservation.Release()
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
 		}
 		return nil
 	}
 }
 
-// Close cancels the stream context and releases the per-channel and pool-wide
-// subscription slots. decrementSubscriptionCount is idempotent (the
-// Reservation's Release is CAS-guarded), so if an in-flight Event() loop also
-// observes the cancel and decrements, the counters stay correct. The `closed` flag is set first so
-// that an in-flight attemptReconnect notices and tears down any new stream it
-// allocates instead of leaking it past Close. The cancel function is snapshotted
-// under mu so a concurrent attemptReconnect can't reassign the field while we
-// read it.
+// Close cancels the stream and releases the slot. Safe to call concurrently
+// with Event or another Close; Reservation.Release is idempotent.
 func (s *topicSubscription) Close() {
-	s.closed.Store(true)
-	s.mu.Lock()
-	cancel := s.cancelFunction
-	s.mu.Unlock()
-	cancel()
-	s.decrementSubscriptionCount()
+	// Set closed before reading state — see attemptReconnect for the inverse.
+	// The CAS doubles as the once-guard for closing the signal channel.
+	if s.closed.CompareAndSwap(false, true) {
+		close(s.closedSignal)
+	}
+	state := s.state.Load()
+	state.cancelFunction()
+	state.reservation.Release()
 }
