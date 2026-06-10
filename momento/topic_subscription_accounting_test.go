@@ -210,6 +210,14 @@ func assertErrorCode(t *testing.T, err error, code string) {
 	}
 }
 
+func discontinuityItem() *pb.XSubscriptionItem {
+	return &pb.XSubscriptionItem{
+		Kind: &pb.XSubscriptionItem_Discontinuity{
+			Discontinuity: &pb.XDiscontinuity{},
+		},
+	}
+}
+
 func assertAccounting(t *testing.T, pool *testTopicGrpcConnectionPool, activeCount int64) {
 	t.Helper()
 	if got := pool.activeCount.Load(); got != activeCount {
@@ -703,6 +711,99 @@ func TestTopicSubscriptionSubscribeCtxCancelEndsSubscription(t *testing.T) {
 	assertAccounting(t, pool, 0)
 }
 
+// TestTopicSubscriptionItemSkipsNonMessageEvents pins Item's contract: it
+// swallows heartbeats and discontinuities and returns the next message value.
+func TestTopicSubscriptionItemSkipsNonMessageEvents(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{
+					{item: heartbeatItem()}, // handshake
+					{item: heartbeatItem()},
+					{item: discontinuityItem()},
+					{item: topicItem(2)},
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+
+	value, err := sub.Item(context.Background())
+	if err != nil {
+		t.Fatalf("Item returned error: %v", err)
+	}
+	if got, ok := value.(String); !ok || got != String("value") {
+		t.Fatalf("Item = %v (%T), want String(\"value\")", value, value)
+	}
+
+	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
+// TestTopicSubscriptionSubscribeCtxCancelDuringBackoffIsTerminal pins the
+// asymmetry between the two context flavors mid-backoff: the Subscribe-time
+// ctx dying ends the subscription (typed CanceledError, no pause), unlike the
+// per-call ctx, which pauses recovery for the next call.
+func TestTopicSubscriptionSubscribeCtxCancelDuringBackoffIsTerminal(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{
+					{item: heartbeatItem()},
+					{err: disconnectErr},
+				},
+			}, nil
+		},
+	}
+	strategy := newSignalingBackoffRetryStrategy(10 * 60 * 1000)
+	client, pool := newAccountingTestClientWithStrategy(streamClient, time.Second, strategy)
+
+	subscribeCtx, cancelSubscribeCtx := context.WithCancel(context.Background())
+	defer cancelSubscribeCtx()
+	sub, err := client.Subscribe(subscribeCtx, testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(context.Background())
+		eventDone <- eventErr
+	}()
+
+	<-strategy.entered
+	cancelSubscribeCtx()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after Subscribe-ctx cancellation")
+		}
+		assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+		if !errors.Is(eventErr, context.Canceled) {
+			t.Fatalf("terminal error should unwrap to context.Canceled, got %v", eventErr)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s of Subscribe-ctx cancellation")
+	}
+	assertAccounting(t, pool, 0)
+
+	// Terminal, not paused: a later call must report the dead subscription,
+	// not retry the reconnect.
+	_, eventErr := sub.Event(context.Background())
+	if eventErr == nil {
+		t.Fatal("expected the subscription to stay terminal")
+	}
+	assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+}
+
 // TestTopicSubscriptionReconnectPausesOnContextCancelAndResumes drives the
 // retry loop into a long backoff, cancels the caller's ctx (Event must return
 // promptly), then verifies the next call with a live ctx resumes the
@@ -759,6 +860,14 @@ func TestTopicSubscriptionReconnectPausesOnContextCancelAndResumes(t *testing.T)
 		t.Fatal("Event did not return within 5s of context cancellation")
 	}
 	// The failed stream's slot was released; recovery is paused, not dead.
+	assertAccounting(t, pool, 0)
+
+	// A call with another dead ctx stays paused rather than resuming.
+	deadCtx, cancelDead := context.WithCancel(context.Background())
+	cancelDead()
+	if _, pausedErr := sub.Event(deadCtx); pausedErr == nil {
+		t.Fatal("expected a dead-ctx call on a paused subscription to return an error")
+	}
 	assertAccounting(t, pool, 0)
 
 	// A live ctx resumes the reconnect (zero backoff on the second
@@ -1095,7 +1204,30 @@ func TestTopicPublishUnaryReleasesReservationOncePerCall(t *testing.T) {
 		}
 	}
 
-	if got := pool.releaseCount.Load(); got != publishCount {
-		t.Fatalf("releaseCount = %d, want %d (exactly one Release per publish)", got, publishCount)
+	// The Bytes branch and the unsupported-value branch release too.
+	if err := client.topicPublish(context.Background(), &TopicPublishRequest{
+		CacheName: "cache",
+		TopicName: "topic",
+		Value:     Bytes("payload"),
+	}); err != nil {
+		t.Fatalf("topicPublish with Bytes returned error: %v", err)
+	}
+	err := client.topicPublish(context.Background(), &TopicPublishRequest{
+		CacheName: "cache",
+		TopicName: "topic",
+		Value:     unsupportedTopicValue{},
+	})
+	if err == nil {
+		t.Fatal("expected an error for an unsupported topic value type")
+	}
+	assertErrorCode(t, err, momentoerrors.InvalidArgumentError)
+
+	if got := pool.releaseCount.Load(); got != publishCount+2 {
+		t.Fatalf("releaseCount = %d, want %d (exactly one Release per publish)", got, publishCount+2)
 	}
 }
+
+// unsupportedTopicValue drives topicPublish's default branch.
+type unsupportedTopicValue struct{}
+
+func (unsupportedTopicValue) isTopicValue() {}

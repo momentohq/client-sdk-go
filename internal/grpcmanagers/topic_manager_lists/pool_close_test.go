@@ -8,6 +8,7 @@ import (
 	"github.com/momentohq/client-sdk-go/auth"
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
@@ -180,6 +181,47 @@ func TestTopicStreamPoolGetRacingCloseIsSafe(t *testing.T) {
 	if got := pool.GetCurrentActiveStreamsCount(); got != 0 {
 		t.Fatalf("active streams count after race = %d, want 0", got)
 	}
+}
+
+// TestTopicUnaryPoolReservationLifecycle covers the real unary pool, which
+// the subscription tests only exercise through fakes: reservations hand out
+// managers round-robin, Release is a no-op returning zero, and Close is
+// idempotent.
+func TestTopicUnaryPoolReservationLifecycle(t *testing.T) {
+	t.Parallel()
+
+	pool, err := NewStaticUnaryGrpcManagerPool(
+		newTestManagerRequest(t),
+		2,
+		logger.NewNoopMomentoLoggerFactory().GetLogger("unary-pool-test"),
+	)
+	if err != nil {
+		t.Fatalf("NewStaticUnaryGrpcManagerPool returned error: %v", err)
+	}
+
+	seen := make(map[*grpcmanagers.TopicGrpcManager]bool)
+	for i := 0; i < 4; i++ {
+		reservation, getErr := pool.GetNextTopicGrpcManager()
+		if getErr != nil {
+			t.Fatalf("GetNextTopicGrpcManager %d returned error: %v", i, getErr)
+		}
+		if reservation.Manager() == nil {
+			t.Fatal("reservation manager is nil")
+		}
+		seen[reservation.Manager()] = true
+		if got := reservation.Release(); got != 0 {
+			t.Fatalf("unary Release returned %d, want 0 (no-op)", got)
+		}
+		if got := reservation.Manager().NumActiveSubscriptions.Load(); got != 0 {
+			t.Fatalf("unary reservations must not touch subscription counts, got %d", got)
+		}
+	}
+	if len(seen) != 2 {
+		t.Fatalf("round-robin visited %d managers, want 2", len(seen))
+	}
+
+	pool.Close()
+	pool.Close() // idempotent
 }
 
 // TestTopicStreamPoolRespectsPerChannelCap fills a multi-channel pool to
