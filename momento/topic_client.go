@@ -97,24 +97,13 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	// watchdog for the first-heartbeat handshake.
 	go c.sendSubscribe(ctx, firstMessageCtx, request, subChan, errChan)
 	select {
-	case <-ctx.Done():
-		// sendSubscribe's stream context is a child of ctx, so Recv will
-		// unblock and the error path releases the slot. The drainer handles
-		// the case where Recv landed a heartbeat first.
-		go drainAndCloseSubscription(subChan, errChan)
-		return nil, momentoerrors.NewMomentoSvcErr(
-			momentoerrors.CanceledError,
-			"subscribe request context was canceled",
-			ctx.Err(),
-		)
 	case <-firstMessageCtx.Done():
-		// First-heartbeat timeout. The watchdog cancels the stream unless the
-		// first message already won the handshake; the drainer closes a live
-		// subscription that lands on subChan after this return.
+		// Handshake deadline or caller cancellation (firstMessageCtx is a
+		// child of ctx, so it fires for both). The watchdog cancels the
+		// stream unless the first message already won the handshake; the
+		// drainer closes a live subscription that lands on subChan after this
+		// return, and the error path releases the slot otherwise.
 		go drainAndCloseSubscription(subChan, errChan)
-		// firstMessageCtx is a child of ctx, so when the caller cancels, both
-		// Done channels fire and select picks between the cases randomly.
-		// Report the caller's cancellation, not a handshake timeout.
 		if ctx.Err() != nil {
 			return nil, momentoerrors.NewMomentoSvcErr(
 				momentoerrors.CanceledError,
@@ -149,13 +138,49 @@ func drainAndCloseSubscription(subChan chan *topicSubscription, errChan chan err
 }
 
 func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessageCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
-	state, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
+	// The stream context pair is created before topicSubscribe so the
+	// watchdog bounds stream ESTABLISHMENT as well as the first-message wait;
+	// otherwise a black-holed endpoint would hold the reserved pool slot
+	// until gRPC's connect timeout, long after Subscribe returned.
+	cancelContext, cancelFunction := context.WithCancel(requestCtx)
+
+	// Watchdog: cancel the stream if firstMessageCtx fires before the
+	// handshake completes. handshakeDecided is the single arbiter: exactly
+	// one of {handshake outcome, watchdog} wins it, so a stream the watchdog
+	// cancelled is never delivered to the caller, and a stream whose first
+	// message won is never cancelled by the watchdog.
+	var handshakeDecided atomic.Bool
+	firstMessageDone := make(chan struct{})
+	go func() {
+		select {
+		case <-firstMessageDone:
+			return
+		case <-firstMessageCtx.Done():
+			if handshakeDecided.CompareAndSwap(false, true) {
+				cancelFunction()
+			}
+		}
+	}()
+
+	state, err := c.pubSubClient.topicSubscribe(cancelContext, cancelFunction, &TopicSubscribeRequest{
 		CacheName:                   request.CacheName,
 		TopicName:                   request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
 		SequencePage:                request.SequencePage,
 	})
 	if err != nil {
+		establishmentWon := handshakeDecided.CompareAndSwap(false, true)
+		close(firstMessageDone)
+		if !establishmentWon && requestCtx.Err() == nil {
+			// The watchdog cancelled establishment at the deadline; report
+			// the handshake timeout rather than the cancellation it induced.
+			errChan <- momentoerrors.NewMomentoSvcErr(
+				momentoerrors.TimeoutError,
+				"subscription did not receive first message within the expected time",
+				err,
+			)
+			return
+		}
 		errChan <- err
 		return
 	}
@@ -172,24 +197,6 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, firstMessa
 		state.reservation.Release()
 		errChan <- err
 	}
-
-	// Watchdog: cancel the stream if firstMessageCtx fires before the first
-	// message arrives. handshakeDecided is the single arbiter: exactly one of
-	// {first-message outcome, watchdog} wins it, so a stream the watchdog
-	// cancelled is never delivered to the caller, and a stream whose first
-	// message won is never cancelled by the watchdog.
-	var handshakeDecided atomic.Bool
-	firstMessageDone := make(chan struct{})
-	go func() {
-		select {
-		case <-firstMessageDone:
-			return
-		case <-firstMessageCtx.Done():
-			if handshakeDecided.CompareAndSwap(false, true) {
-				state.cancelFunction()
-			}
-		}
-	}()
 
 	// Ping the stream to surface a nice error if the cache does not exist.
 	firstMsg, err := state.subscribeClient.Recv()

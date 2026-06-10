@@ -237,7 +237,9 @@ func TestTopicSubscribeReleasesPoolCountersWhenStreamOpenFails(t *testing.T) {
 	_, pool := newAccountingTestClient(streamClient, time.Second)
 	client := &pubSubClient{streamGrpcConnectionPool: pool}
 
-	_, err := client.topicSubscribe(context.Background(), testSubscribeRequest())
+	cancelCtx, cancelFn := context.WithCancel(context.Background())
+	defer cancelFn()
+	_, err := client.topicSubscribe(cancelCtx, cancelFn, testSubscribeRequest())
 	if err == nil {
 		t.Fatal("expected topicSubscribe to return an error")
 	}
@@ -1334,6 +1336,36 @@ func waitForReleasedAccounting(t *testing.T, pool *testTopicGrpcConnectionPool) 
 		time.Sleep(5 * time.Millisecond)
 	}
 	assertAccounting(t, pool, 0)
+}
+
+// TestSubscribeReleasesSlotWhenStreamEstablishmentHangs pins that the
+// handshake watchdog bounds stream ESTABLISHMENT too: a stream-open call that
+// blocks (black-holed endpoint) must not hold the reserved slot past the
+// handshake deadline, even though Subscribe already returned TimeoutError.
+func TestSubscribeReleasesSlotWhenStreamEstablishmentHangs(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			// Establishment completes only when the stream context is
+			// cancelled, as with a black-holed endpoint.
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, 50*time.Millisecond)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err == nil {
+		t.Fatal("expected Subscribe to return a timeout error")
+	}
+	if sub != nil {
+		t.Fatal("expected Subscribe to return a nil subscription on timeout")
+	}
+	assertErrorCode(t, err, momentoerrors.TimeoutError)
+
+	waitForReleasedAccounting(t, pool)
+	if got := pool.releaseCount.Load(); got != 1 {
+		t.Fatalf("releaseCount = %d, want 1 (exactly one Release for the hung establishment)", got)
+	}
 }
 
 // TestSubscribeLateFirstMessageAfterTimeoutReleasesSlot pins the
