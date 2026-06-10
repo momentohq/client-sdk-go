@@ -58,6 +58,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		if err != nil {
 			panic(err)
 		}
+		defer sub.Close()
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
 		var receivedValues []TopicValue
@@ -135,6 +136,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		if err != nil {
 			panic(err)
 		}
+		defer sub.Close()
 
 		cancelContext, cancelFunction := context.WithCancel(sharedContext.Ctx)
 		var receivedItems []TopicEvent
@@ -211,6 +213,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 			CacheName: sharedContext.CacheName,
 			TopicName: topicName,
 		})
+		defer sub.Close()
 
 		// immediately cancel the context
 		ctx, cancel := context.WithCancel(context.Background())
@@ -250,12 +253,12 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 
 	Describe(`Subscribe`, func() {
 		It(`Does not error on a non-existent topic`, func() {
-			Expect(
-				sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
-					CacheName: sharedContext.CacheName,
-					TopicName: topicName,
-				}),
-			).Error().NotTo(HaveOccurred())
+			sub, err := sharedContext.TopicClient.Subscribe(sharedContext.Ctx, &TopicSubscribeRequest{
+				CacheName: sharedContext.CacheName,
+				TopicName: topicName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			sub.Close()
 		})
 	})
 
@@ -280,6 +283,7 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 		if err != nil {
 			panic(err)
 		}
+		defer sub2.Close()
 
 		// publish messages to both
 		_, err = sharedContext.TopicClient.Publish(sharedContext.Ctx, &TopicPublishRequest{

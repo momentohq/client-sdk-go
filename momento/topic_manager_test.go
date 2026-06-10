@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,6 +18,8 @@ import (
 	. "github.com/momentohq/client-sdk-go/momento"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -44,10 +45,11 @@ func keepStreamAlive(ctx context.Context, subscribeClient pb.Pubsub_SubscribeCli
 			default:
 				item, err := subscribeClient.Recv()
 				if err != nil {
-					// The test is ending: the pool closed the connection or the
-					// spec canceled its context.
-					if strings.Contains(err.Error(), "the client connection is closing") ||
-						strings.Contains(err.Error(), "context canceled") {
+					// The test is ending: pool Close and spec ctx cancellation
+					// both surface from Recv as a Canceled status. Match the
+					// code, not grpc-go's message strings, so a wording change
+					// upstream can't fail the spec.
+					if status.Code(err) == codes.Canceled {
 						return
 					}
 					Expect(err).ToNot(HaveOccurred())
