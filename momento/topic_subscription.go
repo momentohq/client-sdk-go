@@ -359,6 +359,20 @@ func (s *topicSubscription) waitBackoff(ctx context.Context, backoff time.Durati
 	case <-timer.C:
 		return nil
 	case <-ctx.Done():
+		// A terminal signal that fired in the same instant wins the tie so
+		// the error carries the terminal cause. (reconnectFailure re-checks
+		// the terminal conditions either way, so classification never
+		// depends on this select.)
+		select {
+		case <-s.streamParentCtx.Done():
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
+		default:
+		}
+		select {
+		case <-s.closedSignal:
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
+		default:
+		}
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
 	case <-s.streamParentCtx.Done():
 		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
@@ -379,16 +393,17 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			s.log.Info("Subscription closed during reconnect; aborting retry loop")
 			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
 		}
-		// A dead caller ctx pauses recovery (Event resumes it on the next
-		// call); a dead streamParentCtx is terminal since a stream parented
-		// to it can never come up.
-		if ctx.Err() != nil {
-			s.log.Info("Context canceled during reconnect; aborting retry loop")
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
-		}
+		// A dead streamParentCtx is terminal (a stream parented to it can
+		// never come up) and is checked before the caller's ctx so a tie
+		// carries the terminal cause; a dead caller ctx pauses recovery
+		// (Event resumes it on the next call).
 		if s.streamParentCtx.Err() != nil {
 			s.log.Info("Subscribe context canceled during reconnect; aborting retry loop")
 			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
+		}
+		if ctx.Err() != nil {
+			s.log.Info("Context canceled during reconnect; aborting retry loop")
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
 		}
 
 		retryBackoffTime := s.retryStrategy.DetermineWhenToRetry(retry.StrategyProps{
