@@ -3,7 +3,6 @@ package topic_manager_lists
 import (
 	"fmt"
 	"math"
-	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -17,12 +16,10 @@ import (
 // streamPoolCore; this type supplies the grow-on-demand capacity policy.
 //
 // grpcManagers and currentMaxConcurrentStreams are only mutated by addManager
-// under the core's mutex; numGrpcManagers mirrors the length atomically for
-// external readers.
+// under the core's mutex.
 type dynamicStreamGrpcManagerPool struct {
 	streamPoolCore
-	grpcManagers    []*grpcmanagers.TopicGrpcManager
-	numGrpcManagers atomic.Int32
+	grpcManagers []*grpcmanagers.TopicGrpcManager
 	// managerIndex is only touched by getNextManager under the core's mutex.
 	managerIndex                uint64
 	maxManagerCount             int    // max grpc channels
@@ -52,7 +49,6 @@ func NewDynamicStreamGrpcManagerPool(request *models.TopicStreamGrpcManagerReque
 		logger:                      logger,
 		newTopicManagerProps:        request,
 	}
-	pool.numGrpcManagers.Store(int32(len(streamTopicManagers)))
 	pool.initStreamPoolCore(pool.getNextManager, func() {
 		closeAllManagers(pool.grpcManagers, logger)
 	})
@@ -61,7 +57,9 @@ func NewDynamicStreamGrpcManagerPool(request *models.TopicStreamGrpcManagerReque
 
 // GetCurrentNumberOfGrpcManagers returns the current number of grpc managers in the pool.
 func (d *dynamicStreamGrpcManagerPool) GetCurrentNumberOfGrpcManagers() int {
-	return int(d.numGrpcManagers.Load())
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return len(d.grpcManagers)
 }
 
 // getNextManager returns the next available stream manager from the pool,
@@ -74,20 +72,10 @@ func (d *dynamicStreamGrpcManagerPool) getNextManager() (*grpcmanagers.TopicGrpc
 		return nil, err
 	}
 
-	// Round-robin over the channels until one has a free slot. Allocation is
-	// serialized by the core mutex, so one pass over every channel would
-	// suffice; the generous bound is defensive.
-	for i := 0; uint32(i) < d.currentMaxConcurrentStreams; i++ {
-		d.managerIndex++
-		nextManagerIndex := d.managerIndex
-		topicManager := d.grpcManagers[nextManagerIndex%uint64(len(d.grpcManagers))]
-		newCount := topicManager.NumActiveSubscriptions.Add(1)
-		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
-			d.logger.Debug("Starting new subscription on grpc channel %d which now has %d streams", nextManagerIndex%uint64(len(d.grpcManagers)), newCount)
-			d.currentActiveStreamsCount.Add(1)
-			return topicManager, nil
-		}
-		topicManager.NumActiveSubscriptions.Add(-1)
+	// The attempt bound is generous: allocation is serialized by the core
+	// mutex, so one pass over every channel would suffice.
+	if topicManager := d.reserveSlot(d.grpcManagers, &d.managerIndex, d.currentMaxConcurrentStreams, d.logger); topicManager != nil {
+		return topicManager, nil
 	}
 
 	// If there are no more streams available, return an error
@@ -141,7 +129,6 @@ func (d *dynamicStreamGrpcManagerPool) addManager() momentoerrors.MomentoSvcErr 
 		return err
 	}
 	d.grpcManagers = append(d.grpcManagers, streamTopicManager)
-	d.numGrpcManagers.Store(int32(len(d.grpcManagers)))
 	d.currentMaxConcurrentStreams = uint32(len(d.grpcManagers)) * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 	return nil
 }

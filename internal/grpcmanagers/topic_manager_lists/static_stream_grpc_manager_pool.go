@@ -77,20 +77,10 @@ func (s *staticStreamGrpcManagerPool) getNextManager() (*grpcmanagers.TopicGrpcM
 		return nil, err
 	}
 
-	// Round-robin over the channels until one has a free slot. Allocation is
-	// serialized by the core mutex, so one pass over every channel would
-	// suffice; the generous bound is defensive.
-	for i := 0; uint32(i) < s.maxConcurrentStreams; i++ {
-		s.managerIndex++
-		nextManagerIndex := s.managerIndex
-		topicManager := s.grpcManagers[nextManagerIndex%uint64(len(s.grpcManagers))]
-		newCount := topicManager.NumActiveSubscriptions.Add(1)
-		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
-			s.logger.Debug("Starting new subscription on grpc channel %d which now has %d streams", nextManagerIndex%uint64(len(s.grpcManagers)), newCount)
-			s.currentActiveStreamsCount.Add(1)
-			return topicManager, nil
-		}
-		topicManager.NumActiveSubscriptions.Add(-1)
+	// The attempt bound is generous: allocation is serialized by the core
+	// mutex, so one pass over every channel would suffice.
+	if topicManager := s.reserveSlot(s.grpcManagers, &s.managerIndex, s.maxConcurrentStreams, s.logger); topicManager != nil {
+		return topicManager, nil
 	}
 
 	// If there are no more streams available, return an error

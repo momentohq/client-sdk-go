@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -112,9 +111,9 @@ type topicSubscription struct {
 	streamParentCtx context.Context
 	// closed is set by Close. attemptReconnect bails out if it observes this set.
 	closed atomic.Bool
-	// closedSignal wakes a reconnect backoff wait when Close is called.
-	closedSignal    chan struct{}
-	closeSignalOnce sync.Once
+	// closedSignal wakes a reconnect backoff wait when Close is called. Only
+	// the Close that wins the closed CAS closes it.
+	closedSignal chan struct{}
 }
 
 // grpcStatusCode returns the gRPC status code for err, unwrapping
@@ -341,6 +340,14 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		})
 
 		if reconnectErr != nil {
+			// A canceled reconnect can never succeed: the pool is shutting
+			// down or the stream's parent context is dead. Stop instead of
+			// burning retries (the legacy default strategy retries forever).
+			var svcErr momentoerrors.MomentoSvcErr
+			if errors.As(reconnectErr, &svcErr) && svcErr.Code() == momentoerrors.CanceledError {
+				s.log.Info("Reconnect attempt was canceled; aborting retry loop")
+				return reconnectErr
+			}
 			s.log.Warn("Failed to reconnect to stream: %s", reconnectErr.Error())
 			err = reconnectErr
 			attempt++
@@ -367,8 +374,10 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 // with Event or another Close; Reservation.Release is idempotent.
 func (s *topicSubscription) Close() {
 	// Set closed before reading state — see attemptReconnect for the inverse.
-	s.closed.Store(true)
-	s.closeSignalOnce.Do(func() { close(s.closedSignal) })
+	// The CAS doubles as the once-guard for closing the signal channel.
+	if s.closed.CompareAndSwap(false, true) {
+		close(s.closedSignal)
+	}
 	state := s.state.Load()
 	state.cancelFunction()
 	state.reservation.Release()

@@ -4,6 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/momentohq/client-sdk-go/config"
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -83,6 +84,30 @@ func (c *streamPoolCore) releaseManager(manager *grpcmanagers.TopicGrpcManager) 
 		}
 	}
 	return newCount
+}
+
+// reserveSlot round-robins over managers until one has spare per-channel
+// capacity, reserving a slot on it and bumping the pool-wide counter. index
+// is owned by the calling pool and only advances under the core mutex.
+// Returns nil when no channel has capacity within attempts probes.
+func (c *streamPoolCore) reserveSlot(
+	managers []*grpcmanagers.TopicGrpcManager,
+	index *uint64,
+	attempts uint32,
+	log logger.MomentoLogger,
+) *grpcmanagers.TopicGrpcManager {
+	for i := uint32(0); i < attempts; i++ {
+		*index++
+		topicManager := managers[*index%uint64(len(managers))]
+		newCount := topicManager.NumActiveSubscriptions.Add(1)
+		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
+			log.Debug("Starting new subscription on grpc channel %d which now has %d streams", *index%uint64(len(managers)), newCount)
+			c.currentActiveStreamsCount.Add(1)
+			return topicManager
+		}
+		topicManager.NumActiveSubscriptions.Add(-1)
+	}
+	return nil
 }
 
 // closeAllManagers closes every connection in managers, logging failures.
