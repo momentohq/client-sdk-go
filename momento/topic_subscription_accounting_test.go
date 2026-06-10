@@ -1234,6 +1234,83 @@ type unsupportedTopicValue struct{}
 
 func (unsupportedTopicValue) isTopicValue() {}
 
+// TestTopicSubscriptionReconnectEstablishmentInterruptedByEventCtx pins the
+// pause contract against a dial that blocks: the reconnect stream is parented
+// to the Subscribe ctx for lineage, but the caller's per-call ctx must still
+// interrupt a blocked establishment promptly, pausing recovery for the next
+// call instead of terminating the subscription.
+func TestTopicSubscriptionReconnectEstablishmentInterruptedByEventCtx(t *testing.T) {
+	disconnectErr := status.Error(codes.Unavailable, "stream disconnected")
+	establishmentEntered := make(chan struct{})
+	var establishmentOnce sync.Once
+	var subscribeCalls atomic.Uint64
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			switch subscribeCalls.Add(1) {
+			case 1:
+				return &testSubscribeClient{
+					results: []recvResult{
+						{item: heartbeatItem()},
+						{err: disconnectErr},
+					},
+				}, nil
+			case 2:
+				// A dial that blocks mid-outage: completes only when the
+				// stream context dies.
+				establishmentOnce.Do(func() { close(establishmentEntered) })
+				<-ctx.Done()
+				return nil, status.FromContextError(ctx.Err()).Err()
+			default:
+				return &testSubscribeClient{
+					results: []recvResult{{item: topicItem(2)}},
+				}, nil
+			}
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventCtx, cancelEventCtx := context.WithCancel(context.Background())
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(eventCtx)
+		eventDone <- eventErr
+	}()
+
+	// Cancel the caller's ctx while the reconnect dial is blocked. Event must
+	// return promptly even though the stream is parented to the Subscribe ctx.
+	<-establishmentEntered
+	cancelEventCtx()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after context cancellation")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event blocked in reconnect establishment did not return within 5s of ctx cancellation")
+	}
+	assertAccounting(t, pool, 0)
+
+	// Paused, not dead: a live ctx resumes and delivers from a fresh stream.
+	event, eventErr := sub.Event(context.Background())
+	if eventErr != nil {
+		t.Fatalf("Event after interrupted establishment returned error: %v", eventErr)
+	}
+	if _, ok := event.(TopicItem); !ok {
+		t.Fatalf("Event = %T, want TopicItem from the resumed stream", event)
+	}
+	assertAccounting(t, pool, 1)
+
+	sub.Close()
+	assertAccounting(t, pool, 0)
+}
+
 // TestSubscribeWatchdogDoesNotCancelLiveSubscription guards the sendSubscribe
 // watchdog race: when both firstMessageDone and firstMessageCtx are ready by
 // the time the watchdog wakes, Go's select picks randomly. Without the
