@@ -435,7 +435,9 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		// (e.g. mid-outage), or Event couldn't return promptly. The induced
 		// cancellation is converted into a pause below.
 		establishmentDone := make(chan struct{})
+		interrupterExited := make(chan struct{})
 		go func() {
+			defer close(interrupterExited)
 			select {
 			case <-establishmentDone:
 			case <-ctx.Done():
@@ -449,6 +451,9 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			SequencePage:                s.lastKnownSequencePage,
 		})
 		close(establishmentDone)
+		// Join the interrupter: after this, either reconnectCancel has already
+		// happened (visible to the check below) or it never will.
+		<-interrupterExited
 
 		if reconnectErr == nil && newState.cancelContext.Err() != nil &&
 			ctx.Err() != nil && s.streamParentCtx.Err() == nil && !s.closed.Load() {
