@@ -430,14 +430,49 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 		// Parent the replacement stream to the Subscribe-time ctx, not this
 		// Event call's ctx, so the stream's lifetime is stable across Events.
 		reconnectCtx, reconnectCancel := context.WithCancel(s.streamParentCtx)
+		// The stream is parented to the Subscribe ctx for stable lineage, but
+		// the caller's ctx must still be able to interrupt a dial that blocks
+		// (e.g. mid-outage), or Event couldn't return promptly. The induced
+		// cancellation is converted into a pause below.
+		establishmentDone := make(chan struct{})
+		interrupterExited := make(chan struct{})
+		go func() {
+			defer close(interrupterExited)
+			select {
+			case <-establishmentDone:
+			case <-ctx.Done():
+				reconnectCancel()
+			}
+		}()
 		newState, reconnectErr := s.momentoTopicClient.topicSubscribe(reconnectCtx, reconnectCancel, &TopicSubscribeRequest{
 			CacheName:                   s.cacheName,
 			TopicName:                   s.topicName,
 			ResumeAtTopicSequenceNumber: s.lastKnownSequenceNumber,
 			SequencePage:                s.lastKnownSequencePage,
 		})
+		close(establishmentDone)
+		// Join the interrupter: after this, either reconnectCancel has already
+		// happened (visible to the check below) or it never will.
+		<-interrupterExited
+
+		if reconnectErr == nil && newState.cancelContext.Err() != nil &&
+			ctx.Err() != nil && s.streamParentCtx.Err() == nil && !s.closed.Load() {
+			// The interrupter cancelled a stream that had just come up;
+			// release it and pause rather than handing Event a dead stream
+			// or terminating the subscription.
+			newState.reservation.Release()
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
+		}
 
 		if reconnectErr != nil {
+			// The caller's ctx dying mid-establishment pauses recovery; this
+			// is checked before the canceled-terminal classification below,
+			// which would otherwise treat the induced cancellation as
+			// terminal.
+			if ctx.Err() != nil && s.streamParentCtx.Err() == nil && !s.closed.Load() {
+				s.log.Info("Context canceled during reconnect establishment; pausing retry loop")
+				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
+			}
 			// A canceled reconnect can never succeed: the pool is shutting
 			// down or the stream's parent context is dead. Stop instead of
 			// burning retries (the legacy default strategy retries forever).
