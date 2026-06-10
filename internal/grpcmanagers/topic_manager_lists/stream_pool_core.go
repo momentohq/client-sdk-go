@@ -97,7 +97,7 @@ func (c *streamPoolCore) reserveSlot(
 	log logger.MomentoLogger,
 ) *grpcmanagers.TopicGrpcManager {
 	for i := uint32(0); i < attempts; i++ {
-		*index++
+		(*index)++
 		topicManager := managers[*index%uint64(len(managers))]
 		newCount := topicManager.NumActiveSubscriptions.Add(1)
 		if newCount <= int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL) {
