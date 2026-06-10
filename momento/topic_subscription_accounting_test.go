@@ -740,6 +740,56 @@ func TestTopicSubscriptionReconnectUsesSubscribeContext(t *testing.T) {
 	assertAccounting(t, pool, 0)
 }
 
+// TestTopicSubscriptionCloseUnblocksEventBlockedInRecv pins the documented
+// Close contract: an Event call blocked in Recv returns promptly with an
+// error when Close cancels the stream context, with the slot released.
+func TestTopicSubscriptionCloseUnblocksEventBlockedInRecv(t *testing.T) {
+	recvBlocked := make(chan struct{})
+	var recvBlockedOnce sync.Once
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			heartbeatSent := false
+			return &testSubscribeClient{
+				recv: func() (*pb.XSubscriptionItem, error) {
+					if !heartbeatSent {
+						heartbeatSent = true
+						return heartbeatItem(), nil
+					}
+					recvBlockedOnce.Do(func() { close(recvBlocked) })
+					<-ctx.Done()
+					return nil, status.FromContextError(ctx.Err()).Err()
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(context.Background())
+		eventDone <- eventErr
+	}()
+
+	<-recvBlocked // Event is now blocked inside Recv
+	sub.Close()
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after Close")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event blocked in Recv did not return within 5s of Close")
+	}
+	assertAccounting(t, pool, 0)
+}
+
 // TestTopicSubscriptionReconnectStopsWhenPoolIsClosed verifies the retry loop
 // treats the pool's shutdown CanceledError as terminal: even an always-retry
 // strategy must not spin against a closed pool.

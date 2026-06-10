@@ -26,8 +26,11 @@ type TopicClient interface {
 	//
 	// The ctx bounds the subscription's lifetime, not just the Subscribe call:
 	// the underlying stream — including any stream re-established by the
-	// automatic reconnect logic — is a child of this ctx, so cancelling it
-	// ends the subscription and releases its connection-pool slot.
+	// automatic reconnect logic — is a child of this ctx. Cancelling it ends
+	// the subscription: a blocked or subsequent Item/Event call returns an
+	// error and releases the subscription's connection-pool slot. If no
+	// Item/Event call runs after cancellation, call Close (idempotent) to
+	// release the slot.
 	Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
 	Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error)
 

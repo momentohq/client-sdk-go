@@ -182,6 +182,46 @@ func TestTopicStreamPoolGetRacingCloseIsSafe(t *testing.T) {
 	}
 }
 
+// TestTopicStreamPoolRespectsPerChannelCap fills a multi-channel pool to
+// capacity and checks the invariant the round-robin reservation must hold:
+// no channel ever exceeds MAX_CONCURRENT_STREAMS_PER_CHANNEL, and a full pool
+// lands exactly at the cap on every channel.
+func TestTopicStreamPoolRespectsPerChannelCap(t *testing.T) {
+	t.Parallel()
+
+	const numChannels = 3
+	pool := newStaticTestPool(t, numChannels)
+	defer pool.Close()
+
+	perChannel := int64(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+	total := numChannels * config.MAX_CONCURRENT_STREAMS_PER_CHANNEL
+	reservations := make([]*Reservation, 0, total)
+	for i := 0; i < total; i++ {
+		reservation, err := pool.GetNextTopicGrpcManager()
+		if err != nil {
+			t.Fatalf("GetNextTopicGrpcManager %d returned error: %v", i, err)
+		}
+		reservations = append(reservations, reservation)
+		for channel, manager := range pool.grpcManagers {
+			if got := manager.NumActiveSubscriptions.Load(); got > perChannel {
+				t.Fatalf("channel %d exceeded the per-channel cap after %d reservations: %d > %d", channel, i+1, got, perChannel)
+			}
+		}
+	}
+	for channel, manager := range pool.grpcManagers {
+		if got := manager.NumActiveSubscriptions.Load(); got != perChannel {
+			t.Fatalf("channel %d subscription count at full pool = %d, want exactly %d", channel, got, perChannel)
+		}
+	}
+
+	for _, reservation := range reservations {
+		reservation.Release()
+	}
+	if got := pool.GetCurrentActiveStreamsCount(); got != 0 {
+		t.Fatalf("active streams count after releasing all = %d, want 0", got)
+	}
+}
+
 // TestTopicDynamicStreamPoolGrowsOnDemand verifies the dynamic pool adds a
 // channel when the current capacity is consumed, with exact counters and no
 // RPCs (slots are reserved without opening streams).
