@@ -22,6 +22,15 @@ import (
 )
 
 type TopicClient interface {
+	// Subscribe starts a subscription on the given topic.
+	//
+	// The ctx bounds the subscription's lifetime, not just the Subscribe call:
+	// the underlying stream — including any stream re-established by the
+	// automatic reconnect logic — is a child of this ctx. Cancelling it ends
+	// the subscription: a blocked or subsequent Item/Event call returns an
+	// error and releases the subscription's connection-pool slot. If no
+	// Item/Event call runs after cancellation, call Close (idempotent) to
+	// release the slot.
 	Subscribe(ctx context.Context, request *TopicSubscribeRequest) (TopicSubscription, error)
 	Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error)
 
@@ -83,15 +92,13 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 	subChan := make(chan *topicSubscription, 1)
 	errChan := make(chan error, 1)
 
-	// Send the subscribe request in a separate goroutine to avoid blocking the main thread.
-	// Here, we'll block until one of the select cases is triggered.
 	go c.sendSubscribe(ctx, request, subChan, errChan)
 	select {
 	case <-ctx.Done():
 		return nil, momentoerrors.NewMomentoSvcErr(
 			momentoerrors.CanceledError,
 			"subscribe request context was canceled",
-			nil,
+			ctx.Err(),
 		)
 	case <-firstMessageCtx.Done():
 		return nil, momentoerrors.NewMomentoSvcErr(
@@ -107,8 +114,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 }
 
 func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
-	var firstMsg *pb.XSubscriptionItem
-	reservation, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
+	state, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
 		CacheName:                   request.CacheName,
 		TopicName:                   request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
@@ -125,23 +131,27 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		c.log.Debug("Resuming subscription from sequence number %d and sequence page %d.", request.ResumeAtTopicSequenceNumber, request.SequencePage)
 	}
 
-	// Ping the stream to provide a nice error message if the cache does not exist.
-	firstMsg, err = subscribeClient.Recv()
+	// Single cleanup path: cancel, release, report.
+	fail := func(err error) {
+		state.cancelFunction()
+		state.reservation.Release()
+		errChan <- err
+	}
+
+	// Ping the stream to surface a nice error if the cache does not exist.
+	firstMsg, err := state.subscribeClient.Recv()
 	if err != nil {
 		c.log.Debug("failed to receive first message from subscription: %s", err.Error())
 
-		// We now count number of active subscriptions per grpc channel, so if we did not return
-		// an error earlier when calling c.pubSubClient.topicSubscribe, we know that the error
-		// here is due to a service-side subscription limit.
+		// topicSubscribe would have errored already if the local pool was
+		// exhausted, so a ResourceExhausted here is a service-side limit.
 		rpcError, _ := status.FromError(err)
 		if rpcError != nil {
 			if rpcError.Code() == codes.ResourceExhausted {
 				c.log.Warn("Topic subscription limit reached for this account; please contact us at support@momentohq.com")
 			}
 		}
-		cancelFunction()
-		reservation.Release()
-		errChan <- momentoerrors.ConvertSvcErr(err)
+		fail(momentoerrors.ConvertSvcErr(err))
 		return
 	}
 
@@ -149,13 +159,11 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 	case *pb.XSubscriptionItem_Heartbeat:
 		// The first message to a new subscription will always be a heartbeat.
 	default:
-		cancelFunction()
-		reservation.Release()
-		errChan <- momentoerrors.NewMomentoSvcErr(
+		fail(momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
 			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
 			err,
-		)
+		))
 		return
 	}
 
@@ -168,18 +176,18 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			break
 		}
 	}
-	subChan <- &topicSubscription{
-		reservation:        reservation,
+	sub := &topicSubscription{
 		topicEventCallback: topicEventCallback,
-		subscribeClient:    subscribeClient,
 		momentoTopicClient: c.pubSubClient,
 		cacheName:          request.CacheName,
 		topicName:          request.TopicName,
 		log:                c.log,
-		cancelContext:      cancelContext,
-		cancelFunction:     cancelFunction,
 		retryStrategy:      c.retryStrategy,
+		streamParentCtx:    requestCtx,
+		closedSignal:       make(chan struct{}),
 	}
+	sub.state.Store(state)
+	subChan <- sub
 }
 
 func (c defaultTopicClient) Publish(ctx context.Context, request *TopicPublishRequest) (responses.TopicPublishResponse, error) {
