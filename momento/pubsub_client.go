@@ -95,11 +95,15 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 }
 
 // topicSubscribe reserves a stream slot and opens a gRPC subscribe stream
-// against it. Failures cancel the request context and release the slot
-// before returning.
-func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*streamState, error) {
+// against it. The caller owns the cancelContext/cancelFunction pair — created
+// before this call so a watchdog can bound stream establishment — and
+// failures cancel it and release the slot before returning.
+func (client *pubSubClient) topicSubscribe(cancelContext context.Context, cancelFunction context.CancelFunc, request *TopicSubscribeRequest) (*streamState, error) {
 	reservation, reservationErr := client.streamGrpcConnectionPool.GetNextTopicGrpcManager()
 	if reservationErr != nil {
+		// Cancel the caller-owned pair so the child context doesn't stay
+		// registered on a long-lived parent (e.g. across reconnect retries).
+		cancelFunction()
 		return nil, reservationErr
 	}
 
@@ -118,7 +122,6 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		}
 	}
 
-	cancelContext, cancelFunction := context.WithCancel(ctx)
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(cancelContext, request.CacheName, requestMetadata)
 
 	var header, trailer metadata.MD
