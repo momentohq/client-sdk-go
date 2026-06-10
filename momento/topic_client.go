@@ -103,6 +103,16 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 		// stream unless the first message already won the handshake; the
 		// drainer closes a live subscription that lands on subChan after this
 		// return, and the error path releases the slot otherwise.
+		if ctx.Err() == nil {
+			// The deadline tied with a successful delivery: prefer the
+			// subscription. Anything on subChan won the handshake arbiter,
+			// so its stream is live.
+			select {
+			case subscription := <-subChan:
+				return subscription, nil
+			default:
+			}
+		}
 		go drainAndCloseSubscription(subChan, errChan)
 		if ctx.Err() != nil {
 			return nil, momentoerrors.NewMomentoSvcErr(

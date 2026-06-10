@@ -1291,6 +1291,58 @@ func TestSubscribeWatchdogDoesNotCancelLiveSubscription(t *testing.T) {
 	}
 }
 
+// TestSubscribeDeadlineBoundaryNeverLeaksOrDeliversDeadSubscriptions hammers
+// the handshake-deadline boundary, where an instant heartbeat and a tiny
+// requestTimeout race inside Subscribe's select. Every returned subscription
+// must be live (the deadline tie prefers a delivered subscription), every
+// timeout must leave no slot behind, and the counters must drain to zero.
+func TestSubscribeDeadlineBoundaryNeverLeaksOrDeliversDeadSubscriptions(t *testing.T) {
+	streamClient := &testPubsubClient{
+		subscribe: func(context.Context, *pb.XSubscriptionRequest, ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			return &testSubscribeClient{
+				results: []recvResult{{item: heartbeatItem()}},
+			}, nil
+		},
+	}
+	// 1ms keeps the deadline and the instant heartbeat permanently racing.
+	client, pool := newAccountingTestClient(streamClient, time.Millisecond)
+
+	const goroutines = 16
+	const perGoroutine = 100
+
+	var wg sync.WaitGroup
+	var successes, timeouts atomic.Int64
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < perGoroutine; i++ {
+				sub, err := client.Subscribe(context.Background(), testSubscribeRequest())
+				if err != nil {
+					timeouts.Add(1)
+					continue
+				}
+				successes.Add(1)
+				state := sub.(*topicSubscription).state.Load()
+				select {
+				case <-state.cancelContext.Done():
+					t.Error("Subscribe returned a subscription with a dead stream")
+				default:
+				}
+				sub.Close()
+			}
+		}()
+	}
+	wg.Wait()
+
+	if successes.Load() == 0 && timeouts.Load() == 0 {
+		t.Fatal("no outcomes recorded; test is vacuous")
+	}
+	// Timed-out handshakes release in sendSubscribe's goroutine; poll for the
+	// stragglers.
+	waitForReleasedAccounting(t, pool)
+}
+
 // TestTopicSubscribeReleasesSlotOnFirstMessageTimeout exercises the
 // firstMessageCtx timeout path. Recv blocks on the stream context (matching
 // production gRPC behavior); the watchdog cancels it after the timeout fires
