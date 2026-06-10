@@ -37,7 +37,7 @@ func newTestTopicGrpcConnectionPool(streamClient pb.PubsubClient) *testTopicGrpc
 
 func (p *testTopicGrpcConnectionPool) GetNextTopicGrpcManager() (*topic_manager_lists.Reservation, momentoerrors.MomentoSvcErr) {
 	if p.closed.Load() {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "connection pool is shutting down", nil)
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "connection pool is shutting down", context.Canceled)
 	}
 	p.manager.NumActiveSubscriptions.Add(1)
 	p.activeCount.Add(1)
@@ -366,6 +366,9 @@ func TestTopicSubscriptionCloseDuringReconnectTearsDownNewStream(t *testing.T) {
 		t.Fatal("expected Event to return an error after close-during-reconnect")
 	}
 	assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+	if !errors.Is(eventErr, context.Canceled) {
+		t.Fatalf("terminal error should unwrap to context.Canceled, got %v", eventErr)
+	}
 	assertAccounting(t, pool, 0)
 }
 
@@ -634,6 +637,72 @@ func TestTopicSubscriptionEventAfterCloseReturnsTypedCanceled(t *testing.T) {
 	}
 }
 
+// TestTopicSubscriptionSubscribeCtxCancelEndsSubscription pins the other
+// terminal flavor: cancelling the ctx passed to Subscribe tears down an
+// established subscription. The blocked-Recv fake also pins stream lineage —
+// the stream context must be a child of the Subscribe ctx, so cancellation
+// unblocks a waiting Event, which returns the typed terminal error and
+// releases the slot.
+func TestTopicSubscriptionSubscribeCtxCancelEndsSubscription(t *testing.T) {
+	recvBlocked := make(chan struct{})
+	var recvBlockedOnce sync.Once
+	streamClient := &testPubsubClient{
+		subscribe: func(ctx context.Context, _ *pb.XSubscriptionRequest, _ ...grpc.CallOption) (pb.Pubsub_SubscribeClient, error) {
+			heartbeatSent := false
+			return &testSubscribeClient{
+				recv: func() (*pb.XSubscriptionItem, error) {
+					if !heartbeatSent {
+						heartbeatSent = true
+						return heartbeatItem(), nil
+					}
+					recvBlockedOnce.Do(func() { close(recvBlocked) })
+					<-ctx.Done()
+					return nil, status.FromContextError(ctx.Err()).Err()
+				},
+			}, nil
+		},
+	}
+	client, pool := newAccountingTestClient(streamClient, time.Second)
+
+	subscribeCtx, cancelSubscribeCtx := context.WithCancel(context.Background())
+	defer cancelSubscribeCtx()
+	sub, err := client.Subscribe(subscribeCtx, testSubscribeRequest())
+	if err != nil {
+		t.Fatalf("Subscribe returned error: %v", err)
+	}
+	assertAccounting(t, pool, 1)
+
+	eventDone := make(chan error, 1)
+	go func() {
+		_, eventErr := sub.Event(context.Background())
+		eventDone <- eventErr
+	}()
+
+	// Cancel the Subscribe-time ctx while Event is blocked in Recv. The
+	// stream context is its child, so the blocked call must return.
+	<-recvBlocked
+	cancelSubscribeCtx()
+
+	state := sub.(*topicSubscription).state.Load()
+	if state.cancelContext.Err() == nil {
+		t.Fatal("the stream context must be a child of the Subscribe ctx")
+	}
+
+	select {
+	case eventErr := <-eventDone:
+		if eventErr == nil {
+			t.Fatal("expected Event to return an error after Subscribe-ctx cancellation")
+		}
+		assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+		if !errors.Is(eventErr, context.Canceled) {
+			t.Fatalf("terminal error should unwrap to context.Canceled, got %v", eventErr)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Event did not return within 5s of Subscribe-ctx cancellation")
+	}
+	assertAccounting(t, pool, 0)
+}
+
 // TestTopicSubscriptionReconnectPausesOnContextCancelAndResumes drives the
 // retry loop into a long backoff, cancels the caller's ctx (Event must return
 // promptly), then verifies the next call with a live ctx resumes the
@@ -830,6 +899,9 @@ func TestTopicSubscriptionCloseInterruptsReconnectBackoff(t *testing.T) {
 			t.Fatal("expected Event to return an error after Close")
 		}
 		assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+		if !errors.Is(eventErr, context.Canceled) {
+			t.Fatalf("terminal error should unwrap to context.Canceled, got %v", eventErr)
+		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("Event did not return within 5s of Close (backoff not interrupted)")
 	}
@@ -987,6 +1059,9 @@ func TestTopicSubscriptionReconnectStopsWhenPoolIsClosed(t *testing.T) {
 			t.Fatal("expected Event to return an error after the pool closed")
 		}
 		assertErrorCode(t, eventErr, momentoerrors.CanceledError)
+		if !errors.Is(eventErr, context.Canceled) {
+			t.Fatalf("terminal error should unwrap to context.Canceled, got %v", eventErr)
+		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("Event did not return within 5s; reconnect loop is spinning against a closed pool")
 	}

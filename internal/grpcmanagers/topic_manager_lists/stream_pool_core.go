@@ -1,6 +1,7 @@
 package topic_manager_lists
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 
@@ -42,7 +43,7 @@ func (c *streamPoolCore) GetNextTopicGrpcManager() (*Reservation, momentoerrors.
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.closed {
-		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "connection pool is shutting down", nil)
+		return nil, momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "connection pool is shutting down", context.Canceled)
 	}
 	topicManager, err := c.getNextManager()
 	if err != nil {

@@ -93,6 +93,12 @@ type TopicSubscription interface {
 // events.
 const subscribeMethodName = "Subscribe"
 
+// errEventCtxInterruptedReconnect marks attemptReconnect aborts caused by the
+// caller's per-call ctx dying. Event converts exactly these into a paused
+// recovery that the next call resumes; it wraps context.Canceled so the error
+// stays errors.Is-compatible on the terminal edges where it can escape.
+var errEventCtxInterruptedReconnect = fmt.Errorf("event context canceled during reconnect: %w", context.Canceled)
+
 // streamState bundles the fields swapped together on every (re)connect. Held
 // in an atomic.Pointer so readers see a consistent snapshot.
 type streamState struct {
@@ -318,7 +324,10 @@ func (s *topicSubscription) resumeReconnect(ctx context.Context) error {
 // pauses the recovery (the next call resumes it), anything else surfaces with
 // its typed code intact.
 func (s *topicSubscription) reconnectFailure(ctx context.Context, streamErr error, reconnectErr error) error {
-	if ctx.Err() != nil && !s.closed.Load() && s.streamParentCtx.Err() == nil {
+	// Pause only when the reconnect was interrupted by the caller's ctx; a
+	// give-up or terminal verdict that merely coincides with a dead ctx must
+	// surface as-is rather than being resurrected by the next call.
+	if errors.Is(reconnectErr, errEventCtxInterruptedReconnect) && !s.closed.Load() && s.streamParentCtx.Err() == nil {
 		s.needsReconnect = true
 		s.lastStreamErr = streamErr
 		return ctx.Err()
@@ -339,6 +348,26 @@ func (s *topicSubscription) onTopicEvent(method string, event middleware.TopicSu
 	}
 }
 
+// waitBackoff sleeps for the retry backoff, waking early when the caller's
+// ctx dies, the Subscribe-time ctx dies, or Close is called. The timer is
+// stopped on early exit so interrupted waits don't leave timers running
+// during reconnect storms with long backoffs.
+func (s *topicSubscription) waitBackoff(ctx context.Context, backoff time.Duration) error {
+	timer := time.NewTimer(backoff)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
+	case <-s.streamParentCtx.Done():
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
+	case <-s.closedSignal:
+		s.log.Info("Subscription closed during reconnect backoff; aborting retry loop")
+		return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
+	}
+}
+
 func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) error {
 	if s.retryStrategy == nil {
 		s.log.Info("No retry strategy provided, returning error")
@@ -348,14 +377,14 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 	for {
 		if s.closed.Load() {
 			s.log.Info("Subscription closed during reconnect; aborting retry loop")
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
 		}
 		// A dead caller ctx pauses recovery (Event resumes it on the next
 		// call); a dead streamParentCtx is terminal since a stream parented
 		// to it can never come up.
 		if ctx.Err() != nil {
 			s.log.Info("Context canceled during reconnect; aborting retry loop")
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", ctx.Err())
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", errEventCtxInterruptedReconnect)
 		}
 		if s.streamParentCtx.Err() != nil {
 			s.log.Info("Subscribe context canceled during reconnect; aborting retry loop")
@@ -377,15 +406,8 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 
 		if *retryBackoffTime > 0 {
 			s.log.Info("Waiting %s milliseconds before attempting to reconnect", fmt.Sprint(*retryBackoffTime))
-			select {
-			case <-time.After(time.Duration(*retryBackoffTime) * time.Millisecond):
-			case <-ctx.Done():
-				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "event context canceled during reconnect", ctx.Err())
-			case <-s.streamParentCtx.Done():
-				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscribe context canceled during reconnect", s.streamParentCtx.Err())
-			case <-s.closedSignal:
-				s.log.Info("Subscription closed during reconnect backoff; aborting retry loop")
-				return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+			if waitErr := s.waitBackoff(ctx, time.Duration(*retryBackoffTime)*time.Millisecond); waitErr != nil {
+				return waitErr
 			}
 		}
 
@@ -424,7 +446,7 @@ func (s *topicSubscription) attemptReconnect(ctx context.Context, err error) err
 			s.log.Info("Subscription closed during reconnect; tearing down newly established stream")
 			newState.cancelFunction()
 			newState.reservation.Release()
-			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", nil)
+			return momentoerrors.NewMomentoSvcErr(momentoerrors.CanceledError, "subscription closed", context.Canceled)
 		}
 		return nil
 	}
