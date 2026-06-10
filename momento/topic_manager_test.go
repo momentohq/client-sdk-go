@@ -111,11 +111,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				streamManager, err := staticPool.GetNextTopicGrpcManager()
+				reservation, err := staticPool.GetNextTopicGrpcManager()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(streamManager).NotTo(BeNil())
+				Expect(reservation).NotTo(BeNil())
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+				subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -161,7 +161,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					go func() {
 						defer GinkgoRecover()
 						defer waitGroup.Done()
-						streamManager, err := staticPool.GetNextTopicGrpcManager()
+						reservation, err := staticPool.GetNextTopicGrpcManager()
 						if err != nil {
 							// Only the over-capacity burst may be refused, and only
 							// with ResourceExhausted.
@@ -169,9 +169,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 							Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 							return
 						}
-						Expect(streamManager).NotTo(BeNil())
+						Expect(reservation).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+						subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -219,11 +219,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+				reservation, err := dynamicPool.GetNextTopicGrpcManager()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(streamManager).NotTo(BeNil())
+				Expect(reservation).NotTo(BeNil())
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+				subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -271,11 +271,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				go func() {
 					defer GinkgoRecover()
 					defer waitGroup.Done()
-					streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+					reservation, err := dynamicPool.GetNextTopicGrpcManager()
 					Expect(err).ToNot(HaveOccurred())
-					Expect(streamManager).NotTo(BeNil())
+					Expect(reservation).NotTo(BeNil())
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+					subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -324,11 +324,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					go func() {
 						defer GinkgoRecover()
 						defer waitGroup.Done()
-						streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+						reservation, err := dynamicPool.GetNextTopicGrpcManager()
 						Expect(err).ToNot(HaveOccurred())
-						Expect(streamManager).NotTo(BeNil())
+						Expect(reservation).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+						subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -381,13 +381,13 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 						defer GinkgoRecover()
 						defer waitGroup.Done()
 
-						streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+						reservation, err := dynamicPool.GetNextTopicGrpcManager()
 						if err != nil {
 							Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 						} else {
-							Expect(streamManager).NotTo(BeNil())
+							Expect(reservation).NotTo(BeNil())
 
-							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+							subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 							Expect(subscribeErr).ToNot(HaveOccurred())
 							Expect(subscribeClient).NotTo(BeNil())
 

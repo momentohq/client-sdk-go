@@ -7,7 +7,6 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/middleware"
 	"github.com/momentohq/client-sdk-go/internal"
-	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers/topic_manager_lists"
 	"github.com/momentohq/client-sdk-go/internal/models"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
@@ -95,11 +94,11 @@ func newPubSubClient(request *models.PubSubClientRequest) (*pubSubClient, moment
 	}, nil
 }
 
-func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*grpcmanagers.TopicGrpcManager, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
-	// Get the next available grpc manager
-	topicManager, topicManagerErr := client.streamGrpcConnectionPool.GetNextTopicGrpcManager()
-	if topicManagerErr != nil {
-		return nil, nil, nil, nil, topicManagerErr
+func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSubscribeRequest) (*topic_manager_lists.Reservation, pb.Pubsub_SubscribeClient, context.Context, context.CancelFunc, error) {
+	// Reserve a stream slot; the Reservation owns its release.
+	reservation, reservationErr := client.streamGrpcConnectionPool.GetNextTopicGrpcManager()
+	if reservationErr != nil {
+		return nil, nil, nil, nil, reservationErr
 	}
 
 	subscriptionRequest := &pb.XSubscriptionRequest{
@@ -122,11 +121,13 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(cancelContext, request.CacheName, requestMetadata)
 
 	var header, trailer metadata.MD
-	subscribeClient, err := topicManager.StreamClient.Subscribe(requestContext, subscriptionRequest)
+	subscribeClient, err := reservation.Manager().StreamClient.Subscribe(requestContext, subscriptionRequest)
 
 	if err != nil {
-		client.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
+		// Cancel before releasing so the stream's resources tear down before
+		// the slot is reusable.
 		cancelFunction()
+		reservation.Release()
 		if subscribeClient != nil {
 			header, _ = subscribeClient.Header()
 			trailer = subscribeClient.Trailer()
@@ -134,7 +135,7 @@ func (client *pubSubClient) topicSubscribe(ctx context.Context, request *TopicSu
 		return nil, nil, nil, nil, momentoerrors.ConvertSvcErr(err, header, trailer)
 	}
 
-	return topicManager, subscribeClient, cancelContext, cancelFunction, err
+	return reservation, subscribeClient, cancelContext, cancelFunction, err
 }
 
 func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPublishRequest) error {
@@ -150,10 +151,13 @@ func (client *pubSubClient) topicPublish(ctx context.Context, request *TopicPubl
 	}
 
 	requestContext := internal.CreateTopicRequestContextFromMetadataMap(ctx, request.CacheName, requestMetadata)
-	topicManager, err := client.unaryGrpcConnectionPool.GetNextTopicGrpcManager()
+	reservation, err := client.unaryGrpcConnectionPool.GetNextTopicGrpcManager()
 	if err != nil {
 		return err
 	}
+	// Release is a no-op for the unary pool; called for contract uniformity.
+	defer reservation.Release()
+	topicManager := reservation.Manager()
 	var header, trailer metadata.MD
 	switch value := request.Value.(type) {
 	case String:

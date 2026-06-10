@@ -9,6 +9,7 @@ import (
 	"github.com/momentohq/client-sdk-go/config/logger"
 	"github.com/momentohq/client-sdk-go/config/retry"
 	"github.com/momentohq/client-sdk-go/internal/grpcmanagers"
+	"github.com/momentohq/client-sdk-go/internal/grpcmanagers/topic_manager_lists"
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 	pb "github.com/momentohq/client-sdk-go/internal/protos"
 	"google.golang.org/grpc"
@@ -30,13 +31,14 @@ func newTestTopicGrpcConnectionPool(streamClient pb.PubsubClient) *testTopicGrpc
 	}
 }
 
-func (p *testTopicGrpcConnectionPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
+func (p *testTopicGrpcConnectionPool) GetNextTopicGrpcManager() (*topic_manager_lists.Reservation, momentoerrors.MomentoSvcErr) {
 	p.manager.NumActiveSubscriptions.Add(1)
 	p.activeCount.Add(1)
-	return p.manager, nil
+	return topic_manager_lists.NewReservation(p.manager, p.releaseManager), nil
 }
 
-func (p *testTopicGrpcConnectionPool) ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64 {
+// releaseManager mirrors the real stream pool's release for accounting.
+func (p *testTopicGrpcConnectionPool) releaseManager(manager *grpcmanagers.TopicGrpcManager) int64 {
 	p.releaseCount.Add(1)
 	p.activeCount.Add(-1)
 	return manager.NumActiveSubscriptions.Add(-1)

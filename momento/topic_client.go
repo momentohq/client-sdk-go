@@ -108,7 +108,7 @@ func (c defaultTopicClient) Subscribe(ctx context.Context, request *TopicSubscri
 
 func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *TopicSubscribeRequest, subChan chan *topicSubscription, errChan chan error) {
 	var firstMsg *pb.XSubscriptionItem
-	topicManager, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
+	reservation, subscribeClient, cancelContext, cancelFunction, err := c.pubSubClient.topicSubscribe(requestCtx, &TopicSubscribeRequest{
 		CacheName:                   request.CacheName,
 		TopicName:                   request.TopicName,
 		ResumeAtTopicSequenceNumber: request.ResumeAtTopicSequenceNumber,
@@ -140,7 +140,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 			}
 		}
 		cancelFunction()
-		c.pubSubClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
+		reservation.Release()
 		errChan <- momentoerrors.ConvertSvcErr(err)
 		return
 	}
@@ -150,7 +150,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		// The first message to a new subscription will always be a heartbeat.
 	default:
 		cancelFunction()
-		c.pubSubClient.streamGrpcConnectionPool.ReleaseTopicGrpcManager(topicManager)
+		reservation.Release()
 		errChan <- momentoerrors.NewMomentoSvcErr(
 			momentoerrors.InternalServerError,
 			fmt.Sprintf("expected a heartbeat message, got: %T", firstMsg.Kind),
@@ -169,7 +169,7 @@ func (c defaultTopicClient) sendSubscribe(requestCtx context.Context, request *T
 		}
 	}
 	subChan <- &topicSubscription{
-		topicManager:       topicManager,
+		reservation:        reservation,
 		topicEventCallback: topicEventCallback,
 		subscribeClient:    subscribeClient,
 		momentoTopicClient: c.pubSubClient,

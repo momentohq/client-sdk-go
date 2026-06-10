@@ -3,6 +3,7 @@ package topic_manager_lists
 import (
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config"
@@ -22,6 +23,9 @@ type staticStreamGrpcManagerPool struct {
 	nextAvailableGrpcManagerChannel chan *StreamGrpcManagerRequest
 	ctx                             context.Context
 	cancel                          context.CancelFunc
+	// dispatcherDone is closed when makeNextManagerAvailable returns.
+	dispatcherDone chan struct{}
+	closeOnce      sync.Once
 }
 
 // GetNextTopicGrpcManager returns the next available TopicGrpcManager from the pool
@@ -30,7 +34,7 @@ type staticStreamGrpcManagerPool struct {
 // Only the makeNextManagerAvailable goroutine started in NewStaticStreamGrpcManagerPool
 // places the next available stream manager on the channel (or an error if no stream manager
 // is available).
-func (s *staticStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
+func (s *staticStreamGrpcManagerPool) GetNextTopicGrpcManager() (*Reservation, momentoerrors.MomentoSvcErr) {
 	select {
 	// If the context was cancelled, we should no longer return any topic managers
 	case <-s.ctx.Done():
@@ -47,20 +51,25 @@ func (s *staticStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.T
 		if topicManagerRequest.Err != nil {
 			return nil, topicManagerRequest.Err
 		}
-		return topicManagerRequest.TopicManager, nil
+		return NewReservation(topicManagerRequest.TopicManager, s.releaseManager), nil
 	}
 }
 
-// Close shuts down all the grpc connections in the pool.
+// Close shuts down all gRPC connections. Safe to call multiple times.
+// Cancels the dispatcher context, waits for the dispatcher to exit, closes
+// the manager channel, then tears down each connection.
 func (s *staticStreamGrpcManagerPool) Close() {
-	s.cancel() // Cancel context first to stop goroutine
-	close(s.nextAvailableGrpcManagerChannel)
-	for _, topicManager := range s.grpcManagers {
-		err := topicManager.Close()
-		if err != nil {
-			s.logger.Error("Error closing topic manager: %v", err)
+	s.closeOnce.Do(func() {
+		s.cancel()
+		<-s.dispatcherDone
+		close(s.nextAvailableGrpcManagerChannel)
+		for _, topicManager := range s.grpcManagers {
+			err := topicManager.Close()
+			if err != nil {
+				s.logger.Error("Error closing topic manager: %v", err)
+			}
 		}
-	}
+	})
 }
 
 // GetCurrentActiveStreamsCount returns the current number of active streams in the pool.
@@ -68,10 +77,10 @@ func (s *staticStreamGrpcManagerPool) GetCurrentActiveStreamsCount() uint64 {
 	return s.currentActiveStreamsCount.Load()
 }
 
-// ReleaseTopicGrpcManager decrements both the per-channel NumActiveSubscriptions counter
-// on the given manager and the pool-wide currentActiveStreamsCount, freeing up the slot
-// so future GetNextTopicGrpcManager calls see capacity. Returns the new per-channel count.
-func (s *staticStreamGrpcManagerPool) ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64 {
+// releaseManager backs Reservation.Release for this pool. Decrements the
+// per-channel and pool-wide counters; the pool-wide CAS bottoms at zero so
+// it can't go negative.
+func (s *staticStreamGrpcManagerPool) releaseManager(manager *grpcmanagers.TopicGrpcManager) int64 {
 	newCount := manager.NumActiveSubscriptions.Add(-1)
 	for {
 		current := s.currentActiveStreamsCount.Load()
@@ -112,6 +121,7 @@ func NewStaticStreamGrpcManagerPool(
 		nextAvailableGrpcManagerChannel: nextAvailableGrpcManagerChannel,
 		ctx:                             ctx,
 		cancel:                          cancel,
+		dispatcherDone:                  make(chan struct{}),
 	}
 
 	go pool.makeNextManagerAvailable()
@@ -128,6 +138,7 @@ func NewStaticStreamGrpcManagerPool(
 // only be able to pull one topic grpc manager from the channel at a time to allocate
 // to each subscribe request.
 func (s *staticStreamGrpcManagerPool) makeNextManagerAvailable() {
+	defer close(s.dispatcherDone)
 	for {
 		select {
 		case <-s.ctx.Done():
@@ -136,6 +147,11 @@ func (s *staticStreamGrpcManagerPool) makeNextManagerAvailable() {
 			topicManager, err := s.getNextManager()
 			select {
 			case <-s.ctx.Done():
+				// Close interrupted a prepared envelope: return the prefetched
+				// slot so the counters stay exact. Error envelopes hold no slot.
+				if topicManager != nil {
+					s.releaseManager(topicManager)
+				}
 				return
 			case s.nextAvailableGrpcManagerChannel <- &StreamGrpcManagerRequest{
 				TopicManager: topicManager,

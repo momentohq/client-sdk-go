@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sync"
 	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config"
@@ -13,18 +14,28 @@ import (
 	"github.com/momentohq/client-sdk-go/internal/momentoerrors"
 )
 
-// dynamicStreamGrpcManagerPool manages a dynamic pool of gRPC channels for stream pubsub requests.
+// dynamicStreamGrpcManagerPool manages a dynamic pool of gRPC channels for
+// stream pubsub requests.
+//
+// makeNextManagerAvailable is the sole writer to grpcManagers; numGrpcManagers
+// mirrors the length atomically for external readers. Close waits on
+// dispatcherDone before iterating grpcManagers, so neither racing append nor
+// racing send is possible.
 type dynamicStreamGrpcManagerPool struct {
 	grpcManagers                    []*grpcmanagers.TopicGrpcManager
+	numGrpcManagers                 atomic.Int32
 	managerIndex                    atomic.Uint64
-	maxManagerCount                 int    // maximum number of grpc channels that can be created
-	currentMaxConcurrentStreams     uint32 // current number of grpc channels * MAX_CONCURRENT_STREAMS_PER_CHANNEL
+	maxManagerCount                 int    // max grpc channels
+	currentMaxConcurrentStreams     uint32 // grpc channels * MAX_CONCURRENT_STREAMS_PER_CHANNEL
 	currentActiveStreamsCount       atomic.Uint64
 	logger                          logger.MomentoLogger
 	newTopicManagerProps            *models.TopicStreamGrpcManagerRequest
 	nextAvailableGrpcManagerChannel chan *StreamGrpcManagerRequest
 	ctx                             context.Context
 	cancel                          context.CancelFunc
+	// dispatcherDone is closed when makeNextManagerAvailable returns.
+	dispatcherDone chan struct{}
+	closeOnce      sync.Once
 }
 
 // GetNextTopicGrpcManager returns the next available TopicGrpcManager from the pool
@@ -33,7 +44,7 @@ type dynamicStreamGrpcManagerPool struct {
 // Only the makeNextManagerAvailable goroutine started in NewDynamicStreamGrpcManagerPool
 // places the next available stream manager on the channel (or an error if no stream manager
 // is available).
-func (d *dynamicStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
+func (d *dynamicStreamGrpcManagerPool) GetNextTopicGrpcManager() (*Reservation, momentoerrors.MomentoSvcErr) {
 	select {
 	// If the context was cancelled, we should no longer return any topic managers
 	case <-d.ctx.Done():
@@ -50,20 +61,25 @@ func (d *dynamicStreamGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.
 		if topicManagerRequest.Err != nil {
 			return nil, topicManagerRequest.Err
 		}
-		return topicManagerRequest.TopicManager, nil
+		return NewReservation(topicManagerRequest.TopicManager, d.releaseManager), nil
 	}
 }
 
-// Close shuts down all the grpc connections in the pool.
+// Close shuts down all gRPC connections. Safe to call multiple times.
+// Cancels the dispatcher context, waits for the dispatcher to exit, closes
+// the manager channel, then tears down each connection.
 func (d *dynamicStreamGrpcManagerPool) Close() {
-	d.cancel() // Cancel context first to stop goroutines
-	close(d.nextAvailableGrpcManagerChannel)
-	for _, topicManager := range d.grpcManagers {
-		err := topicManager.Close()
-		if err != nil {
-			d.logger.Error("Error closing topic manager: %s", err.Error())
+	d.closeOnce.Do(func() {
+		d.cancel()
+		<-d.dispatcherDone
+		close(d.nextAvailableGrpcManagerChannel)
+		for _, topicManager := range d.grpcManagers {
+			err := topicManager.Close()
+			if err != nil {
+				d.logger.Error("Error closing topic manager: %s", err.Error())
+			}
 		}
-	}
+	})
 }
 
 // GetCurrentActiveStreamsCount returns the current number of active streams in the pool.
@@ -71,10 +87,10 @@ func (d *dynamicStreamGrpcManagerPool) GetCurrentActiveStreamsCount() uint64 {
 	return d.currentActiveStreamsCount.Load()
 }
 
-// ReleaseTopicGrpcManager decrements both the per-channel NumActiveSubscriptions counter
-// on the given manager and the pool-wide currentActiveStreamsCount, freeing up the slot
-// so future GetNextTopicGrpcManager calls see capacity. Returns the new per-channel count.
-func (d *dynamicStreamGrpcManagerPool) ReleaseTopicGrpcManager(manager *grpcmanagers.TopicGrpcManager) int64 {
+// releaseManager backs Reservation.Release for this pool. Decrements the
+// per-channel and pool-wide counters; the pool-wide CAS bottoms at zero so
+// it can't go negative.
+func (d *dynamicStreamGrpcManagerPool) releaseManager(manager *grpcmanagers.TopicGrpcManager) int64 {
 	newCount := manager.NumActiveSubscriptions.Add(-1)
 	for {
 		current := d.currentActiveStreamsCount.Load()
@@ -90,7 +106,7 @@ func (d *dynamicStreamGrpcManagerPool) ReleaseTopicGrpcManager(manager *grpcmana
 
 // GetCurrentNumberOfGrpcManagers returns the current number of grpc managers in the pool.
 func (d *dynamicStreamGrpcManagerPool) GetCurrentNumberOfGrpcManagers() int {
-	return len(d.grpcManagers)
+	return int(d.numGrpcManagers.Load())
 }
 
 // NewDynamicStreamGrpcManagerPool creates a new pool with a dynamic number of grpc managers for stream pubsub requests.
@@ -121,10 +137,13 @@ func NewDynamicStreamGrpcManagerPool(request *models.TopicStreamGrpcManagerReque
 		nextAvailableGrpcManagerChannel: nextAvailableGrpcManagerChannel,
 		ctx:                             ctx,
 		cancel:                          cancel,
+		dispatcherDone:                  make(chan struct{}),
 	}
 
-	// Start goroutine to continually make the next available stream manager
-	// available on the streamManagerRequestQueue
+	pool.numGrpcManagers.Store(int32(len(streamTopicManagers)))
+
+	// Start the dispatcher goroutine that keeps the unbuffered channel fed
+	// with the next available manager.
 	go pool.makeNextManagerAvailable()
 
 	return pool, nil
@@ -140,6 +159,7 @@ func NewDynamicStreamGrpcManagerPool(request *models.TopicStreamGrpcManagerReque
 // only be able to pull one topic grpc manager from the channel at a time to allocate
 // to each subscribe request.
 func (d *dynamicStreamGrpcManagerPool) makeNextManagerAvailable() {
+	defer close(d.dispatcherDone)
 	for {
 		select {
 		case <-d.ctx.Done():
@@ -148,6 +168,11 @@ func (d *dynamicStreamGrpcManagerPool) makeNextManagerAvailable() {
 			topicManager, err := d.getNextManager()
 			select {
 			case <-d.ctx.Done():
+				// Close interrupted a prepared envelope: return the prefetched
+				// slot so the counters stay exact. Error envelopes hold no slot.
+				if topicManager != nil {
+					d.releaseManager(topicManager)
+				}
 				return
 			case d.nextAvailableGrpcManagerChannel <- &StreamGrpcManagerRequest{
 				TopicManager: topicManager,
@@ -232,6 +257,7 @@ func (d *dynamicStreamGrpcManagerPool) addManager() momentoerrors.MomentoSvcErr 
 		return err
 	}
 	d.grpcManagers = append(d.grpcManagers, streamTopicManager)
+	d.numGrpcManagers.Store(int32(len(d.grpcManagers)))
 	d.currentMaxConcurrentStreams = uint32(len(d.grpcManagers)) * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
 	return nil
 }
