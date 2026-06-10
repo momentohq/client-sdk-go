@@ -15,7 +15,7 @@ jobs:
   readme:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: Verify README generation
         uses: momentohq/standards-and-practices/github-actions/oss-readme-template@gh-actions-v2
@@ -43,10 +43,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Setup repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v6
         with:
           go-version: 1.19.x
 
@@ -92,10 +92,10 @@ jobs:
       V1_API_KEY: ${{ secrets.ALPHA_TEST_AUTH_TOKEN }}
     steps:
       - name: Setup repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v6
         with:
           go-version: 1.19.x
 
@@ -113,10 +113,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Setup repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v6
         with:
           go-version: 1.19.x
 
@@ -137,12 +137,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Setup repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       # Newer Go for better race-detector diagnostics; the rest of the workflow
       # pins the declared minimum.
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v6
         with:
           go-version: 1.21.x
 
