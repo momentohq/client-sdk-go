@@ -1,6 +1,7 @@
 package topic_manager_lists
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"github.com/momentohq/client-sdk-go/config/logger"
@@ -14,34 +15,25 @@ type staticUnaryGrpcManagerPool struct {
 	grpcManagers []*grpcmanagers.TopicGrpcManager
 	managerIndex atomic.Uint64
 	logger       logger.MomentoLogger
+	closeOnce    sync.Once
 }
 
-// GetNextTopicGrpcManager returns the next available TopicGrpcManager from the pool
-// using a round-robin approach.
-//
-// Publish requests can queue up if there are >100 concurrent requests on a grpc connection,
-// but unary requests will eventually complete so no need for the same level of bookkeeping
-// as for the stream grpc manager pools.
-func (list *staticUnaryGrpcManagerPool) GetNextTopicGrpcManager() (*grpcmanagers.TopicGrpcManager, momentoerrors.MomentoSvcErr) {
+// GetNextTopicGrpcManager returns the next manager via round-robin.
+// Reservation.Release is a no-op since unary requests don't hold slots.
+func (list *staticUnaryGrpcManagerPool) GetNextTopicGrpcManager() (*Reservation, momentoerrors.MomentoSvcErr) {
 	nextManagerIndex := list.managerIndex.Add(1)
-	return list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))], nil
+	return NewReservation(list.grpcManagers[nextManagerIndex%uint64(len(list.grpcManagers))], list.releaseManager), nil
 }
 
-// ReleaseTopicGrpcManager is a no-op for the unary pool because unary requests
-// don't hold long-lived stream slots and the pool doesn't track per-channel
-// subscription counts.
-func (list *staticUnaryGrpcManagerPool) ReleaseTopicGrpcManager(_ *grpcmanagers.TopicGrpcManager) int64 {
+func (list *staticUnaryGrpcManagerPool) releaseManager(_ *grpcmanagers.TopicGrpcManager) int64 {
 	return 0
 }
 
-// Close shuts down all the grpc connections in the pool.
+// Close shuts down all gRPC connections. Safe to call multiple times.
 func (list *staticUnaryGrpcManagerPool) Close() {
-	for _, topicManager := range list.grpcManagers {
-		err := topicManager.Close()
-		if err != nil {
-			list.logger.Error("Error closing topic manager: %v", err)
-		}
-	}
+	list.closeOnce.Do(func() {
+		closeAllManagers(list.grpcManagers, list.logger)
+	})
 }
 
 // NewStaticUnaryGrpcManagerPool creates a new pool with a fixed number of grpc managers for unary pubsub requests.

@@ -111,11 +111,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				streamManager, err := staticPool.GetNextTopicGrpcManager()
+				reservation, err := staticPool.GetNextTopicGrpcManager()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(streamManager).NotTo(BeNil())
+				Expect(reservation).NotTo(BeNil())
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+				subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -141,8 +141,8 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 		// The three burst variants share one body; each Entry supplies the
 		// burst size and whether the pool may refuse reservations. The expected
-		// final count is the burst size plus the pool's prefetched slot,
-		// capped at pool capacity.
+		// final count is the burst size capped at pool capacity — exactly one
+		// slot per successful reservation.
 		DescribeTable("Starts a burst of streams",
 			func(burstSize int, allowExhausted bool) {
 				numGrpcChannels := uint32(2)
@@ -161,7 +161,7 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					go func() {
 						defer GinkgoRecover()
 						defer waitGroup.Done()
-						streamManager, err := staticPool.GetNextTopicGrpcManager()
+						reservation, err := staticPool.GetNextTopicGrpcManager()
 						if err != nil {
 							// Only the over-capacity burst may be refused, and only
 							// with ResourceExhausted.
@@ -169,9 +169,9 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 							Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 							return
 						}
-						Expect(streamManager).NotTo(BeNil())
+						Expect(reservation).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+						subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -186,10 +186,8 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				// Allow time for all streams to be established
 				time.Sleep(500 * time.Millisecond)
 
-				// The dispatcher eagerly prefetches the next manager, so an
-				// unsaturated pool reports one extra reserved slot.
-				expected := uint64(burstSize + 1)
-				if burstSize >= int(maxConcurrentStreams) {
+				expected := uint64(burstSize)
+				if burstSize > int(maxConcurrentStreams) {
 					expected = uint64(maxConcurrentStreams)
 				}
 				Expect(staticPool.GetCurrentActiveStreamsCount()).To(Equal(expected))
@@ -219,11 +217,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			ctx, cancel := context.WithCancel(ctx)
 			waitGroup := sync.WaitGroup{}
 			for i := 0; i < int(maxConcurrentStreams); i++ {
-				streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+				reservation, err := dynamicPool.GetNextTopicGrpcManager()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(streamManager).NotTo(BeNil())
+				Expect(reservation).NotTo(BeNil())
 
-				subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+				subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 				Expect(subscribeErr).ToNot(HaveOccurred())
 				Expect(subscribeClient).NotTo(BeNil())
 
@@ -271,11 +269,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 				go func() {
 					defer GinkgoRecover()
 					defer waitGroup.Done()
-					streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+					reservation, err := dynamicPool.GetNextTopicGrpcManager()
 					Expect(err).ToNot(HaveOccurred())
-					Expect(streamManager).NotTo(BeNil())
+					Expect(reservation).NotTo(BeNil())
 
-					subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+					subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 					Expect(subscribeErr).ToNot(HaveOccurred())
 					Expect(subscribeClient).NotTo(BeNil())
 
@@ -293,10 +291,8 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			// No new manager should have been added as we did not exceed a single channel's stream capacity.
 			Expect(dynamicPool.GetCurrentNumberOfGrpcManagers()).To(Equal(1))
 
-			// Verify correct number of streams are active. The dispatcher
-			// eagerly prefetches the next manager, so the unsaturated pool
-			// reports one extra reserved slot.
-			Expect(dynamicPool.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams / 2)))
+			// Verify correct number of streams are active.
+			Expect(dynamicPool.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams/2 - 1)))
 
 			dynamicPool.Close()
 			cancel()
@@ -324,11 +320,11 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 					go func() {
 						defer GinkgoRecover()
 						defer waitGroup.Done()
-						streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+						reservation, err := dynamicPool.GetNextTopicGrpcManager()
 						Expect(err).ToNot(HaveOccurred())
-						Expect(streamManager).NotTo(BeNil())
+						Expect(reservation).NotTo(BeNil())
 
-						subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+						subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 						Expect(subscribeErr).ToNot(HaveOccurred())
 						Expect(subscribeClient).NotTo(BeNil())
 
@@ -381,13 +377,13 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 						defer GinkgoRecover()
 						defer waitGroup.Done()
 
-						streamManager, err := dynamicPool.GetNextTopicGrpcManager()
+						reservation, err := dynamicPool.GetNextTopicGrpcManager()
 						if err != nil {
 							Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
 						} else {
-							Expect(streamManager).NotTo(BeNil())
+							Expect(reservation).NotTo(BeNil())
 
-							subscribeClient, subscribeErr := streamManager.StreamClient.Subscribe(ctx, subscriptionRequest)
+							subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
 							Expect(subscribeErr).ToNot(HaveOccurred())
 							Expect(subscribeClient).NotTo(BeNil())
 
