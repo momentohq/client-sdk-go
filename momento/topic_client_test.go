@@ -2,6 +2,7 @@ package momento_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -343,10 +344,12 @@ var _ = Describe("topic-client", Label(TOPICS_SERVICE_LABEL), func() {
 			panic(err)
 		}
 
-		// expect one Item() success and one failure
+		// expect one Item() success and one failure: the closed subscription
+		// returns a typed CanceledError that unwraps to context.Canceled
 		item, err = sub1.Item(sharedContext.Ctx)
 		Expect(item).To(BeNil())
-		Expect(err.Error()).To(Equal("context canceled"))
+		Expect(err).To(HaveMomentoErrorCode(CanceledError))
+		Expect(errors.Is(err, context.Canceled)).To(BeTrue())
 
 		item, err = sub2.Item(sharedContext.Ctx)
 		if err != nil {
