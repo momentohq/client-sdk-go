@@ -31,12 +31,11 @@ import (
 //     an in-flight Item/Event call returns an error — immediately if blocked
 //     receiving, or at the next retry check if a reconnect is in flight
 //     (Close also interrupts a reconnect backoff wait).
-//   - An error from the ctx YOU passed to Item/Event means only that the
-//     call stopped waiting: the subscription stays active and a later call
-//     with a live ctx resumes it, including resuming an interrupted
-//     reconnect. This matches the timeout semantics of comparable clients
-//     (NATS NextMsg, Kafka ReadMessage). A call blocked receiving notices
-//     the ctx at the next message/heartbeat boundary or stream event.
+//   - An error from the ctx passed to Item/Event means only that the call
+//     stopped waiting: the subscription stays active and a later call with
+//     a live ctx resumes it, including resuming an interrupted reconnect.
+//     A call blocked receiving notices the ctx at the next
+//     message/heartbeat boundary or stream event.
 //   - Terminal errors (Close was called, or the ctx passed to Subscribe
 //     ended) carry the CanceledError code and unwrap to the underlying
 //     context error; check your own ctx first to tell the two apart. The
