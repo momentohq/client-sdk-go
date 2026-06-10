@@ -121,11 +121,15 @@ precommit: lint test
 
 
 test: install-ginkgo
+	@echo "Running internal unit tests..."
+	@go test -count=1 ./internal/...
 	@echo "Running tests..."
 	@ginkgo ${GINKGO_OPTS} --label-filter "!momento-local" ${TEST_DIRS}
 
 
 prod-test: install-ginkgo
+	@echo "Running internal unit tests..."
+	@go test -count=1 ./internal/...
 	@echo "Running tests with consistent reads..."
 	@CONSISTENT_READS=1 ginkgo ${GINKGO_OPTS} --label-filter "!momento-local" ${TEST_DIRS}
 
