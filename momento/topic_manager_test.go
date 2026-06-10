@@ -139,119 +139,36 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 			waitGroup.Wait()
 		})
 
-		It("Starts a burst of streams < max concurrent streams", func() {
-			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticPool, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(staticPool).NotTo(BeNil())
+		// The three burst variants share one body; each Entry supplies the
+		// burst size and whether the pool may refuse reservations. The expected
+		// final count is the burst size capped at pool capacity — exactly one
+		// slot per successful reservation.
+		DescribeTable("Starts a burst of streams",
+			func(burstSize int, allowExhausted bool) {
+				numGrpcChannels := uint32(2)
+				maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
+				staticPool, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(staticPool).NotTo(BeNil())
 
-			// Start a burst of streams to occupy just under half the max concurrent stream capacity.
-			// Shadow the shared ctx so this spec owns its streams' lifetime and
-			// can wait out its keep-alive goroutines before the next spec runs.
-			ctx, cancel := context.WithCancel(ctx)
-			streamsWaitGroup := sync.WaitGroup{}
-			waitGroup := sync.WaitGroup{}
-			for i := 0; i < int(maxConcurrentStreams/2-1); i++ {
-				waitGroup.Add(1)
-				go func() {
-					defer GinkgoRecover()
-					defer waitGroup.Done()
-					reservation, err := staticPool.GetNextTopicGrpcManager()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(reservation).NotTo(BeNil())
-
-					subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
-					Expect(subscribeErr).ToNot(HaveOccurred())
-					Expect(subscribeClient).NotTo(BeNil())
-
-					// keep the stream alive until the spec tears down
-					keepStreamAlive(ctx, subscribeClient, &streamsWaitGroup)
-				}()
-			}
-
-			// Wait for the burst to complete.
-			waitGroup.Wait()
-
-			// Allow time for all streams to be established
-			time.Sleep(500 * time.Millisecond)
-
-			// Verify correct number of streams are active.
-			Expect(staticPool.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams/2 - 1)))
-
-			staticPool.Close()
-			cancel()
-			streamsWaitGroup.Wait()
-		})
-
-		It("Starts a burst of streams == max concurrent streams", func() {
-			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticPool, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(staticPool).NotTo(BeNil())
-
-			// Start a burst of streams to occupy the max concurrent stream capacity.
-			// Shadow the shared ctx so this spec owns its streams' lifetime and
-			// can wait out its keep-alive goroutines before the next spec runs.
-			ctx, cancel := context.WithCancel(ctx)
-			streamsWaitGroup := sync.WaitGroup{}
-			waitGroup := sync.WaitGroup{}
-			for i := 0; i < int(maxConcurrentStreams); i++ {
-				waitGroup.Add(1)
-				go func() {
-					defer GinkgoRecover()
-					defer waitGroup.Done()
-					reservation, err := staticPool.GetNextTopicGrpcManager()
-					Expect(err).ToNot(HaveOccurred())
-					Expect(reservation).NotTo(BeNil())
-
-					subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
-					Expect(subscribeErr).ToNot(HaveOccurred())
-					Expect(subscribeClient).NotTo(BeNil())
-
-					// keep the stream alive until the spec tears down
-					keepStreamAlive(ctx, subscribeClient, &streamsWaitGroup)
-				}()
-			}
-
-			// Wait for the burst to complete.
-			waitGroup.Wait()
-
-			// Allow time for all streams to be established
-			time.Sleep(500 * time.Millisecond)
-
-			// Verify correct number of streams are active.
-			Expect(staticPool.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
-
-			staticPool.Close()
-			cancel()
-			streamsWaitGroup.Wait()
-		})
-
-		It("Starts a burst of streams > max concurrent streams", func() {
-			numGrpcChannels := uint32(2)
-			maxConcurrentStreams := numGrpcChannels * uint32(config.MAX_CONCURRENT_STREAMS_PER_CHANNEL)
-			staticPool, err := topic_manager_lists.NewStaticStreamGrpcManagerPool(grpcManagerRequest, numGrpcChannels, log)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(staticPool).NotTo(BeNil())
-
-			// Start a burst of streams for 10 greater than the max concurrent stream capacity.
-			// Shadow the shared ctx so this spec owns its streams' lifetime and
-			// can wait out its keep-alive goroutines before the next spec runs.
-			ctx, cancel := context.WithCancel(ctx)
-			streamsWaitGroup := sync.WaitGroup{}
-			waitGroup := sync.WaitGroup{}
-			for i := 0; i < int(maxConcurrentStreams+10); i++ {
-				waitGroup.Add(1)
-				go func() {
-					defer GinkgoRecover()
-					defer waitGroup.Done()
-
-					reservation, err := staticPool.GetNextTopicGrpcManager()
-					if err != nil {
-						Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
-					} else {
+				// Shadow the shared ctx so this spec owns its streams' lifetime and
+				// can wait out its keep-alive goroutines before the next spec runs.
+				ctx, cancel := context.WithCancel(ctx)
+				streamsWaitGroup := sync.WaitGroup{}
+				waitGroup := sync.WaitGroup{}
+				for i := 0; i < burstSize; i++ {
+					waitGroup.Add(1)
+					go func() {
+						defer GinkgoRecover()
+						defer waitGroup.Done()
+						reservation, err := staticPool.GetNextTopicGrpcManager()
+						if err != nil {
+							// Only the over-capacity burst may be refused, and only
+							// with ResourceExhausted.
+							Expect(allowExhausted).To(BeTrue(), "unexpected reservation failure: %v", err)
+							Expect(err.Error()).To(ContainSubstring("ClientResourceExhaustedError"))
+							return
+						}
 						Expect(reservation).NotTo(BeNil())
 
 						subscribeClient, subscribeErr := reservation.Manager().StreamClient.Subscribe(ctx, subscriptionRequest)
@@ -260,23 +177,29 @@ var _ = Describe("retry topic-grpc-managers", Label(RETRY_LABEL, MOMENTO_LOCAL_L
 
 						// keep the stream alive until the spec tears down
 						keepStreamAlive(ctx, subscribeClient, &streamsWaitGroup)
-					}
-				}()
-			}
+					}()
+				}
 
-			// Wait for the burst to complete.
-			waitGroup.Wait()
+				// Wait for the burst to complete.
+				waitGroup.Wait()
 
-			// Allow time for all streams to be established
-			time.Sleep(500 * time.Millisecond)
+				// Allow time for all streams to be established
+				time.Sleep(500 * time.Millisecond)
 
-			// Verify correct number of streams are active.
-			Expect(staticPool.GetCurrentActiveStreamsCount()).To(Equal(uint64(maxConcurrentStreams)))
+				expected := uint64(burstSize)
+				if burstSize > int(maxConcurrentStreams) {
+					expected = uint64(maxConcurrentStreams)
+				}
+				Expect(staticPool.GetCurrentActiveStreamsCount()).To(Equal(expected))
 
-			staticPool.Close()
-			cancel()
-			streamsWaitGroup.Wait()
-		})
+				staticPool.Close()
+				cancel()
+				streamsWaitGroup.Wait()
+			},
+			Entry("to just under half capacity", config.MAX_CONCURRENT_STREAMS_PER_CHANNEL-1, false),
+			Entry("to exactly full capacity", 2*config.MAX_CONCURRENT_STREAMS_PER_CHANNEL, false),
+			Entry("to 10 past capacity", 2*config.MAX_CONCURRENT_STREAMS_PER_CHANNEL+10, true),
+		)
 	})
 
 	Describe("DynamicStreamManagerList", func() {
