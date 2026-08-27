@@ -57,11 +57,13 @@ jobs:
         run: make lint
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.64.8
+          # goinstall builds with the runner's Go; the prebuilt v1 binary is
+          # compiled with go1.24 and refuses a go.mod targeting 1.25.
+          install-mode: goinstall
           only-new-issues: true
-          skip-pkg-cache: true
 
       - name: Check for forbidden replace directives
         run: make check-no-replace
