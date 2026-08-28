@@ -1,6 +1,7 @@
 package momento_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	responses "github.com/momentohq/client-sdk-go/responses"
 	auth_responses "github.com/momentohq/client-sdk-go/responses/auth"
 	"github.com/momentohq/client-sdk-go/utils"
-	"golang.org/x/net/context"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
