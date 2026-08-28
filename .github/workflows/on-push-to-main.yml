@@ -71,11 +71,11 @@ jobs:
         run: make lint
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: v1.64.8
-          # goinstall builds with the runner's Go; the prebuilt v1 binary is
-          # compiled with go1.24 and refuses a go.mod targeting 1.27.
+          version: v2.13.2
+          # goinstall builds with the runner's Go, so the linter can read
+          # go1.27 export data regardless of what the release binary used.
           install-mode: goinstall
           only-new-issues: true
 
