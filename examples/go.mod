@@ -1,6 +1,6 @@
 module github.com/momentohq/go-example
 
-go 1.21
+go 1.27.0
 
 require (
 	// the hrtime and hdrhistogram-go modules are not required to use momento, but
