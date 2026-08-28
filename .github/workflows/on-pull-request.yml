@@ -48,7 +48,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.25.x
+          go-version: 1.27.x
 
       - name: Install devtools
         run: make install-devtools
@@ -61,7 +61,7 @@ jobs:
         with:
           version: v1.64.8
           # goinstall builds with the runner's Go; the prebuilt v1 binary is
-          # compiled with go1.24 and refuses a go.mod targeting 1.25.
+          # compiled with go1.24 and refuses a go.mod targeting 1.27.
           install-mode: goinstall
           only-new-issues: true
 
@@ -99,7 +99,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.25.x
+          go-version: 1.27.x
 
       - name: Install devtools
         run: make install-devtools
@@ -120,7 +120,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.25.x
+          go-version: 1.27.x
 
       - name: Install devtools
         run: make install-devtools
