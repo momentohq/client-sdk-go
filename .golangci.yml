@@ -1,6 +1,32 @@
-# Ignore SA1019 warnings in test files until v2 api keys are fully rolled out and used everywhere
-issues:
-  exclude-rules:
-    - linters:
-        - staticcheck
-      text: "SA1019:"
+version: "2"
+linters:
+  settings:
+    staticcheck:
+      # v2 folds stylecheck (ST) and quickfix (QF) into staticcheck; under v1
+      # neither linter was enabled, so keep them off and run SA/S as before.
+      checks:
+        - all
+        - -ST*
+        - -QF*
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: 'SA1019:'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
