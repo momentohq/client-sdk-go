@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.40.3](https://github.com/momentohq/client-sdk-go/compare/v1.40.2...v1.40.3) (2026-08-31)
+
+
+### Miscellaneous
+
+* bump grpc and x/net for security advisories ([#686](https://github.com/momentohq/client-sdk-go/issues/686)) ([b5b72ee](https://github.com/momentohq/client-sdk-go/commit/b5b72ee11b1ff92dd78cd3b7acb4c3ec0b848bf1))
+* raise go floor to 1.27.0 and update linters ([#688](https://github.com/momentohq/client-sdk-go/issues/688)) ([80017c9](https://github.com/momentohq/client-sdk-go/commit/80017c96ce77197f3533e06565d1310cb73f74b0))
+* retire the machine-user release token ([#684](https://github.com/momentohq/client-sdk-go/issues/684)) ([25f84f3](https://github.com/momentohq/client-sdk-go/commit/25f84f323e1ef70b9b604d9d68504d02b62cfc06))
+
 ## [1.40.2](https://github.com/momentohq/client-sdk-go/compare/v1.40.1...v1.40.2) (2026-05-18)
 
 
