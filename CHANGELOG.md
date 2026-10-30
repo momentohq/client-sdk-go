@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.41.0](https://github.com/momentohq/client-sdk-go/compare/v1.40.3...v1.41.0) (2026-10-30)
+
+
+### Features
+
+* expose cache id on CacheInfo ([#689](https://github.com/momentohq/client-sdk-go/issues/689)) ([2981ba7](https://github.com/momentohq/client-sdk-go/commit/2981ba76ae6c298d6f5190dd18b599c7ef4aa34c))
+
 ## [1.40.3](https://github.com/momentohq/client-sdk-go/compare/v1.40.2...v1.40.3) (2026-08-31)
 
 
