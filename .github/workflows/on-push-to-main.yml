@@ -73,7 +73,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.13.2
+          version: v2.15.0
           # goinstall builds with the runner's Go, so the linter can read
           # go1.27 export data regardless of what the release binary used.
           install-mode: goinstall
