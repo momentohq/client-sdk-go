@@ -18,7 +18,7 @@ install-goimport:
 install-staticcheck:
 	@if ! command -v staticcheck &> /dev/null; then \
 		echo "staticcheck not found, installing..."; \
-		go install honnef.co/go/tools/cmd/staticcheck@v0.8.1; \
+		go install honnef.co/go/tools/cmd/staticcheck@v0.8.2; \
 	fi
 
 install-ginkgo:
@@ -30,7 +30,7 @@ install-ginkgo:
 install-golangci-lint:
 	@if ! command -v golangci-lint &> /dev/null; then \
 		echo "golangci-lint not found, installing..."; \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0; \
 	fi
 
 install-devtools: install-goimport install-staticcheck install-ginkgo install-golangci-lint
