@@ -23,7 +23,7 @@ type CacheInfo struct {
 }
 
 func NewCacheInfo(cache *pb.XCache) responses.CacheInfo {
-	return responses.NewCacheInfo(cache.CacheName)
+	return responses.NewCacheInfoWithID(cache.CacheName, cache.CacheId)
 }
 
 type TopicSubscribeResponse struct{}

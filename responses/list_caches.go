@@ -36,6 +36,7 @@ func (resp ListCachesSuccess) Caches() []CacheInfo {
 // CacheInfo Information about a Cache.
 type CacheInfo struct {
 	name string
+	id   string
 }
 
 // Name Returns cache's name.
@@ -43,7 +44,17 @@ func (ci CacheInfo) Name() string {
 	return ci.name
 }
 
+// ID Returns cache's id. Empty if the server does not report one.
+func (ci CacheInfo) ID() string {
+	return ci.id
+}
+
 // NewCacheInfo returns new CacheInfo with the supplied name.
 func NewCacheInfo(name string) CacheInfo {
 	return CacheInfo{name: name}
+}
+
+// NewCacheInfoWithID returns new CacheInfo with the supplied name and id.
+func NewCacheInfoWithID(name string, id string) CacheInfo {
+	return CacheInfo{name: name, id: id}
 }
